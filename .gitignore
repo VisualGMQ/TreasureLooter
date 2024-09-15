@@ -1,2 +1,7 @@
 CMakeUserPresets.json
-build
+android/app/build/*
+android/app/jni/game/*
+android/.gradle
+android/.idea
+game/cmake-build/
+android/app/.cxx/

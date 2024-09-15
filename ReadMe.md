@@ -4,13 +4,21 @@ A game
 
 ## how to build
 
-1. use conan2
+### Windows/MacOS/Linux
+
+1. enter `game` folder
+2. Please install `vcpkg`. Use to install SDL
+3. use cmake to build
     ```bash
-    conan install . --build=missing --settings=build_type=Debug 
-    ```
-    Or you can change `--setting=build_type=Release` to build release version.
-2. then run cmake
-    ```bash
-    cmake -S . -B build/cmake-build -DCMAKE_TOOLCHAIN_FILE=build/generators/conan_toolchain.cmake 
+    cmake --preset=default
     cmake --build cmake-build
     ```
+
+### Android
+
+1. fetch submodules:
+    ```bash
+    git submodule update --init --recursive
+    ```
+2. copy `game` folder to `android/app/jni`
+3. use `Android Studio` to build
