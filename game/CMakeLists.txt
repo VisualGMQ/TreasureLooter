@@ -24,10 +24,14 @@ else()
     find_package(SDL2_mixer REQUIRED CONFIG)
 
     add_executable(main)
-    target_link_libraries(main PRIVATE SDL2::SDL2main SDL2::SDL2)
-    target_link_libraries(main PRIVATE SDL2_image::SDL2_image)
-    target_link_libraries(main PRIVATE SDL2_ttf::SDL2_ttf)
-    target_link_libraries(main PRIVATE SDL2_mixer::SDL2_mixer)
+    target_link_libraries(main
+        PRIVATE
+        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    )
+    target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>)
+    target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
+    target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 endif()
 
 target_sources(main PRIVATE main.cpp)
