@@ -4,6 +4,8 @@ project(TreasureLootre
     LANGUAGES C CXX
     VERSION 0.1.0)
 
+aux_source_directory(src GAME_SRC)
+
 if (ANDROID)
     add_library(main SHARED)
     find_library(SDL2 SDL2)
@@ -34,5 +36,6 @@ else()
     target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 endif()
 
-target_sources(main PRIVATE main.cpp)
+target_sources(main PRIVATE ${GAME_SRC})
 target_compile_features(main PRIVATE cxx_std_17)
+target_include_directories(main PRIVATE src)
