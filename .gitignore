@@ -5,3 +5,5 @@ android/.gradle
 android/.idea
 game/cmake-build/
 android/app/.cxx/
+compile_commands.json
+game/.cache

@@ -7,7 +7,7 @@ A game
 ### Windows/MacOS/Linux
 
 1. enter `game` folder
-2. Please install `vcpkg`. Use to install SDL
+2. Please install `vcpkg`(Use to install SDL)
 3. use cmake to build
     ```bash
     cmake --preset=default
@@ -21,4 +21,4 @@ A game
     git submodule update --init --recursive
     ```
 2. copy `game` folder to `android/app/jni`
-3. use `Android Studio` to build
+3. use `Android Studio` to build or run `./android/gradlew build`

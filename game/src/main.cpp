@@ -1,10 +1,4 @@
-#include <cstdio>
-#include <iostream>
-#include <unordered_map>
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_ttf.h"
-#include "SDL_mixer.h"
+#include "pch.hpp"
 
 int main(int argc, char** argv) {
     SDL_Init(SDL_INIT_EVERYTHING);
