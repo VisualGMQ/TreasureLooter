@@ -55,6 +55,7 @@ struct Circle {
 struct Rect {
     Vec2 position, size;
 
+    Rect() = default;
     Rect(const Vec2& pos, const Vec2& size): position{pos}, size{size} {}
     Rect(float x, float y, float w, float h): position{x, y}, size{w, h} {}
 

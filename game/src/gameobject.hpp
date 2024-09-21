@@ -1,14 +1,10 @@
 #pragma once
 #include "math.hpp"
 #include "pch.hpp"
+#include "transform.hpp"
+#include "sprite.hpp"
 
 namespace tl {
-
-struct Transform {
-    Vec2 position;
-    Vec2 scale = Vec2::ONES;
-    float rotation = 0;  // in degrees
-};
 
 class GameObjectID {
 public:
@@ -29,9 +25,10 @@ private:
 
 class GameObject {
 public:
-    friend class GameObjectManager;
+    friend class Context;
 
     Transform transform;
+    Sprite sprite;
 
     std::vector<GameObjectID> children;
 
@@ -56,7 +53,6 @@ public:
     void Destroy(GameObjectID);
     GameObject* Find(GameObjectID);
     void Clear();
-    void Update();
 
     GameObjectID GetRootGOID() const { return rootGO_; }
 
@@ -68,8 +64,6 @@ private:
     std::unordered_map<GameObjectID::underlying_type, GameObject> goMap_;
     GameObjectID::underlying_type curID_ = 0;
     GameObjectID rootGO_;
-
-    void updateGOGlobalTransform(GameObject* parent, GameObject* go);
 };
 
 }  // namespace tl

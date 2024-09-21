@@ -1,8 +1,9 @@
 #include "context.hpp"
+#include "flags.hpp"
 #include "log.hpp"
 #include "math.hpp"
 #include "renderer.hpp"
-#include "flags.hpp"
+#include "transform.hpp"
 
 namespace tl {
 
@@ -21,7 +22,6 @@ Context::Context() : window{"Treasure Looter", 1024, 720}, renderer{window} {
         quitSDL();
         exit(1);
     }
-
 }
 
 void Context::initSDL() {
@@ -46,12 +46,64 @@ void Context::Update() {
             }
         }
 
-        goMgr.Update();
-
         renderer.Clear(Color{100, 100, 100});
+        updateGO(nullptr, goMgr.GetRootGO());
         debugMgr.Update();
         renderer.Present();
     }
+}
+
+void Context::updateGO(GameObject* parent, GameObject* go) {
+    if (!parent) {
+        go->globalTransform_ = go->transform;
+    } else {
+        go->globalTransform_ =
+            CalcTransformFromParent(parent->globalTransform_, go->transform);
+    }
+
+    drawSprite(*go);
+
+    for (GameObjectID id : go->children) {
+        GameObject* child = goMgr.Find(id);
+        if (child) {
+            updateGO(go, child);
+        }
+    }
+}
+
+void Context::drawSprite(GameObject& go) {
+    if (!go.sprite.isEnable || !go.sprite) {
+        return;
+    }
+
+    const Transform& goTrans = go.GetGlobalTransform();
+
+    Transform globalTransform =
+        CalcTransformFromParent(goTrans, go.sprite.transform);
+    Vec2 xAxis = Rotate(Vec2::X_AXIS, goTrans.rotation);
+    Vec2 yAxis = Rotate(Vec2::Y_AXIS, goTrans.rotation);
+    Rect dstRect;
+    Vec2 unsignedScale = globalTransform.scale;
+    unsignedScale.x = std::abs(globalTransform.scale.x);
+    unsignedScale.y = std::abs(globalTransform.scale.y);
+    dstRect.size = unsignedScale * go.sprite.GetRegion().size;
+    dstRect.position = globalTransform.position -
+                       dstRect.size.w * go.sprite.GetAnchor().x * xAxis -
+                       dstRect.size.h * go.sprite.GetAnchor().y * yAxis;
+
+    Flags<Flip> flip = Flip::None;
+    if (globalTransform.scale.x < 0) {
+        flip |= Flip::Horizontal;
+    }
+    if (globalTransform.scale.y < 0) {
+        flip |= Flip::Vertical;
+    }
+
+    renderer.DrawTexture(*go.sprite.GetTexture(), go.sprite.GetRegion(),
+                         dstRect, globalTransform.rotation,
+                         go.sprite.GetAnchor() * go.sprite.GetRegion().size *
+                             globalTransform.scale,
+                         flip);
 }
 
 }  // namespace tl
