@@ -5,7 +5,7 @@ namespace tl {
 
 Window::Window(const std::string& title, int w, int h) {
 #ifdef TL_ANDROID
-    window = SDL_CreateWindow(title.c_str(), 0, 0, 0, 0, SDL_WINDOW_SHOWN);
+    window_ = SDL_CreateWindow(title.c_str(), 0, 0, 0, 0, SDL_WINDOW_SHOWN);
 #else
     window_ = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
                                SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_SHOWN);
