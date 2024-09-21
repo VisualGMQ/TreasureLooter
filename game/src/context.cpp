@@ -21,6 +21,7 @@ Context::Context() : window{"Treasure Looter", 1024, 720}, renderer{window} {
         quitSDL();
         exit(1);
     }
+
 }
 
 void Context::initSDL() {
@@ -45,7 +46,10 @@ void Context::Update() {
             }
         }
 
+        goMgr.Update();
+
         renderer.Clear(Color{100, 100, 100});
+        debugMgr.Update();
         renderer.Present();
     }
 }

@@ -88,4 +88,11 @@ struct Segment: public Line {
     }
 };
 
+const float PI = 3.141592653589;
+
+float Deg2Rad(float deg);
+float Rad2Deg(float rad);
+
+Vec2 Rotate(const Vec2& p, float degree);
+
 }

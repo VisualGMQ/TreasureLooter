@@ -4,6 +4,8 @@
 #include "window.hpp"
 #include "renderer.hpp"
 #include "texture.hpp"
+#include "gameobject.hpp"
+#include "debugger.hpp"
 
 namespace tl {
 
@@ -20,6 +22,8 @@ public:
     Window window;
     Renderer renderer;
     TextureManager textureMgr;
+    GameObjectManager goMgr;
+    DebugManager debugMgr;
 
     void Update();
 
