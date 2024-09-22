@@ -1,12 +1,9 @@
+#pragma once
 #include "pch.hpp"
 
 namespace tl {
 
-struct BaseVec2 {
-    float value1, value2;
-};
-
-struct Vec2: public BaseVec2 {
+struct Vec2 {
     union { float x, w; };
     union { float y, h; };
 
@@ -46,6 +43,10 @@ Vec2 operator*(float value, const Vec2& v1);
 Vec2 operator/(float value, const Vec2& v1);
 Vec2 operator-(const Vec2& v);
 
+struct Color {
+    unsigned char r, g, b, a = 255;
+};
+
 struct Circle {
     float radius;
     Vec2 center;
@@ -55,6 +56,7 @@ struct Rect {
     Vec2 position, size;
 
     Rect(const Vec2& pos, const Vec2& size): position{pos}, size{size} {}
+    Rect(float x, float y, float w, float h): position{x, y}, size{w, h} {}
 
     static Rect CreateFromTopLeft(const Vec2& pos, const Vec2& size) {
         return {pos, size};
@@ -85,5 +87,12 @@ struct Segment: public Line {
         return t >= t1 && t <= t2;
     }
 };
+
+const float PI = 3.141592653589;
+
+float Deg2Rad(float deg);
+float Rad2Deg(float rad);
+
+Vec2 Rotate(const Vec2& p, float degree);
 
 }

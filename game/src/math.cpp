@@ -113,4 +113,20 @@ float Vec2::Length() const {
     return std::sqrt(LengthSqrd()); 
 }
 
+float Deg2Rad(float deg) {
+    return deg * PI / 180.0;
+}
+
+float Rad2Deg(float rad) {
+    return rad * 180.0 / PI;
+}
+
+Vec2 Rotate(const Vec2& p, float degree) {
+    float rad = Deg2Rad(degree);
+    float cos = std::cos(rad);
+    float sin = std::sin(rad);
+
+    return Vec2{cos * p.x - sin * p.y, sin * p.x + cos * p.y};
+}
+
 }
