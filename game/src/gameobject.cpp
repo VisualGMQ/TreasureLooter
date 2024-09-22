@@ -36,30 +36,4 @@ void GameObjectManager::Clear() {
     goMap_.clear();
 }
 
-void GameObjectManager::Update() {
-    updateGOGlobalTransform(nullptr, GetRootGO());
-}
-
-void GameObjectManager::updateGOGlobalTransform(GameObject* parent,
-                                                GameObject* go) {
-    if (!parent) {
-        go->globalTransform_ = go->transform;
-    } else {
-        go->globalTransform_.scale = go->transform.scale * parent->globalTransform_.scale;
-        go->globalTransform_.rotation = go->transform.rotation + parent->globalTransform_.rotation;
-        float radians = Deg2Rad(go->transform.rotation);
-        float cos = std::cos(radians);
-        float sin = std::sin(radians);
-        go->globalTransform_.position = Rotate(go->transform.position, go->globalTransform_.rotation);
-        go->globalTransform_.position += parent->globalTransform_.position;
-    }
-
-    for (GameObjectID id : go->children) {
-        GameObject* child = Find(id);
-        if (child) {
-            updateGOGlobalTransform(go, child);
-        }
-    }
-}
-
 }  // namespace tl

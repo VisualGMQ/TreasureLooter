@@ -6,6 +6,7 @@
 #include "texture.hpp"
 #include "gameobject.hpp"
 #include "debugger.hpp"
+#include "sprite.hpp"
 
 namespace tl {
 
@@ -35,6 +36,8 @@ private:
 
     void initSDL();
     void quitSDL();
+    void drawSprite(GameObject&);
+    void updateGO(GameObject* parent, GameObject* go);
 
     static Context* inst;
 };
