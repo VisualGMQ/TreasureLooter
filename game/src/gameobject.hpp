@@ -1,8 +1,9 @@
 #pragma once
-#include "math.hpp"
 #include "pch.hpp"
-#include "transform.hpp"
+#include "animation.hpp"
+#include "math.hpp"
 #include "sprite.hpp"
+#include "transform.hpp"
 
 namespace tl {
 
@@ -29,6 +30,7 @@ public:
 
     Transform transform;
     Sprite sprite;
+    Animator animator;
 
     std::vector<GameObjectID> children;
 
