@@ -1,12 +1,13 @@
 #pragma once
 
-#include "pch.hpp"
-#include "window.hpp"
-#include "renderer.hpp"
-#include "texture.hpp"
-#include "gameobject.hpp"
+#include "animation.hpp"
 #include "debugger.hpp"
+#include "gameobject.hpp"
+#include "pch.hpp"
+#include "renderer.hpp"
 #include "sprite.hpp"
+#include "texture.hpp"
+#include "window.hpp"
 
 namespace tl {
 
@@ -24,6 +25,7 @@ public:
     Renderer renderer;
     TextureManager textureMgr;
     GameObjectManager goMgr;
+    AnimationManager animMgr;
     DebugManager debugMgr;
 
     void Update();
@@ -37,9 +39,10 @@ private:
     void initSDL();
     void quitSDL();
     void drawSprite(GameObject&);
+    void syncAnim2GO(GameObject&);
     void updateGO(GameObject* parent, GameObject* go);
 
     static Context* inst;
 };
 
-}
+}  // namespace tl

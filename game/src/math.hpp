@@ -4,17 +4,24 @@
 namespace tl {
 
 struct Vec2 {
-    union { float x, w; };
-    union { float y, h; };
+    union {
+        float x, w;
+    };
+
+    union {
+        float y, h;
+    };
 
     static const Vec2 ZERO;
     static const Vec2 ONES;
     static const Vec2 X_AXIS;
     static const Vec2 Y_AXIS;
 
-    Vec2(): x{0}, y{0} {}
-    explicit Vec2(float value): x{value}, y{value} {}
-    Vec2(float x, float y): x{x}, y{y} {}
+    Vec2() : x{0}, y{0} {}
+
+    explicit Vec2(float value) : x{value}, y{value} {}
+
+    Vec2(float x, float y) : x{x}, y{y} {}
 
     Vec2& operator+=(const Vec2& o);
     Vec2& operator-=(const Vec2& o);
@@ -56,8 +63,10 @@ struct Rect {
     Vec2 position, size;
 
     Rect() = default;
-    Rect(const Vec2& pos, const Vec2& size): position{pos}, size{size} {}
-    Rect(float x, float y, float w, float h): position{x, y}, size{w, h} {}
+
+    Rect(const Vec2& pos, const Vec2& size) : position{pos}, size{size} {}
+
+    Rect(float x, float y, float w, float h) : position{x, y}, size{w, h} {}
 
     static Rect CreateFromTopLeft(const Vec2& pos, const Vec2& size) {
         return {pos, size};
@@ -72,21 +81,18 @@ struct Line {
     Vec2 p;
     Vec2 dir;
 
-    Line(const Vec2& p, const Vec2& dir): p{p}, dir{dir} {}
+    Line(const Vec2& p, const Vec2& dir) : p{p}, dir{dir} {}
 
-    Vec2 GetPtOn(float t) const {
-        return p + t * dir;
-    }
+    Vec2 GetPtOn(float t) const { return p + t * dir; }
 };
 
-struct Segment: public Line {
-    float t1, t2;   // t1 <= t2
+struct Segment : public Line {
+    float t1, t2;  // t1 <= t2
 
-    Segment(const Vec2& p, const Vec2& dir, float t1, float t2): Line{p, dir}, t1{std::min(t1, t2)}, t2{std::max(t1, t2)} {}
+    Segment(const Vec2& p, const Vec2& dir, float t1, float t2)
+        : Line{p, dir}, t1{std::min(t1, t2)}, t2{std::max(t1, t2)} {}
 
-    bool IsOn(float t) const {
-        return t >= t1 && t <= t2;
-    }
+    bool IsOn(float t) const { return t >= t1 && t <= t2; }
 };
 
 const float PI = 3.141592653589;
@@ -96,4 +102,9 @@ float Rad2Deg(float rad);
 
 Vec2 Rotate(const Vec2& p, float degree);
 
+template <typename T>
+T Clamp(T a, T b, T value) {
+    return value < a ? a : (value > b ? b : value);
 }
+
+}  // namespace tl
