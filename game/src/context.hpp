@@ -43,9 +43,6 @@ private:
     void syncAnim2GO(GameObject&);
     void updateGO(GameObject* parent, GameObject* go);
 
-    void initImGui();
-    void quitImGui();
-
     static Context* inst;
 };
 

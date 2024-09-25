@@ -49,10 +49,6 @@ void Context::quitSDL() {
 }
 
 Context::~Context() {
-    ImGui_ImplSDLRenderer2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
-
     debugMgr.reset();
     animMgr.reset();
     goMgr.reset();
@@ -187,26 +183,5 @@ void Context::syncAnim2GO(GameObject& go) {
         }
     }
 }
-
-void Context::initImGui() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    // ImGui::StyleColorsLight();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForSDLRenderer(window->window_, renderer->renderer_);
-    ImGui_ImplSDLRenderer2_Init(renderer->renderer_);
-}
-
-void Context::quitImGui() {}
 
 }  // namespace tl
