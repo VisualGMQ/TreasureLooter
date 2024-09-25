@@ -17,7 +17,7 @@ Texture::Texture(const std::string& filename) {
         }
         SDL_FreeSurface(surface);
         texture_ = SDL_CreateTextureFromSurface(
-            Context::GetInst().renderer.renderer_, newSurface);
+            Context::GetInst().renderer->renderer_, newSurface);
         if (!texture_) {
             LOGW("create texture %s from surface failed: %s", filename.c_str(),
                  SDL_GetError());

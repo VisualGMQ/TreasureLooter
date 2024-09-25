@@ -7,6 +7,7 @@ namespace tl {
 class Window {
 public:
     friend class Renderer;
+    friend class Context;
 
     Window(const std::string& title, int w, int h);
     Window(const Window&) = delete;

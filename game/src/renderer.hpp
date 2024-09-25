@@ -15,6 +15,7 @@ enum class Flip {
 class Renderer {
 public:
     friend class Texture;
+    friend class Context;
 
     explicit Renderer(Window& window);
     ~Renderer();
