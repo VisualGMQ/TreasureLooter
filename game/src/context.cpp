@@ -17,15 +17,25 @@ void Context::Destroy() {
     delete inst;
 }
 
-Context::Context() : window{"Treasure Looter", 1024, 720}, renderer{window} {
+Context::Context() {
+    window = std::make_unique<Window>("Treasure Looter", 1024, 720);
+    renderer = std::make_unique<Renderer>(*window);
     if (!window || !renderer) {
         quitSDL();
         exit(1);
     }
+
+    textureMgr = std::make_unique<TextureManager>();
+    goMgr = std::make_unique<GameObjectManager>();
+    animMgr = std::make_unique<AnimationManager>();
+    debugMgr = std::make_unique<DebugManager>();
 }
 
 void Context::initSDL() {
     SDL_Init(SDL_INIT_EVERYTHING);
+#ifdef SDL_HINT_IME_SHOW_UI
+    SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+#endif
     IMG_Init(IMG_INIT_PNG);
     Mix_Init(MIX_INIT_MP3);
     TTF_Init();
@@ -38,6 +48,21 @@ void Context::quitSDL() {
     SDL_Quit();
 }
 
+Context::~Context() {
+    ImGui_ImplSDLRenderer2_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    debugMgr.reset();
+    animMgr.reset();
+    goMgr.reset();
+    textureMgr.reset();
+    renderer.reset();
+    window.reset();
+
+    quitSDL();
+}
+
 void Context::Update() {
     while (!shouldExit) {
         while (SDL_PollEvent(&event)) {
@@ -46,10 +71,10 @@ void Context::Update() {
             }
         }
 
-        renderer.Clear(Color{100, 100, 100});
-        updateGO(nullptr, goMgr.GetRootGO());
-        debugMgr.Update();
-        renderer.Present();
+        renderer->Clear(Color{100, 100, 100});
+        updateGO(nullptr, goMgr->GetRootGO());
+        debugMgr->Update();
+        renderer->Present();
     }
 }
 
@@ -67,7 +92,7 @@ void Context::updateGO(GameObject* parent, GameObject* go) {
     drawSprite(*go);
 
     for (GameObjectID id : go->children) {
-        GameObject* child = goMgr.Find(id);
+        GameObject* child = goMgr->Find(id);
         if (child) {
             updateGO(go, child);
         }
@@ -102,7 +127,7 @@ void Context::drawSprite(GameObject& go) {
         flip |= Flip::Vertical;
     }
 
-    renderer.DrawTexture(*go.sprite.GetTexture(), go.sprite.GetRegion(),
+    renderer->DrawTexture(*go.sprite.GetTexture(), go.sprite.GetRegion(),
                          dstRect, globalTransform.rotation,
                          go.sprite.GetAnchor() * go.sprite.GetRegion().size *
                              globalTransform.scale,
@@ -162,5 +187,26 @@ void Context::syncAnim2GO(GameObject& go) {
         }
     }
 }
+
+void Context::initImGui() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |=
+        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |=
+        ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForSDLRenderer(window->window_, renderer->renderer_);
+    ImGui_ImplSDLRenderer2_Init(renderer->renderer_);
+}
+
+void Context::quitImGui() {}
 
 }  // namespace tl

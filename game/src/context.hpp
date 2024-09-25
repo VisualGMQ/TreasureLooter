@@ -21,12 +21,12 @@ public:
     static void Init();
     static void Destroy();
 
-    Window window;
-    Renderer renderer;
-    TextureManager textureMgr;
-    GameObjectManager goMgr;
-    AnimationManager animMgr;
-    DebugManager debugMgr;
+    std::unique_ptr<Window> window;
+    std::unique_ptr<Renderer> renderer;
+    std::unique_ptr<TextureManager> textureMgr;
+    std::unique_ptr<GameObjectManager> goMgr;
+    std::unique_ptr<AnimationManager> animMgr;
+    std::unique_ptr<DebugManager> debugMgr;
 
     void Update();
 
@@ -35,12 +35,16 @@ private:
     bool shouldExit = false;
 
     Context();
+    ~Context();
 
     void initSDL();
     void quitSDL();
     void drawSprite(GameObject&);
     void syncAnim2GO(GameObject&);
     void updateGO(GameObject* parent, GameObject* go);
+
+    void initImGui();
+    void quitImGui();
 
     static Context* inst;
 };

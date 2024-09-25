@@ -28,6 +28,7 @@ class GameObject {
 public:
     friend class Context;
 
+    std::string name = "<no-name>";
     Transform transform;
     Sprite sprite;
     Animator animator;

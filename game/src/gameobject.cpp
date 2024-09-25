@@ -9,6 +9,7 @@ GameObjectManager::GameObjectManager() {
     if (!result) {
         LOGE("root go create failed");
     }
+    result.go->name = "root";
     rootGO_ = result.id;
 }
 

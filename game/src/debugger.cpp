@@ -11,8 +11,8 @@ void DebugManager::Update() {
 
 void DebugManager::drawAllGO() {
     const float AxisLen = 50;
-    auto& goMap = Context::GetInst().goMgr.GetAllGO();
-    Renderer& renderer = Context::GetInst().renderer;
+    auto& goMap = Context::GetInst().goMgr->GetAllGO();
+    Renderer& renderer = *Context::GetInst().renderer;
     for (auto& [id, go] : goMap) {
         const Transform& transform = go.GetGlobalTransform(); 
         Vec2 xAxisEnd = Rotate(Vec2::X_AXIS * AxisLen * transform.scale.x, transform.rotation) + transform.position;
