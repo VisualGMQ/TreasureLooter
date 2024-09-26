@@ -18,6 +18,8 @@ void Context::Destroy() {
 }
 
 Context::Context() {
+    initSDL();
+
     window = std::make_unique<Window>("Treasure Looter", 1024, 720);
     renderer = std::make_unique<Renderer>(*window);
     if (!window || !renderer) {
