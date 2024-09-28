@@ -13,13 +13,31 @@ public:
 
     using underlying_type = uint32_t;
 
-    GameObjectID() : id_{InvalidGOID} {}
+    static GameObjectID Null;
 
-    operator bool() const { return id_ != InvalidGOID; }
+    GameObjectID(const GameObjectID&) = default;
+    GameObjectID() : id_{Invalid} {}
+
+    operator bool() const { return id_ != Invalid; }
+
+    GameObjectID& operator=(const GameObjectID&) = default;
+
+    bool operator==(const GameObjectID& o) const {
+        return id_ == o.id_;
+    }
+
+    bool operator!=(const GameObjectID& o) const {
+        return !(*this == o);
+    }
+
+    explicit operator underlying_type() const {
+        return id_;
+    }
 
 private:
     underlying_type id_;
-    static const underlying_type InvalidGOID = 0;
+
+    static const underlying_type Invalid = 0;
 
     GameObjectID(underlying_type id) : id_{id} {}
 };
@@ -27,32 +45,36 @@ private:
 class GameObject {
 public:
     friend class Context;
+    friend class GameObjectManager;
 
     std::string name = "<no-name>";
     Transform transform;
     Sprite sprite;
     Animator animator;
 
-    std::vector<GameObjectID> children;
-
     const Transform& GetGlobalTransform() const { return globalTransform_; }
+    GameObjectID GetID() const { return id_; }
+    GameObjectID GetParentID() const { return parent_; }
+
+    auto& GetChildren() const { return children_; }
+    void RemoveChild(GameObjectID);
+    void AppendChild(GameObjectID);
+    void SetChildToNext(GameObjectID target, GameObjectID go);
+    void SetChildToPrev(GameObjectID target, GameObjectID go);
+    void InsertChild(GameObjectID go, size_t idx);
 
 private:
     Transform globalTransform_;
+    GameObjectID id_;
+    GameObjectID parent_;
+    std::vector<GameObjectID> children_;
 };
 
 class GameObjectManager {
 public:
-    struct CreateResult {
-        GameObjectID id;
-        GameObject* go = nullptr;
-
-        operator bool() const { return id && go; }
-    };
-
     GameObjectManager();
 
-    CreateResult Create();
+    GameObject* Create();
     void Destroy(GameObjectID);
     GameObject* Find(GameObjectID);
     void Clear();

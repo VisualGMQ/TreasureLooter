@@ -39,6 +39,8 @@ private:
 
     void initSDL();
     void quitSDL();
+    void initImGui();
+    void quitImGui();
     void drawSprite(GameObject&);
     void syncAnim2GO(GameObject&);
     void updateGO(GameObject* parent, GameObject* go);

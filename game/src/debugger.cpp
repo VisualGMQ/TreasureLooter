@@ -3,7 +3,18 @@
 
 namespace tl {
 
+DebugManager::DebugManager()
+    : hierarchyWatcher{std::make_unique<GOHierarchyWatcher>()},
+      inspector{std::make_unique<Inspector>()} {}
+
 void DebugManager::Update() {
+    if (inspector) {
+        inspector->Update();
+    }
+    if (hierarchyWatcher) {
+        hierarchyWatcher->Update();
+    }
+
     if (enableDrawGO) {
         drawAllGO();
     }

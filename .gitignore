@@ -7,3 +7,4 @@ game/cmake-build/
 android/app/.cxx/
 compile_commands.json
 game/.cache
+game/imgui.ini

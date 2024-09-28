@@ -5,6 +5,7 @@ project(TreasureLootre
     VERSION 0.1.0)
 
 aux_source_directory(src GAME_SRC)
+aux_source_directory(src/3rdlib/imgui GAME_SRC)
 
 if (ANDROID)
     add_library(main SHARED)
@@ -39,3 +40,5 @@ endif()
 target_sources(main PRIVATE ${GAME_SRC})
 target_compile_features(main PRIVATE cxx_std_17)
 target_include_directories(main PRIVATE src)
+target_compile_definitions(main PRIVATE _CRT_SECURE_NO_WARNINGS)
+

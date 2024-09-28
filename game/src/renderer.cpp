@@ -60,4 +60,8 @@ void Renderer::DrawTexture(const Texture& texture, const Rect& srcRect,
                       static_cast<SDL_RendererFlip>(Flip{flip}));
 }
 
+void Renderer::SetScale(const Vec2& scale) {
+    SDL_RenderSetScale(renderer_, scale.w, scale.h);
+}
+
 }  // namespace tl
