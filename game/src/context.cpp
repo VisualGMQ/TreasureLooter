@@ -102,20 +102,31 @@ void Context::drawSprite(GameObject& go) {
         return;
     }
 
-    const Transform& goTrans = go.GetGlobalTransform();
+    auto& globalTransform = go.GetGlobalTransform();
 
-    Transform globalTransform =
-        CalcTransformFromParent(goTrans, go.sprite.transform);
-    Vec2 xAxis = Rotate(Vec2::X_AXIS, goTrans.rotation);
-    Vec2 yAxis = Rotate(Vec2::Y_AXIS, goTrans.rotation);
     Rect dstRect;
     Vec2 unsignedScale = globalTransform.scale;
     unsignedScale.x = std::abs(globalTransform.scale.x);
     unsignedScale.y = std::abs(globalTransform.scale.y);
     dstRect.size = unsignedScale * go.sprite.GetRegion().size;
-    dstRect.position = globalTransform.position -
-                       dstRect.size.w * go.sprite.GetAnchor().x * xAxis -
-                       dstRect.size.h * go.sprite.GetAnchor().y * yAxis;
+
+    Vec2 xAxis = Rotate(Vec2::X_AXIS, globalTransform.rotation);
+    Vec2 yAxis = Rotate(Vec2::Y_AXIS, globalTransform.rotation);
+    int xSign = Sign(globalTransform.scale.x);
+    int ySign = Sign(globalTransform.scale.y);
+    Vec2 xOffset, yOffset;
+    if (xSign > 0) {
+        xOffset = -dstRect.size.w * go.sprite.anchor.x * xAxis;
+    } else if (xSign < 0) {
+        xOffset = -dstRect.size.w * (1.0 - go.sprite.anchor.x) * xAxis;
+    }
+    if (ySign > 0) {
+        yOffset = -dstRect.size.h * go.sprite.anchor.y * yAxis;
+    } else if (xSign < 0) {
+        yOffset = -dstRect.size.h * (1.0 - go.sprite.anchor.y) * yAxis;
+    }
+    dstRect.position = globalTransform.position + xOffset + yOffset;
+
 
     Flags<Flip> flip = Flip::None;
     if (globalTransform.scale.x < 0) {
@@ -143,9 +154,6 @@ void Context::syncAnim2GO(GameObject& go) {
             case FloatBindPoint::GORotation:
                 go.transform.rotation = track.curData;
                 break;
-            case FloatBindPoint::SpriteRotation:
-                go.sprite.transform.rotation = track.curData;
-                break;
         }
     }
 
@@ -157,12 +165,6 @@ void Context::syncAnim2GO(GameObject& go) {
                 break;
             case Vec2BindPoint::GOScale:
                 go.transform.scale = track.curData;
-                break;
-            case Vec2BindPoint::SpritePosition:
-                go.sprite.transform.position = track.curData;
-                break;
-            case Vec2BindPoint::SpriteScale:
-                go.sprite.transform.scale = track.curData;
                 break;
         }
     }

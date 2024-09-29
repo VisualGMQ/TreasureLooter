@@ -31,13 +31,10 @@ struct Track {
 enum class Vec2BindPoint {
     GOPosition,
     GOScale,
-    SpritePosition,
-    SpriteScale,
 };
 
 enum class FloatBindPoint {
     GORotation,
-    SpriteRotation,
 };
 
 enum class TextureBindPoint {

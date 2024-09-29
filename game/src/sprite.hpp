@@ -11,7 +11,7 @@ public:
         return texture_ && region_.size.w > 0 && region_.size.h > 0;
     }
 
-    Transform transform;
+    Vec2 anchor = Vec2{0.5, 0.5};
     bool isEnable = true;
 
     void SetTexture(Texture& texture);
