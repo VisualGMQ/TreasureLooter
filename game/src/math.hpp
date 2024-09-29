@@ -107,4 +107,15 @@ T Clamp(T a, T b, T value) {
     return value < a ? a : (value > b ? b : value);
 }
 
+template <typename T>
+T Sign(T value) {
+    if (value > 0) {
+        return 1;
+    } else if (value == 0) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
 }  // namespace tl
