@@ -18,13 +18,10 @@ public:
     Texture* GetTexture() const { return texture_; }
     void SetRegion(const Rect& region);
     const Rect& GetRegion() const { return region_; }
-    void SetAnchor(const Vec2& anchor);
-    const Vec2& GetAnchor() const { return anchor_; }
 
 private:
     Texture* texture_ = nullptr;
     Rect region_;
-    Vec2 anchor_ = Vec2{0.5, 0.5};
 };
 
 }

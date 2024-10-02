@@ -26,6 +26,7 @@ Context::Context() {
         quitSDL();
         exit(1);
     }
+    initImGui();
 
     textureMgr = std::make_unique<TextureManager>();
     goMgr = std::make_unique<GameObjectManager>();
@@ -51,6 +52,8 @@ void Context::quitSDL() {
 }
 
 Context::~Context() {
+    quitImGui();
+
     debugMgr.reset();
     animMgr.reset();
     goMgr.reset();
@@ -64,14 +67,28 @@ Context::~Context() {
 void Context::Update() {
     while (!shouldExit) {
         while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT) {
                 shouldExit = true;
             }
         }
 
+        ImGui_ImplSDLRenderer2_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::ShowDemoWindow();
+
         renderer->Clear(Color{100, 100, 100});
+
         updateGO(nullptr, goMgr->GetRootGO());
         debugMgr->Update();
+
+        ImGui::Render();
+        ImGuiIO& io = ImGui::GetIO();
+        renderer->SetScale({io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer->renderer_);
+
         renderer->Present();
     }
 }
@@ -89,7 +106,7 @@ void Context::updateGO(GameObject* parent, GameObject* go) {
     }
     drawSprite(*go);
 
-    for (GameObjectID id : go->children) {
+    for (GameObjectID id : go->GetChildren()) {
         GameObject* child = goMgr->Find(id);
         if (child) {
             updateGO(go, child);
@@ -127,7 +144,6 @@ void Context::drawSprite(GameObject& go) {
     }
     dstRect.position = globalTransform.position + xOffset + yOffset;
 
-
     Flags<Flip> flip = Flip::None;
     if (globalTransform.scale.x < 0) {
         flip |= Flip::Horizontal;
@@ -137,10 +153,9 @@ void Context::drawSprite(GameObject& go) {
     }
 
     renderer->DrawTexture(*go.sprite.GetTexture(), go.sprite.GetRegion(),
-                         dstRect, globalTransform.rotation,
-                         go.sprite.GetAnchor() * go.sprite.GetRegion().size *
-                             globalTransform.scale,
-                         flip);
+                          dstRect, globalTransform.rotation,
+                          Vec2::ZERO,
+                          flip);
 }
 
 void Context::syncAnim2GO(GameObject& go) {
@@ -186,6 +201,27 @@ void Context::syncAnim2GO(GameObject& go) {
                 break;
         }
     }
+}
+
+void Context::initImGui() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplSDL2_InitForSDLRenderer(window->window_, renderer->renderer_);
+    ImGui_ImplSDLRenderer2_Init(renderer->renderer_);
+
+}
+
+void Context::quitImGui() {
+    ImGui_ImplSDLRenderer2_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 }
 
 }  // namespace tl

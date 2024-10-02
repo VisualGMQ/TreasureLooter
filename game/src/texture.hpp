@@ -7,6 +7,7 @@ namespace tl {
 class Texture {
 public:
     friend class Renderer;
+    friend class Inspector;
 
     Texture(const std::string& filename);
     Texture(const Texture&) = delete;

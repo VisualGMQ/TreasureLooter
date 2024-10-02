@@ -1,25 +1,84 @@
 #include "gameobject.hpp"
 #include "log.hpp"
 #include "math.hpp"
+#include "context.hpp"
 
 namespace tl {
 
-GameObjectManager::GameObjectManager() {
-    auto result = Create();
-    if (!result) {
-        LOGE("root go create failed");
+GameObjectID GameObjectID::Null;
+
+void GameObject::RemoveChild(GameObjectID go) {
+    auto it = std::remove(children_.begin(), children_.end(), go);
+    if (it == children_.end()) {
+        return;
     }
-    result.go->name = "root";
-    rootGO_ = result.id;
+    GameObject* removedGO = Context::GetInst().goMgr->Find(go);
+    TL_RETURN_IF(removedGO);
+
+    removedGO->parent_ = GameObjectID::Null;
+    children_.erase(it, children_.end());
 }
 
-GameObjectManager::CreateResult GameObjectManager::Create() {
+void GameObject::AppendChild(GameObjectID go) {
+    GameObject* appendGO = Context::GetInst().goMgr->Find(go);
+    if (!appendGO) {
+        return;
+    }
+    children_.push_back(go);
+    appendGO->parent_ = id_;
+}
+
+void GameObject::SetChildToNext(GameObjectID target, GameObjectID go) {
+    auto it = std::find(children_.begin(), children_.end(), target);
+    if (it == children_.end()) {
+        return;
+    }
+
+    GameObject* insertGO = Context::GetInst().goMgr->Find(go);
+    TL_RETURN_IF(insertGO);
+
+    insertGO->parent_ = id_;
+
+    children_.insert(it + 1, go);
+}
+
+void GameObject::SetChildToPrev(GameObjectID target, GameObjectID go) {
+    auto it = std::find(children_.begin(), children_.end(), target);
+    if (it == children_.end()) {
+        return;
+    }
+
+    GameObject* insertGO = Context::GetInst().goMgr->Find(go);
+    TL_RETURN_IF(insertGO);
+    insertGO->parent_ = id_;
+
+    children_.insert(it, go);
+}
+
+void GameObject::InsertChild(GameObjectID go, size_t idx) {
+    GameObject* insertGO = Context::GetInst().goMgr->Find(go);
+    TL_RETURN_IF(insertGO);
+    insertGO->parent_ = id_;
+
+    children_.insert(children_.begin() + idx, go);
+}
+
+GameObjectManager::GameObjectManager() {
+    auto go = Create();
+    if (!go) {
+        LOGE("root go create failed");
+    }
+    go->name = "root";
+    rootGO_ = go->GetID();
+}
+
+GameObject* GameObjectManager::Create() {
     auto result = goMap_.emplace(++curID_, GameObject{});
     if (result.second) {
-        return CreateResult{GameObjectID{result.first->first},
-                            &result.first->second};
+        result.first->second.id_ = result.first->first;
+        return &result.first->second;
     }
-    return CreateResult{};
+    return nullptr;
 }
 
 void GameObjectManager::Destroy(GameObjectID o) {

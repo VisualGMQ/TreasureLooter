@@ -27,6 +27,7 @@ public:
     void FillRect(const Rect&, const Color&);
     void DrawTexture(const Texture&, const Rect& srcRect, const Rect& dstRect,
                      float degree, const Vec2& rotCenter, Flags<Flip> flip = Flip::None);
+    void SetScale(const Vec2& scale);
 
     operator bool() const;
 
