@@ -5,9 +5,11 @@
 #include "gameobject.hpp"
 #include "pch.hpp"
 #include "renderer.hpp"
+#include "scene.hpp"
 #include "sprite.hpp"
 #include "texture.hpp"
 #include "window.hpp"
+#include "asset_table.hpp"
 
 namespace tl {
 
@@ -27,23 +29,24 @@ public:
     std::unique_ptr<GameObjectManager> goMgr;
     std::unique_ptr<AnimationManager> animMgr;
     std::unique_ptr<DebugManager> debugMgr;
+    std::unique_ptr<AssetTable> assetTbl;
+    std::unique_ptr<SceneManager> sceneMgr;
 
     void Update();
 
-private:
-    SDL_Event event;
-    bool shouldExit = false;
+    void Exit() { shouldExit_ = true; }
 
-    Context();
+private:
+    SDL_Event event_;
+    bool shouldExit_ = false;
+
     ~Context();
 
     void initSDL();
     void quitSDL();
     void initImGui();
     void quitImGui();
-    void drawSprite(GameObject&);
-    void syncAnim2GO(GameObject&);
-    void updateGO(GameObject* parent, GameObject* go);
+    void postInit();
 
     static Context* inst;
 };

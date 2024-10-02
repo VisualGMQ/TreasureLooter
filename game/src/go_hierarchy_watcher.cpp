@@ -1,5 +1,6 @@
 #include "go_hierarchy_watcher.hpp"
 #include "context.hpp"
+#include "macro.hpp"
 
 namespace tl {
 
@@ -8,8 +9,27 @@ void GOHierarchyWatcher::Update() {
     if (ImGui::Begin("hierarchy")) {
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);
 
-        GameObject* root = ctx.goMgr->GetRootGO();
+        std::string curSceneName = "<no scene>";
+        auto& sceneMgr = Context::GetInst().sceneMgr;
+        for (auto& [name, scene] : sceneMgr->GetAllScenes()) {
+            if (sceneMgr->GetCurScene() == scene.get()) {
+                curSceneName = name;
+                break;
+            }
+        }
+
+        if (ImGui::BeginCombo("scene", curSceneName.c_str())) {
+            for (auto& [name, scene] : sceneMgr->GetAllScenes()) {
+                if (ImGui::Selectable(name.c_str(), curSceneName == name)) {
+                    sceneMgr->ChangeScene(name);
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        GameObject* root = ctx.sceneMgr->GetCurScene()->GetRootGO();
         if (!root) {
+            ImGui::End();
             return;
         }
         int id = 0;
@@ -39,7 +59,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    auto& goMgr = Context::GetInst().goMgr;
+    auto scene = Context::GetInst().sceneMgr->GetCurScene();
     bool isNodeOpen = false;
 
     std::string nameWithID = go.name + "###" + std::to_string(++id);
@@ -53,7 +73,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
             selectedGO_ = goID;
         }
 
-        if (goID != goMgr->GetRootGOID()) {
+        if (goID != scene->GetRootGOID()) {
             isDragging = ImGui::BeginDragDropSource();
         }
         if (isDragging) {
@@ -64,7 +84,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
         } else {
             bool toBeChild = !ImGui::IsKeyDown(ImGuiKey_S);
             if (!isParentDragging &&
-                (toBeChild || goID != goMgr->GetRootGOID()) &&
+                (toBeChild || goID != scene->GetRootGOID()) &&
                 ImGui::BeginDragDropTarget()) {
                 const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("go");
                 if (payload && payload->Data) {
@@ -100,6 +120,7 @@ void GOHierarchyWatcher::applyGOMove() {
     TL_RETURN_IF(goMoveInfo_);
 
     auto& goMgr = Context::GetInst().goMgr;
+    auto scene = Context::GetInst().sceneMgr->GetCurScene();
     GameObject* source = goMgr->Find(goMoveInfo_.source);
     TL_RETURN_IF(source);
 
@@ -110,7 +131,7 @@ void GOHierarchyWatcher::applyGOMove() {
     TL_RETURN_IF(target);
 
     GameObject* targetParent = goMgr->Find(target->GetParentID());
-    TL_RETURN_IF(target->GetParentID() != goMgr->GetRootGOID() || targetParent);
+    TL_RETURN_IF(target->GetParentID() != scene->GetRootGOID() || targetParent);
 
     parent->RemoveChild(source->GetID());
 
