@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.hpp"
+#include "renderer.hpp"
 #include "texture.hpp"
 #include "transform.hpp"
 
@@ -12,6 +13,7 @@ public:
     }
 
     Vec2 anchor = Vec2{0.5, 0.5};
+    Flags<Flip> flip = Flip::None;
     bool isEnable = true;
 
     void SetTexture(Texture& texture);

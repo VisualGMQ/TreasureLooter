@@ -10,6 +10,7 @@ public:
 
 private:
     void parseTexture(tinyxml2::XMLElement&);
+    void parseTilemap(tinyxml2::XMLElement&);
 };
 
 }

@@ -4,9 +4,14 @@
         <rotation>0</rotation>
         <scale>1 1</scale>
     </transform>
+    <!--
     <sprite>
         <anchor>0.5 0.5</anchor>
         <is_enable>true</is_enable>
         <texture>SpriteSheet.png</texture>
     </sprite>
+    -->
+    <tilemap>
+        <name>test</name>
+    </tilemap>
 </gameobject>

@@ -14,10 +14,10 @@ AssetTable::AssetTable() {
         return;
     }
 
-    // parse textures
     auto assetsElem = doc.FirstChildElement("assets");
     TL_RETURN_IF_LOGE(assetsElem, "assets.xml don't has `assets` element");
 
+    // parse textures
     tinyxml2::XMLElement* textureList = assetsElem->FirstChildElement("texture");
     TL_RETURN_IF(textureList);
 
@@ -28,16 +28,34 @@ AssetTable::AssetTable() {
         TL_CONTINUE_IF(elem);
         parseTexture(*elem);
     }
+
+    // parse tile map
+    tinyxml2::XMLElement* tilemapList = assetsElem->FirstChildElement("tilemap");
+    TL_RETURN_IF(tilemapList);
+
+    node = tilemapList->FirstChild();
+    while (node) {
+        auto elem = node->ToElement();
+        node = node->NextSibling();
+        TL_CONTINUE_IF(elem);
+        parseTilemap(*elem);
+    }
 }
-
-
 
 void AssetTable::parseTexture(tinyxml2::XMLElement& node) {
     auto attr = node.FindAttribute("path");
-    std::string path = attr->Value();
-    path = "assets/image/" + path;
+    std::string name = attr->Value();
+    auto path = "assets/image/" + name;
 
-    Context::GetInst().textureMgr->Load(path);
+    Context::GetInst().textureMgr->Load(path, name);
+}
+
+void AssetTable::parseTilemap(tinyxml2::XMLElement& node) {
+    auto attr = node.FindAttribute("path");
+    std::string name = attr->Value();
+    auto path = "assets/tilemap/" + name + ".json";
+
+    Context::GetInst().tilemapMgr->Load(path, name);
 }
 
 

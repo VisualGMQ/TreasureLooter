@@ -27,9 +27,9 @@ private:
 
 class TextureManager {
 public:
-    Texture* Load(const std::string& filename);
-    Texture* Get(const std::string& filename) const;
-    void Destroy(const std::string& filename);
+    Texture* Load(const std::string& filename, const std::string& name);
+    Texture* Get(const std::string& name) const;
+    void Destroy(const std::string& name);
     void Clear();
 
 private:

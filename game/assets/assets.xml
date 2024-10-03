@@ -1,5 +1,11 @@
 <assets>
     <texture>
         <element path="SpriteSheet.png"/>
+        <element path="TilesetFloor.png"/>
+        <element path="TilesetNature.png"/>
     </texture>
+    <tilemap>
+        <element path="test"/>
+        <element path="test2"/>
+    </tilemap>
 </assets>

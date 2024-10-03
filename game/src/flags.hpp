@@ -21,6 +21,12 @@ public:
 
     Flags operator&(T o) const { return Flags{value_ & static_cast<underlying_type>(o)}; }
 
+    Flags& operator=(const Flags&) = default;
+    Flags& operator=(T value) {
+        value_ = static_cast<underlying_type>(value);
+        return *this;
+    }
+
     Flags& operator|=(T o) {
         value_ |= static_cast<underlying_type>(o);
         return *this;
@@ -32,6 +38,7 @@ public:
     }
 
     operator T() const { return static_cast<T>(value_); }
+    operator bool() const { return value_; }
 
 private:
     underlying_type value_{};
