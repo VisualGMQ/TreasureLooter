@@ -2,6 +2,7 @@
 #include "log.hpp"
 #include "math.hpp"
 #include "context.hpp"
+#include "macro.hpp"
 
 namespace tl {
 
@@ -63,15 +64,6 @@ void GameObject::InsertChild(GameObjectID go, size_t idx) {
     children_.insert(children_.begin() + idx, go);
 }
 
-GameObjectManager::GameObjectManager() {
-    auto go = Create();
-    if (!go) {
-        LOGE("root go create failed");
-    }
-    go->name = "root";
-    rootGO_ = go->GetID();
-}
-
 GameObject* GameObjectManager::Create() {
     auto result = goMap_.emplace(++curID_, GameObject{});
     if (result.second) {
@@ -88,6 +80,15 @@ void GameObjectManager::Destroy(GameObjectID o) {
 GameObject* GameObjectManager::Find(GameObjectID o) {
     if (auto it = goMap_.find(o.id_); it != goMap_.end()) {
         return &it->second;
+    }
+    return nullptr;
+}
+
+GameObject* GameObjectManager::Find(std::string_view name) {
+    for (auto& [id, go] : goMap_) {
+        if (go.name == name) {
+            return &go;
+        }
     }
     return nullptr;
 }

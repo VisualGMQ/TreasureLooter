@@ -44,7 +44,7 @@ private:
 
 class GameObject {
 public:
-    friend class Context;
+    friend class Scene;
     friend class GameObjectManager;
 
     std::string name = "<no-name>";
@@ -72,23 +72,17 @@ private:
 
 class GameObjectManager {
 public:
-    GameObjectManager();
-
     GameObject* Create();
     void Destroy(GameObjectID);
     GameObject* Find(GameObjectID);
+    GameObject* Find(std::string_view);
     void Clear();
-
-    GameObjectID GetRootGOID() const { return rootGO_; }
-
-    GameObject* GetRootGO() { return Find(rootGO_); }
 
     auto& GetAllGO() const { return goMap_; }
 
 private:
     std::unordered_map<GameObjectID::underlying_type, GameObject> goMap_;
     GameObjectID::underlying_type curID_ = 0;
-    GameObjectID rootGO_;
 };
 
 }  // namespace tl
