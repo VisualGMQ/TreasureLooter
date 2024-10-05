@@ -56,6 +56,7 @@
  * THE SOFTWARE.
  */
 
+#include <algorithm>
 #pragma once
 
 #include <string>
@@ -1027,36 +1028,6 @@ namespace json11 {
 #ifndef TILESON_TILESON_PARSER_HPP
 #define TILESON_TILESON_PARSER_HPP
 
-//RBP: FS-namespace is defined in tileson_parser now!
-#if _MSC_VER && !__INTEL_COMPILER
-	#include <filesystem>
-	namespace fs = std::filesystem;
-#elif __MINGW64__
-	#if __MINGW64_VERSION_MAJOR > 6
-		#include <filesystem>
-		namespace fs = std::filesystem;
-	#else
-		#include <experimental/filesystem>
-		namespace fs = std::experimental::filesystem;
-	#endif
-#elif __clang__
-	#if __clang_major__ < 8
-		#include <experimental/filesystem>
-		namespace fs = std::experimental::filesystem;
-	#else
-		#include <filesystem>
-		namespace fs = std::filesystem;
-	#endif
-#else //Linux
-	#if __GNUC__ < 8 //GCC major version less than 8
-		#include <experimental/filesystem>
-		namespace fs = std::experimental::filesystem;
-	#else
-		#include <filesystem>
-		namespace fs = std::filesystem;
-	#endif
-#endif
-
 #include <fstream>
 #include <sstream>
 #include <memory>
@@ -1075,6 +1046,18 @@ namespace json11 {
 #include <string_view>
 namespace tson
 {
+
+	inline std::string ParentPath(const std::string& filename) {
+		auto slashPos = filename.find_last_of('/');
+		auto backslashPos = filename.find_last_of('\\');
+		auto lastPos = std::min(slashPos, backslashPos);
+		if (lastPos == 0) {
+			return filename;
+		} else {
+			return filename.substr(0, lastPos);
+		}
+	}
+
 	class Tools
 	{
 
@@ -1219,7 +1202,7 @@ namespace tson
 			 * @param path
 			 * @return
 			 */
-			virtual TOut decompressFile(const fs::path &path) = 0;
+			virtual TOut decompressFile(const std::string &path) = 0;
 
 			/*!
 			 * Used for whole file decompression. Not related to Tiled
@@ -1250,7 +1233,7 @@ namespace tson
 
 			inline std::string decompress(const std::string_view &s) override;
 
-			inline std::string decompressFile(const fs::path &path) override;
+			inline std::string decompressFile(const std::string &path) override;
 			inline std::string decompress(const void *data, size_t size) override;
 
 		private:
@@ -1324,7 +1307,7 @@ namespace tson
 	 * @param path
 	 * @return
 	 */
-	std::string Base64Decompressor::decompressFile(const fs::path &)
+	std::string Base64Decompressor::decompressFile(const std::string &)
 	{
 		return std::string();
 	}
@@ -1378,7 +1361,7 @@ namespace tson
 				return out;
 			}
 
-			inline std::vector<uint8_t> decompressFile(const fs::path &path) override
+			inline std::vector<uint8_t> decompressFile(const std::string &path) override
 			{
 				std::vector<uint8_t> in;
 				std::vector<uint8_t> out;
@@ -1852,7 +1835,7 @@ namespace tson
 			 * @return
 			 */
 			[[nodiscard]] virtual size_t size() const = 0;
-			[[nodiscard]] virtual bool parse(const fs::path &path) = 0;
+			[[nodiscard]] virtual bool parse(const std::string &path) = 0;
 			[[nodiscard]] virtual bool parse(const void *data, size_t size) = 0;
 
 			template <typename T>
@@ -1870,8 +1853,8 @@ namespace tson
 			 * Only assigned if json is parsed by file.
 			 * @return
 			 */
-			[[nodiscard]] virtual fs::path directory() const = 0;
-			virtual void directory(const fs::path &directory) = 0;
+			[[nodiscard]] virtual std::string directory() const = 0;
+			virtual void directory(const std::string &directory) = 0;
 
 			/*!
 			 * Create a new empty instance using the same engine
@@ -2039,32 +2022,28 @@ namespace tson
 				return m_json->size();
 			}
 
-			inline bool parse(const fs::path &path) override
+			inline bool parse(const std::string &path) override
 			{
 				clearCache();
 				m_data = nullptr;
 				m_json = nullptr;
-				if (fs::exists(path) && fs::is_regular_file(path))
+				m_path = ParentPath(path);
+				m_data = std::make_unique<nlohmann::json>();
+				std::ifstream i(path.generic_string());
+				try
 				{
-					m_path = path.parent_path();
-					m_data = std::make_unique<nlohmann::json>();
-					std::ifstream i(path.generic_string());
-					try
-					{
-						i >> *m_data;
-						m_json = m_data.get();
-					}
-					catch (const nlohmann::json::parse_error &error)
-					{
-						std::string message = "Parse error: ";
-						message += std::string(error.what());
-						message += std::string("\n");
-						std::cerr << message;
-						return false;
-					}
-					return true;
+					i >> *m_data;
+					m_json = m_data.get();
 				}
-				return false;
+				catch (const nlohmann::json::parse_error &error)
+				{
+					std::string message = "Parse error: ";
+					message += std::string(error.what());
+					message += std::string("\n");
+					std::cerr << message;
+					return false;
+				}
+				return true;
 			}
 
 			inline bool parse(const void *data, size_t size) override
@@ -2114,12 +2093,12 @@ namespace tson
 				return m_json->is_null();
 			}
 
-			fs::path directory() const override
+			std::string directory() const override
 			{
 				return m_path;
 			}
 
-			void directory(const fs::path &directory) override
+			void directory(const std::string &directory) override
 			{
 				m_path = directory;
 			}
@@ -2220,7 +2199,7 @@ namespace tson
 
 			nlohmann::json *m_json = nullptr;
 			std::unique_ptr<nlohmann::json> m_data = nullptr; //Only used if this is the owner json!
-			fs::path m_path;
+			std::string m_path;
 
 			//Cache!
 			std::map<std::string, std::unique_ptr<IJson>> m_arrayCache;
@@ -2348,38 +2327,34 @@ namespace tson
 				return 0;
 			}
 
-			inline bool parse(const fs::path &path) override
+			inline bool parse(const std::string &path) override
 			{
 				clearCache();
 				m_data = nullptr;
 				m_json = nullptr;
-				if (fs::exists(path) && fs::is_regular_file(path))
+				m_path = ParentPath(path);
+				m_data = std::make_unique<picojson::value>();
+				std::ifstream i(path.generic_string());
+				try
 				{
-					m_path = path.parent_path();
-					m_data = std::make_unique<picojson::value>();
-					std::ifstream i(path.generic_string());
-					try
+					std::string error = picojson::parse(*m_data, i);
+					if(!error.empty())
 					{
-						std::string error = picojson::parse(*m_data, i);
-						if(!error.empty())
-						{
-							std::cerr << "PicoJson parse error: " << error << "\n";
-							return false;
-						}
-						//i >> *m_data;
-						m_json = m_data.get();
-					}
-					catch (const std::exception &error)
-					{
-						std::string message = "Parse error: ";
-						message += std::string(error.what());
-						message += std::string("\n");
-						std::cerr << message;
+						std::cerr << "PicoJson parse error: " << error << "\n";
 						return false;
 					}
-					return true;
+					//i >> *m_data;
+					m_json = m_data.get();
 				}
-				return false;
+				catch (const std::exception &error)
+				{
+					std::string message = "Parse error: ";
+					message += std::string(error.what());
+					message += std::string("\n");
+					std::cerr << message;
+					return false;
+				}
+				return true;
 			}
 
 			inline bool parse(const void *data, size_t size) override
@@ -2441,12 +2416,12 @@ namespace tson
 				return m_json->is<picojson::null>();
 			}
 
-			fs::path directory() const override
+			std::string directory() const override
 			{
 				return m_path;
 			}
 
-			void directory(const fs::path &directory) override
+			void directory(const std::string &directory) override
 			{
 				m_path = directory;
 			}
@@ -2554,7 +2529,7 @@ namespace tson
 
 			picojson::value *m_json = nullptr;
 			std::unique_ptr<picojson::value> m_data = nullptr; //Only used if this is the owner json!
-			fs::path m_path;
+			std::string m_path;
 
 			//Cache!
 			std::map<std::string, std::unique_ptr<IJson>> m_arrayCache;
@@ -2673,48 +2648,44 @@ namespace tson
 				return 0;
 			}
 
-			inline bool parse(const fs::path &path) override
+			inline bool parse(const std::string &path) override
 			{
 				clearCache();
 				m_data = nullptr;
 				m_json = nullptr;
-				if (fs::exists(path) && fs::is_regular_file(path))
+				std::ifstream file(path);
+				std::string str;
+				m_path = ParentPath(path);
+
+				file.seekg(0, std::ios::end);
+				str.reserve(static_cast<size_t>(file.tellg()));
+				file.seekg(0, std::ios::beg);
+
+				str.assign((std::istreambuf_iterator<char>(file)),
+							std::istreambuf_iterator<char>());
+
+				m_data = std::make_unique<json11::Json>();
+
+				try
 				{
-					std::ifstream file(path.generic_string());
-					std::string str;
-					m_path = path.parent_path();
-
-					file.seekg(0, std::ios::end);
-					str.reserve(static_cast<size_t>(file.tellg()));
-					file.seekg(0, std::ios::beg);
-
-					str.assign((std::istreambuf_iterator<char>(file)),
-							   std::istreambuf_iterator<char>());
-
-					m_data = std::make_unique<json11::Json>();
-
-					try
+					std::string strError;
+					*m_data = json11::Json::parse(str, strError);
+					if(!strError.empty())
 					{
-						std::string strError;
-						*m_data = json11::Json::parse(str, strError);
-						if(!strError.empty())
-						{
-							std::cerr << strError << "\n";
-							return false;
-						}
-						m_json = m_data.get();
-					}
-					catch (const std::exception &error)
-					{
-						std::string message = "Json11 parse error: ";
-						message += std::string(error.what());
-						message += std::string("\n");
-						std::cerr << message;
+						std::cerr << strError << "\n";
 						return false;
 					}
-					return true;
+					m_json = m_data.get();
 				}
-				return false;
+				catch (const std::exception &error)
+				{
+					std::string message = "Json11 parse error: ";
+					message += std::string(error.what());
+					message += std::string("\n");
+					std::cerr << message;
+					return false;
+				}
+				return true;
 			}
 
 			inline bool parse(const void *data, size_t size) override
@@ -2787,12 +2758,12 @@ namespace tson
 				return m_json->is_null();
 			}
 
-			fs::path directory() const override
+			std::string directory() const override
 			{
 				return m_path;
 			}
 
-			void directory(const fs::path &directory) override
+			void directory(const std::string &directory) override
 			{
 				m_path = directory;
 			}
@@ -2895,7 +2866,7 @@ namespace tson
 			std::unique_ptr<json11::Json> m_data = nullptr; //Only used if this is the owner json!
 
 			const json11::Json *m_json = nullptr;
-			fs::path m_path;
+			std::string m_path;
 
 			//Cache!
 			std::map<std::string, std::unique_ptr<IJson>> m_arrayCache;
@@ -5762,7 +5733,7 @@ namespace tson
 			inline bool parseId(IJson &json);
 
 			[[nodiscard]] inline uint32_t getId() const;
-			[[nodiscard]] inline const fs::path &getImage() const;
+			[[nodiscard]] inline const std::string &getImage() const;
 			[[nodiscard]] inline const Vector2i &getImageSize() const;
 			[[nodiscard]] inline const std::string &getType() const;
 			[[nodiscard]] inline const std::string &getClassType() const;
@@ -5800,7 +5771,7 @@ namespace tson
 			tson::Animation                  m_animation{};      /*! 'animation': Array of Frames */
 			uint32_t                         m_id {};            /*! 'id': Local ID of the tile */
 
-			fs::path                         m_image;            /*! 'image': Image representing this tile (optional)*/
+			std::string                         m_image;            /*! 'image': Image representing this tile (optional)*/
 
 			tson::Vector2i                   m_imageSize;        /*! x = 'imagewidth' and y = 'imageheight': in pixels */
 			tson::Layer                      m_objectgroup; 	 	/*! 'objectgroup': Layer with type objectgroup (optional) */
@@ -5885,7 +5856,7 @@ uint32_t tson::Tile::getId() const
  * @return
  */
 
-const fs::path &tson::Tile::getImage() const { return m_image; }
+const std::string &tson::Tile::getImage() const { return m_image; }
 
 /*!
  * x = 'imagewidth' and y = 'imageheight': in pixels
@@ -6269,8 +6240,8 @@ namespace tson
 			[[nodiscard]] inline int getColumns() const;
 			[[nodiscard]] inline int getFirstgid() const;
 
-			[[nodiscard]] inline const fs::path &getImagePath() const;
-			[[nodiscard]] inline const fs::path &getImage() const;
+			[[nodiscard]] inline const std::string &getImagePath() const;
+			[[nodiscard]] inline const std::string &getImage() const;
 			[[nodiscard]] inline const Vector2i &getImageSize() const;
 			[[nodiscard]] inline int getMargin() const;
 			[[nodiscard]] inline const std::string &getName() const;
@@ -6316,7 +6287,7 @@ namespace tson
 			int                           m_columns {};       /*! 'columns': The number of tile columns in the tileset */
 			int                           m_firstgid {};      /*! 'firstgid': GID corresponding to the first tile in the set */
 
-			fs::path                      m_image;            /*! 'image': Image used for tiles in this set */
+			std::string                      m_image;            /*! 'image': Image used for tiles in this set */
 
 			tson::Vector2i                m_imageSize;        /*! x = 'imagewidth' and y = 'imageheight': in pixels */
 			int                           m_margin {};        /*! 'margin': Buffer between image edge and first tile (pixels)*/
@@ -6341,8 +6312,8 @@ namespace tson
 			tson::Map *                   m_map;              /*! The map who owns this tileset */
 
 			//v1.3.0-stuff
-			fs::path                      m_source {};           /*! 'source': exists only when tileset is contained in an external file*/
-			fs::path                      m_path {};             /*! Has the full path to the tileset if 'source' has an existing value */
+			std::string                      m_source {};           /*! 'source': exists only when tileset is contained in an external file*/
+			std::string                      m_path {};             /*! Has the full path to the tileset if 'source' has an existing value */
 			Transformations               m_transformations {};  /*! New in Tiled v1.5 - This element is used to describe which transformations can be applied to
 																	 the tiles (e.g. to extend a Wang set by transforming existing tiles).*/
 
@@ -6388,8 +6359,8 @@ bool tson::Tileset::parse(IJson &json, tson::Map *map)
 			return allFound;
 
 		std::string sourceStr = json["source"].get<std::string>();
-		m_source = fs::path(sourceStr);
-		m_path = json.directory() / m_source;
+		m_source = sourceStr;
+		m_path = json.directory() + '/' + m_source;
 
 		if(!json.parse(m_path))
 			return false;
@@ -6397,7 +6368,7 @@ bool tson::Tileset::parse(IJson &json, tson::Map *map)
 
 	if(json.count("columns") > 0) m_columns = json["columns"].get<int>(); else allFound = false;
 
-	if(json.count("image") > 0) m_image = fs::path(json["image"].get<std::string>()); else allFound = false;
+	if(json.count("image") > 0) m_image = json["image"].get<std::string>(); else allFound = false;
 
 	if(json.count("margin") > 0) m_margin = json["margin"].get<int>(); else allFound = false;
 	if(json.count("name") > 0) m_name = json["name"].get<std::string>(); else allFound = false;
@@ -6491,7 +6462,7 @@ int tson::Tileset::getFirstgid() const
  * @return
  */
 
-const fs::path &tson::Tileset::getImagePath() const { return m_image; }
+const std::string &tson::Tileset::getImagePath() const { return m_image; }
 
 /*!
  * x = 'imagewidth' and y = 'imageheight': in pixels
@@ -6570,7 +6541,7 @@ const std::string &tson::Tileset::getType() const
  * @return
  */
 
-const fs::path &tson::Tileset::getImage() const { return m_image; }
+const std::string &tson::Tileset::getImage() const { return m_image; }
 
 /*!
  * 'tiles': Array of Tiles (optional)
@@ -6933,7 +6904,7 @@ bool tson::Map::parse(IJson &json, tson::DecompressorContainer *decompressors, t
 				return nullptr;
 
 			std::unique_ptr<IJson> linkedFileJson = json.create();
-			bool parseOk = linkedFileJson->parse(json.directory() / relativePath);
+			bool parseOk = linkedFileJson->parse(json.directory() + '/' + relativePath);
 			if(parseOk)
 				return linkedFileJson;
 			else
@@ -7834,33 +7805,33 @@ namespace tson
 	class WorldMapData
 	{
 		public:
-			inline WorldMapData(const fs::path &folder_, IJson &json);
-			inline void parse(const fs::path &folder_, IJson &json);
-			//inline WorldMapData(fs::path folder_, std::string fileName_) : folder {std::move(folder_)}, fileName {fileName_}
+			inline WorldMapData(const std::string &folder_, IJson &json);
+			inline void parse(const std::string &folder_, IJson &json);
+			//inline WorldMapData(std::string folder_, std::string fileName_) : folder {std::move(folder_)}, fileName {fileName_}
 			//{
 			//    path = folder / fileName;
 			//}
 
-			fs::path folder;
-			fs::path path;
+			std::string folder;
+			std::string path;
 			std::string fileName;
 			tson::Vector2i size;
 			tson::Vector2i position;
 	};
 
-	WorldMapData::WorldMapData(const fs::path &folder_, IJson &json)
+	WorldMapData::WorldMapData(const std::string &folder_, IJson &json)
 	{
 		parse(folder_, json);
 	}
 
-	void WorldMapData::parse(const fs::path &folder_, IJson &json)
+	void WorldMapData::parse(const std::string &folder_, IJson &json)
 	{
 		folder = folder_;
 		if(json.count("fileName") > 0) fileName = json["fileName"].get<std::string>();
 		if(json.count("height") > 0) size = {json["width"].get<int>(), json["height"].get<int>()};
 		if(json.count("x") > 0) position = {json["x"].get<int>(), json["y"].get<int>()};
 
-		path = (!fileName.empty()) ? folder / fileName : folder;
+		path = (!fileName.empty()) ? folder + '/' + fileName : folder;
 	}
 }
 
@@ -7879,21 +7850,21 @@ namespace tson
 			{
 			}
 
-			inline explicit World(const fs::path &path, std::unique_ptr<tson::IJson> jsonParser = std::make_unique<tson::Json11>());
+			inline explicit World(const std::string &path, std::unique_ptr<tson::IJson> jsonParser = std::make_unique<tson::Json11>());
 			#else
 			inline explicit World(std::unique_ptr<tson::IJson> jsonParser) : m_json {std::move(jsonParser)}
 			{
 			}
 
-			inline explicit World(const fs::path &path, std::unique_ptr<tson::IJson> jsonParser);
+			inline explicit World(const std::string &path, std::unique_ptr<tson::IJson> jsonParser);
 			#endif
-			inline bool parse(const fs::path &path);
+			inline bool parse(const std::string &path);
 			inline std::size_t loadMaps(tson::Tileson *parser); //tileson_forward.hpp
 			inline bool contains(std::string_view filename);
 			inline const WorldMapData *get(std::string_view filename) const;
 
-			[[nodiscard]] inline const fs::path &getPath() const;
-			[[nodiscard]] inline const fs::path &getFolder() const;
+			[[nodiscard]] inline const std::string &getPath() const;
+			[[nodiscard]] inline const std::string &getFolder() const;
 			[[nodiscard]] inline const std::vector<WorldMapData> &getMapData() const;
 			[[nodiscard]] inline bool onlyShowAdjacentMaps() const;
 			[[nodiscard]] inline const std::string &getType() const;
@@ -7903,23 +7874,23 @@ namespace tson
 			inline void parseJson(IJson &json);
 
 			std::unique_ptr<IJson> m_json = nullptr;
-			fs::path m_path;
-			fs::path m_folder;
+			std::string m_path;
+			std::string m_folder;
 			std::vector<WorldMapData> m_mapData;
 			std::vector<std::unique_ptr<tson::Map>> m_maps;
 			bool m_onlyShowAdjacentMaps;
 			std::string m_type;
 	};
 
-	World::World(const fs::path &path, std::unique_ptr<tson::IJson> jsonParser) : m_json {std::move(jsonParser)}
+	World::World(const std::string &path, std::unique_ptr<tson::IJson> jsonParser) : m_json {std::move(jsonParser)}
 	{
 		parse(path);
 	}
 
-	bool World::parse(const fs::path &path)
+	bool World::parse(const std::string &path)
 	{
 		m_path = path;
-		m_folder = m_path.parent_path();
+		m_folder = ParentPath(m_path);
 
 		if(!m_json->parse(path))
 			return false;
@@ -7928,7 +7899,7 @@ namespace tson
 		return true;
 	}
 
-	const fs::path &World::getPath() const
+	const std::string &World::getPath() const
 	{
 		return m_path;
 	}
@@ -7960,7 +7931,7 @@ namespace tson
 		}
 	}
 
-	const fs::path &World::getFolder() const
+	const std::string &World::getFolder() const
 	{
 		return m_folder;
 	}
@@ -8138,67 +8109,28 @@ namespace tson
 	class ProjectFolder
 	{
 		public:
-			inline ProjectFolder(const fs::path &path);
+			inline ProjectFolder(const std::string &path);
 
-			inline const fs::path &getPath() const;
+			inline const std::string &getPath() const;
 			inline bool hasWorldFile() const;
 			inline const std::vector<ProjectFolder> &getSubFolders() const;
-			inline const std::vector<fs::path> &getFiles() const;
+			inline const std::vector<std::string> &getFiles() const;
 			inline const World &getWorld() const;
 
 		private:
-			inline void loadData();
-			fs::path                    m_path;
+			std::string                    m_path;
 			bool                        m_hasWorldFile;
 			tson::World                 m_world;
 			std::vector<ProjectFolder>  m_subFolders;
-			std::vector<fs::path>       m_files;
+			std::vector<std::string>       m_files;
 
 	};
 
-	ProjectFolder::ProjectFolder(const fs::path &path) : m_path {path}
+	ProjectFolder::ProjectFolder(const std::string &path) : m_path {path}
 	{
-		loadData();
 	}
 
-	void ProjectFolder::loadData()
-	{
-		m_hasWorldFile = false;
-		m_subFolders.clear();
-		m_files.clear();
-		//Search and see if there is a World file .world file
-		fs::path worldPath;
-		for (const auto & entry : fs::directory_iterator(m_path))
-		{
-			if(fs::is_regular_file(entry.path()))
-			{
-				if(entry.path().extension() == ".world")
-				{
-					m_hasWorldFile = true;
-					worldPath = entry.path();
-				}
-			}
-		}
-
-		if(m_hasWorldFile)
-			m_world.parse(worldPath);
-
-		for (const auto & entry : fs::directory_iterator(m_path))
-		{
-			if (fs::is_directory(entry.path()))
-				m_subFolders.emplace_back(entry.path());//.loadData(); - loadData() is called in the constructor, so don't call again.
-			else if (fs::is_regular_file(entry.path()))
-			{
-				if(m_hasWorldFile && m_world.contains(entry.path().filename().generic_string()))
-					m_files.emplace_back(entry.path());
-				else if(!m_hasWorldFile)
-					m_files.emplace_back(entry.path());
-			}
-		}
-
-	}
-
-	const fs::path &ProjectFolder::getPath() const
+	const std::string &ProjectFolder::getPath() const
 	{
 		return m_path;
 	}
@@ -8213,7 +8145,7 @@ namespace tson
 		return m_subFolders;
 	}
 
-	const std::vector<fs::path> &ProjectFolder::getFiles() const
+	const std::vector<std::string> &ProjectFolder::getFiles() const
 	{
 		return m_files;
 	}
@@ -8254,7 +8186,7 @@ namespace tson
 			ProjectPropertyTypes projectPropertyTypes;
 
 			//Tileson specific
-			fs::path basePath;
+			std::string basePath;
 			std::vector<tson::ProjectFolder> folderPaths;
 	};
 }
@@ -8272,40 +8204,40 @@ namespace tson
 			{
 
 			}
-			inline explicit Project(const fs::path &path, std::unique_ptr<tson::IJson> jsonParser = std::make_unique<tson::Json11>());
+			inline explicit Project(const std::string &path, std::unique_ptr<tson::IJson> jsonParser = std::make_unique<tson::Json11>());
 			#else
 			inline explicit Project(std::unique_ptr<tson::IJson> jsonParser) : m_json {std::move(jsonParser)}
 			{
 
 			}
-			inline explicit Project(const fs::path &path, std::unique_ptr<tson::IJson> jsonParser);
+			inline explicit Project(const std::string &path, std::unique_ptr<tson::IJson> jsonParser);
 			#endif
-			inline bool parse(const fs::path &path);
+			inline bool parse(const std::string &path);
 			inline void parse();
 
 			[[nodiscard]] inline const ProjectData &getData() const;
-			[[nodiscard]] inline const fs::path &getPath() const;
+			[[nodiscard]] inline const std::string &getPath() const;
 			[[nodiscard]] inline const std::vector<ProjectFolder> &getFolders() const;
 			[[nodiscard]] inline tson::EnumDefinition* getEnumDefinition(std::string_view name);
 			[[nodiscard]] inline tson::TiledClass* getClass(std::string_view name);
 
 		private:
 			inline void parseJson(IJson &json);
-			fs::path m_path;
+			std::string m_path;
 			std::vector<ProjectFolder> m_folders;
 			ProjectData m_data;
 			std::unique_ptr<IJson> m_json = nullptr;
 	};
 
-	Project::Project(const fs::path &path, std::unique_ptr<tson::IJson> jsonParser) : m_json {std::move(jsonParser)}
+	Project::Project(const std::string &path, std::unique_ptr<tson::IJson> jsonParser) : m_json {std::move(jsonParser)}
 	{
 		parse(path);
 	}
 
-	bool Project::parse(const fs::path &path)
+	bool Project::parse(const std::string &path)
 	{
 		m_path = path;
-		std::ifstream i(m_path.generic_string());
+		std::ifstream i(m_path);
 
 		try
 		{
@@ -8330,7 +8262,7 @@ namespace tson
 
 	void Project::parseJson(IJson &json)
 	{
-		m_data.basePath = (m_path.empty()) ? fs::path() : m_path.parent_path(); //The directory of the project file
+		m_data.basePath = (m_path.empty()) ? "" : ParentPath(m_path); //The directory of the project file
 
 		//Make sure these property types are read before any map is, so they can be resolved.
 		if(json.count("propertyTypes") > 0)
@@ -8358,14 +8290,14 @@ namespace tson
 			{
 				std::string folder = item->get<std::string>();
 				m_data.folders.emplace_back(folder);
-				m_data.folderPaths.emplace_back(m_data.basePath / folder);
-				m_folders.emplace_back(m_data.basePath / folder);
+				m_data.folderPaths.emplace_back(m_data.basePath + '/' + folder);
+				m_folders.emplace_back(m_data.basePath + '/' + folder);
 			});
 		}
 		if(json.count("objectTypesFile") > 0) m_data.objectTypesFile = json["objectTypesFile"].get<std::string>();
 	}
 
-	const fs::path &Project::getPath() const
+	const std::string &Project::getPath() const
 	{
 		return m_path;
 	}
@@ -8413,7 +8345,7 @@ namespace tson
 			inline explicit Tileson(tson::Project *project, std::unique_ptr<tson::IJson> jsonParser, bool includeBase64Decoder = true);
 			#endif
 
-			inline std::unique_ptr<tson::Map> parse(const fs::path &path, std::unique_ptr<IDecompressor<std::vector<uint8_t>, std::vector<uint8_t>>> decompressor = nullptr);
+			inline std::unique_ptr<tson::Map> parse(const std::string &path, std::unique_ptr<IDecompressor<std::vector<uint8_t>, std::vector<uint8_t>>> decompressor = nullptr);
 			inline std::unique_ptr<tson::Map> parse(const void * data, size_t size, std::unique_ptr<IDecompressor<std::vector<uint8_t>, std::vector<uint8_t>>> decompressor = nullptr);
 			inline tson::DecompressorContainer *decompressors();
 
@@ -8448,7 +8380,7 @@ tson::Tileson::Tileson(tson::Project *project, std::unique_ptr<tson::IJson> json
  * @param path path to file
  * @return parsed data as Map
  */
-std::unique_ptr<tson::Map> tson::Tileson::parse(const fs::path &path, std::unique_ptr<IDecompressor<std::vector<uint8_t>, std::vector<uint8_t>>> decompressor)
+std::unique_ptr<tson::Map> tson::Tileson::parse(const std::string &path, std::unique_ptr<IDecompressor<std::vector<uint8_t>, std::vector<uint8_t>>> decompressor)
 {
 
 	bool result = false;
@@ -8471,7 +8403,7 @@ std::unique_ptr<tson::Map> tson::Tileson::parse(const fs::path &path, std::uniqu
 	}
 
 	std::string msg = "File not found: ";
-	msg += std::string(path.generic_string());
+	msg += std::string(path);
 	return std::make_unique<tson::Map>(tson::ParseStatus::FileNotFound, msg);
 }
 
@@ -8581,7 +8513,7 @@ bool tson::Tile::parse(IJson &json, tson::Tileset *tileset, tson::Map *map)
 	m_tileset = tileset;
 	m_map = map;
 
-	if(json.count("image") > 0) m_image = fs::path(json["image"].get<std::string>()); //Optional
+	if(json.count("image") > 0) m_image = json["image"].get<std::string>(); //Optional
 
 	bool allFound = parseId(json);
 
@@ -9122,11 +9054,8 @@ std::size_t tson::World::loadMaps(tson::Tileson *parser)
 	m_maps.clear();
 	std::for_each(m_mapData.begin(), m_mapData.end(), [&](const tson::WorldMapData &data)
 	{
-		if(fs::exists(data.path))
-		{
-			std::unique_ptr<tson::Map> map = parser->parse(data.path);
-			m_maps.push_back(std::move(map));
-		}
+		std::unique_ptr<tson::Map> map = parser->parse(data.path);
+		m_maps.push_back(std::move(map));
 	});
 
 	return m_maps.size();
@@ -9143,7 +9072,7 @@ void tson::Property::setValueByType(IJson &json)
 			break;
 
 		case Type::File:
-			m_value = fs::path(json.get<std::string>());
+			m_value = json.get<std::string>();
 			break;
 
 		case Type::Int:
