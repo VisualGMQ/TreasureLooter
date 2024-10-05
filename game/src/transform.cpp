@@ -11,7 +11,8 @@ Transform CalcTransformFromParent(const Transform& parentGlobalTransform,
     float cos = std::cos(radians);
     float sin = std::sin(radians);
     trans.position =
-        Rotate(localTransform.position, parentGlobalTransform.rotation);
+        Rotate(localTransform.position * parentGlobalTransform.scale,
+               parentGlobalTransform.rotation);
     trans.position += parentGlobalTransform.position;
     return trans;
 }

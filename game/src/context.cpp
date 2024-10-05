@@ -31,8 +31,9 @@ void Context::postInit() {
     initImGui();
 
     textureMgr = std::make_unique<TextureManager>();
-    goMgr = std::make_unique<GameObjectManager>();
+    tilemapMgr = std::make_unique<TileMapManager>();
     animMgr = std::make_unique<AnimationManager>();
+    goMgr = std::make_unique<GameObjectManager>();
     debugMgr = std::make_unique<DebugManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
@@ -59,6 +60,7 @@ Context::~Context() {
     quitImGui();
 
     sceneMgr.reset();
+    tilemapMgr.reset();
     assetTbl.reset();
     debugMgr.reset();
     animMgr.reset();

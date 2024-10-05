@@ -21,14 +21,18 @@ private:
     void clear();
     void parseGOInfo(tinyxml2::XMLElement& elem);
 
-    GameObject* parseGORecurse(tinyxml2::XMLElement& node);
-    GameObject* parseGO(tinyxml2::XMLElement& node);
-    Sprite parseSprite(tinyxml2::XMLElement& elem);
-    Transform parseTransform(tinyxml2::XMLElement& elem);
+    GameObject* parseGORecurse(const tinyxml2::XMLElement& node);
+    GameObject* parseGO(const tinyxml2::XMLElement& node) const;
+    Sprite parseSprite(const tinyxml2::XMLElement& elem) const;
+    Transform parseTransform(const tinyxml2::XMLElement& elem) const;
+    TileMap* parseTileMap(const tinyxml2::XMLElement& elem) const;
 
-    void drawSprite(GameObject&);
+    void drawSprite(const GameObject&) const;
     void syncAnim2GO(GameObject&);
     void updateGO(GameObject* parent, GameObject* go);
+    void drawTileMap(const GameObject&) const;
+    void drawTileLayer(const Transform&, const TileMap&, const TileLayer&) const;
+    void drawObjectLayer(const Transform&, const TileMap&, const ObjectLayer&) const;
 };
 
 class SceneManager {

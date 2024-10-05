@@ -11,10 +11,11 @@ public:
 private:
     std::string lastGOName_;
 
-    void updateName(GameObject& go);
-    void updateTransform(GameObject& go);
-    void updateSprite(GameObject& go);
-    void updateAnimator(GameObject& go);
+    void updateName(const std::string&) const;
+    void updateTransform(Transform&);
+    void updateSprite(Sprite&);
+    void updateAnimator(Animator&);
+    void updateTileMap(TileMap&);
     void updateTransformGeneric(Transform& transform);
 };
 

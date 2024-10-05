@@ -10,6 +10,7 @@
 #include "texture.hpp"
 #include "window.hpp"
 #include "asset_table.hpp"
+#include "tilemap.hpp"
 
 namespace tl {
 
@@ -29,8 +30,9 @@ public:
     std::unique_ptr<GameObjectManager> goMgr;
     std::unique_ptr<AnimationManager> animMgr;
     std::unique_ptr<DebugManager> debugMgr;
-    std::unique_ptr<AssetTable> assetTbl;
     std::unique_ptr<SceneManager> sceneMgr;
+    std::unique_ptr<TileMapManager> tilemapMgr;
+    std::unique_ptr<AssetTable> assetTbl;
 
     void Update();
 

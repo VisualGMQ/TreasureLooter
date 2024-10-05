@@ -3,6 +3,7 @@
 #include "texture.hpp"
 #include "window.hpp"
 #include "flags.hpp"
+#include "transform.hpp"
 
 namespace tl {
 
@@ -28,6 +29,8 @@ public:
     void DrawTexture(const Texture&, const Rect& srcRect, const Rect& dstRect,
                      float degree, const Vec2& rotCenter, Flags<Flip> flip = Flip::None);
     void SetScale(const Vec2& scale);
+    void DrawTexture(const Texture&, const Rect& region, const Transform& trans,
+                     const Vec2& anchor, Flags<Flip> flip);
 
     operator bool() const;
 

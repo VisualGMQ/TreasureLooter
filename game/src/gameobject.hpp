@@ -4,6 +4,7 @@
 #include "math.hpp"
 #include "sprite.hpp"
 #include "transform.hpp"
+#include "tilemap.hpp"
 
 namespace tl {
 
@@ -51,6 +52,7 @@ public:
     Transform transform;
     Sprite sprite;
     Animator animator;
+    TileMap* tilemap = nullptr;
 
     const Transform& GetGlobalTransform() const { return globalTransform_; }
     GameObjectID GetID() const { return id_; }

@@ -1,7 +1,9 @@
 #include "scene.hpp"
-#include "macro.hpp"
 #include "common.hpp"
 #include "context.hpp"
+#include "macro.hpp"
+#include "tilemap.hpp"
+
 
 namespace tl {
 
@@ -18,7 +20,7 @@ void Scene::load(tinyxml2::XMLDocument& doc) {
     root->name = "root";
     goList_.push_back(root->GetID());
 
-    auto sceneElem =doc.FirstChildElement("scene");
+    auto sceneElem = doc.FirstChildElement("scene");
     TL_RETURN_IF_LOGW(sceneElem, "`scene` elem not exists");
 
     auto node = sceneElem->FirstChild();
@@ -34,14 +36,14 @@ void Scene::load(tinyxml2::XMLDocument& doc) {
     }
 }
 
-GameObject* Scene::parseGORecurse(tinyxml2::XMLElement& node) {
+GameObject* Scene::parseGORecurse(const tinyxml2::XMLElement& node) {
     GameObject* go = parseGO(node);
     TL_RETURN_NULL_IF(go);
     goList_.push_back(go->GetID());
 
     int elemCount = node.ChildElementCount();
     if (elemCount > 0) {
-        tinyxml2::XMLNode* child = node.FirstChild();
+        const tinyxml2::XMLNode* child = node.FirstChild();
         while (child) {
             auto elem = child->ToElement();
             child = child->NextSibling();
@@ -57,7 +59,7 @@ GameObject* Scene::parseGORecurse(tinyxml2::XMLElement& node) {
     return go;
 }
 
-GameObject* Scene::parseGO(tinyxml2::XMLElement& node) {
+GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
     const tinyxml2::XMLAttribute* attr = node.FindAttribute("path");
     TL_RETURN_NULL_IF(attr);
 
@@ -67,7 +69,8 @@ GameObject* Scene::parseGO(tinyxml2::XMLElement& node) {
     TL_RETURN_NULL_IF_LOGW(!err, "%s not exists", attr->Value());
 
     auto goElem = doc.FirstChildElement("gameobject");
-    TL_RETURN_NULL_IF_LOGE(goElem, "%s don't exists `gameobject` elem", attr->Value());
+    TL_RETURN_NULL_IF_LOGE(goElem, "%s don't exists `gameobject` elem",
+                           attr->Value());
 
     GameObject* go = Context::GetInst().goMgr->Create();
     go->name = attr->Value();
@@ -82,10 +85,21 @@ GameObject* Scene::parseGO(tinyxml2::XMLElement& node) {
         go->sprite = parseSprite(*spriteElem);
     }
 
+    auto tilemapElem = goElem->FirstChildElement("tilemap");
+    if (tilemapElem) {
+        go->tilemap = parseTileMap(*tilemapElem);
+    }
+
     return go;
 }
 
-Transform Scene::parseTransform(tinyxml2::XMLElement& elem) {
+TileMap* Scene::parseTileMap(const tinyxml2::XMLElement& elem) const {
+    auto nameElem = elem.FirstChildElement("name");
+    const char* name = nameElem->GetText();
+    return Context::GetInst().tilemapMgr->Find(name);
+}
+
+Transform Scene::parseTransform(const tinyxml2::XMLElement& elem) const {
     Transform transform;
 
     auto posElem = elem.FirstChildElement("position");
@@ -109,7 +123,7 @@ Transform Scene::parseTransform(tinyxml2::XMLElement& elem) {
     return transform;
 }
 
-Sprite Scene::parseSprite(tinyxml2::XMLElement& elem) {
+Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
     Sprite sprite;
 
     auto anchorElem = elem.FirstChildElement("anchor");
@@ -132,7 +146,7 @@ Sprite Scene::parseSprite(tinyxml2::XMLElement& elem) {
     auto textureElem = elem.FirstChildElement("texture");
     if (textureElem) {
         const char* filename = textureElem->GetText();
-        Texture* texture = Context::GetInst().textureMgr->Get(std::string("assets/image/") + filename);
+        Texture* texture = Context::GetInst().textureMgr->Get(filename);
         if (!texture) {
             LOGW("texture %s not exists", filename);
         } else {
@@ -145,6 +159,19 @@ Sprite Scene::parseSprite(tinyxml2::XMLElement& elem) {
         Rect region;
         ParseFloat(regionElem->GetText(), (float*)(&region), 4);
         sprite.SetRegion(region);
+    }
+
+    auto flipElem = elem.FirstChildElement("flip");
+    if (flipElem) {
+        std::string_view text = flipElem->GetText();
+        if (text == "vertical") {
+            sprite.flip = Flip::Vertical;
+        } else if (text == "horizontal") {
+            sprite.flip = Flip::Horizontal;
+        } else if (text == "both") {
+            sprite.flip |= Flip::Vertical;
+            sprite.flip |= Flip::Horizontal;
+        }
     }
 
     return sprite;
@@ -194,6 +221,7 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
         go->globalTransform_ =
             CalcTransformFromParent(parent->globalTransform_, go->transform);
     }
+    drawTileMap(*go);
     drawSprite(*go);
 
     for (GameObjectID id : go->GetChildren()) {
@@ -204,47 +232,14 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
     }
 }
 
-void Scene::drawSprite(GameObject& go) {
+void Scene::drawSprite(const GameObject& go) const {
     if (!go.sprite.isEnable || !go.sprite) {
         return;
     }
 
-    auto& globalTransform = go.GetGlobalTransform();
-
-    Rect dstRect;
-    Vec2 unsignedScale = globalTransform.scale;
-    unsignedScale.x = std::abs(globalTransform.scale.x);
-    unsignedScale.y = std::abs(globalTransform.scale.y);
-    dstRect.size = unsignedScale * go.sprite.GetRegion().size;
-
-    Vec2 xAxis = Rotate(Vec2::X_AXIS, globalTransform.rotation);
-    Vec2 yAxis = Rotate(Vec2::Y_AXIS, globalTransform.rotation);
-    int xSign = Sign(globalTransform.scale.x);
-    int ySign = Sign(globalTransform.scale.y);
-    Vec2 xOffset, yOffset;
-    if (xSign > 0) {
-        xOffset = -dstRect.size.w * go.sprite.anchor.x * xAxis;
-    } else if (xSign < 0) {
-        xOffset = -dstRect.size.w * (1.0 - go.sprite.anchor.x) * xAxis;
-    }
-    if (ySign > 0) {
-        yOffset = -dstRect.size.h * go.sprite.anchor.y * yAxis;
-    } else if (xSign < 0) {
-        yOffset = -dstRect.size.h * (1.0 - go.sprite.anchor.y) * yAxis;
-    }
-    dstRect.position = globalTransform.position + xOffset + yOffset;
-
-    Flags<Flip> flip = Flip::None;
-    if (globalTransform.scale.x < 0) {
-        flip |= Flip::Horizontal;
-    }
-    if (globalTransform.scale.y < 0) {
-        flip |= Flip::Vertical;
-    }
-
     Context::GetInst().renderer->DrawTexture(
-        *go.sprite.GetTexture(), go.sprite.GetRegion(), dstRect,
-        globalTransform.rotation, Vec2::ZERO, flip);
+        *go.sprite.GetTexture(), go.sprite.GetRegion(), go.GetGlobalTransform(),
+        go.sprite.anchor, go.sprite.flip);
 }
 
 void Scene::syncAnim2GO(GameObject& go) {
@@ -292,6 +287,51 @@ void Scene::syncAnim2GO(GameObject& go) {
     }
 }
 
+void Scene::drawTileMap(const GameObject& go) const {
+    TL_RETURN_IF(go.tilemap);
+
+    for (auto& layer : go.tilemap->GetLayers()) {
+        if (layer->GetType() == MapLayerType::Object) {
+            drawObjectLayer(go.globalTransform_, *go.tilemap,
+                            (ObjectLayer&)*layer);
+        } else if (layer->GetType() == MapLayerType::Tiles) {
+            drawTileLayer(go.globalTransform_, *go.tilemap, (TileLayer&)*layer);
+        }
+    }
+}
+
+void Scene::drawTileLayer(const Transform& trans, const TileMap& map,
+                          const TileLayer& layer) const {
+    auto& renderer = Context::GetInst().renderer;
+    for (uint32_t y = 0; y < layer.GetSize().h; y++) {
+        for (uint32_t x = 0; x < layer.GetSize().w; x++) {
+            const Tile* tile = layer.GetTile(x, y);
+            TL_CONTINUE_IF(tile && tile->tilesetIndex);
+            const TileSet& tileset = map.GetTileSet(tile->tilesetIndex.value());
+
+            Transform localTransform;
+            localTransform.position = Vec2(x, y) * tileset.tileSize;
+            Transform globalTrans = CalcTransformFromParent(trans, localTransform);
+
+            renderer->DrawTexture(*tileset.texture, tile->region, globalTrans,
+                                  Vec2{}, tile->flip);
+        }
+    }
+}
+
+void Scene::drawObjectLayer(const Transform& trans, const TileMap& tilemap,
+                            const ObjectLayer& layer) const {
+    auto& renderer = Context::GetInst().renderer;
+    for (auto& obj : layer.tileObjects) {
+        Transform localTransform;
+        localTransform.position = obj.position;
+        localTransform.scale = obj.size / obj.region.size;
+        Transform globalTrans = CalcTransformFromParent(trans, localTransform);
+        renderer->DrawTexture(*obj.tileset->texture, obj.region, globalTrans,
+                              Vec2{0, 1}, obj.flip);
+    }
+}
+
 SceneManager::SceneManager() {
     tinyxml2::XMLDocument doc;
     auto err = doc.LoadFile("assets/scenes.xml");
@@ -321,10 +361,12 @@ SceneManager::SceneManager() {
         TL_CONTINUE_IF(attr && attr->Value());
 
         std::string name = attr->Value();
-        auto scene = std::make_unique<Scene>("assets/gpa/scene/" + name + ".xml");
+        auto scene =
+            std::make_unique<Scene>("assets/gpa/scene/" + name + ".xml");
         TL_CONTINUE_IF(scene && *scene);
 
-        auto& emplacedScene = sceneMap_.emplace(name, std::move(scene)).first->second;
+        auto& emplacedScene =
+            sceneMap_.emplace(name, std::move(scene)).first->second;
 
         if (name == startupName) {
             curScene_ = emplacedScene.get();

@@ -59,6 +59,20 @@ struct Circle {
     Vec2 center;
 };
 
+struct Ellipse {
+    Vec2 center;
+    float halfX;
+    float halfY;
+};
+
+struct Polygon {
+    std::vector<Vec2> points;
+};
+
+struct Polyline {
+    std::vector<Vec2> points;
+};
+
 struct Rect {
     Vec2 position, size;
 
