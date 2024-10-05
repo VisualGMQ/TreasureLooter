@@ -176,12 +176,13 @@ struct Animator {
 class AnimationManager {
 public:
     Animation* Create(const std::string& name);
-    Animation* Get(const std::string& name) const;
+    Animation* Get(const std::string& name);
+    const Animation* Get(const std::string& name) const;
     void Destroy(const std::string& name);
     void Clear();
 
 private:
-    std::unordered_map<std::string, std::unique_ptr<Animation>> animations_;
+    std::unordered_map<std::string, Animation> animations_;
 };
 
 }  // namespace tl

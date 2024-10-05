@@ -95,7 +95,7 @@ public:
     TileMap* Find(const std::string& name);
 
 private:
-    std::unordered_map<std::string, std::unique_ptr<TileMap>> tilemaps_;
+    std::unordered_map<std::string, TileMap> tilemaps_;
 };
 
 }  // namespace tl

@@ -210,17 +210,16 @@ TileMap* TileMapManager::Load(const std::string& filename,
     auto it = tilemaps_.find(name);
     if (it != tilemaps_.end()) {
         LOGW("%s tilemap already exists", name.c_str());
-        return it->second.get();
+        return &it->second;
     }
 
-    return tilemaps_.emplace(name, std::make_unique<TileMap>(TileMap{filename}))
-        .first->second.get();
+    return &tilemaps_.emplace(name, filename).first->second;
 }
 
 TileMap* TileMapManager::Find(const std::string& name) {
     auto it = tilemaps_.find(name);
     if (it != tilemaps_.end()) {
-        return it->second.get();
+        return &it->second;
     }
     return nullptr;
 }

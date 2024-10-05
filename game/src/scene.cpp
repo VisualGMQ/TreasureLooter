@@ -361,15 +361,14 @@ SceneManager::SceneManager() {
         TL_CONTINUE_IF(attr && attr->Value());
 
         std::string name = attr->Value();
-        auto scene =
-            std::make_unique<Scene>("assets/gpa/scene/" + name + ".xml");
-        TL_CONTINUE_IF(scene && *scene);
+        Scene scene("assets/gpa/scene/" + name + ".xml");
+        TL_CONTINUE_IF(scene);
 
         auto& emplacedScene =
             sceneMap_.emplace(name, std::move(scene)).first->second;
 
         if (name == startupName) {
-            curScene_ = emplacedScene.get();
+            curScene_ = &emplacedScene;
         }
     }
 }
@@ -379,7 +378,7 @@ Scene* SceneManager::Find(const std::string& name) {
     if (it == sceneMap_.end()) {
         return nullptr;
     }
-    return it->second.get();
+    return &it->second;
 }
 
 Scene* SceneManager::GetCurScene() {
@@ -395,7 +394,7 @@ void SceneManager::Update() {
 bool SceneManager::ChangeScene(const std::string& name) {
     auto it = sceneMap_.find(name);
     if (it != sceneMap_.end()) {
-        changeDstScene_ = it->second.get();
+        changeDstScene_ = &it->second;
         return true;
     }
     return false;

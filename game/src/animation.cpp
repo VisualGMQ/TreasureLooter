@@ -160,17 +160,16 @@ void Animation::updateAllTrack() {
 }
 
 Animation* AnimationManager::Create(const std::string& name) {
-    std::unique_ptr<Animation> anim = std::make_unique<Animation>();
-    if (!anim) {
-        return nullptr;
-    }
-
-    return animations_.emplace(name, std::move(anim)).first->second.get();
+    return &animations_.emplace(name, Animation{}).first->second;
 }
 
-Animation* AnimationManager::Get(const std::string& name) const {
+Animation* AnimationManager::Get(const std::string& name) {
+    return const_cast<Animation*>(std::as_const(*this).Get(name));
+}
+
+const Animation* AnimationManager::Get(const std::string& name) const {
     if (auto it = animations_.find(name); it != animations_.end()) {
-        return it->second.get();
+        return &it->second;
     }
     return nullptr;
 }
