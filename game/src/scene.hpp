@@ -48,7 +48,7 @@ public:
     auto& GetAllScenes() const { return sceneMap_; }
 
 private:
-    std::unordered_map<std::string, std::unique_ptr<Scene>> sceneMap_;
+    std::unordered_map<std::string, Scene> sceneMap_;
     Scene* curScene_ = nullptr;
     Scene* changeDstScene_ = nullptr;
 };

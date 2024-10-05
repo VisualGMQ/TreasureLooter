@@ -28,12 +28,13 @@ private:
 class TextureManager {
 public:
     Texture* Load(const std::string& filename, const std::string& name);
-    Texture* Get(const std::string& name) const;
+    const Texture* Get(const std::string& name) const;
+    Texture* Get(const std::string& name);
     void Destroy(const std::string& name);
     void Clear();
 
 private:
-    std::unordered_map<std::string, std::unique_ptr<Texture>> textures_;
+    std::unordered_map<std::string, Texture> textures_;
 };
 
 }  // namespace tl

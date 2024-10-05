@@ -12,7 +12,7 @@ void GOHierarchyWatcher::Update() {
         std::string curSceneName = "<no scene>";
         auto& sceneMgr = Context::GetInst().sceneMgr;
         for (auto& [name, scene] : sceneMgr->GetAllScenes()) {
-            if (sceneMgr->GetCurScene() == scene.get()) {
+            if (sceneMgr->GetCurScene() == &scene) {
                 curSceneName = name;
                 break;
             }

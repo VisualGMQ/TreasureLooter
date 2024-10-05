@@ -1,6 +1,7 @@
 #include "texture.hpp"
 #include "context.hpp"
 #include "log.hpp"
+#include "macro.hpp"
 
 namespace tl {
 
@@ -54,20 +55,22 @@ Texture* TextureManager::Load(const std::string& filename, const std::string& na
     auto it = textures_.find(name);
     if (it != textures_.end()) {
         LOGW("%s texture already exists(from %s)", name.c_str(), filename.c_str());
-        return it->second.get();
+        return &it->second;
     }
 
-    std::unique_ptr<Texture> texture = std::make_unique<Texture>(filename);
-    if (!texture || !(*texture)) {
-        return nullptr;
-    }
+    Texture texture(filename);
+    TL_RETURN_NULL_IF(texture);
 
-    return textures_.emplace(name, std::move(texture)).first->second.get();
+    return &textures_.emplace(name, std::move(texture)).first->second;
 }
 
-Texture* TextureManager::Get(const std::string& name) const {
+Texture* TextureManager::Get(const std::string& name) {
+    return const_cast<Texture*>(std::as_const(*this).Get(name));
+}
+
+const Texture* TextureManager::Get(const std::string& name) const {
     if (auto it = textures_.find(name); it != textures_.end()) {
-        return it->second.get();
+        return &it->second;
     }
     return nullptr;
 }
