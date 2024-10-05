@@ -1,10 +1,10 @@
 #include "context.hpp"
+#include "asset_table.hpp"
 #include "flags.hpp"
 #include "log.hpp"
 #include "math.hpp"
 #include "renderer.hpp"
 #include "transform.hpp"
-#include "asset_table.hpp"
 
 namespace tl {
 
@@ -37,6 +37,10 @@ void Context::postInit() {
     debugMgr = std::make_unique<DebugManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
+    keyboard = std::make_unique<input::Keyboard>();
+    mouse = std::make_unique<input::Mouse>();
+    gameCtrlMgr = std::make_unique<input::GameControllerManager>();
+    fingerMgr = std::make_unique<input::FingerManager>();
 }
 
 void Context::initSDL() {
@@ -59,6 +63,10 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    fingerMgr.reset();
+    gameCtrlMgr.reset();
+    mouse.reset();
+    keyboard.reset();
     sceneMgr.reset();
     tilemapMgr.reset();
     assetTbl.reset();
@@ -79,6 +87,10 @@ void Context::Update() {
             if (event_.type == SDL_QUIT) {
                 shouldExit_ = true;
             }
+            keyboard->HandleEvent(event_);
+            mouse->HandleEvent(event_);
+            gameCtrlMgr->HandleEvent(event_);
+            fingerMgr->HandleEvent(event_);
         }
 
         ImGui_ImplSDLRenderer2_NewFrame();
@@ -89,34 +101,39 @@ void Context::Update() {
 
         renderer->Clear(Color{100, 100, 100});
 
+        keyboard->Update();
+        mouse->Update();
+        gameCtrlMgr->Update();
+        fingerMgr->Update();
         sceneMgr->Update();
         debugMgr->Update();
 
         ImGui::Render();
         ImGuiIO& io = ImGui::GetIO();
-        renderer->SetScale({io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
-        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer->renderer_);
+        renderer->SetScale(
+            {io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(),
+                                              renderer->renderer_);
 
         renderer->Present();
-
         sceneMgr->PostUpdate();
     }
 }
-
 
 void Context::initImGui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |=
+        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |=
+        ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
 
     ImGui::StyleColorsDark();
 
     ImGui_ImplSDL2_InitForSDLRenderer(window->window_, renderer->renderer_);
     ImGui_ImplSDLRenderer2_Init(renderer->renderer_);
-
 }
 
 void Context::quitImGui() {

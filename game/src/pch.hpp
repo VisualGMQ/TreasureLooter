@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <string_view>
 #include <optional>
+#include <array>
 
 #include "SDL.h"
 #include "SDL_image.h"

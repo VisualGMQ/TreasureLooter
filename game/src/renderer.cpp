@@ -19,37 +19,53 @@ Renderer::operator bool() const {
     return renderer_;
 }
 
-void Renderer::Clear(const Color& c) {
+void Renderer::Clear(const Color& c) const {
     setDrawColor(c);
     SDL_RenderClear(renderer_);
 }
 
-void Renderer::Present() {
+void Renderer::Present() const {
     SDL_RenderPresent(renderer_);
 }
 
-void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& c) {
+void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& c) const {
     setDrawColor(c);
     SDL_RenderDrawLineF(renderer_, p1.x, p1.y, p2.x, p2.y);
 }
 
-void Renderer::setDrawColor(const Color& c) {
+void Renderer::setDrawColor(const Color& c) const {
     SDL_SetRenderDrawColor(renderer_, c.r, c.g, c.b, c.a);
 }
 
-void Renderer::DrawRect(const Rect& r, const Color& c) {
+void Renderer::DrawRect(const Rect& r, const Color& c) const {
     setDrawColor(c);
     SDL_RenderDrawRectF(renderer_, (SDL_FRect*)&r);
 }
 
-void Renderer::FillRect(const Rect& r, const Color& c) {
+void Renderer::FillRect(const Rect& r, const Color& c) const {
     setDrawColor(c);
     SDL_RenderFillRectF(renderer_, (SDL_FRect*)&r);
 }
 
+void Renderer::DrawCircle(const Circle& c, const Color& color) const {
+    setDrawColor(color);
+    constexpr int step = 10;
+    constexpr float angle = PI / step;
+    for (int i = 0; i < step; i++) {
+        float curAngle = i * angle;
+        float nextAngle = (i + 1) * angle;
+        Vec2 offset1{std::cos(curAngle), std::sin(curAngle)};
+        offset1 *= c.radius;
+        Vec2 offset2{std::cos(nextAngle), std::sin(nextAngle)};
+        offset2 *= c.radius;
+
+        DrawLine(c.center + offset1, c.center + offset2, color);
+    }
+}
+
 void Renderer::DrawTexture(const Texture& texture, const Rect& srcRect,
                            const Rect& dstRect, float degree,
-                           const Vec2& rotCenter, Flags<Flip> flip) {
+                           const Vec2& rotCenter, Flags<Flip> flip) const {
     SDL_Rect src;
     src.x = srcRect.position.x;
     src.y = srcRect.position.y;
@@ -60,12 +76,13 @@ void Renderer::DrawTexture(const Texture& texture, const Rect& srcRect,
                       static_cast<SDL_RendererFlip>(Flip{flip}));
 }
 
-void Renderer::SetScale(const Vec2& scale) {
+void Renderer::SetScale(const Vec2& scale) const {
     SDL_RenderSetScale(renderer_, scale.w, scale.h);
 }
 
-void Renderer::DrawTexture(const Texture& texture, const Rect& region, const Transform& trans,
-                     const Vec2& anchor, Flags<Flip> flip) {
+void Renderer::DrawTexture(const Texture& texture, const Rect& region,
+                           const Transform& trans, const Vec2& anchor,
+                           Flags<Flip> flip) const {
     TL_RETURN_IF(texture);
 
     Rect dstRect;
@@ -103,8 +120,7 @@ void Renderer::DrawTexture(const Texture& texture, const Rect& region, const Tra
         f |= Flip::Vertical;
     }
 
-    DrawTexture(texture, region, dstRect,
-        trans.rotation, Vec2::ZERO, f);
+    DrawTexture(texture, region, dstRect, trans.rotation, Vec2::ZERO, f);
 }
 
 }  // namespace tl

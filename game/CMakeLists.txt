@@ -7,7 +7,7 @@ project(TreasureLootre
 aux_source_directory(src GAME_SRC)
 aux_source_directory(src/3rdlib/imgui GAME_SRC)
 aux_source_directory(src/3rdlib/tinyxml2 GAME_SRC)
-aux_source_directory(src/asset_parser GAME_SRC)
+aux_source_directory(src/input GAME_SRC)
 
 if (ANDROID)
     add_library(main SHARED)
