@@ -51,6 +51,7 @@ void Renderer::DrawCircle(const Circle& c, const Color& color) const {
     setDrawColor(color);
     constexpr int step = 10;
     constexpr float angle = 2 * PI / step;
+
     for (int i = 0; i < step; i++) {
         float curAngle = i * angle;
         float nextAngle = (i + 1) * angle;

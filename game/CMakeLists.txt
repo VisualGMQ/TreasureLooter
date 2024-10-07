@@ -10,6 +10,7 @@ aux_source_directory(src/3rdlib/tinyxml2 GAME_SRC)
 aux_source_directory(src/input GAME_SRC)
 aux_source_directory(src/controller GAME_SRC)
 
+
 if (ANDROID)
     add_library(main SHARED)
     find_library(SDL2 SDL2)
