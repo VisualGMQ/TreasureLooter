@@ -109,7 +109,7 @@ struct Segment : public Line {
     bool IsOn(float t) const { return t >= t1 && t <= t2; }
 };
 
-const float PI = 3.141592653589;
+constexpr float PI = 3.141592653589;
 
 float Deg2Rad(float deg);
 float Rad2Deg(float rad);
@@ -131,5 +131,7 @@ T Sign(T value) {
         return -1;
     }
 }
+
+bool IsPointInCircle(const Vec2& p, const Circle& c);
 
 }  // namespace tl

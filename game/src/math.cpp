@@ -129,4 +129,8 @@ Vec2 Rotate(const Vec2& p, float degree) {
     return Vec2{cos * p.x - sin * p.y, sin * p.x + cos * p.y};
 }
 
+bool IsPointInCircle(const Vec2& p, const Circle& c) {
+    return (p - c.center).LengthSqrd() <= c.radius * c.radius;
+}
+
 }

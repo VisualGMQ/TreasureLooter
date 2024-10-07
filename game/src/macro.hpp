@@ -64,3 +64,5 @@
     if (!(x)) {           \
         continue;         \
     }
+
+#define FLT_EQ(a, b) (std::abs(a - b) <= std::numeric_limits<float>::epsilon())

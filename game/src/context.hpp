@@ -11,6 +11,10 @@
 #include "window.hpp"
 #include "asset_table.hpp"
 #include "tilemap.hpp"
+#include "input/keyboard.hpp"
+#include "input/mouse.hpp"
+#include "input/game_controller.hpp"
+#include "input/finger.hpp"
 
 namespace tl {
 
@@ -33,6 +37,10 @@ public:
     std::unique_ptr<SceneManager> sceneMgr;
     std::unique_ptr<TileMapManager> tilemapMgr;
     std::unique_ptr<AssetTable> assetTbl;
+    std::unique_ptr<input::Keyboard> keyboard;
+    std::unique_ptr<input::Mouse> mouse;
+    std::unique_ptr<input::GameControllerManager> gameCtrlMgr;
+    std::unique_ptr<input::FingerManager> fingerMgr;
 
     void Update();
 
