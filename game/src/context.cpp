@@ -5,6 +5,7 @@
 #include "math.hpp"
 #include "renderer.hpp"
 #include "transform.hpp"
+#include "controller/touch_controller.hpp"
 
 namespace tl {
 
@@ -30,6 +31,12 @@ void Context::postInit() {
     }
     initImGui();
 
+    keyboard = std::make_unique<input::Keyboard>();
+    mouse = std::make_unique<input::Mouse>();
+    gameCtrlMgr = std::make_unique<input::GameControllerManager>();
+    fingerMgr = std::make_unique<input::FingerManager>();
+    controllerMgr = std::make_unique<controller::ControllerManager>();
+    gameController = std::make_unique<GameController>();
     textureMgr = std::make_unique<TextureManager>();
     tilemapMgr = std::make_unique<TileMapManager>();
     animMgr = std::make_unique<AnimationManager>();
@@ -37,10 +44,6 @@ void Context::postInit() {
     debugMgr = std::make_unique<DebugManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
-    keyboard = std::make_unique<input::Keyboard>();
-    mouse = std::make_unique<input::Mouse>();
-    gameCtrlMgr = std::make_unique<input::GameControllerManager>();
-    fingerMgr = std::make_unique<input::FingerManager>();
 }
 
 void Context::initSDL() {
@@ -51,6 +54,10 @@ void Context::initSDL() {
     IMG_Init(IMG_INIT_PNG);
     Mix_Init(MIX_INIT_MP3);
     TTF_Init();
+
+#ifdef TL_ANDROID
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+#endif
 }
 
 void Context::quitSDL() {
@@ -63,6 +70,8 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    gameController.reset();
+    controllerMgr.reset();
     fingerMgr.reset();
     gameCtrlMgr.reset();
     mouse.reset();
@@ -91,6 +100,7 @@ void Context::Update() {
             mouse->HandleEvent(event_);
             gameCtrlMgr->HandleEvent(event_);
             fingerMgr->HandleEvent(event_);
+            controllerMgr->HandleEvent(event_);
         }
 
         ImGui_ImplSDLRenderer2_NewFrame();
@@ -101,6 +111,8 @@ void Context::Update() {
 
         renderer->Clear(Color{100, 100, 100});
 
+        controllerMgr->Update();
+        gameController->Update();
         keyboard->Update();
         mouse->Update();
         gameCtrlMgr->Update();
@@ -124,10 +136,6 @@ void Context::initImGui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
 
     ImGui::StyleColorsDark();

@@ -2,6 +2,6 @@
     <startup>scene1</startup>
     <scene>
         <element path="scene1"/>
-        <element path="scene2"/>
+        <element path="test-controller"/>
     </scene>
 </scenes>

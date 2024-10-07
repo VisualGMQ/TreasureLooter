@@ -11,6 +11,7 @@ public:
     operator bool() const;
     GameObjectID GetRootGOID() const;
     GameObject* GetRootGO();
+    bool HasGO(GameObjectID) const;
 
     const std::vector<GameObjectID>& GetAllGOID() const;
 
