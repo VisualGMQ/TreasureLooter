@@ -90,7 +90,7 @@ public:
 
     private:
         Type type_ = Type::Invalid;
-        double value_;  // in [-1, 1]
+        double value_ = 0;  // in [-1, 1]
 
         Axis() = default;
     };

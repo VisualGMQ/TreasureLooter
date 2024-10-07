@@ -33,8 +33,9 @@ public:
     private:
         TouchPoint() = default;
 
-        Vec2 curPos_;
-        Vec2 offset_;
+        Vec2 curPos_;  // in [0, 1]
+        Vec2 offset_;  // in [0, 1]
+
         float pressure_ = 0;
         bool isPressing_ = false;
         bool isPressed_ = false;

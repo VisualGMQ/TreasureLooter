@@ -1,6 +1,10 @@
 #include "go_hierarchy_watcher.hpp"
 #include "context.hpp"
+#include "controller/gamepad_controller.hpp"
+#include "controller/keyboard_controller.hpp"
+#include "controller/touch_controller.hpp"
 #include "macro.hpp"
+
 
 namespace tl {
 
@@ -8,6 +12,22 @@ void GOHierarchyWatcher::Update() {
     auto& ctx = Context::GetInst();
     if (ImGui::Begin("hierarchy")) {
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);
+
+        if (ImGui::Checkbox("simulate touch", &ctx.debugMgr->simulateTouch)) {
+            if (ctx.debugMgr->simulateTouch) {
+                ctx.controllerMgr->ChangeController(
+                    std::make_unique<controller::TouchController>());
+            } else {
+                if (ctx.gameCtrlMgr->GetControllers().empty()) {
+                    ctx.controllerMgr->ChangeController(
+                        std::make_unique<controller::KeyboardController>());
+                } else {
+                    ctx.controllerMgr->ChangeController(
+                        std::make_unique<controller::GamePadController>(
+                            ctx.gameCtrlMgr->GetControllers().begin()->second));
+                }
+            }
+        }
 
         std::string curSceneName = "<no scene>";
         auto& sceneMgr = Context::GetInst().sceneMgr;
@@ -33,7 +53,7 @@ void GOHierarchyWatcher::Update() {
             return;
         }
         int id = 0;
-        updateRecursive( *root, id, true, false);
+        updateRecursive(*root, id, true, false);
     }
     ImGui::End();
 
@@ -46,7 +66,8 @@ void GOHierarchyWatcher::Update() {
 }
 
 void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
-                                         bool isParentOpen, bool isParentDragging) {
+                                         bool isParentOpen,
+                                         bool isParentDragging) {
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                    ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -86,10 +107,11 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
             if (!isParentDragging &&
                 (toBeChild || goID != scene->GetRootGOID()) &&
                 ImGui::BeginDragDropTarget()) {
-                const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("go");
+                const ImGuiPayload* payload =
+                    ImGui::AcceptDragDropPayload("go");
                 if (payload && payload->Data) {
                     GameObjectID* id = (GameObjectID*)payload->Data;
-                    
+
                     goMoveInfo_.source = *id;
                     goMoveInfo_.target = goID;
                     goMoveInfo_.toBeChild = toBeChild;

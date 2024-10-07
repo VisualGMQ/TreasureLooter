@@ -15,6 +15,8 @@
 #include "input/mouse.hpp"
 #include "input/game_controller.hpp"
 #include "input/finger.hpp"
+#include "controller/controller.hpp"
+#include "game_controller.hpp"
 
 namespace tl {
 
@@ -41,6 +43,8 @@ public:
     std::unique_ptr<input::Mouse> mouse;
     std::unique_ptr<input::GameControllerManager> gameCtrlMgr;
     std::unique_ptr<input::FingerManager> fingerMgr;
+    std::unique_ptr<controller::ControllerManager> controllerMgr;
+    std::unique_ptr<GameController> gameController;
 
     void Update();
 

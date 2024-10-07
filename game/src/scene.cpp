@@ -90,6 +90,17 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
         go->tilemap = parseTileMap(*tilemapElem);
     }
 
+    auto controllerElem = goElem->FirstChildElement("controller");
+    if (controllerElem) {
+        auto& controller = Context::GetInst().gameController;
+        if (controller->HasCharacter()) {
+            LOGW("controller already has character: %s",
+                 controller->GetCharacter()->name.c_str());
+        } else {
+            controller->SetCharacter(go->GetID());
+        }
+    }
+
     return go;
 }
 
@@ -199,6 +210,12 @@ GameObjectID Scene::GetRootGOID() const {
 GameObject* Scene::GetRootGO() {
     TL_RETURN_NULL_IF(!goList_.empty());
     return Context::GetInst().goMgr->Find(goList_[0]);
+}
+
+bool Scene::HasGO(GameObjectID id) const {
+    return std::find_if(goList_.begin(), goList_.end(),
+                        [=](const GameObjectID& goID) { return goID == id; }) !=
+           goList_.end();
 }
 
 const std::vector<GameObjectID>& Scene::GetAllGOID() const {
@@ -311,7 +328,8 @@ void Scene::drawTileLayer(const Transform& trans, const TileMap& map,
 
             Transform localTransform;
             localTransform.position = Vec2(x, y) * tileset.tileSize;
-            Transform globalTrans = CalcTransformFromParent(trans, localTransform);
+            Transform globalTrans =
+                CalcTransformFromParent(trans, localTransform);
 
             renderer->DrawTexture(*tileset.texture, tile->region, globalTrans,
                                   Vec2{}, tile->flip);

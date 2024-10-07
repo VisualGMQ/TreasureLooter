@@ -20,12 +20,10 @@ void GameController::Button::Update() {
 }
 
 void GameController::Axis::HandleEvent(const SDL_ControllerAxisEvent& event) {
-    TL_RETURN_IF(event.axis == static_cast<int>(type_));
-
     if (event.value > 0) {
         value_ = event.value / 32767.0f;
     } else {
-        value_ = event.value / -32768.0f;
+        value_ = event.value / 32768.0f;
     }
 }
 
@@ -36,6 +34,13 @@ GameController::GameController(int index) {
 
     controller_ = SDL_GameControllerOpen(index);
     TL_RETURN_IF_LOGE(controller_, "controller can't be open");
+
+    for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
+        buttons_[i].type_ = static_cast<Button::Type>(i);
+    }
+    for (int i = 0; i < SDL_CONTROLLER_AXIS_MAX; i++) {
+        axis_[i].type_ = static_cast<Axis::Type>(i);
+    }
 }
 
 void GameController::HandleEvent(const SDL_Event& event) {
@@ -101,4 +106,4 @@ void GameControllerManager::Update() {
     }
 }
 
-}  // namespace tl
+}  // namespace tl::input

@@ -8,6 +8,7 @@ namespace tl {
 class DebugManager {
 public:
     bool enableDrawGO = false;
+    bool simulateTouch = false;
     std::unique_ptr<GOHierarchyWatcher> hierarchyWatcher;
     std::unique_ptr<Inspector> inspector;
 
