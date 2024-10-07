@@ -25,7 +25,7 @@ Vec2 TouchController::GetAxis() const {
     if (fingerInAxisCircle_) {
 #ifdef TL_ANDROID
         auto& fingerMgr = Context::GetInst().fingerMgr;
-        auto& finger = fingerMgr->GetFinger(fingerInAxisCircle_);
+        auto& finger = fingerMgr->GetFinger(fingerInAxisCircle_.value());
         Vec2 curPos =
             finger.GetPosition() * Context::GetInst().window->GetSize();
 #else
@@ -129,7 +129,7 @@ void TouchController::updateFingerState(std::optional<SDL_FingerID>& id,
             }
         }
     } else {
-        auto& finger = fingerMgr->GetFinger(id);
+        auto& finger = fingerMgr->GetFinger(id.value());
         if (finger.IsReleasing() || finger.IsReleased()) {
             id = std::nullopt;
         }
