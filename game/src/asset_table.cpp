@@ -6,10 +6,17 @@
 namespace tl {
 
 AssetTable::AssetTable() {
+    void* fileContent =  SDL_LoadFile("assets/assets.xml", nullptr);
+    if (!fileContent) {
+        LOGE("can't load assets/assets.xml");
+        Context::GetInst().Exit();
+        return;
+    }
+
     tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError err = doc.LoadFile("assets/assets.xml");
+    tinyxml2::XMLError err = doc.Parse((const char*)fileContent);
     if (err) {
-        LOGE("assets.xml load failed");
+        LOGE("assets.xml parse failed");
         Context::GetInst().Exit();
         return;
     }

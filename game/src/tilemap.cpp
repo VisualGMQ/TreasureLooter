@@ -34,8 +34,12 @@ Vec2 TileLayer::GetSize() const {
 }
 
 TileMap::TileMap(const std::string& filename) {
+    size_t fileSize;
+    void* fileContent = SDL_LoadFile(filename.c_str(), &fileSize);
+    TL_RETURN_IF_LOGE(fileContent, "%s load failed", filename.c_str());
+
     tson::Tileson t;
-    std::unique_ptr<tson::Map> map = t.parse(filename);
+    std::unique_ptr<tson::Map> map = t.parse(fileContent, fileSize);
 
     TL_RETURN_IF_LOGW(map->getStatus() == tson::ParseStatus::OK,
                       "%s tilemap parse failed", filename.c_str());

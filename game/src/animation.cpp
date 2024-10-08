@@ -16,7 +16,7 @@ void Animation::Rewind() {
 
 void Animation::Stop() {
     Pause();
-    Stop();
+    Rewind();
 }
 
 bool Animation::IsPlaying() const {

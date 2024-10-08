@@ -47,7 +47,8 @@ void GOHierarchyWatcher::Update() {
             ImGui::EndCombo();
         }
 
-        GameObject* root = ctx.sceneMgr->GetCurScene()->GetRootGO();
+        auto curScene = ctx.sceneMgr->GetCurScene();
+        GameObject* root = curScene ? curScene->GetRootGO() : nullptr;
         if (!root) {
             ImGui::End();
             return;

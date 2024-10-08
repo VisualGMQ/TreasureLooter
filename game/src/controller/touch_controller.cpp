@@ -120,10 +120,11 @@ void TouchController::updateFingerState(std::optional<SDL_FingerID>& id,
 #ifdef TL_ANDROID
     auto& fingerMgr = Context::GetInst().fingerMgr;
     if (!id) {
+        Vec2 windowSize = Context::GetInst().window->GetSize();
         for (int i = 0; i < fingerMgr->FingerMaxCount(); i++) {
             auto& button = fingerMgr->GetFinger(i);
             if (button.IsPressed() &&
-                IsPointInCircle(button.GetPosition(), circle)) {
+                IsPointInCircle(button.GetPosition() * windowSize, circle)) {
                 id = i;
                 break;
             }

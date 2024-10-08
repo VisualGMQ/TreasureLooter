@@ -3,8 +3,9 @@ android/app/build/*
 android/app/jni/game/*
 android/.gradle
 android/.idea
-game/cmake-build/
+android/app/src/main/assets/*
 android/app/.cxx/
+game/cmake-build/
 compile_commands.json
 game/.cache
 game/imgui.ini

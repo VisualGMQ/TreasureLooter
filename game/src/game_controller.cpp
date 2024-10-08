@@ -17,7 +17,8 @@ bool GameController::HasCharacter() const {
 }
 
 void GameController::Update() {
-    TL_RETURN_IF(Context::GetInst().sceneMgr->GetCurScene()->HasGO(go_));
+    auto curScene = Context::GetInst().sceneMgr->GetCurScene();
+    TL_RETURN_IF(curScene && curScene->HasGO(go_));
 
     auto& goMgr = Context::GetInst().goMgr;
     GameObject* go = goMgr->Find(go_);
