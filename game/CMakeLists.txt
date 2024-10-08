@@ -45,4 +45,5 @@ target_sources(main PRIVATE ${GAME_SRC})
 target_compile_features(main PRIVATE cxx_std_17)
 target_include_directories(main PRIVATE src)
 target_compile_definitions(main PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_precompile_headers(main PRIVATE src/pch.hpp)
 

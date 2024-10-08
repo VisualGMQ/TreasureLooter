@@ -2654,6 +2654,9 @@ namespace tson
 				m_data = nullptr;
 				m_json = nullptr;
 				std::ifstream file(path);
+				if (file.fail()) {
+					return false;
+				}
 				std::string str;
 				m_path = ParentPath(path);
 

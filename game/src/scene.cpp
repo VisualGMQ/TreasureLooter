@@ -8,8 +8,14 @@
 namespace tl {
 
 Scene::Scene(const std::string& filename) {
+    void* fileContent =  SDL_LoadFile(filename.c_str(), nullptr);
+    if (!fileContent) {
+        LOGE("can't load %s", filename.c_str());
+        return;
+    }
+
     tinyxml2::XMLDocument doc;
-    auto err = doc.LoadFile(filename.c_str());
+    auto err = doc.Parse((const char*)fileContent);
     TL_RETURN_IF_LOGW(!err, "%s load failed", filename.c_str());
 
     load(doc);
@@ -63,10 +69,17 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
     const tinyxml2::XMLAttribute* attr = node.FindAttribute("path");
     TL_RETURN_NULL_IF(attr);
 
+    std::string filename =
+        std::string("assets/gpa/go/") + attr->Value() + ".xml";
+    void* fileContent = SDL_LoadFile(filename.c_str(), nullptr);
+    if (!fileContent) {
+        LOGE("can't load %s", filename.c_str());
+        return nullptr;
+    }
+
     tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError err = doc.LoadFile(
-        (std::string("assets/gpa/go/") + attr->Value() + ".xml").c_str());
-    TL_RETURN_NULL_IF_LOGW(!err, "%s not exists", attr->Value());
+    tinyxml2::XMLError err = doc.Parse((const char*)fileContent);
+    TL_RETURN_NULL_IF_LOGW(!err, "%s parse failed", filename.c_str());
 
     auto goElem = doc.FirstChildElement("gameobject");
     TL_RETURN_NULL_IF_LOGE(goElem, "%s don't exists `gameobject` elem",
@@ -351,9 +364,16 @@ void Scene::drawObjectLayer(const Transform& trans, const TileMap& tilemap,
 }
 
 SceneManager::SceneManager() {
+    void* fileContent = SDL_LoadFile("assets/scenes.xml", nullptr);
+    if (!fileContent) {
+        LOGE("can't load assets/scenes.xml");
+        Context::GetInst().Exit();
+        return;
+    }
+
     tinyxml2::XMLDocument doc;
-    auto err = doc.LoadFile("assets/scenes.xml");
-    TL_RETURN_IF_LOGE(!err, "scenes.xml load failed");
+    auto err = doc.Parse((const char*)fileContent);
+    TL_RETURN_IF_LOGE(!err, "assets/scenes.xml parse failed");
 
     auto scenesElem = doc.FirstChildElement("scenes");
     TL_RETURN_IF_LOGE(scenesElem, "don't exists `scenes`");
