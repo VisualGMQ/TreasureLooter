@@ -14,6 +14,9 @@ jobs:
             - name: Ubuntu
               os: ubuntu-latest
               android: none
+            - name: Emscripten
+              os: ubuntu-latest
+              android: none
             - name: MacOS
               os: macOS-latest
               android: none
@@ -27,9 +30,14 @@ jobs:
 
     - name: Prepare cmake
       uses: lukka/get-cmake@latest
+
     - name: Run vcpkg
       if: matrix.android == 'none'
       uses: lukka/run-vcpkg@v11
+
+    - name: Prepare emscripten
+      if: matrix.name == 'Emscripten'
+      uses: mymindstorm/setup-emsdk@v14
 
     - name: Prepare Ubuntu
       if: contains(matrix.os, 'ubuntu') && matrix.android == 'none'
@@ -44,9 +52,15 @@ jobs:
 
     - name: Config cmake(Ubuntu&MacOS)
       working-directory: ./game
-      if: ${{ !contains(matrix.os, 'windows') && matrix.android == 'none' }}
+      if: ${{ !contains(matrix.os, 'windows') && matrix.android == 'none' && matrix.name != 'Emscripten' }}
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-Linux
+
+    - name: Config cmake(Emscripten)
+      working-directory: ./game
+      if: matrix.name == 'Emscripten'
+      run: |
+        emcmake cmake --preset=CI-Emscripten
 
     - name: Config cmake(Windows)
       working-directory: ./game
@@ -57,7 +71,7 @@ jobs:
     - name: Build under PC
       working-directory: ./game
       if: matrix.android == 'none'
-      run: ${{ matrix.cmake-path}}cmake --build cmake-build
+      run: ${{ matrix.cmake-path }}cmake --build cmake-build
 
     - name: Prepare Android JDK
       if: runner.os == 'Linux' && matrix.android != 'none'

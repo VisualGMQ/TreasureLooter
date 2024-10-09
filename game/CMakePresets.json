@@ -25,6 +25,10 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
+        },
+        {
+            "name": "CI-Emscripten",
+            "binaryDir": "${sourceDir}/cmake-build"
         }
     ]
 }
