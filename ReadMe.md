@@ -1,3 +1,5 @@
+[![Build](https://github.com/VisualGMQ/TreasureLooter/actions/workflows/build.yaml/badge.svg)](https://github.com/VisualGMQ/TreasureLooter/actions/workflows/build.yaml)
+
 # TreasureLooter
 
 A game
@@ -12,6 +14,23 @@ A game
     ```bash
     cmake --preset=default
     cmake --build cmake-build
+    ```
+
+### Emscripten
+
+1. enter `game` folder
+2. config cmake:
+    ```bash
+    emcmake cmake -S . -B cmake-build
+    ```
+3. use cmake to build
+    ```bash
+    cmake --build cmake-build
+    ```
+4. run game
+    ```bash
+    cd cmake-build
+    emrun main.html
     ```
 
 ### Android

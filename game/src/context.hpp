@@ -49,6 +49,7 @@ public:
     void Update();
 
     void Exit() { shouldExit_ = true; }
+    bool ShouldExit() const { return shouldExit_; }
 
 private:
     SDL_Event event_;

@@ -16,6 +16,10 @@
 #include <optional>
 #include <array>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_mixer.h"

@@ -24,6 +24,25 @@ if (ANDROID)
     target_link_libraries(main PRIVATE SDL2_ttf)
     target_link_libraries(main PRIVATE SDL2_mixer)
     target_compile_definitions(main PRIVATE TL_ANDROID)
+elseif(EMSCRIPTEN)
+    message("emscripten build")
+    add_executable(main)
+    target_compile_definitions(main PRIVATE TL_EMSCRIPTEN)
+    set(USE_FLAGS "-sUSE_SDL=2 -sUSE_FREETYPE=1 -sUSE_SDL_IMAGE=2 -sUSE_SDL_TTF=2 -sUSE_SDL_MIXER=2 -sSDL2_IMAGE_FORMATS=\"[\"png\"]\"")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_EXECUTABLE_SUFFIX .html)
+    set_target_properties(main
+        PROPERTIES
+            LINK_FLAGS "--preload-file=assets -s ALLOW_MEMORY_GROWTH=1")
+
+    add_custom_command(TARGET main
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
+        COMMENT "copy assets file to build path"
+        VERBATIM
+    )
 else()
     find_package(SDL2 REQUIRED CONFIG)
     find_package(SDL2_image REQUIRED CONFIG)

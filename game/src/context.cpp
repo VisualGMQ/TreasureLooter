@@ -94,46 +94,44 @@ Context::~Context() {
 }
 
 void Context::Update() {
-    while (!shouldExit_) {
-        while (SDL_PollEvent(&event_)) {
-            ImGui_ImplSDL2_ProcessEvent(&event_);
-            if (event_.type == SDL_QUIT) {
-                shouldExit_ = true;
-            }
-            keyboard->HandleEvent(event_);
-            mouse->HandleEvent(event_);
-            gameCtrlMgr->HandleEvent(event_);
-            fingerMgr->HandleEvent(event_);
-            controllerMgr->HandleEvent(event_);
+    while (SDL_PollEvent(&event_)) {
+        ImGui_ImplSDL2_ProcessEvent(&event_);
+        if (event_.type == SDL_QUIT) {
+            shouldExit_ = true;
         }
-
-        ImGui_ImplSDLRenderer2_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::ShowDemoWindow();
-
-        renderer->Clear(Color{100, 100, 100});
-
-        controllerMgr->Update();
-        gameController->Update();
-        keyboard->Update();
-        mouse->Update();
-        gameCtrlMgr->Update();
-        fingerMgr->Update();
-        sceneMgr->Update();
-        debugMgr->Update();
-
-        ImGui::Render();
-        ImGuiIO& io = ImGui::GetIO();
-        renderer->SetScale(
-            {io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
-        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(),
-                                              renderer->renderer_);
-
-        renderer->Present();
-        sceneMgr->PostUpdate();
+        keyboard->HandleEvent(event_);
+        mouse->HandleEvent(event_);
+        gameCtrlMgr->HandleEvent(event_);
+        fingerMgr->HandleEvent(event_);
+        controllerMgr->HandleEvent(event_);
     }
+
+    ImGui_ImplSDLRenderer2_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
+
+    renderer->Clear(Color{100, 100, 100});
+
+    controllerMgr->Update();
+    gameController->Update();
+    keyboard->Update();
+    mouse->Update();
+    gameCtrlMgr->Update();
+    fingerMgr->Update();
+    sceneMgr->Update();
+    debugMgr->Update();
+
+    ImGui::Render();
+    ImGuiIO& io = ImGui::GetIO();
+    renderer->SetScale(
+            {io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
+    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(),
+            renderer->renderer_);
+
+    renderer->Present();
+    sceneMgr->PostUpdate();
 }
 
 void Context::initImGui() {
