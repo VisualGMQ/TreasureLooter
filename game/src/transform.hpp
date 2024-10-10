@@ -12,4 +12,7 @@ struct Transform {
 Transform CalcTransformFromParent(const Transform& parentGlobalTransform,
                                   const Transform& localTransform);
 
+Transform CalcLocalTransformToParent(const Transform& parentGlobalTransform,
+                                  const Transform& globalTrans);
+
 }  // namespace tl

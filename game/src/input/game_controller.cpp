@@ -6,7 +6,7 @@ namespace tl::input {
 void GameController::Button::HandleEvent(
     const SDL_ControllerButtonEvent& event) {
     Type type = static_cast<Type>(event.button);
-    TL_RETURN_IF(type != Type::Invalid);
+    TL_RETURN_IF_FALSE(type != Type::Invalid);
 
     if (event.state == SDL_PRESSED) {
         isPressing_ = true;
@@ -29,11 +29,11 @@ void GameController::Axis::HandleEvent(const SDL_ControllerAxisEvent& event) {
 
 GameController::GameController(int index) {
     instanceID_ = SDL_JoystickGetDeviceInstanceID(index);
-    TL_RETURN_IF_LOGE(instanceID_ != -1, "game controller %d is not valid",
+    TL_RETURN_IF_FALSE_LOGE(instanceID_ != -1, "game controller %d is not valid",
                       index);
 
     controller_ = SDL_GameControllerOpen(index);
-    TL_RETURN_IF_LOGE(controller_, "controller can't be open");
+    TL_RETURN_IF_FALSE_LOGE(controller_, "controller can't be open");
 
     for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
         buttons_[i].type_ = static_cast<Button::Type>(i);

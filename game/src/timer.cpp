@@ -3,6 +3,10 @@
 
 namespace tl {
 
+Time::Time() {
+    fpsStatistic_.fill(0);
+}
+
 void Time::BeginRecordElapse() {
     elapseTime_ = SDL_GetTicks64();
 }
@@ -10,6 +14,11 @@ void Time::BeginRecordElapse() {
 void Time::EndRecordElapse() {
     elapseTime_ = SDL_GetTicks64() - elapseTime_;
     lastElapseTime_ = elapseTime_;
+
+    for (int i = 0; i < fpsStatistic_.size() - 1; i++) { 
+        fpsStatistic_[i] = fpsStatistic_[i + 1];
+    }
+    fpsStatistic_.back() = elapseTime_;
 }
 
 TimeType Time::GetElapse() const {
@@ -23,11 +32,20 @@ uint32_t Time::GetFPS() const {
     return 1000 / lastElapseTime_;
 }
 
+uint32_t Time::GetAverageFPS() const {
+    float sum = 0;
+    for (int i = 0; i < fpsStatistic_.size(); i++) {
+        sum += fpsStatistic_[i];
+    }
+
+    return uint32_t(1000.0f / (sum / fpsStatistic_.size()));
+}
+
 Timer::Timer(TimeType interval, int loop, Timer::Callback callback)
     : interval_{interval}, loop_{loop}, callback_{callback} {}
 
 void Timer::Update(TimeType elapse) {
-    TL_RETURN_IF(isWorking_);
+    TL_RETURN_IF_FALSE(isWorking_);
 
     curTime_ += elapse;
     if (curTime_ >= interval_) {
@@ -57,7 +75,7 @@ void Timer::Start() {
 TimerID TimerManager::Create(TimeType interval, int loop,
                              Timer::Callback callback) {
     auto result = timers_.emplace(++curID_, Timer{interval, loop, callback});
-    TL_RETURN_VALUE_IF(result.second, TimerID{});
+    TL_RETURN_VALUE_IF_FALSE(result.second, TimerID{});
     return result.first->first;
 }
 

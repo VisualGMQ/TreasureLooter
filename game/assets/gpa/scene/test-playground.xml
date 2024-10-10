@@ -1,4 +1,4 @@
-<scene level='test_level'>
+<scene>
     <element path="tilemap"/>
     <element path="test-controller"/>
     <element path="test-transform-anim"/>

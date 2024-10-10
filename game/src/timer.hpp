@@ -1,19 +1,19 @@
 #pragma once
 #include "id.hpp"
 #include "pch.hpp"
+#include "common.hpp"
 
 namespace tl {
 
-using TimeType = uint64_t;
-
 class Time {
 public:
+    Time();
     TimeType GetElapse() const;
     uint32_t GetFPS() const;
+    uint32_t GetAverageFPS() const;
     void BeginRecordElapse();
     void EndRecordElapse();
 
-    Time() = default;
     Time(const Time&) = delete;
     Time(Time&&) = delete;
     Time& operator=(Time&&) = delete;
@@ -22,6 +22,8 @@ public:
 private:
     TimeType elapseTime_ = 0;
     TimeType lastElapseTime_ = 0;
+
+    std::array<float, 100> fpsStatistic_;
 };
 
 class Timer;

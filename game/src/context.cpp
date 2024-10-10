@@ -1,11 +1,14 @@
 #include "context.hpp"
 #include "asset_table.hpp"
+#include "controller/touch_controller.hpp"
 #include "flags.hpp"
+#include "level/test_pushActor.hpp"
+#include "level/test_moveAndSlide.hpp"
+#include "level/test_physics.hpp"
+#include "level/test_playground.hpp"
 #include "log.hpp"
 #include "math.hpp"
 #include "renderer.hpp"
-#include "transform.hpp"
-#include "controller/touch_controller.hpp"
 
 namespace tl {
 
@@ -38,20 +41,24 @@ void Context::postInit() {
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     controllerMgr = std::make_unique<controller::ControllerManager>();
-    gameController = std::make_unique<GameController>();
     textureMgr = std::make_unique<TextureManager>();
     tilemapMgr = std::make_unique<TileMapManager>();
     fontMgr = std::make_unique<FontManager>();
     animMgr = std::make_unique<AnimationManager>();
     audioMgr = std::make_unique<AudioManager>();
-    goMgr = std::make_unique<GameObjectManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
     keyboard = std::make_unique<input::Keyboard>();
     mouse = std::make_unique<input::Mouse>();
+    physicsScene = std::make_unique<PhysicsScene>();
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     debugMgr = std::make_unique<DebugManager>();
+
+    registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
+    registerLevel2Scene(std::make_unique<TestPhysicsLevel>(), "test-sweep");
+    registerLevel2Scene(std::make_unique<TestMoveAndSlideLevel>(), "test-maze");
+    registerLevel2Scene(std::make_unique<TestPushActor>(), "test-pushActor");
 }
 
 void Context::initSDL() {
@@ -60,7 +67,7 @@ void Context::initSDL() {
     SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 #endif
     IMG_Init(IMG_INIT_PNG);
-    Mix_Init(MIX_INIT_MP3|MIX_INIT_OGG);
+    Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG);
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) != 0) {
         LOGE("open audio device failed");
     }
@@ -81,6 +88,7 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    physicsScene.reset();
     audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();
@@ -96,7 +104,6 @@ Context::~Context() {
     assetTbl.reset();
     debugMgr.reset();
     animMgr.reset();
-    goMgr.reset();
     textureMgr.reset();
     renderer.reset();
     window.reset();
@@ -128,7 +135,9 @@ void Context::Update() {
     renderer->Clear(Color{0.3, 0.3, 0.3});
 
     controllerMgr->Update();
-    gameController->Update();
+    if (gameController) {
+        gameController->Update();
+    }
     keyboard->Update();
     mouse->Update();
     gameCtrlMgr->Update();
@@ -140,9 +149,9 @@ void Context::Update() {
     ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
     renderer->SetScale(
-            {io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
+        {io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(),
-            renderer->renderer_);
+                                          renderer->renderer_);
 
     renderer->Present();
     sceneMgr->PostUpdate();
@@ -166,6 +175,13 @@ void Context::quitImGui() {
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+}
+
+void Context::registerLevel2Scene(std::unique_ptr<Level>&& level,
+                                  const std::string& sceneName) {
+    auto scene = sceneMgr->Find(sceneName);
+    TL_RETURN_IF_FALSE(scene);
+    scene->RegisterLevel(std::move(level));
 }
 
 }  // namespace tl

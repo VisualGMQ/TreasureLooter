@@ -10,6 +10,14 @@ TileSet::operator bool() const {
     return texture && tileSize != Vec2{0, 0};
 }
 
+const ObjectLayer* MapLayer::AsObjectLayer() const {
+    return static_cast<const ObjectLayer*>(this);
+}
+
+const TileLayer* MapLayer::AsTileLayer() const {
+    return static_cast<const TileLayer*>(this);
+}
+
 TileLayer::TileLayer(uint32_t w, uint32_t h)
     : MapLayer{MapLayerType::Tiles}, w_{w}, h_{h} {
     tiles_.resize(w * h);
@@ -17,16 +25,20 @@ TileLayer::TileLayer(uint32_t w, uint32_t h)
 
 void TileLayer::SetTile(uint32_t x, uint32_t y, const Tile& tile) {
     uint32_t idx = x + y * w_;
-    TL_RETURN_IF(idx < tiles_.size());
+    TL_RETURN_IF_FALSE(idx < tiles_.size());
 
     tiles_[idx] = tile;
 }
 
 const Tile* TileLayer::GetTile(uint32_t x, uint32_t y) const {
     uint32_t idx = x + y * w_;
-    TL_RETURN_NULL_IF(idx < tiles_.size());
+    TL_RETURN_NULL_IF_FALSE(idx < tiles_.size());
 
     return &tiles_[idx];
+}
+
+Tile* TileLayer::GetTile(uint32_t x, uint32_t y) {
+    return const_cast<Tile*>(std::as_const(*this).GetTile(x, y));
 }
 
 Vec2 TileLayer::GetSize() const {
@@ -36,16 +48,17 @@ Vec2 TileLayer::GetSize() const {
 TileMap::TileMap(const std::string& filename) {
     size_t fileSize;
     void* fileContent = SDL_LoadFile(filename.c_str(), &fileSize);
-    TL_RETURN_IF_LOGE(fileContent, "%s load failed", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGE(fileContent, "%s load failed", filename.c_str());
 
     tson::Tileson t;
     std::unique_ptr<tson::Map> map = t.parse(fileContent, fileSize);
 
-    TL_RETURN_IF_LOGW(map->getStatus() == tson::ParseStatus::OK,
-                      "%s tilemap parse failed", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGW(map->getStatus() == tson::ParseStatus::OK,
+                            "%s tilemap parse failed", filename.c_str());
 
-    TL_RETURN_IF_LOGE(!map->isInfinite(),
-                      "only support finite tilemap(from %s)", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGE(!map->isInfinite(),
+                            "only support finite tilemap(from %s)",
+                            filename.c_str());
 
     for (auto& tileset : map->getTilesets()) {
         tileSets_.emplace_back(parseTileSet(tileset));
@@ -151,6 +164,11 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
     auto mapSize = layer.getMap()->getSize();
     auto tileLayer = std::make_unique<TileLayer>(mapSize.x, mapSize.y);
 
+    Flags<tson::TileFlipFlags> flipFlags;
+    flipFlags |= tson::TileFlipFlags::Diagonally;
+    flipFlags |= tson::TileFlipFlags::Horizontally;
+    flipFlags |= tson::TileFlipFlags::Vertically;
+
     auto& tileData = layer.getTileData();
     for (auto& [pos, tileObj] : layer.getTileObjects()) {
         auto [x, y] = pos;
@@ -178,7 +196,22 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
         for (int i = 0; i < tileSets_.size(); i++) {
             if (tileSets_[i].name == tilesetName) {
                 myTile.tilesetIndex = i;
+
                 break;
+            }
+        }
+
+        // find collision shape
+        uint32_t id = tile->getGid() & static_cast<uint32_t>(~flipFlags);
+        if (auto it = collisionMap_.find(id); it != collisionMap_.end()) {
+            if (const Circle* c = std::get_if<Circle>(&it->second); c) {
+                myTile.actor.enable = true;
+                myTile.actor.shape.type = Shape::Type::Circle;
+                myTile.actor.shape.circle = *c;
+            } else if (const AABB* a = std::get_if<AABB>(&it->second); a) {
+                myTile.actor.enable = true;
+                myTile.actor.shape.type = Shape::Type::AABB;
+                myTile.actor.shape.aabb = *a;
             }
         }
 
@@ -188,7 +221,7 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
     return tileLayer;
 }
 
-TileSet TileMap::parseTileSet(const tson::Tileset& tileset) const {
+TileSet TileMap::parseTileSet(const tson::Tileset& tileset) {
     TileSet result;
     auto& imageName = tileset.getImage();
     Texture* texture = Context::GetInst().textureMgr->Find(imageName);
@@ -197,6 +230,33 @@ TileSet TileMap::parseTileSet(const tson::Tileset& tileset) const {
         LOGW("%s image not exists when parsing tileset %s", imageName.c_str(),
              tileset.getName().c_str());
         return {};
+    }
+
+    Flags<tson::TileFlipFlags> flipFlags;
+    flipFlags |= tson::TileFlipFlags::Diagonally;
+    flipFlags |= tson::TileFlipFlags::Horizontally;
+    flipFlags |= tson::TileFlipFlags::Vertically;
+
+    auto& tiles = tileset.getTiles();
+    for (auto& tile : tiles) {
+        auto& objGroup = tile.getObjectgroup();
+        auto& objs = objGroup.getObjects();
+        for (auto& obj : objs) {
+            auto gid = tile.getId();
+            uint32_t id = gid & static_cast<uint32_t>(~flipFlags);
+            auto layer = parseObjectLayer(tile.getObjectgroup());
+            // NOTE: we only use one collision body in layer, and we only support Circle & AABB
+            if (!layer->ellipses.empty()) {
+                const Ellipse& ellipse = layer->ellipses[0];
+                TL_CONTINUE_IF_FALSE(ellipse);
+                collisionMap_[id] = Circle{ellipse.center, ellipse.halfX};
+            } else if (!layer->rects.empty()) {
+                const Rect& rect = layer->rects[0];
+                TL_CONTINUE_IF_FALSE(rect);
+                collisionMap_[id] = AABB{rect.position + rect.size * 0.5,
+                                         rect.size * 0.5};
+            }
+        }
     }
 
     result.name = tileset.getName();
@@ -227,5 +287,4 @@ TileMap* TileMapManager::Find(const std::string& name) {
     }
     return nullptr;
 }
-
-}  // namespace tl
+} // namespace tl

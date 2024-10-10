@@ -472,7 +472,7 @@
                 0,
                 0,
                 2147484039,
-                2147484038,
+                389,
                 2147484037,
                 0,
                 204,
@@ -608,6 +608,34 @@
             "spacing": 0,
             "tilecount": 504,
             "tileheight": 16,
+            "tiles": [
+                {
+                    "id": 388,
+                    "objectgroup": {
+                        "draworder": "index",
+                        "id": 2,
+                        "name": "",
+                        "objects": [
+                            {
+                                "height": 6.18182,
+                                "id": 1,
+                                "name": "",
+                                "rotation": 0,
+                                "type": "",
+                                "visible": true,
+                                "width": 7.72727,
+                                "x": 8.27273,
+                                "y": 9.81818
+                            }
+                        ],
+                        "opacity": 1,
+                        "type": "objectgroup",
+                        "visible": true,
+                        "x": 0,
+                        "y": 0
+                    }
+                }
+            ],
             "tilewidth": 16
         },
         {

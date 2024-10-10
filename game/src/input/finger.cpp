@@ -23,10 +23,10 @@ void FingerManager::TouchPoint::Update() {
 }
 
 void FingerManager::HandleEvent(const SDL_Event& event) {
-    TL_RETURN_IF(event.type == SDL_FINGERDOWN || event.type == SDL_FINGERUP ||
+    TL_RETURN_IF_FALSE(event.type == SDL_FINGERDOWN || event.type == SDL_FINGERUP ||
                  event.type == SDL_FINGERMOTION);
     auto id = event.tfinger.fingerId;
-    TL_RETURN_IF(id >= 0 && id < MaxFingerCount);
+    TL_RETURN_IF_FALSE(id >= 0 && id < MaxFingerCount);
 
     fingers_[id].HandleEvent(event.tfinger);
 }

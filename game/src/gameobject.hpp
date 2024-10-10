@@ -6,35 +6,33 @@
 #include "transform.hpp"
 #include "tilemap.hpp"
 #include "id.hpp"
+#include "physics.hpp"
 
 namespace tl {
-
-class GameObject;
-class GameObjectManager;
-
-using GameObjectID = ID<GameObject, GameObjectManager>;
 
 class GameObject {
 public:
     friend class Scene;
     friend class GameObjectManager;
+    friend class PhysicsScene;
 
     std::string name = "<no-name>";
     Transform transform;
     Sprite sprite;
     Animator animator;
     TileMap* tilemap = nullptr;
+    PhysicActor physicActor;
 
     const Transform& GetGlobalTransform() const { return globalTransform_; }
     GameObjectID GetID() const { return id_; }
     GameObjectID GetParentID() const { return parent_; }
 
     auto& GetChildren() const { return children_; }
-    void RemoveChild(GameObjectID);
-    void AppendChild(GameObjectID);
-    void SetChildToNext(GameObjectID target, GameObjectID go);
-    void SetChildToPrev(GameObjectID target, GameObjectID go);
-    void InsertChild(GameObjectID go, size_t idx);
+    void RemoveChild(GameObject&);
+    void AppendChild(GameObject&);
+    void SetChildToNext(GameObject& target, GameObject& go);
+    void SetChildToPrev(GameObject& target, GameObject& go);
+    void InsertChild(GameObject& go, size_t idx);
 
 private:
     Transform globalTransform_;
@@ -45,17 +43,26 @@ private:
 
 class GameObjectManager {
 public:
+    GameObjectManager() = default;
+    GameObjectManager(const GameObjectManager&) = delete;
+    GameObjectManager& operator=(const GameObjectManager&) = delete;
+    GameObjectManager(GameObjectManager&&) = default;
+    GameObjectManager& operator=(GameObjectManager&&) = default;
+
     GameObject* Create();
     void Destroy(GameObjectID);
     GameObject* Find(GameObjectID);
     GameObject* Find(std::string_view);
+    GameObject* Clone(GameObjectID);
+    GameObject* Clone(GameObject&);
     void Clear();
 
     auto& GetAllGO() const { return goMap_; }
+    auto& GetAllGO() { return goMap_; }
 
 private:
     std::unordered_map<GameObjectID::underlying_type, GameObject> goMap_;
-    GameObjectID::underlying_type curID_ = 0;
+    static GameObjectID::underlying_type curID_;
 };
 
 }  // namespace tl

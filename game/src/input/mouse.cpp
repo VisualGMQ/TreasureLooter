@@ -4,7 +4,7 @@
 namespace tl::input {
 
 void Mouse::Button::HandleEvent(const SDL_MouseButtonEvent& event) {
-    TL_RETURN_IF(event.button == static_cast<int>(type_));
+    TL_RETURN_IF_FALSE(event.button == static_cast<int>(type_));
 
     if (event.type == SDL_MOUSEBUTTONDOWN) {
         isPressing_ = true;

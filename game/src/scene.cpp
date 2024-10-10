@@ -2,9 +2,12 @@
 #include "common.hpp"
 #include "context.hpp"
 #include "macro.hpp"
+#include "physics.hpp"
 #include "tilemap.hpp"
 
 namespace tl {
+
+Scene SceneManager::null_;
 
 Scene::Scene(const std::string& filename) {
     void* fileContent = SDL_LoadFile(filename.c_str(), nullptr);
@@ -15,36 +18,43 @@ Scene::Scene(const std::string& filename) {
 
     tinyxml2::XMLDocument doc;
     auto err = doc.Parse((const char*)fileContent);
-    TL_RETURN_IF_LOGW(!err, "%s load failed", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGW(!err, "%s load failed", filename.c_str());
 
     load(doc);
 }
 
+GameObjectManager& Scene::GetGOMgr() {
+    return const_cast<GameObjectManager&>(std::as_const(*this).GetGOMgr());
+}
+
+const GameObjectManager& Scene::GetGOMgr() const {
+    return goMgr_;
+}
+
 void Scene::load(tinyxml2::XMLDocument& doc) {
-    auto root = Context::GetInst().goMgr->Create();
+    auto root = GetGOMgr().Create();
     root->name = "root";
-    goList_.push_back(root->GetID());
+    rootGO_ = root->GetID();
 
     auto sceneElem = doc.FirstChildElement("scene");
-    TL_RETURN_IF_LOGW(sceneElem, "`scene` elem not exists");
+    TL_RETURN_IF_FALSE_LOGW(sceneElem, "`scene` elem not exists");
 
     auto node = sceneElem->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
 
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
         GameObject* go = parseGORecurse(*elem);
-        TL_CONTINUE_IF(go);
+        TL_CONTINUE_IF_FALSE(go);
 
-        root->AppendChild(go->GetID());
+        root->AppendChild(*go);
     }
 }
 
 GameObject* Scene::parseGORecurse(const tinyxml2::XMLElement& node) {
     GameObject* go = parseGO(node);
-    TL_RETURN_NULL_IF(go);
-    goList_.push_back(go->GetID());
+    TL_RETURN_NULL_IF_FALSE(go);
 
     int elemCount = node.ChildElementCount();
     if (elemCount > 0) {
@@ -52,11 +62,11 @@ GameObject* Scene::parseGORecurse(const tinyxml2::XMLElement& node) {
         while (child) {
             auto elem = child->ToElement();
             child = child->NextSibling();
-            TL_CONTINUE_IF(elem);
+            TL_CONTINUE_IF_FALSE(elem);
 
             GameObject* childGO = parseGORecurse(*elem);
             if (childGO) {
-                go->AppendChild(childGO->GetID());
+                go->AppendChild(*childGO);
             }
         }
     }
@@ -64,9 +74,9 @@ GameObject* Scene::parseGORecurse(const tinyxml2::XMLElement& node) {
     return go;
 }
 
-GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
+GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) {
     const tinyxml2::XMLAttribute* attr = node.FindAttribute("path");
-    TL_RETURN_NULL_IF(attr);
+    TL_RETURN_NULL_IF_FALSE(attr);
 
     std::string filename =
         std::string("assets/gpa/go/") + attr->Value() + ".xml";
@@ -78,13 +88,13 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
 
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLError err = doc.Parse((const char*)fileContent);
-    TL_RETURN_NULL_IF_LOGW(!err, "%s parse failed", filename.c_str());
+    TL_RETURN_NULL_IF_FALSE_LOGW(!err, "%s parse failed", filename.c_str());
 
     auto goElem = doc.FirstChildElement("gameobject");
-    TL_RETURN_NULL_IF_LOGE(goElem, "%s don't exists `gameobject` elem",
-                           attr->Value());
+    TL_RETURN_NULL_IF_FALSE_LOGE(goElem, "%s don't exists `gameobject` elem",
+                                 attr->Value());
 
-    GameObject* go = Context::GetInst().goMgr->Create();
+    GameObject* go = GetGOMgr().Create();
     go->name = attr->Value();
 
     auto transformElem = goElem->FirstChildElement("transform");
@@ -102,20 +112,14 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
         go->tilemap = parseTileMap(*tilemapElem);
     }
 
-    auto controllerElem = goElem->FirstChildElement("controller");
-    if (controllerElem) {
-        auto& controller = Context::GetInst().gameController;
-        if (controller->HasCharacter()) {
-            LOGW("controller already has character: %s",
-                 controller->GetCharacter()->name.c_str());
-        } else {
-            controller->SetCharacter(go->GetID());
-        }
-    }
-
     auto animationElem = goElem->FirstChildElement("animation");
     if (animationElem) {
         go->animator = parseAnimator(*animationElem);
+    }
+
+    auto physicActorElem = goElem->FirstChildElement("physic_actor");
+    if (physicActorElem) {
+        go->physicActor = parsePhysicActor(*physicActorElem);
     }
 
     return go;
@@ -128,8 +132,7 @@ TileMap* Scene::parseTileMap(const tinyxml2::XMLElement& elem) const {
 }
 
 Animator Scene::parseAnimator(const tinyxml2::XMLElement& elem) const {
-    Animation* anim =
-        Context::GetInst().animMgr->Find(elem.GetText());
+    Animation* anim = Context::GetInst().animMgr->Find(elem.GetText());
 
     Animator animator;
     animator.animation = anim;
@@ -254,38 +257,56 @@ Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
     return sprite;
 }
 
-void Scene::clear() {
-    auto& goMgr = Context::GetInst().goMgr;
-    for (auto id : goList_) {
-        goMgr->Destroy(id);
+PhysicActor Scene::parsePhysicActor(const tinyxml2::XMLElement& elem) const {
+    PhysicActor actor;
+    actor.enable = false;
+    auto aabbElem = elem.FirstChildElement("aabb");
+    if (aabbElem) {
+        float values[4] = {0};
+        ParseFloat(aabbElem->GetText(), values, 4);
+        actor.enable = true;
+        actor.shape.type = Shape::Type::AABB;
+        actor.shape.aabb.center = Vec2{values[0], values[1]};
+        actor.shape.aabb.halfSize = Vec2{values[2], values[3]};
     }
+
+    auto circleElem = elem.FirstChildElement("circle");
+    if (circleElem) {
+        float values[3] = {0};
+        ParseFloat(circleElem->GetText(), values, 3);
+        actor.enable = true;
+        actor.shape.type = Shape::Type::Circle;
+        actor.shape.circle.center = Vec2{values[0], values[1]};
+        actor.shape.circle.radius = values[2];
+    }
+
+    return actor;
 }
 
-Scene::operator bool() const {
-    return !goList_.empty();
+void Scene::clear() {
+    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
+    deleteGORecurse(rootGO_);
+}
+
+void Scene::deleteGORecurse(GameObjectID id) {
+    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
+    auto go = goMgr.Find(id);
+    TL_RETURN_IF_FALSE(go);
+
+    for (auto child : go->GetChildren()) {
+        deleteGORecurse(id);
+    }
+
+    goMgr.Destroy(id);
 }
 
 GameObjectID Scene::GetRootGOID() const {
-    if (goList_.empty()) {
-        return {};
-    }
-
-    return goList_[0];
+    return rootGO_;
 }
 
 GameObject* Scene::GetRootGO() {
-    TL_RETURN_NULL_IF(!goList_.empty());
-    return Context::GetInst().goMgr->Find(goList_[0]);
-}
-
-bool Scene::HasGO(GameObjectID id) const {
-    return std::find_if(goList_.begin(), goList_.end(),
-                        [=](const GameObjectID& goID) { return goID == id; }) !=
-           goList_.end();
-}
-
-const std::vector<GameObjectID>& Scene::GetAllGOID() const {
-    return goList_;
+    return Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
+        GetRootGOID());
 }
 
 void Scene::RegisterLevel(std::unique_ptr<Level>&& level) {
@@ -293,11 +314,15 @@ void Scene::RegisterLevel(std::unique_ptr<Level>&& level) {
 }
 
 void Scene::Update() {
-    TL_RETURN_IF(!goList_.empty());
     if (level_) {
         level_->Update();
     }
-    updateGO(nullptr, Context::GetInst().goMgr->Find(goList_[0]));
+    updateGOTransformRecurse(nullptr, *GetRootGO(), false);
+    Context::GetInst().physicsScene->ClearActors();
+    addGOs2PhysicsScene();
+    Context::GetInst().physicsScene->Update(1);
+    updateGOTransformRecurse(nullptr, *GetRootGO(), true);
+    updateGO(nullptr, GetRootGO());
 }
 
 void Scene::updateGO(GameObject* parent, GameObject* go) {
@@ -307,20 +332,48 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
             syncAnim2GO(*go);
         }
     }
-    if (!parent) {
-        go->globalTransform_ = go->transform;
-    } else {
-        go->globalTransform_ =
-            CalcTransformFromParent(parent->globalTransform_, go->transform);
-    }
+
     drawTileMap(*go);
     drawSprite(*go);
 
     for (GameObjectID id : go->GetChildren()) {
-        GameObject* child = Context::GetInst().goMgr->Find(id);
+        GameObject* child =
+            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(id);
         if (child) {
             updateGO(go, child);
         }
+    }
+}
+
+void Scene::updateGOTransformRecurse(GameObject* parent, GameObject& child,
+                                     bool syncPhysics) {
+    if (syncPhysics && child.physicActor) {
+        Vec2 relativePos = Rotate(child.physicActor.shape.GetCenter() *
+                                      (child.globalTransform_.scale),
+                                  child.globalTransform_.rotation);
+        child.globalTransform_.position =
+            child.physicActor.collideShape_.GetCenter() - relativePos;
+        if (parent) {
+            child.transform = CalcLocalTransformToParent(
+                parent->GetGlobalTransform(), child.GetGlobalTransform());
+        } else {
+            child.transform = child.globalTransform_;
+        }
+    } else {
+        if (parent) {
+            child.globalTransform_ = CalcTransformFromParent(
+                parent->GetGlobalTransform(), child.transform);
+        } else {
+            child.globalTransform_ = child.transform;
+        }
+    }
+
+    for (auto c : child.GetChildren()) {
+        GameObject* go =
+            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(c);
+        TL_CONTINUE_IF_FALSE(go);
+
+        updateGOTransformRecurse(&child, *go, syncPhysics);
     }
 }
 
@@ -334,12 +387,19 @@ void Scene::drawSprite(const GameObject& go) const {
         go.sprite.anchor, go.sprite.flip, go.sprite.color);
 }
 
+void Scene::addGOs2PhysicsScene() {
+    for (auto&& [_, go] : GetGOMgr().GetAllGO()) {
+        Context::GetInst().physicsScene->MarkAsPhysics(&go);
+    }
+}
+
 void Scene::syncAnim2GO(GameObject& go) {
-    TL_RETURN_IF(go.animator);
+    TL_RETURN_IF_FALSE(go.animator);
 
     auto& floatTrack = go.animator.floatTracks_;
     for (int i = 0; i < floatTrack.size(); i++) {
-        TL_CONTINUE_IF(!go.animator.animation->floatTracks[i].keyframes.empty());
+        TL_CONTINUE_IF_FALSE(
+            !go.animator.animation->floatTracks[i].keyframes.empty());
 
         auto& track = floatTrack[i];
         auto bind = static_cast<FloatBindPoint>(i);
@@ -352,7 +412,8 @@ void Scene::syncAnim2GO(GameObject& go) {
 
     auto& vec2Track = go.animator.vec2Tracks_;
     for (int i = 0; i < vec2Track.size(); i++) {
-        TL_CONTINUE_IF(!go.animator.animation->vec2Tracks[i].keyframes.empty());
+        TL_CONTINUE_IF_FALSE(
+            !go.animator.animation->vec2Tracks[i].keyframes.empty());
 
         auto bind = static_cast<Vec2BindPoint>(i);
         auto& track = vec2Track[i];
@@ -368,7 +429,8 @@ void Scene::syncAnim2GO(GameObject& go) {
 
     auto& textureTrack = go.animator.textureTracks_;
     for (int i = 0; i < textureTrack.size(); i++) {
-        TL_CONTINUE_IF(!go.animator.animation->textureTracks[i].keyframes.empty());
+        TL_CONTINUE_IF_FALSE(
+            !go.animator.animation->textureTracks[i].keyframes.empty());
 
         auto bind = static_cast<TextureBindPoint>(i);
         auto& track = textureTrack[i];
@@ -381,7 +443,8 @@ void Scene::syncAnim2GO(GameObject& go) {
 
     auto& rectTrack = go.animator.rectTracks_;
     for (int i = 0; i < rectTrack.size(); i++) {
-        TL_CONTINUE_IF(!go.animator.animation->rectTracks[i].keyframes.empty());
+        TL_CONTINUE_IF_FALSE(
+            !go.animator.animation->rectTracks[i].keyframes.empty());
 
         auto bind = static_cast<RectBindPoint>(i);
         auto& track = rectTrack[i];
@@ -394,7 +457,7 @@ void Scene::syncAnim2GO(GameObject& go) {
 }
 
 void Scene::drawTileMap(const GameObject& go) const {
-    TL_RETURN_IF(go.tilemap);
+    TL_RETURN_IF_FALSE(go.tilemap);
 
     for (auto& layer : go.tilemap->GetLayers()) {
         if (layer->GetType() == MapLayerType::Object) {
@@ -412,7 +475,7 @@ void Scene::drawTileLayer(const Transform& trans, const TileMap& map,
     for (uint32_t y = 0; y < layer.GetSize().h; y++) {
         for (uint32_t x = 0; x < layer.GetSize().w; x++) {
             const Tile* tile = layer.GetTile(x, y);
-            TL_CONTINUE_IF(tile && tile->tilesetIndex);
+            TL_CONTINUE_IF_FALSE(tile && tile->tilesetIndex);
             const TileSet& tileset = map.GetTileSet(tile->tilesetIndex.value());
 
             Transform localTransform;
@@ -449,42 +512,39 @@ SceneManager::SceneManager() {
 
     tinyxml2::XMLDocument doc;
     auto err = doc.Parse((const char*)fileContent);
-    TL_RETURN_IF_LOGE(!err, "assets/scenes.xml parse failed");
+    TL_RETURN_IF_FALSE_LOGE(!err, "assets/scenes.xml parse failed");
 
     auto scenesElem = doc.FirstChildElement("scenes");
-    TL_RETURN_IF_LOGE(scenesElem, "don't exists `scenes`");
+    TL_RETURN_IF_FALSE_LOGE(scenesElem, "don't exists `scenes`");
 
     auto startupElem = scenesElem->FirstChildElement("startup");
     if (!startupElem) {
         Context::GetInst().Exit();
-        TL_RETURN_IF_LOGE(startupElem, "don't exists startup scene");
+        TL_RETURN_IF_FALSE_LOGE(startupElem, "don't exists startup scene");
     }
     const char* startupName = startupElem->GetText();
 
     auto sceneElem = scenesElem->FirstChildElement("scene");
-    TL_RETURN_IF_LOGE(sceneElem, "don't exists `scene`");
+    TL_RETURN_IF_FALSE_LOGE(sceneElem, "don't exists `scene`");
 
     auto node = sceneElem->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
 
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
 
         auto attr = elem->FindAttribute("path");
-        TL_CONTINUE_IF(attr && attr->Value());
+        TL_CONTINUE_IF_FALSE(attr && attr->Value());
 
         std::string name = attr->Value();
         Scene scene("assets/gpa/scene/" + name + ".xml");
-        TL_CONTINUE_IF(scene);
 
         auto& emplacedScene =
             sceneMap_.emplace(name, std::move(scene)).first->second;
-
-        if (name == startupName) {
-            curScene_ = &emplacedScene;
-        }
     }
+
+    ChangeScene(startupName);
 }
 
 Scene* SceneManager::Find(const std::string& name) {
@@ -495,8 +555,8 @@ Scene* SceneManager::Find(const std::string& name) {
     return &it->second;
 }
 
-Scene* SceneManager::GetCurScene() {
-    return curScene_;
+Scene& SceneManager::GetCurScene() {
+    return curScene_ ? *curScene_ : null_;
 }
 
 void SceneManager::Update() {

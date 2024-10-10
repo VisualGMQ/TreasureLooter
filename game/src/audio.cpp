@@ -5,7 +5,7 @@ namespace tl {
 
 Audio::Audio(const std::string& filename) {
     chunk_ = Mix_LoadWAV(filename.c_str());
-    TL_RETURN_IF_LOGE(chunk_, "audio %s load failed: %s", filename.c_str(),
+    TL_RETURN_IF_FALSE_LOGE(chunk_, "audio %s load failed: %s", filename.c_str(),
                       Mix_GetError());
 }
 
@@ -29,23 +29,23 @@ void Audio::Play(int loops) {
 }
 
 void Audio::Pause() {
-    TL_RETURN_IF(channel_ != InvalidChannel);
+    TL_RETURN_IF_FALSE(channel_ != InvalidChannel);
     Mix_Pause(channel_);
 }
 
 void Audio::Resume() {
-    TL_RETURN_IF(channel_ != InvalidChannel);
+    TL_RETURN_IF_FALSE(channel_ != InvalidChannel);
     Mix_ReserveChannels(channel_);
 }
 
 void Audio::Stop() {
-    TL_RETURN_IF(channel_ != InvalidChannel);
+    TL_RETURN_IF_FALSE(channel_ != InvalidChannel);
     Mix_HaltChannel(channel_);
     channel_ = InvalidChannel;
 }
 
 bool Audio::IsPlaying() {
-    TL_RETURN_FALSE_IF(channel_ != InvalidChannel);
+    TL_RETURN_FALSE_IF_FALSE(channel_ != InvalidChannel);
     return Mix_Playing(channel_);
 }
 
@@ -64,7 +64,7 @@ void Audio::FadeOut(int loops, int ms) {
 }
 
 void Audio::ChangeVolume(float volume) {
-    TL_RETURN_IF(channel_ != InvalidChannel && volume >= 0);
+    TL_RETURN_IF_FALSE(channel_ != InvalidChannel && volume >= 0);
     Mix_Volume(channel_, MIX_MAX_VOLUME * volume);
 }
 
@@ -74,7 +74,7 @@ Audio::~Audio() {
 
 Music::Music(const std::string& filename) {
     music_ = Mix_LoadMUS(filename.c_str());
-    TL_RETURN_IF_LOGE(music_, "music %s load faild: %s", filename.c_str(),
+    TL_RETURN_IF_FALSE_LOGE(music_, "music %s load faild: %s", filename.c_str(),
                       Mix_GetError());
 }
 
@@ -97,17 +97,17 @@ Music::~Music() {
 Audio* AudioManager::LoadSound(const std::string& filename,
                                const std::string& name) {
     Audio audio{filename};
-    TL_RETURN_NULL_IF(audio);
+    TL_RETURN_NULL_IF_FALSE(audio);
 
     auto result = audios_.emplace(name, std::move(audio));
-    TL_RETURN_NULL_IF(result.second);
+    TL_RETURN_NULL_IF_FALSE(result.second);
 
     return &result.first->second;
 }
 
 const Audio* AudioManager::FindSound(const std::string& name) const {
     auto it = audios_.find(name);
-    TL_RETURN_NULL_IF(it != audios_.end());
+    TL_RETURN_NULL_IF_FALSE(it != audios_.end());
 
     return &it->second;
 }
@@ -119,10 +119,10 @@ Audio* AudioManager::FindSound(const std::string& name) {
 Music* AudioManager::LoadMusic(const std::string& filename,
                                const std::string& name) {
     Music audio{filename};
-    TL_RETURN_NULL_IF(audio);
+    TL_RETURN_NULL_IF_FALSE(audio);
 
     auto result = musics_.emplace(name, std::move(audio));
-    TL_RETURN_NULL_IF(result.second);
+    TL_RETURN_NULL_IF_FALSE(result.second);
 
     return &result.first->second;
 }
@@ -166,13 +166,13 @@ void AudioManager::FadeOutMusic(int ms) {
 }
 
 void AudioManager::ChangeMusicVolume(float volume) {
-    TL_RETURN_IF(volume >= 0);
+    TL_RETURN_IF_FALSE(volume >= 0);
     Mix_VolumeMusic(volume * MIX_MAX_VOLUME);
 }
 
 Music* AudioManager::findMusic(const std::string& name) {
     auto it = musics_.find(name);
-    TL_RETURN_NULL_IF(it != musics_.end());
+    TL_RETURN_NULL_IF_FALSE(it != musics_.end());
     return &it->second;
 }
 

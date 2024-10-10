@@ -10,5 +10,4 @@
         <texture>SpriteSheet.png</texture>
         <region>0 0 16 16</region>
     </sprite>
-    <controller/>
 </gameobject>

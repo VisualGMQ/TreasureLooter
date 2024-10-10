@@ -9,6 +9,7 @@ class DebugManager {
 public:
     bool enableDrawGO = false;
     bool simulateTouch = false;
+    bool enableDrawCollisionShapes = false;
     std::unique_ptr<GOHierarchyWatcher> hierarchyWatcher;
     std::unique_ptr<Inspector> inspector;
 
@@ -16,7 +17,10 @@ public:
     void Update();
 
 private:
-    void drawAllGO();
+    void drawGO(const GameObject&);
+    void drawCollisionShape(const GameObject&);
+    void drawOneCollisionShape(const Shape& shape);
+    void updateRecurse(GameObject&);
 };
 
 }  // namespace tl

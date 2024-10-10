@@ -17,4 +17,15 @@ Transform CalcTransformFromParent(const Transform& parentGlobalTransform,
     return trans;
 }
 
+Transform CalcLocalTransformToParent(const Transform& parentGlobalTransform,
+                                  const Transform& globalTrans) {
+    Transform trans;
+    trans.scale = globalTrans.scale / parentGlobalTransform.scale;
+    trans.rotation = globalTrans.rotation - parentGlobalTransform.rotation;
+    trans.position = (globalTrans.position - parentGlobalTransform.position) / trans.scale;
+    trans.position = Rotate(trans.position, -parentGlobalTransform.rotation);
+
+    return trans;
+}
+
 }  // namespace tl
