@@ -6,6 +6,7 @@
 #include "transform.hpp"
 #include "tilemap.hpp"
 #include "id.hpp"
+#include "physics.hpp"
 
 namespace tl {
 
@@ -24,6 +25,7 @@ public:
     Sprite sprite;
     Animator animator;
     TileMap* tilemap = nullptr;
+    PhysicsActor physicsActor;
 
     const Transform& GetGlobalTransform() const { return globalTransform_; }
     GameObjectID GetID() const { return id_; }

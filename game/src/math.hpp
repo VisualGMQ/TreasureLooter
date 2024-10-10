@@ -77,6 +77,10 @@ Color operator/(float value, const Color& v1);
 struct Circle {
     float radius;
     Vec2 center;
+
+    operator bool() const {
+        return radius > 0;
+    }
 };
 
 struct Ellipse {
@@ -94,7 +98,15 @@ struct Polyline {
 };
 
 struct Rect {
-    Vec2 position, size;
+    union {
+        Vec2 position = {};
+        Vec2 center;
+    };
+
+    union {
+        Vec2 size = {};
+        Vec2 halfSize;
+    };
 
     Rect() = default;
 
@@ -108,6 +120,10 @@ struct Rect {
 
     static Rect CreateFromCenter(const Vec2& center, const Vec2& halfSize) {
         return {center - halfSize, halfSize * 2.0f};
+    }
+
+    operator bool() const {
+        return size.w > 0 && size.h > 0;
     }
 };
 
