@@ -54,6 +54,11 @@ void Context::postInit() {
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     debugMgr = std::make_unique<DebugManager>();
+
+    registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
+    registerLevel2Scene(std::make_unique<TestPhysicsLevel>(), "test-sweep");
+    registerLevel2Scene(std::make_unique<TestMoveAndSlideLevel>(), "test-maze");
+    registerLevel2Scene(std::make_unique<TestPushActor>(), "test-pushActor");
     eventMgr = std::make_unique<EventManager>();
 
     registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
@@ -91,6 +96,7 @@ Context::~Context() {
 
     physicsScene.reset();
     eventMgr.reset();
+    physicsScene.reset();
     audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();

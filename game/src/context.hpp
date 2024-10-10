@@ -20,6 +20,8 @@
 #include "timer.hpp"
 #include "font.hpp"
 #include "audio.hpp"
+#include "physics.hpp"
+#include "physics_scene.hpp"
 #include "event.hpp"
 #include "physics.hpp"
 #include "physics_scene.hpp"
