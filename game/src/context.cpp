@@ -41,6 +41,7 @@ void Context::postInit() {
     gameController = std::make_unique<GameController>();
     textureMgr = std::make_unique<TextureManager>();
     tilemapMgr = std::make_unique<TileMapManager>();
+    fontMgr = std::make_unique<FontManager>();
     animMgr = std::make_unique<AnimationManager>();
     goMgr = std::make_unique<GameObjectManager>();
     debugMgr = std::make_unique<DebugManager>();
@@ -76,6 +77,7 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    fontMgr.reset();
     timerMgr.reset();
     time.reset();
     gameController.reset();

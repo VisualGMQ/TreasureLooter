@@ -13,6 +13,12 @@ public:
     void BeginRecordElapse();
     void EndRecordElapse();
 
+    Time() = default;
+    Time(const Time&) = delete;
+    Time(Time&&) = delete;
+    Time& operator=(Time&&) = delete;
+    Time& operator=(const Time&) = delete;
+
 private:
     TimeType elapseTime_ = 0;
     TimeType lastElapseTime_ = 0;
@@ -25,11 +31,18 @@ using TimerID = ID<Timer, TimerManager>;
 
 class Timer {
 public:
+    friend class TimerManager;
+
     static constexpr int InfLoop = -1;
 
     using Callback = std::function<TimeType(Timer&)>;
 
     Timer(TimeType interval, int loop, Callback callback);
+
+    Timer(Timer&&) = default;
+    Timer& operator=(Timer&&) = default;
+    Timer(const Timer&) = delete;
+    Timer& operator=(const Timer&) = delete;
 
     int GetRemainLoop() const { return loop_; }
 

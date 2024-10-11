@@ -18,6 +18,7 @@
 #include "controller/controller.hpp"
 #include "game_controller.hpp"
 #include "timer.hpp"
+#include "font.hpp"
 
 namespace tl {
 
@@ -48,6 +49,7 @@ public:
     std::unique_ptr<GameController> gameController;
     std::unique_ptr<Time> time;
     std::unique_ptr<TimerManager> timerMgr;
+    std::unique_ptr<FontManager> fontMgr;
 
     void Update();
 
