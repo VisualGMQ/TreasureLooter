@@ -5,43 +5,14 @@
 #include "sprite.hpp"
 #include "transform.hpp"
 #include "tilemap.hpp"
+#include "id.hpp"
 
 namespace tl {
 
-class GameObjectID {
-public:
-    friend class GameObjectManager;
+class GameObject;
+class GameObjectManager;
 
-    using underlying_type = uint32_t;
-
-    static GameObjectID Null;
-
-    GameObjectID(const GameObjectID&) = default;
-    GameObjectID() : id_{Invalid} {}
-
-    operator bool() const { return id_ != Invalid; }
-
-    GameObjectID& operator=(const GameObjectID&) = default;
-
-    bool operator==(const GameObjectID& o) const {
-        return id_ == o.id_;
-    }
-
-    bool operator!=(const GameObjectID& o) const {
-        return !(*this == o);
-    }
-
-    explicit operator underlying_type() const {
-        return id_;
-    }
-
-private:
-    underlying_type id_;
-
-    static const underlying_type Invalid = 0;
-
-    GameObjectID(underlying_type id) : id_{id} {}
-};
+using GameObjectID = ID<GameObject, GameObjectManager>;
 
 class GameObject {
 public:

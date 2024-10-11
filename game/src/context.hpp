@@ -17,6 +17,7 @@
 #include "input/finger.hpp"
 #include "controller/controller.hpp"
 #include "game_controller.hpp"
+#include "timer.hpp"
 
 namespace tl {
 
@@ -45,6 +46,8 @@ public:
     std::unique_ptr<input::FingerManager> fingerMgr;
     std::unique_ptr<controller::ControllerManager> controllerMgr;
     std::unique_ptr<GameController> gameController;
+    std::unique_ptr<Time> time;
+    std::unique_ptr<TimerManager> timerMgr;
 
     void Update();
 

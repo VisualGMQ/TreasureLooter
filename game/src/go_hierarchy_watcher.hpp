@@ -21,8 +21,8 @@ private:
         bool toBeChild = false;
 
         void Reset() {
-            target = GameObjectID::Null;
-            source = GameObjectID::Null;
+            target = GameObjectID{};
+            source = GameObjectID{};
         }
 
         operator bool() const { return source && target; }

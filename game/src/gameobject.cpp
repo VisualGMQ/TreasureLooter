@@ -6,8 +6,6 @@
 
 namespace tl {
 
-GameObjectID GameObjectID::Null;
-
 void GameObject::RemoveChild(GameObjectID go) {
     auto it = std::remove(children_.begin(), children_.end(), go);
     if (it == children_.end()) {
@@ -16,7 +14,7 @@ void GameObject::RemoveChild(GameObjectID go) {
     GameObject* removedGO = Context::GetInst().goMgr->Find(go);
     TL_RETURN_IF(removedGO);
 
-    removedGO->parent_ = GameObjectID::Null;
+    removedGO->parent_ = GameObjectID{};
     children_.erase(it, children_.end());
 }
 

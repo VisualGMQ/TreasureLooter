@@ -11,6 +11,7 @@ namespace tl {
 void GOHierarchyWatcher::Update() {
     auto& ctx = Context::GetInst();
     if (ImGui::Begin("hierarchy")) {
+        ImGui::LabelText("fps", "%u", ctx.time->GetFPS());
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);
 
         if (ImGui::Checkbox("simulate touch", &ctx.debugMgr->simulateTouch)) {
@@ -61,7 +62,7 @@ void GOHierarchyWatcher::Update() {
     applyGOMove();
     goMoveInfo_.Reset();
     if (shouldChangeDraggingState_) {
-        draggingGOID_ = GameObjectID::Null;
+        draggingGOID_ = GameObjectID{};
         shouldChangeDraggingState_ = false;
     }
 }
