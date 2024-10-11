@@ -31,6 +31,8 @@ void Context::postInit() {
     }
     initImGui();
 
+    time = std::make_unique<Time>();
+    timerMgr = std::make_unique<TimerManager>();
     keyboard = std::make_unique<input::Keyboard>();
     mouse = std::make_unique<input::Mouse>();
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
@@ -74,6 +76,8 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    timerMgr.reset();
+    time.reset();
     gameController.reset();
     controllerMgr.reset();
     fingerMgr.reset();
@@ -94,6 +98,8 @@ Context::~Context() {
 }
 
 void Context::Update() {
+    time->BeginRecordElapse();
+
     while (SDL_PollEvent(&event_)) {
         ImGui_ImplSDL2_ProcessEvent(&event_);
         if (event_.type == SDL_QUIT) {
@@ -122,6 +128,7 @@ void Context::Update() {
     fingerMgr->Update();
     sceneMgr->Update();
     debugMgr->Update();
+    timerMgr->Update(time->GetElapse());
 
     ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
@@ -132,6 +139,8 @@ void Context::Update() {
 
     renderer->Present();
     sceneMgr->PostUpdate();
+
+    time->EndRecordElapse();
 }
 
 void Context::initImGui() {
