@@ -59,6 +59,17 @@ AssetTable::AssetTable() {
         TL_CONTINUE_IF(elem);
         parseFont(*elem);
     }
+    // parse animation
+    tinyxml2::XMLElement* animList = assetsElem->FirstChildElement("animation");
+    TL_RETURN_IF(animList);
+
+    node = animList->FirstChild();
+    while (node) {
+        auto elem = node->ToElement();
+        node = node->NextSibling();
+        TL_CONTINUE_IF(elem);
+        parseAnimation(*elem);
+    }
 }
 
 void AssetTable::parseTexture(tinyxml2::XMLElement& node) {
@@ -84,6 +95,15 @@ void AssetTable::parseFont(tinyxml2::XMLElement& node) {
     auto path = "assets/font/" + name;
 
     Context::GetInst().fontMgr->Load(path, name);
+}
+
+void AssetTable::parseAnimation(tinyxml2::XMLElement& node) {
+    auto attr = node.FindAttribute("path");
+    std::string name = attr->Value();
+    TL_RETURN_IF(!name.empty());
+    auto path = "assets/anim/" + name + ".xml";
+
+    Context::GetInst().animMgr->Load(path, name);
 }
 
 }  // namespace tl

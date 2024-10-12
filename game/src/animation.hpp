@@ -1,7 +1,10 @@
 #pragma once
+#include "macro.hpp"
 #include "math.hpp"
 #include "pch.hpp"
 #include "texture.hpp"
+#include "timer.hpp"
+
 
 namespace tl {
 
@@ -24,25 +27,37 @@ struct Keyframe {
 template <typename T, bool CanInterp>
 struct Track {
     std::vector<Keyframe<T, CanInterp>> keyframes;
-    T curData;
+};
+
+template <typename T, bool CanInterp>
+struct TrackPlayInfo {
+    T curData{};
     uint32_t curFrame = 0;
 };
 
 enum class Vec2BindPoint {
-    GOPosition,
+    GOPosition = 0,
     GOScale,
+
+    _Count,
 };
 
 enum class FloatBindPoint {
-    GORotation,
+    GORotation = 0,
+
+    _Count,
 };
 
 enum class TextureBindPoint {
-    Sprite,
+    Sprite = 0,
+
+    _Count,
 };
 
 enum class RectBindPoint {
-    Sprite,
+    Sprite = 0,
+
+    _Count,
 };
 
 using TextureTrack = Track<Texture*, false>;
@@ -50,9 +65,49 @@ using RectTrack = Track<Rect, false>;
 using Vec2Track = Track<Vec2, true>;
 using FloatTrack = Track<float, true>;
 
+using TextureTrackPlayInfo = TrackPlayInfo<Texture*, false>;
+using RectTrackPlayInfo = TrackPlayInfo<Rect, false>;
+using Vec2TrackPlayInfo = TrackPlayInfo<Vec2, true>;
+using FloatTrackPlayInfo = TrackPlayInfo<float, true>;
+
+static constexpr int InfLoop = -1;
+
 class Animation {
 public:
-    static constexpr int InfLoop = -1;
+    explicit Animation(const std::string& filename);
+
+    std::array<Vec2Track, static_cast<size_t>(Vec2BindPoint::_Count)>
+        vec2Tracks;
+    std::array<FloatTrack, static_cast<size_t>(FloatBindPoint::_Count)>
+        floatTracks;
+    std::array<RectTrack, static_cast<size_t>(RectBindPoint::_Count)>
+        rectTracks;
+    std::array<TextureTrack, static_cast<size_t>(TextureBindPoint::_Count)>
+        textureTracks;
+
+    TimeType GetMaxTime() const { return maxTime_; }
+
+private:
+    TimeType maxTime_ = 0;
+
+    TimeType findMaxTime() const;
+
+    bool parseVec2Track(const tinyxml2::XMLElement&, Vec2BindPoint&,
+                        Vec2Track&) const;
+    bool parseFloatTrack(const tinyxml2::XMLElement&, FloatBindPoint&,
+                         FloatTrack&) const;
+    bool parseRectTrack(const tinyxml2::XMLElement&, RectBindPoint&,
+                        RectTrack&) const;
+    bool parseTextureTrack(const tinyxml2::XMLElement&, TextureBindPoint&,
+                           TextureTrack&) const;
+    bool parseDataAttributes(const tinyxml2::XMLElement&, TimeType& time,
+                             Interpolate& interp) const;
+};
+
+struct Animator {
+    friend class Scene;
+
+    Animation* animation = nullptr;
 
     void Play();
     void Pause();
@@ -65,119 +120,105 @@ public:
     void SetRate(float rate);
     float GetRate() const;
 
+    float GetCurTime() const { return curTime_; }
+
     void Update(uint32_t elapse);
 
-    void SetVec2Track(Vec2BindPoint, const Vec2Track&);
-    void SetFloatTrack(FloatBindPoint, const FloatTrack&);
-    void SetTextureTrack(TextureBindPoint, const TextureTrack&);
-    void SetRectTrack(RectBindPoint bind, const RectTrack& track);
-
-    auto& GetVec2Tracks() const { return vec2Tracks_; }
-
-    auto& GetFloatTracks() const { return floatTracks_; }
-
-    auto& GetTextureTracks() const { return textureTracks_; }
-
-    auto& GetRectTracks() const { return rectTracks_; }
+    operator bool() const { return animation; }
 
 private:
-    std::unordered_map<Vec2BindPoint, Vec2Track> vec2Tracks_;
-    std::unordered_map<FloatBindPoint, FloatTrack> floatTracks_;
-    std::unordered_map<RectBindPoint, RectTrack> rectTracks_;
-    std::unordered_map<TextureBindPoint, TextureTrack> textureTracks_;
-    float curTime_ = 0;
-    int loop_ = 0;
-    bool isPlaying_ = false;
-    uint32_t maxTime_ = 0;
-    float rate = 1;
+    std::array<Vec2TrackPlayInfo, static_cast<size_t>(Vec2BindPoint::_Count)>
+        vec2Tracks_;
+    std::array<FloatTrackPlayInfo, static_cast<size_t>(FloatBindPoint::_Count)>
+        floatTracks_;
+    std::array<RectTrackPlayInfo, static_cast<size_t>(RectBindPoint::_Count)>
+        rectTracks_;
+    std::array<TextureTrackPlayInfo,
+               static_cast<size_t>(TextureBindPoint::_Count)>
+        textureTracks_;
 
-    uint32_t findMaxTime() const;
+    bool isPlaying_ = false;
+    int loop_ = 0;
+    float curTime_ = 0;
+    float rate_ = 1;
 
     template <typename T, bool CanInterp>
-    void updateTrack(Track<T, CanInterp>& track) {
-        if (track.keyframes.empty()) {
+    void updateTrack(Track<T, CanInterp>& track, TrackPlayInfo<T, CanInterp>& playInfo) {
+        TL_RETURN_IF(!track.keyframes.empty());
+        TL_RETURN_IF(curTime_ >= track.keyframes[0].time &&
+                     curTime_ <= track.keyframes.back().time);
+
+        if (rate_ > 0) {
+            while (playInfo.curFrame + 1 < track.keyframes.size() &&
+                   track.keyframes[playInfo.curFrame + 1].time <= curTime_) {
+                playInfo.curFrame++;
+            }
+        } else if (rate_ < 0) {
+            while (playInfo.curFrame > 0 &&
+                   track.keyframes[playInfo.curFrame].time > curTime_) {
+                playInfo.curFrame--;
+            }
+        }
+
+        if (playInfo.curFrame + 1 == track.keyframes.size()) {
+            playInfo.curData = track.keyframes.back().value;
             return;
         }
 
-        if (rate > 0) {
-            while (track.curFrame + 1 < track.keyframes.size() &&
-                   track.keyframes[track.curFrame + 1].time <= curTime_) {
-                track.curFrame++;
-            }
-        } else if (rate < 0) {
-            while (track.curFrame > 0 &&
-                   track.keyframes[track.curFrame].time > curTime_) {
-                track.curFrame--;
-            }
-        }
-
-        if (track.curFrame + 1 == track.keyframes.size()) {
-            track.curData = track.keyframes.back().value;
-            return;
-        }
-
-        auto& prevFrame = track.keyframes[track.curFrame];
-        auto& nextFrame = track.keyframes[track.curFrame + 1];
+        auto& prevFrame = track.keyframes[playInfo.curFrame];
+        auto& nextFrame = track.keyframes[playInfo.curFrame + 1];
         if constexpr (CanInterp) {
             if (prevFrame.interpolate == Interpolate::Linear) {
                 float percent = (curTime_ - prevFrame.time) /
                                 float(nextFrame.time - prevFrame.time);
                 T value = prevFrame.value +
                           (nextFrame.value - prevFrame.value) * percent;
-                track.curData = value;
+                playInfo.curData = value;
             } else {
-                track.curData = prevFrame.value;
+                playInfo.curData = prevFrame.value;
             }
         } else {
-            track.curData = prevFrame.value;
+            playInfo.curData = prevFrame.value;
         }
     }
 
     template <typename T, bool CanInterp>
-    void updateTrackCurFrame(Track<T, CanInterp>& track) {
-        if (track.keyframes.empty()) {
-            return;
-        }
+    void updateTrackCurFrame(Track<T, CanInterp>& track, TrackPlayInfo<T, CanInterp>& playInfo) {
+        TL_RETURN_IF(!track.keyframes.empty());
 
-        if (rate > 0) {
+        if (rate_ > 0) {
             int i = 0;
             for (; i + 1 < track.keyframes.size(); i++) {
                 auto& prevFrame = track.keyframes[i];
                 auto& nextFrame = track.keyframes[i + 1];
                 if (prevFrame.time <= curTime_ && nextFrame.time > curTime_) {
-                    track.curFrame = i;
+                    playInfo.curFrame = i;
                     return;
                 }
             }
-            track.curFrame = i;
+            playInfo.curFrame = i;
         } else {
             int i = track.keyframes.size() - 1;
             for (; i - 1 > 0; i--) {
                 auto& prevFrame = track.keyframes[i - 1];
                 auto& nextFrame = track.keyframes[i];
                 if (prevFrame.time < curTime_ && nextFrame.time >= curTime_) {
-                    track.curFrame = i - 1;
+                    playInfo.curFrame = i - 1;
                     return;
                 }
             }
-            track.curFrame = i > 0 ? i - 1 : 0;
+            playInfo.curFrame = i > 0 ? i - 1 : 0;
         }
     }
 
     void updateAllTrack();
 };
 
-struct Animator {
-    Animation* animation = nullptr;
-
-    operator bool() const { return animation; }
-};
-
 class AnimationManager {
 public:
-    Animation* Create(const std::string& name);
-    Animation* Get(const std::string& name);
-    const Animation* Get(const std::string& name) const;
+    Animation* Load(const std::string& filename, const std::string& name);
+    Animation* Find(const std::string& name);
+    const Animation* Find(const std::string& name) const;
     void Destroy(const std::string& name);
     void Clear();
 

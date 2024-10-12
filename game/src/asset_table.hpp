@@ -12,6 +12,7 @@ private:
     void parseTexture(tinyxml2::XMLElement&);
     void parseTilemap(tinyxml2::XMLElement&);
     void parseFont(tinyxml2::XMLElement&);
+    void parseAnimation(tinyxml2::XMLElement&);
 };
 
 }

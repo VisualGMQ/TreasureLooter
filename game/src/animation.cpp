@@ -1,104 +1,238 @@
 #include "animation.hpp"
+#include "common.hpp"
+#include "context.hpp"
 
 namespace tl {
 
-void Animation::Play() {
-    isPlaying_ = true;
-}
+Animation::Animation(const std::string& filename) {
+    size_t fileSize;
+    void* fileContent = SDL_LoadFile(filename.c_str(), &fileSize);
+    TL_RETURN_IF_LOGE(fileContent, "%s load failed", filename.c_str());
 
-void Animation::Pause() {
-    isPlaying_ = false;
-}
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError err = doc.Parse((const char*)fileContent, fileSize);
+    TL_RETURN_IF_LOGE(!err, "animation %s load failed", filename.c_str());
 
-void Animation::Rewind() {
-    curTime_ = 0;
-}
+    auto animElem = doc.FirstChildElement("animation");
+    TL_RETURN_IF(animElem);
 
-void Animation::Stop() {
-    Pause();
-    Rewind();
-}
+    auto tracksElem = animElem->FirstChildElement("tracks");
+    TL_RETURN_IF(tracksElem);
 
-bool Animation::IsPlaying() const {
-    return isPlaying_;
-}
+    auto trackElem = tracksElem->FirstChildElement("track");
+    while (trackElem) {
+        auto bindElem = trackElem->FirstChildElement("bind");
+        TL_RETURN_IF(bindElem);
 
-void Animation::SetLoop(int loop) {
-    if (loop_ < 0) {
-        loop_ = InfLoop;
+        std::string_view bind = bindElem->GetText();
+        if (bind == "go_position" || bind == "go_scale") {
+            Vec2BindPoint bindPoint;
+            Vec2Track track;
+            TL_RETURN_IF(parseVec2Track(*trackElem, bindPoint, track));
+            vec2Tracks[static_cast<size_t>(bindPoint)] = std::move(track);
+        } else if (bind == "go_rotation") {
+            FloatBindPoint bindPoint;
+            FloatTrack track;
+            TL_RETURN_IF(parseFloatTrack(*trackElem, bindPoint, track));
+            floatTracks[static_cast<size_t>(bindPoint)] = std::move(track);
+        } else if (bind == "sprite_region") {
+            RectBindPoint bindPoint;
+            RectTrack track;
+            TL_RETURN_IF(parseRectTrack(*trackElem, bindPoint, track));
+            rectTracks[static_cast<size_t>(bindPoint)] = std::move(track);
+        } else if (bind == "sprite_texture") {
+            TextureBindPoint bindPoint;
+            TextureTrack track;
+            TL_RETURN_IF(parseTextureTrack(*trackElem, bindPoint, track));
+            textureTracks[static_cast<size_t>(bindPoint)] = std::move(track);
+        }
+
+        auto sibling = trackElem->NextSibling();
+        TL_BREAK_IF(sibling);
+        trackElem = sibling->ToElement();
     }
-    loop_ = loop;
-}
 
-int Animation::GetLoop() const {
-    return loop_;
-}
-
-void Animation::SetRate(float value) {
-    rate = value;
-}
-
-float Animation::GetRate() const {
-    return rate;
-}
-
-void Animation::SetVec2Track(Vec2BindPoint bind, const Vec2Track& track) {
-    if (track.keyframes.empty()) {
-        return;
-    }
-    Vec2& value = vec2Tracks_.emplace(bind, track).first->second.curData;
-    value = track.keyframes[0].value;
     maxTime_ = findMaxTime();
 }
 
-void Animation::SetFloatTrack(FloatBindPoint bind, const FloatTrack& track) {
-    if (track.keyframes.empty()) {
-        return;
+bool Animation::parseVec2Track(const tinyxml2::XMLElement& elem,
+                               Vec2BindPoint& bindPoint,
+                               Vec2Track& track) const {
+    auto bindElem = elem.FirstChildElement("bind");
+    TL_RETURN_FALSE_IF(bindElem);
+
+    if (strcmp(bindElem->GetText(), "go_position") == 0) {
+        bindPoint = Vec2BindPoint::GOPosition;
+    } else if (strcmp(bindElem->GetText(), "go_scale") == 0) {
+        bindPoint = Vec2BindPoint::GOScale;
     }
-    auto& t = floatTracks_.emplace(bind, track).first->second;
-    t.curData = t.keyframes[0].value;
-    maxTime_ = findMaxTime();
+
+    auto dataElem = elem.FirstChildElement("data");
+    TL_RETURN_FALSE_IF(dataElem);
+
+    auto element = dataElem->FirstChildElement("element");
+    while (element) {
+        Interpolate interpolate;
+        TimeType time;
+        parseDataAttributes(*element, time, interpolate);
+
+        Vec2 value;
+        ParseFloat(element->GetText(), (float*)&value, 2);
+
+        track.keyframes.emplace_back(value, time, interpolate);
+
+        auto sibling = element->NextSibling();
+        TL_BREAK_IF(sibling);
+        element = sibling->ToElement();
+    }
+
+    return true;
 }
 
-void Animation::SetTextureTrack(TextureBindPoint bind,
-                                const TextureTrack& track) {
-    if (track.keyframes.empty()) {
-        return;
+bool Animation::parseFloatTrack(const tinyxml2::XMLElement& elem,
+                                FloatBindPoint& bindPoint,
+                                FloatTrack& track) const {
+    auto bindElem = elem.FirstChildElement("bind");
+    TL_RETURN_FALSE_IF(bindElem);
+
+    if (strcmp(bindElem->GetText(), "go_rotation") == 0) {
+        bindPoint = FloatBindPoint::GORotation;
     }
-    auto& t = textureTracks_.emplace(bind, track).first->second;
-    t.curData = t.keyframes[0].value;
-    maxTime_ = findMaxTime();
+
+    auto dataElem = elem.FirstChildElement("data");
+    TL_RETURN_FALSE_IF(dataElem);
+
+    auto element = dataElem->FirstChildElement("element");
+    while (element) {
+        Interpolate interpolate;
+        TimeType time;
+        parseDataAttributes(*element, time, interpolate);
+
+        float value;
+        ParseFloat(element->GetText(), &value, 1);
+
+        track.keyframes.emplace_back(value, time, interpolate);
+
+        auto sibling = element->NextSibling();
+        TL_BREAK_IF(sibling);
+        element = sibling->ToElement();
+    }
+
+    return true;
 }
 
-void Animation::SetRectTrack(RectBindPoint bind, const RectTrack& track) {
-    if (track.keyframes.empty()) {
-        return;
+bool Animation::parseRectTrack(const tinyxml2::XMLElement& elem,
+                               RectBindPoint& bindPoint,
+                               RectTrack& track) const {
+    auto bindElem = elem.FirstChildElement("bind");
+    TL_RETURN_FALSE_IF(bindElem);
+
+    if (strcmp(bindElem->GetText(), "sprite_region") == 0) {
+        bindPoint = RectBindPoint::Sprite;
     }
-    auto& t = rectTracks_.emplace(bind, track).first->second;
-    t.curData = t.keyframes[0].value;
-    maxTime_ = findMaxTime();
+
+    auto dataElem = elem.FirstChildElement("data");
+    TL_RETURN_FALSE_IF(dataElem);
+
+    auto element = dataElem->FirstChildElement("element");
+    while (element) {
+        Interpolate interpolate;
+        TimeType time;
+        parseDataAttributes(*element, time, interpolate);
+
+        Rect value;
+        ParseFloat(element->GetText(), (float*)&value, 4);
+
+        track.keyframes.emplace_back(value, time, interpolate);
+
+        auto sibling = element->NextSibling();
+        TL_BREAK_IF(sibling);
+        element = sibling->ToElement();
+    }
+
+    return true;
 }
 
-uint32_t Animation::findMaxTime() const {
+bool Animation::parseTextureTrack(const tinyxml2::XMLElement& elem,
+                                  TextureBindPoint& bindPoint,
+                                  TextureTrack& track) const {
+    auto bindElem = elem.FirstChildElement("bind");
+    TL_RETURN_FALSE_IF(bindElem);
+
+    if (strcmp(bindElem->GetText(), "sprite_texture") == 0) {
+        bindPoint = TextureBindPoint::Sprite;
+    }
+
+    auto dataElem = elem.FirstChildElement("data");
+    TL_RETURN_FALSE_IF(dataElem);
+
+    auto element = dataElem->FirstChildElement("element");
+    while (element) {
+        Interpolate interpolate;
+        TimeType time;
+        parseDataAttributes(*element, time, interpolate);
+
+        std::string_view textureName = element->GetText();
+        Texture* texture = Context::GetInst().textureMgr->Find(
+            std::string(element->GetText()));
+        TL_RETURN_FALSE_IF(texture);
+
+        track.keyframes.emplace_back(texture, time, interpolate);
+
+        auto sibling = element->NextSibling();
+        TL_BREAK_IF(sibling);
+        element = sibling->ToElement();
+    }
+
+    return true;
+}
+
+bool Animation::parseDataAttributes(const tinyxml2::XMLElement& element,
+                                    TimeType& time,
+                                    Interpolate& interpolate) const {
+    auto timeAttr = element.FindAttribute("time");
+    TL_RETURN_FALSE_IF(timeAttr);
+    time = timeAttr->Int64Value();
+
+    interpolate = Interpolate::Linear;
+    auto interpAttr = element.FindAttribute("interpolate");
+
+    TL_RETURN_FALSE_IF(interpAttr);
+    if (strcmp(interpAttr->Value(), "linear") == 0) {
+        interpolate = Interpolate::Linear;
+    } else if (strcmp(interpAttr->Value(), "none") == 0) {
+        interpolate = Interpolate::None;
+    } else {
+        interpolate = Interpolate::Linear;
+        LOGW("unknown interpolate type %s", interpAttr->Value());
+    }
+
+    return true;
+}
+
+TimeType Animation::findMaxTime() const {
     uint32_t maxTime = 0;
-    for (auto& [_, track] : vec2Tracks_) {
-        if (track.keyframes.empty()) {
-            continue;
-        }
+    for (auto& track : vec2Tracks) {
+        TL_CONTINUE_IF(!track.keyframes.empty());
+
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
     }
-    for (auto& [_, track] : floatTracks_) {
-        if (track.keyframes.empty()) {
-            continue;
-        }
+    for (auto& track : floatTracks) {
+        TL_CONTINUE_IF(!track.keyframes.empty());
+
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
     }
-    for (auto& [_, track] : textureTracks_) {
-        if (track.keyframes.empty()) {
-            continue;
-        }
+    for (auto& track : textureTracks) {
+        TL_CONTINUE_IF(!track.keyframes.empty());
+
+        uint32_t trackMaxTime = track.keyframes.back().time;
+        maxTime = std::max(trackMaxTime, maxTime);
+    }
+    for (auto& track : rectTracks) {
+        TL_CONTINUE_IF(!track.keyframes.empty());
+
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
     }
@@ -106,68 +240,130 @@ uint32_t Animation::findMaxTime() const {
     return maxTime;
 }
 
-void Animation::Update(uint32_t elapse) {
-    if (rate == 0 || !isPlaying_) {
-        return;
+void Animator::Play() {
+    isPlaying_ = true;
+}
+
+void Animator::Pause() {
+    isPlaying_ = false;
+}
+
+void Animator::Rewind() {
+    curTime_ = 0;
+
+    for (auto& track : vec2Tracks_) {
+        track.curFrame = 0;
     }
+
+    for (auto& track : floatTracks_) {
+        track.curFrame = 0;
+    }
+
+    for (auto& track : textureTracks_) {
+        track.curFrame = 0;
+    }
+
+    for (auto& track : rectTracks_) {
+        track.curFrame = 0;
+    }
+}
+
+void Animator::Stop() {
+    Pause();
+    Rewind();
+}
+
+bool Animator::IsPlaying() const {
+    return isPlaying_;
+}
+
+void Animator::SetLoop(int loop) {
+    if (loop_ < 0) {
+        loop_ = InfLoop;
+    }
+    loop_ = loop;
+}
+
+int Animator::GetLoop() const {
+    return loop_;
+}
+
+void Animator::SetRate(float value) {
+    rate_ = value;
+}
+
+float Animator::GetRate() const {
+    return rate_;
+}
+
+void Animator::Update(uint32_t elapse) {
+    TL_RETURN_IF(rate_ != 0 && isPlaying_ && animation);
 
     updateAllTrack();
 
-    curTime_ += elapse * rate;
+    curTime_ += elapse * rate_;
 
-    if (curTime_ >= maxTime_ || curTime_ <= 0) {
+    TimeType maxTime = animation->GetMaxTime();
+
+    if (curTime_ >= animation->GetMaxTime() || curTime_ <= 0) {
         if (loop_ == 0) {
             isPlaying_ = false;
-            curTime_ = Clamp<float>(0, maxTime_, curTime_);
+            curTime_ = Clamp<float>(0, maxTime, curTime_);
 
             updateAllTrack();
-        }
-        if (loop_ > 0) {
-            curTime_ = rate > 0 ? curTime_ - maxTime_ : curTime_;
-            curTime_ = rate < 0 ? curTime_ + maxTime_ : curTime_;
+        } else {
+            curTime_ = rate_ > 0 ? curTime_ - maxTime : curTime_;
+            curTime_ = rate_ < 0 ? curTime_ + maxTime : curTime_;
 
             loop_ = loop_ == InfLoop ? InfLoop : loop_ - 1;
 
-            for (auto& [_, track] : vec2Tracks_) {
-                updateTrackCurFrame(track);
+            for (int i = 0; i < static_cast<int>(Vec2BindPoint::_Count); i++) {
+                updateTrackCurFrame(animation->vec2Tracks[i], vec2Tracks_[i]);
             }
-            for (auto& [_, track] : floatTracks_) {
-                updateTrackCurFrame(track);
+            for (int i = 0; i < static_cast<int>(FloatBindPoint::_Count); i++) {
+                updateTrackCurFrame(animation->floatTracks[i], floatTracks_[i]);
             }
-            for (auto& [_, track] : textureTracks_) {
-                updateTrackCurFrame(track);
+            for (int i = 0; i < static_cast<int>(TextureBindPoint::_Count);
+                 i++) {
+                updateTrackCurFrame(animation->textureTracks[i],
+                                    textureTracks_[i]);
             }
-            for (auto& [_, track] : rectTracks_) {
-                updateTrackCurFrame(track);
+            for (int i = 0; i < static_cast<int>(RectBindPoint::_Count); i++) {
+                updateTrackCurFrame(animation->rectTracks[i], rectTracks_[i]);
             }
         }
     }
 }
 
-void Animation::updateAllTrack() {
-    for (auto& [_, track] : vec2Tracks_) {
-        updateTrack(track);
+void Animator::updateAllTrack() {
+    for (int i = 0; i < static_cast<int>(Vec2BindPoint::_Count); i++) {
+        updateTrack(animation->vec2Tracks[i], vec2Tracks_[i]);
     }
-    for (auto& [_, track] : floatTracks_) {
-        updateTrack(track);
+    for (int i = 0; i < static_cast<int>(FloatBindPoint::_Count); i++) {
+        updateTrack(animation->floatTracks[i], floatTracks_[i]);
     }
-    for (auto& [_, track] : textureTracks_) {
-        updateTrack(track);
+    for (int i = 0; i < static_cast<int>(TextureBindPoint::_Count); i++) {
+        updateTrack(animation->textureTracks[i], textureTracks_[i]);
     }
-    for (auto& [_, track] : rectTracks_) {
-        updateTrack(track);
+    for (int i = 0; i < static_cast<int>(RectBindPoint::_Count); i++) {
+        updateTrack(animation->rectTracks[i], rectTracks_[i]);
     }
 }
 
-Animation* AnimationManager::Create(const std::string& name) {
-    return &animations_.emplace(name, Animation{}).first->second;
+Animation* AnimationManager::Load(const std::string& filename,
+                                  const std::string& name) {
+    auto result = animations_.emplace(name, filename);
+    TL_RETURN_NULL_IF_LOGE(result.second, "load animation %s failed",
+                           name.c_str());
+
+    return &result.first->second;
 }
 
-Animation* AnimationManager::Get(const std::string& name) {
-    return const_cast<Animation*>(std::as_const(*this).Get(name));
+Animation* AnimationManager::Find(const std::string& name) {
+    return const_cast<Animation*>(std::as_const(*this).Find(name));
 }
 
-const Animation* AnimationManager::Get(const std::string& name) const {
+const Animation* AnimationManager::Find(const std::string& name) const {
     if (auto it = animations_.find(name); it != animations_.end()) {
         return &it->second;
     }

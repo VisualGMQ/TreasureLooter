@@ -144,11 +144,11 @@ Texture* TextureManager::Load(const std::string& filename,
     return &textures_.emplace(name, std::move(texture)).first->second;
 }
 
-Texture* TextureManager::Get(const std::string& name) {
-    return const_cast<Texture*>(std::as_const(*this).Get(name));
+Texture* TextureManager::Find(const std::string& name) {
+    return const_cast<Texture*>(std::as_const(*this).Find(name));
 }
 
-const Texture* TextureManager::Get(const std::string& name) const {
+const Texture* TextureManager::Find(const std::string& name) const {
     if (auto it = textures_.find(name); it != textures_.end()) {
         return &it->second;
     }

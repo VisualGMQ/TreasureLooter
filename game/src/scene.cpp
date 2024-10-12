@@ -4,11 +4,10 @@
 #include "macro.hpp"
 #include "tilemap.hpp"
 
-
 namespace tl {
 
 Scene::Scene(const std::string& filename) {
-    void* fileContent =  SDL_LoadFile(filename.c_str(), nullptr);
+    void* fileContent = SDL_LoadFile(filename.c_str(), nullptr);
     if (!fileContent) {
         LOGE("can't load %s", filename.c_str());
         return;
@@ -114,6 +113,11 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) const {
         }
     }
 
+    auto animationElem = goElem->FirstChildElement("animation");
+    if (animationElem) {
+        go->animator = parseAnimator(*animationElem);
+    }
+
     return go;
 }
 
@@ -121,6 +125,26 @@ TileMap* Scene::parseTileMap(const tinyxml2::XMLElement& elem) const {
     auto nameElem = elem.FirstChildElement("name");
     const char* name = nameElem->GetText();
     return Context::GetInst().tilemapMgr->Find(name);
+}
+
+Animator Scene::parseAnimator(const tinyxml2::XMLElement& elem) const {
+    Animation* anim =
+        Context::GetInst().animMgr->Find(elem.GetText());
+
+    Animator animator;
+    animator.animation = anim;
+
+    if (!anim) {
+        LOGW("animation %s not exists", elem.GetText());
+    }
+
+    auto rate = elem.FindAttribute("rate");
+    animator.SetRate(rate ? rate->FloatValue() : 1.0);
+
+    auto loop = elem.FindAttribute("loop");
+    animator.SetLoop(loop ? loop->IntValue() : 0);
+
+    return animator;
 }
 
 Transform Scene::parseTransform(const tinyxml2::XMLElement& elem) const {
@@ -166,7 +190,7 @@ Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
         } else {
             LOGW("sprite `is_enable` elem can't parse");
         }
-    } 
+    }
     sprite.isEnable = enable;
 
     auto colorElem = elem.FirstChildElement("color");
@@ -177,7 +201,7 @@ Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
     auto textureElem = elem.FirstChildElement("texture");
     if (textureElem) {
         const char* filename = textureElem->GetText();
-        Texture* texture = Context::GetInst().textureMgr->Get(filename);
+        Texture* texture = Context::GetInst().textureMgr->Find(filename);
         if (!texture) {
             LOGW("texture %s not exists", filename);
         } else {
@@ -271,9 +295,11 @@ void Scene::Update() {
 
 void Scene::updateGO(GameObject* parent, GameObject* go) {
     if (go->animator.animation) {
-        go->animator.animation->Update(1);
+        go->animator.Update(1);
+        if (go->animator.IsPlaying()) {
+            syncAnim2GO(*go);
+        }
     }
-    syncAnim2GO(*go);
     if (!parent) {
         go->globalTransform_ = go->transform;
     } else {
@@ -302,12 +328,14 @@ void Scene::drawSprite(const GameObject& go) const {
 }
 
 void Scene::syncAnim2GO(GameObject& go) {
-    if (!go.animator) {
-        return;
-    }
+    TL_RETURN_IF(go.animator);
 
-    auto& floatTrack = go.animator.animation->GetFloatTracks();
-    for (auto& [bind, track] : floatTrack) {
+    auto& floatTrack = go.animator.floatTracks_;
+    for (int i = 0; i < floatTrack.size(); i++) {
+        TL_CONTINUE_IF(!go.animator.animation->floatTracks[i].keyframes.empty());
+
+        auto& track = floatTrack[i];
+        auto bind = static_cast<FloatBindPoint>(i);
         switch (bind) {
             case FloatBindPoint::GORotation:
                 go.transform.rotation = track.curData;
@@ -315,8 +343,12 @@ void Scene::syncAnim2GO(GameObject& go) {
         }
     }
 
-    auto& vec2Track = go.animator.animation->GetVec2Tracks();
-    for (auto& [bind, track] : vec2Track) {
+    auto& vec2Track = go.animator.vec2Tracks_;
+    for (int i = 0; i < vec2Track.size(); i++) {
+        TL_CONTINUE_IF(!go.animator.animation->vec2Tracks[i].keyframes.empty());
+
+        auto bind = static_cast<Vec2BindPoint>(i);
+        auto& track = vec2Track[i];
         switch (bind) {
             case Vec2BindPoint::GOPosition:
                 go.transform.position = track.curData;
@@ -327,8 +359,12 @@ void Scene::syncAnim2GO(GameObject& go) {
         }
     }
 
-    auto& textureTrack = go.animator.animation->GetTextureTracks();
-    for (auto& [bind, track] : textureTrack) {
+    auto& textureTrack = go.animator.textureTracks_;
+    for (int i = 0; i < textureTrack.size(); i++) {
+        TL_CONTINUE_IF(!go.animator.animation->textureTracks[i].keyframes.empty());
+
+        auto bind = static_cast<TextureBindPoint>(i);
+        auto& track = textureTrack[i];
         switch (bind) {
             case TextureBindPoint::Sprite:
                 go.sprite.SetTexture(*track.curData);
@@ -336,8 +372,12 @@ void Scene::syncAnim2GO(GameObject& go) {
         }
     }
 
-    auto& rectTrack = go.animator.animation->GetRectTracks();
-    for (auto& [bind, track] : rectTrack) {
+    auto& rectTrack = go.animator.rectTracks_;
+    for (int i = 0; i < rectTrack.size(); i++) {
+        TL_CONTINUE_IF(!go.animator.animation->rectTracks[i].keyframes.empty());
+
+        auto bind = static_cast<RectBindPoint>(i);
+        auto& track = rectTrack[i];
         switch (bind) {
             case RectBindPoint::Sprite:
                 go.sprite.SetRegion(track.curData);
