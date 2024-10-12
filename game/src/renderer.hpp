@@ -29,9 +29,10 @@ public:
     void DrawCircle(const Circle&, const Color&) const;
     void FillRect(const Rect&, const Color&) const;
     void DrawTexture(const Texture&, const Rect& srcRect, const Rect& dstRect,
-                     float degree, const Vec2& rotCenter, Flags<Flip> flip = Flip::None) const;
+                     float degree, const Vec2& rotCenter, Flags<Flip> flip, const Color&) const;
     void DrawTexture(const Texture&, const Rect& region, const Transform& trans,
-                     const Vec2& anchor, Flags<Flip> flip) const;
+                     const Vec2& anchor, Flags<Flip> flip,
+                     const Color&) const;
 
     operator bool() const;
 

@@ -169,6 +169,11 @@ Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
     } 
     sprite.isEnable = enable;
 
+    auto colorElem = elem.FirstChildElement("color");
+    if (colorElem) {
+        ParseFloat(colorElem->GetText(), (float*)&sprite.color, 4);
+    }
+
     auto textureElem = elem.FirstChildElement("texture");
     if (textureElem) {
         const char* filename = textureElem->GetText();
@@ -293,7 +298,7 @@ void Scene::drawSprite(const GameObject& go) const {
 
     Context::GetInst().renderer->DrawTexture(
         *go.sprite.GetTexture(), go.sprite.GetRegion(), go.GetGlobalTransform(),
-        go.sprite.anchor, go.sprite.flip);
+        go.sprite.anchor, go.sprite.flip, go.sprite.color);
 }
 
 void Scene::syncAnim2GO(GameObject& go) {
@@ -369,7 +374,7 @@ void Scene::drawTileLayer(const Transform& trans, const TileMap& map,
                 CalcTransformFromParent(trans, localTransform);
 
             renderer->DrawTexture(*tileset.texture, tile->region, globalTrans,
-                                  Vec2{}, tile->flip);
+                                  Vec2{}, tile->flip, Color::White);
         }
     }
 }
@@ -383,7 +388,7 @@ void Scene::drawObjectLayer(const Transform& trans, const TileMap& tilemap,
         localTransform.scale = obj.size / obj.region.size;
         Transform globalTrans = CalcTransformFromParent(trans, localTransform);
         renderer->DrawTexture(*obj.tileset->texture, obj.region, globalTrans,
-                              Vec2{0, 1}, obj.flip);
+                              Vec2{0, 1}, obj.flip, Color::White);
     }
 }
 

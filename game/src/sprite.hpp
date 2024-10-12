@@ -15,6 +15,7 @@ public:
     Vec2 anchor = Vec2{0.5, 0.5};
     Flags<Flip> flip = Flip::None;
     bool isEnable = true;
+    Color color = Color::White;
 
     void SetTexture(Texture& texture);
     const Texture* GetTexture() const;

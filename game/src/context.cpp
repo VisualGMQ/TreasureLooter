@@ -120,7 +120,7 @@ void Context::Update() {
 
     ImGui::ShowDemoWindow();
 
-    renderer->Clear(Color{100, 100, 100});
+    renderer->Clear(Color{0.3, 0.3, 0.3});
 
     controllerMgr->Update();
     gameController->Update();

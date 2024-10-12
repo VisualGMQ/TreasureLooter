@@ -6,5 +6,6 @@
     </transform>
     <sprite>
         <text font="Pixel.ttf" size="16">the quick brown fox jumps over the lazy dog</text>
+        <color>1 0 1 0.45</color>
     </sprite>
 </gameobject>

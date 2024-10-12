@@ -51,8 +51,28 @@ Vec2 operator/(float value, const Vec2& v1);
 Vec2 operator-(const Vec2& v);
 
 struct Color {
-    unsigned char r, g, b, a = 255;
+    static const Color White;
+    static const Color Black;
+    static const Color Red;
+    static const Color Blue;
+    static const Color Green;
+    static const Color Yellow;
+
+    float r = 1, g = 1, b = 1, a = 1;
+
+    Color& operator*=(const Color& o);
+    Color& operator*=(float value);
+    Color& operator/=(float value);
+    bool operator==(const Color& o) const;
+    bool operator!=(const Color& o) const;
 };
+
+Color operator*(const Color& v1, const Color& v2);
+Color operator/(const Color& v1, const Color& v2);
+Color operator*(const Color& v1, float value);
+Color operator/(const Color& v1, float value);
+Color operator*(float value, const Color& v1);
+Color operator/(float value, const Color& v1);
 
 struct Circle {
     float radius;

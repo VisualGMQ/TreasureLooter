@@ -61,6 +61,9 @@ void Inspector::updateSprite(Sprite& sprite) {
         ImGui::DragFloat4("region", (float*)(&region));
         sprite.SetRegion(region);
 
+        // display color
+        ImGui::ColorEdit4("color", &sprite.color.r, ImGuiColorEditFlags_Float);
+
         // display flip
         bool flipV = sprite.flip & Flip::Vertical;
         bool flipH = sprite.flip & Flip::Horizontal;

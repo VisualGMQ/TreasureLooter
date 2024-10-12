@@ -113,6 +113,89 @@ float Vec2::Length() const {
     return std::sqrt(LengthSqrd()); 
 }
 
+const Color Color::White{1, 1, 1, 1};
+const Color Color::Black{0, 0, 0, 1};
+const Color Color::Red{1, 0, 0, 1};
+const Color Color::Blue{0, 1, 0, 1};
+const Color Color::Green{0, 0, 1, 1};
+const Color Color::Yellow{1, 1, 0, 1};
+
+Color& Color::operator*=(const Color& o) {
+    r *= o.r;
+    g *= o.g;
+    b *= o.b;
+    a *= o.a;
+    return *this;
+}
+
+Color& Color::operator*=(float value) {
+    r *= value;
+    g *= value;
+    b *= value;
+    a *= value;
+    return *this;
+}
+
+Color& Color::operator/=(float value) {
+    r /= value;
+    g /= value;
+    b /= value;
+    a /= value;
+    return *this;
+}
+
+bool Color::operator==(const Color& o) const {
+    return r == o.r && g == o.g && b == o.b && a == o.a;
+}
+
+bool Color::operator!=(const Color& o) const {
+    return !(*this == o);
+}
+
+Color operator*(const Color& c1, const Color& c2) {
+    Color c = c1;
+    c.r *= c2.r;
+    c.g *= c2.g;
+    c.b *= c2.b;
+    c.a *= c2.a;
+    return c;
+}
+
+Color operator/(const Color& c1, const Color& c2) {
+    Color c = c1;
+    c.r /= c2.r;
+    c.g /= c2.g;
+    c.b /= c2.b;
+    c.a /= c2.a;
+    return c;
+}
+
+Color operator*(const Color& c1, float value) {
+    Color c = c1;
+    c.r *= value;
+    c.g *= value;
+    c.b *= value;
+    c.a *= value;
+    return c;
+}
+
+Color operator/(const Color& c1, float value) {
+    Color c = c1;
+    c.r /= value;
+    c.g /= value;
+    c.b /= value;
+    c.a /= value;
+    return c;
+}
+
+Color operator*(float value, const Color& c1) {
+    return c1 * value;
+}
+
+Color operator/(float value, const Color& c1) {
+    return c1 / value;
+}
+
 float Deg2Rad(float deg) {
     return deg * PI / 180.0;
 }
@@ -133,4 +216,4 @@ bool IsPointInCircle(const Vec2& p, const Circle& c) {
     return (p - c.center).LengthSqrd() <= c.radius * c.radius;
 }
 
-}
+}  // namespace tl
