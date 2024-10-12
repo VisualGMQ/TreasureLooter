@@ -1,0 +1,10 @@
+<gameobject>
+    <transform>
+        <position>200 100</position>
+        <rotation>0</rotation>
+        <scale>1 1</scale>
+    </transform>
+    <sprite>
+        <text font="Pixel.ttf" size="16">the quick brown fox jumps over the lazy dog</text>
+    </sprite>
+</gameobject>

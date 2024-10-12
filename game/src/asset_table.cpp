@@ -47,6 +47,18 @@ AssetTable::AssetTable() {
         TL_CONTINUE_IF(elem);
         parseTilemap(*elem);
     }
+
+    // parse font
+    tinyxml2::XMLElement* fontList = assetsElem->FirstChildElement("font");
+    TL_RETURN_IF(fontList);
+
+    node = fontList->FirstChild();
+    while (node) {
+        auto elem = node->ToElement();
+        node = node->NextSibling();
+        TL_CONTINUE_IF(elem);
+        parseFont(*elem);
+    }
 }
 
 void AssetTable::parseTexture(tinyxml2::XMLElement& node) {
@@ -65,5 +77,13 @@ void AssetTable::parseTilemap(tinyxml2::XMLElement& node) {
     Context::GetInst().tilemapMgr->Load(path, name);
 }
 
+void AssetTable::parseFont(tinyxml2::XMLElement& node) {
+    auto attr = node.FindAttribute("path");
+    std::string name = attr->Value();
+    TL_RETURN_IF(!name.empty());
+    auto path = "assets/font/" + name;
+
+    Context::GetInst().fontMgr->Load(path, name);
+}
 
 }  // namespace tl

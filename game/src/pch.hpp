@@ -15,6 +15,7 @@
 #include <string_view>
 #include <optional>
 #include <array>
+#include <variant>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>

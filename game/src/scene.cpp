@@ -156,16 +156,18 @@ Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
     }
 
     auto enableElem = elem.FirstChildElement("is_enable");
+    bool enable = true;
     if (enableElem) {
         auto text = enableElem->GetText();
         if (strcmp(text, "true") == 0) {
-            sprite.isEnable = true;
+            enable = true;
         } else if (strcmp(text, "false") == 0) {
-            sprite.isEnable = false;
+            enable = false;
         } else {
             LOGW("sprite `is_enable` elem can't parse");
         }
-    }
+    } 
+    sprite.isEnable = enable;
 
     auto textureElem = elem.FirstChildElement("texture");
     if (textureElem) {
@@ -175,6 +177,28 @@ Sprite Scene::parseSprite(const tinyxml2::XMLElement& elem) const {
             LOGW("texture %s not exists", filename);
         } else {
             sprite.SetTexture(*texture);
+        }
+    } else {
+        auto textElem = elem.FirstChildElement("text");
+        if (textElem) {
+            auto nameAttr = textElem->FindAttribute("font");
+            const char* name = nullptr;
+            const char* text = "";
+            if (nameAttr) {
+                name = nameAttr->Value();
+            }
+
+            auto sizeAttr = textElem->FindAttribute("size");
+            uint8_t size = 16;
+            if (sizeAttr) {
+                size = sizeAttr->Int64Value();
+            }
+
+            text = textElem->GetText();
+            auto font = Context::GetInst().fontMgr->Find(name);
+            if (font) {
+                sprite.SetFontTexture(FontTexture(*font, text, size));
+            }
         }
     }
 

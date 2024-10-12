@@ -76,10 +76,29 @@ void Inspector::updateSprite(Sprite& sprite) {
         }
 
         // display texture
-        auto texture = sprite.GetTexture();
-        if (texture) {
-            ImVec2 size{texture->GetSize().w, texture->GetSize().h};
-            ImGui::Image(texture->texture_, size);
+        if (sprite.IsTexture()) {
+            auto texture = sprite.GetTexture();
+            if (texture) {
+                ImVec2 size{texture->GetSize().w, texture->GetSize().h};
+                ImGui::Image(texture->texture_, size);
+            }
+        }
+
+        // show text properties
+        if (sprite.IsText()) {
+            ImGui::SeparatorText("text");
+            auto text = sprite.GetText();
+            char buf[2048] = {0};
+            strcpy(buf, text.c_str());
+            ImGui::InputTextMultiline("text", buf, sizeof(buf));
+            if (buf != text) {
+                sprite.SetText(buf);
+            }
+            int ptSize = sprite.GetFontSize();
+            ImGui::DragInt("ptSize", &ptSize, 1, 2, 255);
+            if (ptSize != sprite.GetFontSize()) {
+                sprite.SetFontSize(ptSize);
+            }
         }
     }
     ImGui::PopID();

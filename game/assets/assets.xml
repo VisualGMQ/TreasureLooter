@@ -8,4 +8,7 @@
         <element path="test"/>
         <element path="test2"/>
     </tilemap>
+    <font>
+        <element path="Pixel.ttf"/>
+    </font>
 </assets>
