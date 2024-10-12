@@ -34,7 +34,8 @@ void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& c) const {
 }
 
 void Renderer::setDrawColor(const Color& c) const {
-    SDL_SetRenderDrawColor(renderer_, c.r, c.g, c.b, c.a);
+    SDL_SetRenderDrawColor(renderer_, c.r * 255, c.g * 255, c.b * 255,
+                           c.a * 255);
 }
 
 void Renderer::DrawRect(const Rect& r, const Color& c) const {
@@ -66,12 +67,16 @@ void Renderer::DrawCircle(const Circle& c, const Color& color) const {
 
 void Renderer::DrawTexture(const Texture& texture, const Rect& srcRect,
                            const Rect& dstRect, float degree,
-                           const Vec2& rotCenter, Flags<Flip> flip) const {
+                           const Vec2& rotCenter, Flags<Flip> flip,
+                           const Color& color) const {
     SDL_Rect src;
     src.x = srcRect.position.x;
     src.y = srcRect.position.y;
     src.w = srcRect.size.w;
     src.h = srcRect.size.h;
+    SDL_SetTextureColorMod(texture.texture_, color.r * 255, color.g * 255,
+                           color.b * 255);
+    SDL_SetTextureAlphaMod(texture.texture_, color.a * 255);
     SDL_RenderCopyExF(renderer_, texture.texture_, &src, (SDL_FRect*)&dstRect,
                       degree, (SDL_FPoint*)&rotCenter,
                       static_cast<SDL_RendererFlip>(Flip{flip}));
@@ -83,7 +88,7 @@ void Renderer::SetScale(const Vec2& scale) const {
 
 void Renderer::DrawTexture(const Texture& texture, const Rect& region,
                            const Transform& trans, const Vec2& anchor,
-                           Flags<Flip> flip) const {
+                           Flags<Flip> flip, const Color& color) const {
     TL_RETURN_IF(texture);
 
     Rect dstRect;
@@ -121,7 +126,7 @@ void Renderer::DrawTexture(const Texture& texture, const Rect& region,
         f |= Flip::Vertical;
     }
 
-    DrawTexture(texture, region, dstRect, trans.rotation, Vec2::ZERO, f);
+    DrawTexture(texture, region, dstRect, trans.rotation, Vec2::ZERO, f, color);
 }
 
 }  // namespace tl
