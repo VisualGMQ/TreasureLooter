@@ -16,7 +16,7 @@ private:
     void updateSprite(Sprite&);
     void updateAnimator(Animator&);
     void updateTileMap(TileMap&);
-    void updateTransformGeneric(Transform& transform);
+    void updateTransformGeneric(Transform&);
 };
 
 }

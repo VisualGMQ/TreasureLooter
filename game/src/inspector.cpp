@@ -108,7 +108,32 @@ void Inspector::updateSprite(Sprite& sprite) {
 }
 
 void Inspector::updateAnimator(Animator& animator) {
-    // TODO:
+    if (ImGui::CollapsingHeader("animator")) {
+        ImGui::Text("status: %s", animator.IsPlaying() ? "playing" : "pausing");
+        ImGui::Text("%llu/%llu", (TimeType)animator.GetCurTime(), animator.animation->GetMaxTime());
+
+        if (ImGui::Button("play")) {
+            animator.Play();
+        }
+        ImGui::SameLine();
+
+        if (ImGui::Button("pause")) {
+            animator.Pause();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("stop")) {
+            animator.Stop();
+        }
+
+        float rate  = animator.GetRate();
+        ImGui::DragFloat("rate", &rate, 0.1);
+        animator.SetRate(rate);
+
+        int loop = animator.GetLoop();
+        ImGui::DragInt("loop", &loop, 1, -1, INT_MAX);
+        animator.SetLoop(loop);
+    }
 }
 
 void Inspector::updateTileMap(TileMap& tilemap) {

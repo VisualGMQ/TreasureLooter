@@ -58,8 +58,8 @@ private:
 class TextureManager {
 public:
     Texture* Load(const std::string& filename, const std::string& name);
-    const Texture* Get(const std::string& name) const;
-    Texture* Get(const std::string& name);
+    const Texture* Find(const std::string& name) const;
+    Texture* Find(const std::string& name);
     void Destroy(const std::string& name);
     void Clear();
 

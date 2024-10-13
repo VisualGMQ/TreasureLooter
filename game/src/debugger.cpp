@@ -35,8 +35,8 @@ void DebugManager::drawAllGO() {
         Vec2 yAxisEnd = Rotate(Vec2::Y_AXIS * AxisLen * transform.scale.y,
                                transform.rotation) +
                         transform.position;
-        renderer.DrawLine(transform.position, xAxisEnd, Color{255, 0, 0});
-        renderer.DrawLine(transform.position, yAxisEnd, Color{0, 255, 0});
+        renderer.DrawLine(transform.position, xAxisEnd, Color{1, 0, 0});
+        renderer.DrawLine(transform.position, yAxisEnd, Color{0, 1, 0});
     }
 }
 

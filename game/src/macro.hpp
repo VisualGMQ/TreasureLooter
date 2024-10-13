@@ -65,4 +65,9 @@
         continue;         \
     }
 
+#define TL_BREAK_IF(x) \
+    if (!(x)) {        \
+        break;         \
+    }
+
 #define FLT_EQ(a, b) (std::abs(a - b) <= std::numeric_limits<float>::epsilon())

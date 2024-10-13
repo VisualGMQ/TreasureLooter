@@ -191,7 +191,7 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
 TileSet TileMap::parseTileSet(const tson::Tileset& tileset) const {
     TileSet result;
     auto& imageName = tileset.getImage();
-    Texture* texture = Context::GetInst().textureMgr->Get(imageName);
+    Texture* texture = Context::GetInst().textureMgr->Find(imageName);
 
     if (!texture) {
         LOGW("%s image not exists when parsing tileset %s", imageName.c_str(),

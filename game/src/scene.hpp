@@ -27,6 +27,7 @@ private:
     Sprite parseSprite(const tinyxml2::XMLElement& elem) const;
     Transform parseTransform(const tinyxml2::XMLElement& elem) const;
     TileMap* parseTileMap(const tinyxml2::XMLElement& elem) const;
+    Animator parseAnimator(const tinyxml2::XMLElement& elem) const;
 
     void drawSprite(const GameObject&) const;
     void syncAnim2GO(GameObject&);

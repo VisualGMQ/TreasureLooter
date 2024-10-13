@@ -1,7 +1,6 @@
 <scenes>
-    <startup>scene1</startup>
+    <startup>test-playground</startup>
     <scene>
-        <element path="scene1"/>
-        <element path="test-controller"/>
+        <element path="test-playground"/>
     </scene>
 </scenes>

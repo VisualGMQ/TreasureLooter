@@ -44,13 +44,13 @@ void Context::postInit() {
     fontMgr = std::make_unique<FontManager>();
     animMgr = std::make_unique<AnimationManager>();
     goMgr = std::make_unique<GameObjectManager>();
-    debugMgr = std::make_unique<DebugManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
     keyboard = std::make_unique<input::Keyboard>();
     mouse = std::make_unique<input::Mouse>();
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
+    debugMgr = std::make_unique<DebugManager>();
 }
 
 void Context::initSDL() {

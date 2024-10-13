@@ -1,0 +1,19 @@
+<animation>
+    <tracks>
+        <track>
+            <bind>go_position</bind>
+            <data>
+                <element time="0" interpolate="linear">100 100</element>
+                <element time="5000">500 100</element>
+                <element time="10000">500 500</element>
+            </data>
+        </track>
+        <track>
+            <bind>go_rotation</bind>
+            <data>
+                <element time="5000">0</element>
+                <element time="10000">360</element>
+            </data>
+        </track>
+    </tracks>
+</animation>
