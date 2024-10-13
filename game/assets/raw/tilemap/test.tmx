@@ -5,6 +5,11 @@
  </editorsettings>
  <tileset firstgid="1" name="nature" tilewidth="16" tileheight="16" tilecount="504" columns="24">
   <image source="../../image/TilesetNature.png" width="384" height="336"/>
+  <tile id="388">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="8.27273" y="9.81818" width="7.72727" height="6.18182"/>
+   </objectgroup>
+  </tile>
  </tileset>
  <tileset firstgid="505" name="land" tilewidth="16" tileheight="16" tilecount="572" columns="22">
   <image source="../../image/TilesetFloor.png" width="352" height="417"/>
@@ -43,7 +48,7 @@
 230,231,0,252,0,0,202,0,0,0,252,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,202,0,0,0,0,
 0,0,0,0,0,389,390,391,0,0,0,0,0,0,0,0,
-0,204,202,0,0,2147484039,2147484038,2147484037,0,204,0,0,0,0,204,0,
+0,204,202,0,0,2147484039,389,2147484037,0,204,0,0,0,0,204,0,
 0,228,0,0,202,0,0,0,0,228,0,0,0,0,228,0,
 0,252,0,0,0,0,0,0,0,252,0,0,0,0,252,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0

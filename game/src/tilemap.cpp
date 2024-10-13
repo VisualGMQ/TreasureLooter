@@ -199,6 +199,15 @@ TileSet TileMap::parseTileSet(const tson::Tileset& tileset) const {
         return {};
     }
 
+    auto& tiles = tileset.getTiles();
+    for (auto& tile : tiles) {
+        auto& objGroup = tile.getObjectgroup();
+        auto& objs = objGroup.getObjects();
+        for (auto& obj : objs) {
+            // TODO: read collision
+        }
+    }
+
     result.name = tileset.getName();
     result.texture = texture;
     result.margin = tileset.getMargin();
