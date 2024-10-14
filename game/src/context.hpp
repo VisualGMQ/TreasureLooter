@@ -19,6 +19,7 @@
 #include "game_controller.hpp"
 #include "timer.hpp"
 #include "font.hpp"
+#include "audio.hpp"
 
 namespace tl {
 
@@ -50,6 +51,7 @@ public:
     std::unique_ptr<Time> time;
     std::unique_ptr<TimerManager> timerMgr;
     std::unique_ptr<FontManager> fontMgr;
+    std::unique_ptr<AudioManager> audioMgr;
 
     void Update();
 
