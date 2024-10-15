@@ -288,8 +288,15 @@ const std::vector<GameObjectID>& Scene::GetAllGOID() const {
     return goList_;
 }
 
+void Scene::RegisterLevel(std::unique_ptr<Level>&& level) {
+    level_ = std::move(level);
+}
+
 void Scene::Update() {
     TL_RETURN_IF(!goList_.empty());
+    if (level_) {
+        level_->Update();
+    }
     updateGO(nullptr, Context::GetInst().goMgr->Find(goList_[0]));
 }
 
@@ -509,8 +516,24 @@ bool SceneManager::ChangeScene(const std::string& name) {
 
 void SceneManager::PostUpdate() {
     if (changeDstScene_) {
+        if (curScene_) {
+            Level* level = curScene_->GetLevel();
+            if (level) {
+                level->Quit();
+            }
+        }
+
         curScene_ = changeDstScene_;
         changeDstScene_ = nullptr;
+
+        Level* level = curScene_->GetLevel();
+        if (curScene_ && level) {
+            if (!level->IsInited()) {
+                level->Init();
+                level->isInited_ = true;
+            }
+            level->Enter();
+        }
     }
 }
 

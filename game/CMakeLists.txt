@@ -66,3 +66,12 @@ target_include_directories(main PRIVATE src)
 target_compile_definitions(main PRIVATE _CRT_SECURE_NO_WARNINGS)
 target_precompile_headers(main PRIVATE src/pch.hpp)
 
+find_package(Python3 REQUIRED)
+if (NOT Python3_Interpreter_FOUND)
+    message(WARNING "python3 don't found")
+endif()
+
+add_custom_target(asset_fix
+    ${Python3_EXECUTABLE} tool/asset_fixer.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    VERBATIM)
