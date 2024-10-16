@@ -1,11 +1,14 @@
 #pragma once
 #include "gameobject.hpp"
+#include "level.hpp"
 
 namespace tl {
 
 class Scene {
 public:
     Scene(const std::string& filename);
+    void RegisterLevel(std::unique_ptr<Level>&& level);
+    Level* GetLevel() const { return level_.get(); }
     void Update();
 
     operator bool() const;
@@ -17,6 +20,7 @@ public:
 
 private:
     std::vector<GameObjectID> goList_;
+    std::unique_ptr<Level> level_;
 
     void load(tinyxml2::XMLDocument& doc);
     void clear();
