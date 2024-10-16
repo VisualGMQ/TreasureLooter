@@ -6,7 +6,7 @@
 namespace tl {
 
 AssetTable::AssetTable() {
-    void* fileContent =  SDL_LoadFile("assets/assets.xml", nullptr);
+    void* fileContent = SDL_LoadFile("assets/assets.xml", nullptr);
     if (!fileContent) {
         LOGE("can't load assets/assets.xml");
         Context::GetInst().Exit();
@@ -25,7 +25,8 @@ AssetTable::AssetTable() {
     TL_RETURN_IF_LOGE(assetsElem, "assets.xml don't has `assets` element");
 
     // parse textures
-    tinyxml2::XMLElement* textureList = assetsElem->FirstChildElement("texture");
+    tinyxml2::XMLElement* textureList =
+        assetsElem->FirstChildElement("texture");
     TL_RETURN_IF(textureList);
 
     auto node = textureList->FirstChild();
@@ -37,7 +38,8 @@ AssetTable::AssetTable() {
     }
 
     // parse tile map
-    tinyxml2::XMLElement* tilemapList = assetsElem->FirstChildElement("tilemap");
+    tinyxml2::XMLElement* tilemapList =
+        assetsElem->FirstChildElement("tilemap");
     TL_RETURN_IF(tilemapList);
 
     node = tilemapList->FirstChild();
@@ -59,6 +61,7 @@ AssetTable::AssetTable() {
         TL_CONTINUE_IF(elem);
         parseFont(*elem);
     }
+
     // parse animation
     tinyxml2::XMLElement* animList = assetsElem->FirstChildElement("animation");
     TL_RETURN_IF(animList);
@@ -69,6 +72,22 @@ AssetTable::AssetTable() {
         node = node->NextSibling();
         TL_CONTINUE_IF(elem);
         parseAnimation(*elem);
+    }
+
+    // parse audio
+    tinyxml2::XMLElement* audioList = assetsElem->FirstChildElement("audio");
+    TL_RETURN_IF(audioList);
+
+    node = audioList->FirstChild();
+    while (node) {
+        auto elem = node->ToElement();
+        node = node->NextSibling();
+        TL_CONTINUE_IF(elem);
+
+        bool isMusic = strcmp(elem->Name(), "music") == 0;
+
+        TL_CONTINUE_IF(isMusic || strcmp(elem->Name(), "sound") == 0);
+        parseAudio(*elem, isMusic);
     }
 }
 
@@ -104,6 +123,19 @@ void AssetTable::parseAnimation(tinyxml2::XMLElement& node) {
     auto path = "assets/anim/" + name + ".xml";
 
     Context::GetInst().animMgr->Load(path, name);
+}
+
+void AssetTable::parseAudio(tinyxml2::XMLElement& node, bool isMusic) {
+    auto attr = node.FindAttribute("path");
+    std::string name = attr->Value();
+    TL_RETURN_IF(!name.empty());
+
+    auto path = "assets/audio/" + name;
+    if (isMusic) {
+        Context::GetInst().audioMgr->LoadMusic(path, name);
+    } else {
+        Context::GetInst().audioMgr->LoadSound(path, name);
+    }
 }
 
 }  // namespace tl

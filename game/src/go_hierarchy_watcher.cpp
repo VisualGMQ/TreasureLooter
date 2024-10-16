@@ -10,6 +10,7 @@ namespace tl {
 
 void GOHierarchyWatcher::Update() {
     auto& ctx = Context::GetInst();
+
     if (ImGui::Begin("hierarchy")) {
         ImGui::LabelText("fps", "%u", ctx.time->GetFPS());
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);

@@ -15,4 +15,8 @@
         <element path="transform-test"/>
         <element path="texture-test"/>
     </animation>
+    <audio>
+        <music path="quiet-bgm.ogg"/> 
+        <sound path="Fire2.wav"/>
+    </audio>
 </assets>

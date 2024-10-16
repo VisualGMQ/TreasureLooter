@@ -43,6 +43,7 @@ void Context::postInit() {
     tilemapMgr = std::make_unique<TileMapManager>();
     fontMgr = std::make_unique<FontManager>();
     animMgr = std::make_unique<AnimationManager>();
+    audioMgr = std::make_unique<AudioManager>();
     goMgr = std::make_unique<GameObjectManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
@@ -59,7 +60,10 @@ void Context::initSDL() {
     SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 #endif
     IMG_Init(IMG_INIT_PNG);
-    Mix_Init(MIX_INIT_MP3);
+    Mix_Init(MIX_INIT_MP3|MIX_INIT_OGG);
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) != 0) {
+        LOGE("open audio device failed");
+    }
     TTF_Init();
 
 #ifdef TL_ANDROID
@@ -77,6 +81,7 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();
     time.reset();
