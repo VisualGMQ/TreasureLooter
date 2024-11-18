@@ -52,6 +52,7 @@ void Context::postInit() {
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     debugMgr = std::make_unique<DebugManager>();
+    eventMgr = std::make_unique<EventManager>();
 }
 
 void Context::initSDL() {
@@ -81,6 +82,7 @@ void Context::quitSDL() {
 Context::~Context() {
     quitImGui();
 
+    eventMgr.reset();
     audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();
@@ -136,6 +138,7 @@ void Context::Update() {
     sceneMgr->Update();
     debugMgr->Update();
     timerMgr->Update(time->GetElapse());
+    eventMgr->Update();
 
     ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
