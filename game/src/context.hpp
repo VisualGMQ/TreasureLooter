@@ -20,6 +20,7 @@
 #include "timer.hpp"
 #include "font.hpp"
 #include "audio.hpp"
+#include "event.hpp"
 #include "physics.hpp"
 #include "physics_scene.hpp"
 
@@ -54,6 +55,7 @@ public:
     std::unique_ptr<FontManager> fontMgr;
     std::unique_ptr<AudioManager> audioMgr;
     std::unique_ptr<PhysicsScene> physicsScene;
+    std::unique_ptr<EventManager> eventMgr;
 
     void Update();
 

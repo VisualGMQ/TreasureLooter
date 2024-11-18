@@ -54,6 +54,7 @@ void Context::postInit() {
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     debugMgr = std::make_unique<DebugManager>();
+    eventMgr = std::make_unique<EventManager>();
 
     registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
     registerLevel2Scene(std::make_unique<TestPhysicsLevel>(), "test-sweep");
@@ -89,6 +90,7 @@ Context::~Context() {
     quitImGui();
 
     physicsScene.reset();
+    eventMgr.reset();
     audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();
@@ -145,6 +147,7 @@ void Context::Update() {
     sceneMgr->Update();
     debugMgr->Update();
     timerMgr->Update(time->GetElapse());
+    eventMgr->Update();
 
     ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
