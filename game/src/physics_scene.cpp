@@ -1,4 +1,6 @@
 ﻿#include "physics_scene.hpp"
+
+#include "context.hpp"
 #include "gameobject.hpp"
 
 namespace tl {
@@ -74,6 +76,8 @@ void PhysicsScene::Update(TimeType delta) {
 
     hitInfos_.clear();
 
+    auto& eventMgr = Context::GetInst().eventMgr;
+
     for (int i = 0; i < actors_.size(); i++) {
         for (int j = i; j < actors_.size(); j++) {
             const MarkedActor* trigger = nullptr;
@@ -96,8 +100,15 @@ void PhysicsScene::Update(TimeType delta) {
                          [goid = solid->go->GetID()](const GameObjectID& id) {
                              return id == goid;
                          });
+            bool isInArea = trigger->actor->enteredGOList_.end() != it;
             bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
-            // TODO: not finish
+            if (isInArea && !isOverlap) {
+                trigger->actor->enteredGOList_.erase(it);
+                eventMgr->EnqueueEnterTriggerAreaEvent(solid->go, *trigger);
+            } else if (!isInArea && isOverlap) {
+                trigger->actor->enteredGOList_.push_back(solid->go->GetID());
+                eventMgr->EnqueueEnterTriggerAreaEvent(trigger->go, *solid);
+            }
         }
     }
 }
