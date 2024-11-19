@@ -10,6 +10,12 @@ struct VectorSplitResult {
 
 VectorSplitResult SplitVector(const Vec2& dir, const Vec2& norm);
 
+struct MarkedActor {
+    GameObject* go = nullptr;
+    Tile* tile = nullptr;
+    PhysicActor* actor = nullptr;
+};
+
 class PhysicsScene {
 public:
     void MarkAsPhysics(GameObject*);
@@ -24,7 +30,7 @@ public:
     void SyncPose(GameObject* parent, GameObject& child);
 
 private:
-    std::vector<PhysicActor*> actors_;
+    std::vector<MarkedActor> actors_;
     std::vector<SweepHitInfo> hitInfos_;
 
     void generateContacts();
@@ -32,10 +38,12 @@ private:
     void handleContacts();
     void handleNoContactMove();
     void moveAndSlide(SweepHitInfo& hit, float Threshould);
-    bool quickCheckNeedSweep(const AABB& aabb1, const AABB& aabb2, const Vec2& dir) const;
+    bool quickCheckNeedSweep(const AABB& aabb1, const AABB& aabb2,
+                             const Vec2& dir) const;
 
     SweepHitInfo sweep(const PhysicActor& actor1, const PhysicActor& actor2);
-    SweepHitInfo sweep(const Shape& shape1, const Shape& shape2, const Vec2& dir);
+    SweepHitInfo sweep(const Shape& shape1, const Shape& shape2,
+                       const Vec2& dir);
+    bool checkOverlap(const PhysicActor& tirgger, const PhysicActor& overlap) const;
 };
-
 }

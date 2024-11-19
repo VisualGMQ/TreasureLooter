@@ -13,19 +13,24 @@ void EventManager::RegistCallback(Event::Type type, const CallbackFn& callback,
     callbacks_[static_cast<uint32_t>(type)].push_back(cb);
 }
 
-void EventManager::EnqueueEvent(const Event& event) {
-    events_.push_back(event);
+void EventManager::EnqueuPhysicsAreaTriggerEvent(
+    const MarkedActor& src, const MarkedActor& dst) {
+    Event event;
+    event.type = Event::Type::PhysicsAreaTigger;
+    event.physicsAreaTrigger.src = src;
+    event.physicsAreaTrigger.dst = dst;
+    events_.emplace_back(std::move(event));
 }
 
 void EventManager::Update() {
     for (auto& event : events_) {
-        TL_CONTINUE_IF(event.type != Event::Type::Unknown);
+        TL_CONTINUE_IF_FALSE(event.type != Event::Type::Unknown);
         std::vector<size_t> needRemoveCallbacks;
 
         auto& callbacks = callbacks_[static_cast<uint32_t>(event.type)];
         for (size_t i = 0; i < callbacks.size(); i++) {
             EventCallback& callback = callbacks[i];
-            
+
             callback.func(event);
             if (callback.callOnce) {
                 needRemoveCallbacks.push_back(i);
@@ -39,5 +44,4 @@ void EventManager::Update() {
 
     events_.clear();
 }
-
 }

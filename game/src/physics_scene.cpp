@@ -2,7 +2,6 @@
 #include "gameobject.hpp"
 
 namespace tl {
-
 VectorSplitResult SplitVector(const Vec2& vel, const Vec2& norm) {
     Vec2 vertical = ProjectOn(vel, norm);
     Vec2 horizontal = vel - vertical;
@@ -12,16 +11,20 @@ VectorSplitResult SplitVector(const Vec2& vel, const Vec2& norm) {
 void PhysicsScene::MarkAsPhysics(GameObject* go) {
     if (go->physicActor) {
         go->physicActor.collideShape_ = GetShapeRelateBy(*go);
-        actors_.push_back(&go->physicActor);
+        MarkedActor actor;
+        actor.actor = &go->physicActor;
+        actor.go = go;
+        actors_.push_back(actor);
     }
     if (go->tilemap) {
         for (auto& layer : go->tilemap->GetLayers()) {
-            if (layer->GetType()  == MapLayerType::Tiles) {
+            if (layer->GetType() == MapLayerType::Tiles) {
                 auto tileLayer = layer->AsTileLayer();
                 for (int i = 0; i < tileLayer->GetSize().w; i++) {
                     for (int j = 0; j < tileLayer->GetSize().h; j++) {
                         Tile* tile = tileLayer->GetTile(i, j);
-                        TL_CONTINUE_IF_FALSE(tile && tile->tilesetIndex && tile->actor);
+                        TL_CONTINUE_IF_FALSE(
+                            tile && tile->tilesetIndex && tile->actor);
                         bool isVFlip = tile->flip & Flip::Vertical;
                         bool isHFlip = tile->flip & Flip::Horizontal;
                         const TileSet& tileset =
@@ -33,12 +36,18 @@ void PhysicsScene::MarkAsPhysics(GameObject* go) {
                             Vec2{isHFlip ? -1.0f : 1.0f,
                                  isVFlip ? -1.0f : 1.0f}
                         };
-                        Transform tileLocalTransform = CalcTransformFromParent(localTransform, scaleTransform);
+                        Transform tileLocalTransform = CalcTransformFromParent(
+                            localTransform, scaleTransform);
                         Transform tileGlobalTransform = CalcTransformFromParent(
                             go->GetGlobalTransform(), tileLocalTransform);
                         tile->actor.collideShape_ =
                             GetShapeRelateBy(tileGlobalTransform, tile->actor);
-                        actors_.push_back(&tile->actor);
+
+                        MarkedActor actor;
+                        actor.go = go;
+                        actor.tile = tile;
+                        actor.actor = &tile->actor;
+                        actors_.push_back(actor);
                     }
                 }
             }
@@ -64,6 +73,33 @@ void PhysicsScene::Update(TimeType delta) {
     }
 
     hitInfos_.clear();
+
+    for (int i = 0; i < actors_.size(); i++) {
+        for (int j = i; j < actors_.size(); j++) {
+            const MarkedActor* trigger = nullptr;
+            const MarkedActor* solid = nullptr;
+
+            MarkedActor& actor1 = actors_[i];
+            MarkedActor& actor2 = actors_[j];
+            if (actor1.actor->isTrigger && !actor2.actor->isTrigger) {
+                trigger = &actor1;
+                solid = &actor2;
+            } else if (!actor1.actor->isTrigger && actor2.actor->isTrigger) {
+                trigger = &actor1;
+                solid = &actor2;
+            } else {
+                continue;
+            }
+
+            auto it = std::find_if(trigger->actor->enteredGOList_.begin(),
+                         trigger->actor->enteredGOList_.end(),
+                         [goid = solid->go->GetID()](const GameObjectID& id) {
+                             return id == goid;
+                         });
+            bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
+            // TODO: not finish
+        }
+    }
 }
 
 void PhysicsScene::ClearActors() {
@@ -72,18 +108,22 @@ void PhysicsScene::ClearActors() {
 
 void PhysicsScene::handleNoContactMove() {
     for (auto actor : actors_) {
-        actor->collideShape_.SetCenter(actor->collideShape_.GetCenter() +
-                                       actor->movement_);
-        actor->movement_ = Vec2::ZERO;
+        actor.actor->collideShape_.SetCenter(
+            actor.actor->collideShape_.GetCenter() +
+            actor.actor->movement_);
+        actor.actor->movement_ = Vec2::ZERO;
     }
 }
 
 void PhysicsScene::generateContacts() {
     for (size_t i = 0; i < actors_.size(); i++) {
         std::optional<SweepHitInfo> minHitInfo;
-        PhysicActor* actor1 = actors_[i];
+        PhysicActor* actor1 = actors_[i].actor;
         for (size_t j = i + 1; j < actors_.size(); j++) {
-            PhysicActor* actor2 = actors_[j];
+            PhysicActor* actor2 = actors_[j].actor;
+
+            TL_CONTINUE_IF_FALSE(actor1->filter & actor2->filter);
+            TL_CONTINUE_IF_FALSE(!actor1->isTrigger || !actor2->isTrigger);
 
             SweepHitInfo hit = sweep(*actor1, *actor2);
             hit.src = actor1;
@@ -227,4 +267,31 @@ void PhysicsScene::SyncPose(GameObject* parent, GameObject& child) {
         }
     }
 }
-}  // namespace tl
+
+bool PhysicsScene::checkOverlap(const PhysicActor& trigger,
+                                const PhysicActor& solid) const {
+    if (trigger.collideShape_.type == Shape::Type::Circle) {
+        if (solid.collideShape_.type == Shape::Type::Circle) {
+            return IsCircleOverlap(trigger.collideShape_.circle,
+                                   solid.collideShape_.circle);
+        }
+        if (solid.collideShape_.type == Shape::Type::AABB) {
+            return IsCircleAABBOverlap(trigger.collideShape_.circle,
+                                       solid.collideShape_.aabb);
+        }
+        return false;
+    }
+
+    if (trigger.collideShape_.type == Shape::Type::AABB) {
+        if (solid.collideShape_.type == Shape::Type::Circle) {
+            return IsCircleAABBOverlap(solid.collideShape_.circle,
+                                       trigger.collideShape_.aabb);
+        }
+        if (solid.collideShape_.type == Shape::Type::AABB) {
+            return IsAABBOverlap(solid.collideShape_.aabb,
+                                 trigger.collideShape_.aabb);
+        }
+        return false;
+    }
+}
+} // namespace tl

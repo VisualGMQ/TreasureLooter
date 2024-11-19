@@ -20,6 +20,7 @@ struct Shape {
         AABB aabb;
         Circle circle;
     };
+    
     enum class Type {
         Unknown,
         AABB,
@@ -48,6 +49,9 @@ struct PhysicActor {
         Dynamic,
     } type = Type::Dynamic;
 
+    bool isTrigger = false;
+    uint32_t filter = std::numeric_limits<uint32_t>::max();
+
     Shape shape;
     bool enable = false;
 
@@ -60,6 +64,8 @@ struct PhysicActor {
 private:
     Vec2 movement_;
     Shape collideShape_;
+
+    std::vector<GameObjectID> enteredGOList_;
 };
 
 struct SweepHitInfo {

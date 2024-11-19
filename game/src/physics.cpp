@@ -7,7 +7,9 @@
 namespace tl {
 
 void PhysicActor::SetMovement(const Vec2& v) {
-    movement_ = v;
+    if (type == Type::Dynamic) {
+        movement_ = v;
+    }
 }
 
 size_t PhysicsScene::Raycast(const Vec2& start, const Vec2& dir,
@@ -20,7 +22,9 @@ size_t PhysicsScene::Raycast(const Vec2& start, const Vec2& dir,
     aabb1.halfSize.x = std::abs(halfDir.x);
     aabb1.halfSize.y = std::abs(halfDir.y);
     
-    for (auto actor : actors_) {
+    for (auto act : actors_) {
+        PhysicActor* actor = act.actor;
+        
         TL_BREAK_IF_FALSE(resultCount < maxHitInfoCount);
         TL_CONTINUE_IF_FALSE(quickCheckNeedSweep(aabb1, actor->collideShape_.aabb, dir));
 
@@ -47,7 +51,7 @@ size_t PhysicsScene::Sweep(const Shape& shape, const Vec2& dir,
     for (auto& other : actors_) {
         TL_RETURN_VALUE_IF_FALSE(count <= maxHitInfoCount, count);
 
-        SweepHitInfo hit = sweep(shape, other->collideShape_, dir);
+        SweepHitInfo hit = sweep(shape, other.actor->collideShape_, dir);
         if (hit.t > 0) {
             hitInfos[count++] = hit;
         }
