@@ -89,8 +89,8 @@ void PhysicsScene::Update(TimeType delta) {
                 trigger = &actor1;
                 solid = &actor2;
             } else if (!actor1.actor->isTrigger && actor2.actor->isTrigger) {
-                trigger = &actor1;
-                solid = &actor2;
+                trigger = &actor2;
+                solid = &actor1;
             } else {
                 continue;
             }
@@ -104,10 +104,10 @@ void PhysicsScene::Update(TimeType delta) {
             bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
             if (isInArea && !isOverlap) {
                 trigger->actor->enteredGOList_.erase(it);
-                eventMgr->EnqueueEnterTriggerAreaEvent(solid->go, *trigger);
+                eventMgr->EnqueueLeaveTriggerAreaEvent(solid->go, *trigger);
             } else if (!isInArea && isOverlap) {
                 trigger->actor->enteredGOList_.push_back(solid->go->GetID());
-                eventMgr->EnqueueEnterTriggerAreaEvent(trigger->go, *solid);
+                eventMgr->EnqueueEnterTriggerAreaEvent(solid->go, *trigger);
             }
         }
     }
@@ -134,7 +134,7 @@ void PhysicsScene::generateContacts() {
             PhysicActor* actor2 = actors_[j].actor;
 
             TL_CONTINUE_IF_FALSE(actor1->filter & actor2->filter);
-            TL_CONTINUE_IF_FALSE(!actor1->isTrigger || !actor2->isTrigger);
+            TL_CONTINUE_IF_FALSE(!actor1->isTrigger && !actor2->isTrigger);
 
             SweepHitInfo hit = sweep(*actor1, *actor2);
             hit.src = actor1;

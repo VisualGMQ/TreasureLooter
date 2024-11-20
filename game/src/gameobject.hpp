@@ -34,6 +34,9 @@ public:
     void SetChildToPrev(GameObject& target, GameObject& go);
     void InsertChild(GameObject& go, size_t idx);
 
+    void Move(const Vec2& offset);
+    void Teleport(const Vec2& pos);
+
 private:
     Transform globalTransform_;
     GameObjectID id_;

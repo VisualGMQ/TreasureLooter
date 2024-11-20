@@ -49,6 +49,18 @@ void GameObject::InsertChild(GameObject& go, size_t idx) {
     children_.insert(children_.begin() + idx, go.GetID());
 }
 
+void GameObject::Move(const Vec2& offset) {
+    if (physicActor) {
+        physicActor.SetMovement(offset);
+    } else {
+        transform.position += offset;
+    }
+}
+
+void GameObject::Teleport(const Vec2& pos) {
+    transform.position = pos;
+}
+
 GameObject* GameObjectManager::Create() {
     auto result = goMap_.emplace(++curID_, GameObject{});
     if (result.second) {

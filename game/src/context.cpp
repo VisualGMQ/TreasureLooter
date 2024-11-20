@@ -3,12 +3,13 @@
 #include "controller/touch_controller.hpp"
 #include "flags.hpp"
 #include "level/test_pushActor.hpp"
-#include "level/test_moveAndSlide.hpp"
 #include "level/test_physics.hpp"
 #include "level/test_playground.hpp"
 #include "log.hpp"
 #include "math.hpp"
 #include "renderer.hpp"
+#include "level/test_maze.hpp"
+#include "level/test_trigger.hpp"
 
 namespace tl {
 
@@ -54,17 +55,12 @@ void Context::postInit() {
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     debugMgr = std::make_unique<DebugManager>();
-
-    registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
-    registerLevel2Scene(std::make_unique<TestPhysicsLevel>(), "test-sweep");
-    registerLevel2Scene(std::make_unique<TestMoveAndSlideLevel>(), "test-maze");
-    registerLevel2Scene(std::make_unique<TestPushActor>(), "test-pushActor");
     eventMgr = std::make_unique<EventManager>();
 
     registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
     registerLevel2Scene(std::make_unique<TestPhysicsLevel>(), "test-sweep");
-    registerLevel2Scene(std::make_unique<TestMoveAndSlideLevel>(), "test-maze");
-    registerLevel2Scene(std::make_unique<TestPushActor>(), "test-pushActor");
+    registerLevel2Scene(std::make_unique<TestMazeLevel>(), "test-maze");
+    registerLevel2Scene(std::make_unique<TestTriggerLevel>(), "test-trigger");
 }
 
 void Context::initSDL() {

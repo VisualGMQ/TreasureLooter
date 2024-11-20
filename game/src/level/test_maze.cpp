@@ -1,5 +1,5 @@
-#pragma once
-#include "level/test_moveAndSlide.hpp"
+#include "level/test_maze.hpp"
+#include "level/common_move_controller.hpp"
 #include "context.hpp"
 
 namespace tl {
@@ -32,7 +32,7 @@ constexpr std::string_view Maze =
     "###################  ";
 // clang-format on
 
-void TestMoveAndSlideLevel::Init() {
+void TestMazeLevel::Init() {
     auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
     GameObject* go = goMgr.Find("test/maze/rectPrefab");
     TL_RETURN_IF_FALSE(go);
@@ -58,25 +58,14 @@ void TestMoveAndSlideLevel::Init() {
     }
 }
 
-void TestMoveAndSlideLevel::Enter() {
+
+void TestMazeLevel::Enter() {
     Context::GetInst().debugMgr->enableDrawCollisionShapes = true;
-    Context::GetInst().gameController = std::make_unique<MoveController>();
-}
 
-void MoveController::Update() {
-    GameObject* go =
-        Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
-            "test/maze/circlePrefab");
+    GameObject* go = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
+        "test/maze/circlePrefab");
     TL_RETURN_IF_FALSE(go);
-
-    auto controller = Context::GetInst().controllerMgr->GetController();
-    TL_RETURN_IF_FALSE(controller);
-    Vec2 axis = controller->GetAxis();
-
-    // NOTE: this if is convenient for debug, not necessary
-    if (axis != Vec2::ZERO) {
-        go->physicActor.SetMovement(axis * 0.4);
-    }
+    Context::GetInst().gameController = std::make_unique<CommonMoveController>(
+        go->GetID());
 }
-
-}  // namespace tl
+}
