@@ -44,11 +44,6 @@ struct PhysicActor {
     friend class PhysicsScene;
     friend class Scene;
 
-    enum class Type {
-        Static,
-        Dynamic,
-    } type = Type::Dynamic;
-
     bool isTrigger = false;
     uint32_t filter = std::numeric_limits<uint32_t>::max();
 

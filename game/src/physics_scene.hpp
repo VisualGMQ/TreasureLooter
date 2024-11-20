@@ -27,8 +27,6 @@ public:
     size_t Sweep(const Shape&, const Vec2& dir, SweepHitInfo*,
                  size_t maxHitInfoCount);
 
-    void SyncPose(GameObject* parent, GameObject& child);
-
 private:
     std::vector<MarkedActor> actors_;
     std::vector<SweepHitInfo> hitInfos_;

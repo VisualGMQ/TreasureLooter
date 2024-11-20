@@ -22,7 +22,7 @@ Transform CalcLocalTransformToParent(const Transform& parentGlobalTransform,
     Transform trans;
     trans.scale = globalTrans.scale / parentGlobalTransform.scale;
     trans.rotation = globalTrans.rotation - parentGlobalTransform.rotation;
-    trans.position = (globalTrans.position - parentGlobalTransform.position) / trans.scale;
+    trans.position = (globalTrans.position - parentGlobalTransform.position) / parentGlobalTransform.scale;
     trans.position = Rotate(trans.position, -parentGlobalTransform.rotation);
 
     return trans;

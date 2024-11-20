@@ -1,9 +1,9 @@
 <scenes>
-    <startup>test-pushActor</startup>
+    <startup>test-trigger</startup>
     <scene>
         <element path="test-playground"/>
         <element path="test-sweep"/>
         <element path="test-maze"/>
-        <element path="test-pushActor"/>
+        <element path="test-trigger"/>
     </scene>
 </scenes>

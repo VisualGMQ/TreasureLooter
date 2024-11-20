@@ -280,6 +280,10 @@ PhysicActor Scene::parsePhysicActor(const tinyxml2::XMLElement& elem) const {
         actor.shape.circle.radius = values[2];
     }
 
+    if (auto node = elem.FirstChildElement("trigger")) {
+        actor.isTrigger = true;
+    }
+
     return actor;
 }
 
@@ -348,11 +352,8 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
 void Scene::updateGOTransformRecurse(GameObject* parent, GameObject& child,
                                      bool syncPhysics) {
     if (syncPhysics && child.physicActor) {
-        Vec2 relativePos = Rotate(child.physicActor.shape.GetCenter() *
-                                      (child.globalTransform_.scale),
-                                  child.globalTransform_.rotation);
-        child.globalTransform_.position =
-            child.physicActor.collideShape_.GetCenter() - relativePos;
+        Vec2 dir = child.physicActor.shape.GetCenter() * child.transform.scale;
+        child.globalTransform_.position = child.physicActor.GetCollideShape().GetCenter() - Rotate(dir, child.transform.rotation);
         if (parent) {
             child.transform = CalcLocalTransformToParent(
                 parent->GetGlobalTransform(), child.GetGlobalTransform());

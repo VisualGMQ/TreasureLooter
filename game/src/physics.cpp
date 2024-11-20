@@ -7,9 +7,7 @@
 namespace tl {
 
 void PhysicActor::SetMovement(const Vec2& v) {
-    if (type == Type::Dynamic) {
-        movement_ = v;
-    }
+    movement_ = v;
 }
 
 size_t PhysicsScene::Raycast(const Vec2& start, const Vec2& dir,

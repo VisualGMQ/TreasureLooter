@@ -260,25 +260,6 @@ SweepHitInfo PhysicsScene::sweep(const Shape& shape1, const Shape& shape2,
     return hitInfo;
 }
 
-void PhysicsScene::SyncPose(GameObject* parent, GameObject& child) {
-    if (child.physicActor) {
-        child.transform.position = child.physicActor.collideShape_.GetCenter();
-        if (parent) {
-            child.transform = CalcLocalTransformToParent(
-                parent->GetGlobalTransform(), child.GetGlobalTransform());
-        } else {
-            child.globalTransform_ = child.transform;
-        }
-    } else {
-        if (parent) {
-            child.globalTransform_ = CalcTransformFromParent(
-                parent->GetGlobalTransform(), child.transform);
-        } else {
-            child.globalTransform_ = child.transform;
-        }
-    }
-}
-
 bool PhysicsScene::checkOverlap(const PhysicActor& trigger,
                                 const PhysicActor& solid) const {
     if (trigger.collideShape_.type == Shape::Type::Circle) {

@@ -28,7 +28,7 @@ struct Event {
 
     union {
         EnterTriggerArea enterTriggerArea{};
-        LeaveTriggerArea leaveTriggerArea;
+        LeaveTriggerArea leaveTriggerArea{};
     };
 };
 
