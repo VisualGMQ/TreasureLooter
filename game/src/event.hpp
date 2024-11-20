@@ -27,9 +27,11 @@ struct Event {
     } type = Type::Unknown;
 
     union {
-        EnterTriggerArea enterTriggerArea{};
-        LeaveTriggerArea leaveTriggerArea{};
+        EnterTriggerArea enterTriggerArea;
+        LeaveTriggerArea leaveTriggerArea;
     };
+
+    Event() : enterTriggerArea{} { }
 };
 
 class EventManager {
