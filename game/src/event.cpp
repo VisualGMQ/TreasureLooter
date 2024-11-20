@@ -13,6 +13,24 @@ void EventManager::RegistCallback(Event::Type type, const CallbackFn& callback,
     callbacks_[static_cast<uint32_t>(type)].push_back(cb);
 }
 
+void EventManager::RemoveCallback(Event::Type type, std::string_view name) {
+    auto& callbackList = callbacks_[static_cast<uint32_t>(type)];
+    callbackList.erase(std::find(callbackList.begin(), callbackList.end(),
+                                 [=](const EventCallback& callback) {
+                                     return callback.name == name;
+                                 }));
+}
+
+void EventManager::RemoveAllCallbackIn(Event::Type type) {
+    callbacks_[static_cast<uint32_t>(type)].clear();
+}
+
+void EventManager::RemoveAllCallback() {
+    for (auto& callback : callbacks_) {
+        callback.clear();
+    }
+}
+
 void EventManager::EnqueueEnterTriggerAreaEvent(
     GameObject* go, const MarkedActor& area) {
     Event event;

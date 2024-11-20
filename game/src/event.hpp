@@ -40,6 +40,9 @@ public:
 
     void RegistCallback(Event::Type type, const CallbackFn& callback,
                         bool callOnce = false, const std::string& name = "");
+    void RemoveCallback(Event::Type type, std::string_view name);
+    void RemoveAllCallbackIn(Event::Type type);
+    void RemoveAllCallback();
     void EnqueueEnterTriggerAreaEvent(GameObject*, const MarkedActor& dst);
     void EnqueueLeaveTriggerAreaEvent(GameObject*, const MarkedActor& dst);
     void Update();
