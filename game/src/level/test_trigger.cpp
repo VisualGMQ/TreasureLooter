@@ -22,6 +22,7 @@ void TestTriggerLevel::Enter() {
     eventMgr->RegistCallback(Event::Type::LeaveTriggerArea, [&, id = go->GetID()](const Event& e) {
         TL_RETURN_IF_FALSE(id == e.leaveTriggerArea.go->GetID());
         e.leaveTriggerArea.go->sprite.color = Color::White;
+        Context::GetInst().eventMgr->RemoveCallback(Event::Type::LeaveTriggerArea, "test-trigger-leave");
     }, false, "test-trigger-leave");
 }
 

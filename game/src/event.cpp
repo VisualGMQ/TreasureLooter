@@ -13,12 +13,8 @@ void EventManager::RegistCallback(Event::Type type, const CallbackFn& callback,
     callbacks_[static_cast<uint32_t>(type)].push_back(cb);
 }
 
-void EventManager::RemoveCallback(Event::Type type, std::string_view name) {
-    auto& callbackList = callbacks_[static_cast<uint32_t>(type)];
-    callbackList.erase(std::find(callbackList.begin(), callbackList.end(),
-                                 [=](const EventCallback& callback) {
-                                     return callback.name == name;
-                                 }));
+void EventManager::RemoveCallback(Event::Type type, const std::string& name) {
+    pendingRemoveCallbacks_[static_cast<uint32_t>(type)].push_back(name);
 }
 
 void EventManager::RemoveAllCallbackIn(Event::Type type) {
@@ -70,5 +66,34 @@ void EventManager::Update() {
     }
 
     events_.clear();
+    removePendingCallbacks();
+}
+
+void EventManager::removePendingCallbacks() {
+    for (int i = 0; i < pendingClearOneType_.size(); i++) {
+        if (pendingClearOneType_[i] || pendingClearAll_) {
+            callbacks_[i].clear();
+            pendingRemoveCallbacks_[i].clear();
+        }
+    }
+
+    pendingClearAll_ = false;
+
+    pendingClearOneType_.fill(false);
+
+    for (int i = 0; i < static_cast<uint32_t>(Event::Type::_EventCount); i++) {
+        auto& callbackNameList = pendingRemoveCallbacks_[i];
+        for (auto& callbackName : callbackNameList) {
+            callbacks_[i].erase(std::find_if(callbacks_[i].begin(),
+                                             callbacks_[i].end(),
+                                             [&](const EventCallback&
+                                             callback) {
+                                                 return callback.name ==
+                                                     callbackName;
+                                             }));
+        }
+
+        callbackNameList.clear();
+    }
 }
 }
