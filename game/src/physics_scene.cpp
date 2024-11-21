@@ -76,41 +76,7 @@ void PhysicsScene::Update(TimeType delta) {
 
     hitInfos_.clear();
 
-    auto& eventMgr = Context::GetInst().eventMgr;
-
-    for (int i = 0; i < actors_.size(); i++) {
-        for (int j = i; j < actors_.size(); j++) {
-            const MarkedActor* trigger = nullptr;
-            const MarkedActor* solid = nullptr;
-
-            MarkedActor& actor1 = actors_[i];
-            MarkedActor& actor2 = actors_[j];
-            if (actor1.actor->isTrigger && !actor2.actor->isTrigger) {
-                trigger = &actor1;
-                solid = &actor2;
-            } else if (!actor1.actor->isTrigger && actor2.actor->isTrigger) {
-                trigger = &actor2;
-                solid = &actor1;
-            } else {
-                continue;
-            }
-
-            auto it = std::find_if(trigger->actor->enteredGOList_.begin(),
-                         trigger->actor->enteredGOList_.end(),
-                         [goid = solid->go->GetID()](const GameObjectID& id) {
-                             return id == goid;
-                         });
-            bool isInArea = trigger->actor->enteredGOList_.end() != it;
-            bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
-            if (isInArea && !isOverlap) {
-                trigger->actor->enteredGOList_.erase(it);
-                eventMgr->EnqueueLeaveTriggerAreaEvent(solid->go, *trigger);
-            } else if (!isInArea && isOverlap) {
-                trigger->actor->enteredGOList_.push_back(solid->go->GetID());
-                eventMgr->EnqueueEnterTriggerAreaEvent(solid->go, *trigger);
-            }
-        }
-    }
+    handleTrigger();    
 }
 
 void PhysicsScene::ClearActors() {
@@ -258,6 +224,45 @@ SweepHitInfo PhysicsScene::sweep(const Shape& shape1, const Shape& shape2,
     }
 
     return hitInfo;
+}
+
+void PhysicsScene::handleTrigger() {
+    auto& eventMgr = Context::GetInst().eventMgr;
+
+    for (int i = 0; i < actors_.size(); i++) {
+        for (int j = i; j < actors_.size(); j++) {
+            const MarkedActor* trigger = nullptr;
+            const MarkedActor* solid = nullptr;
+
+            MarkedActor& actor1 = actors_[i];
+            MarkedActor& actor2 = actors_[j];
+            if (actor1.actor->isTrigger && !actor2.actor->isTrigger) {
+                trigger = &actor1;
+                solid = &actor2;
+            } else if (!actor1.actor->isTrigger && actor2.actor->isTrigger) {
+                trigger = &actor2;
+                solid = &actor1;
+            } else {
+                continue;
+            }
+
+            auto it = std::find_if(trigger->actor->enteredGOList_.begin(),
+                                   trigger->actor->enteredGOList_.end(),
+                                   [goid = solid->go->GetID()](
+                                   const GameObjectID& id) {
+                                       return id == goid;
+                                   });
+            bool isInArea = trigger->actor->enteredGOList_.end() != it;
+            bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
+            if (isInArea && !isOverlap) {
+                trigger->actor->enteredGOList_.erase(it);
+                eventMgr->EnqueueLeaveTriggerAreaEvent(solid->go, *trigger);
+            } else if (!isInArea && isOverlap) {
+                trigger->actor->enteredGOList_.push_back(solid->go->GetID());
+                eventMgr->EnqueueEnterTriggerAreaEvent(solid->go, *trigger);
+            }
+        }
+    }
 }
 
 bool PhysicsScene::checkOverlap(const PhysicActor& trigger,

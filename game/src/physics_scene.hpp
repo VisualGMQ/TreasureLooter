@@ -42,6 +42,7 @@ private:
     SweepHitInfo sweep(const PhysicActor& actor1, const PhysicActor& actor2);
     SweepHitInfo sweep(const Shape& shape1, const Shape& shape2,
                        const Vec2& dir);
+    void handleTrigger();
     bool checkOverlap(const PhysicActor& tirgger, const PhysicActor& overlap) const;
 };
 }
