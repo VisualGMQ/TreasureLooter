@@ -23,8 +23,6 @@
 #include "physics.hpp"
 #include "physics_scene.hpp"
 #include "event.hpp"
-#include "physics.hpp"
-#include "physics_scene.hpp"
 
 namespace tl {
 

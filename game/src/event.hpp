@@ -45,6 +45,7 @@ public:
     void RemoveAllCallback();
     void EnqueueEnterTriggerAreaEvent(GameObject*, const MarkedActor& dst);
     void EnqueueLeaveTriggerAreaEvent(GameObject*, const MarkedActor& dst);
+
     void Update();
 
 private:

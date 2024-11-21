@@ -4,6 +4,8 @@ project(TreasureLootre
     LANGUAGES C CXX
     VERSION 0.1.0)
 
+file(GLOB_RECURSE HEADERS ./src/*.hpp)
+
 aux_source_directory(src GAME_SRC)
 aux_source_directory(src/3rdlib/imgui GAME_SRC)
 aux_source_directory(src/3rdlib/tinyxml2 GAME_SRC)
@@ -63,8 +65,10 @@ else()
     target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 endif()
 
+
 target_sources(main PRIVATE ${GAME_SRC} ${GAME_HEADERS})
 target_sources(main PRIVATE ${GAME_ASSETS})
+
 target_compile_features(main PRIVATE cxx_std_17)
 target_include_directories(main PRIVATE src)
 target_compile_definitions(main PRIVATE _CRT_SECURE_NO_WARNINGS)

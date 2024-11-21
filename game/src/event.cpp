@@ -66,6 +66,7 @@ void EventManager::Update() {
     }
 
     events_.clear();
+  
     removePendingCallbacks();
 }
 
@@ -96,4 +97,5 @@ void EventManager::removePendingCallbacks() {
         callbackNameList.clear();
     }
 }
+
 }

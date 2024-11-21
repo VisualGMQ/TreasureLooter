@@ -92,7 +92,6 @@ Context::~Context() {
 
     physicsScene.reset();
     eventMgr.reset();
-    physicsScene.reset();
     audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();
