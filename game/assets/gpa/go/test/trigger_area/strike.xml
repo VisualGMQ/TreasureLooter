@@ -1,0 +1,17 @@
+<gameobject>
+    <transform>
+        <position>200 200</position>
+        <rotation>0</rotation>
+        <scale>2 2</scale>
+    </transform>
+    <sprite>
+        <anchor>0.5 0.5</anchor>
+        <is_enable>true</is_enable>
+        <texture>TilesetNature.png</texture>
+        <region>0 226 16 16</region>
+    </sprite>
+    <physic_actor>
+        <aabb>0 0 8 8</aabb>
+        <trigger/>
+    </physic_actor>
+</gameobject>

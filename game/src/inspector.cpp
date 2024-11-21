@@ -6,14 +6,15 @@
 namespace tl {
 
 void Inspector::Update() {
-    auto& ctx = Context::GetInst();
-    GameObjectID id = ctx.debugMgr->hierarchyWatcher->GetSelected();
+    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
+    GameObjectID id = Context::GetInst().debugMgr->hierarchyWatcher->GetSelected();
 
     if (ImGui::Begin("inspector")) {
-        GameObject* go = ctx.goMgr->Find(id);
+        GameObject* go = goMgr.Find(id);
         if (go) {
             updateName(go->name);
-            updateTransform(go->transform);
+            updateTransform("transform", go->transform);
+            updateTransform("global transform", go->GetGlobalTransform());
             if (go->sprite) {
                 updateSprite(go->sprite);
             }
@@ -22,6 +23,9 @@ void Inspector::Update() {
             }
             if (go->tilemap) {
                 updateTileMap(*go->tilemap);
+            }
+            if (go->physicActor) {
+                updatePhysicActor(go->physicActor);
             }
         }
     }
@@ -35,9 +39,17 @@ void Inspector::updateName(const std::string& name) const {
     ImGui::InputText("name", buf, sizeof(buf), flags);
 }
 
-void Inspector::updateTransform(Transform& transform) {
-    ImGui::PushID("transform");
-    if (ImGui::CollapsingHeader("transform")) {
+void Inspector::updateTransform(const std::string& title, Transform& transform) {
+    ImGui::PushID(title.c_str());
+    if (ImGui::CollapsingHeader(title.c_str())) {
+        updateTransformGeneric(transform);
+    }
+    ImGui::PopID();
+}
+
+void Inspector::updateTransform(const std::string& title, const Transform& transform) {
+    ImGui::PushID(title.c_str());
+    if (ImGui::CollapsingHeader(title.c_str())) {
         updateTransformGeneric(transform);
     }
     ImGui::PopID();
@@ -48,6 +60,15 @@ void Inspector::updateTransformGeneric(Transform& transform) {
     ImGui::DragFloat2("scale", (float*)&transform.scale, 0.1);
     ImGui::DragFloat("rotation", &transform.rotation, 1.0, 0.0, 0.0,
                      "%.3f(deg)");
+}
+
+void Inspector::updateTransformGeneric(const Transform& transform) {
+    ImGui::BeginDisabled(true);
+    ImGui::DragFloat2("position", (float*)&transform.position);
+    ImGui::DragFloat2("scale", (float*)&transform.scale, 0.1);
+    ImGui::DragFloat("rotation", (float*)&transform.rotation, 1.0, 0.0, 0.0,
+                     "%.3f(deg)");
+    ImGui::EndDisabled();
 }
 
 void Inspector::updateSprite(Sprite& sprite) {
@@ -65,8 +86,8 @@ void Inspector::updateSprite(Sprite& sprite) {
         ImGui::ColorEdit4("color", &sprite.color.r, ImGuiColorEditFlags_Float);
 
         // display flip
-        bool flipV = sprite.flip & Flip::Vertical;
-        bool flipH = sprite.flip & Flip::Horizontal;
+        bool flipV = (sprite.flip & Flip::Vertical) != Flip::None;
+        bool flipH = (sprite.flip & Flip::Horizontal) != Flip::None;
         ImGui::Checkbox("Flip Horizontal", &flipH);
         ImGui::Checkbox("Flip Vertical", &flipV);
 
@@ -110,7 +131,7 @@ void Inspector::updateSprite(Sprite& sprite) {
 void Inspector::updateAnimator(Animator& animator) {
     if (ImGui::CollapsingHeader("animator")) {
         ImGui::Text("status: %s", animator.IsPlaying() ? "playing" : "pausing");
-        ImGui::Text("%llu/%llu", (TimeType)animator.GetCurTime(), animator.animation->GetMaxTime());
+        ImGui::Text("%lu/%lu", (TimeType)animator.GetCurTime(), animator.animation->GetMaxTime());
 
         if (ImGui::Button("play")) {
             animator.Play();
@@ -138,6 +159,31 @@ void Inspector::updateAnimator(Animator& animator) {
 
 void Inspector::updateTileMap(TileMap& tilemap) {
     if (ImGui::CollapsingHeader("tileMap")) {
+    }
+}
+
+void Inspector::updatePhysicActor(PhysicActor& actor) {
+    if (ImGui::CollapsingHeader("PhysicActor")) {
+        ImGui::BeginDisabled(!actor.enable);
+        switch (actor.shape.type) {
+            case Shape::Type::Unknown:
+                ImGui::Text("unknown shape type");
+                break;
+            case Shape::Type::AABB:
+                ImGui::Text("AABB");
+                ImGui::DragFloat2("center", (float*)&actor.shape.aabb.center,
+                                  0.1);
+                ImGui::DragFloat2("halfSize",
+                                  (float*)&actor.shape.aabb.halfSize, 0.1, 0,
+                                  FLT_MAX);
+                break;
+            case Shape::Type::Circle:
+                ImGui::Text("Circle");
+                ImGui::DragFloat("radius", &actor.shape.circle.radius, 0.1, 0, FLT_MAX);
+                ImGui::DragFloat2("center", (float*)&actor.shape.circle.center, 0.1);
+                break;
+        }
+        ImGui::EndDisabled();
     }
 }
 

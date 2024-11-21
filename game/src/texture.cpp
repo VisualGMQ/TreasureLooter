@@ -6,7 +6,7 @@
 namespace tl {
 
 Texture::Texture(SDL_Texture* texture) : texture_{texture} {
-    TL_RETURN_IF(texture);
+    TL_RETURN_IF_FALSE(texture);
 
     int w, h;
     SDL_QueryTexture(texture_, nullptr, nullptr, &w, &h);
@@ -15,10 +15,10 @@ Texture::Texture(SDL_Texture* texture) : texture_{texture} {
 }
 
 Texture::Texture(SDL_Surface* surface) {
-    TL_RETURN_IF(surface);
+    TL_RETURN_IF_FALSE(surface);
     texture_ = SDL_CreateTextureFromSurface(
         Context::GetInst().renderer->renderer_, surface);
-    TL_RETURN_IF(texture_);
+    TL_RETURN_IF_FALSE(texture_);
 
     size_.w = surface->w;
     size_.h = surface->h;
@@ -76,26 +76,26 @@ FontTexture::FontTexture(Font& font, const std::string& text, uint8_t fontSize)
 }
 
 void FontTexture::ChangeFont(Font& font) {
-    TL_RETURN_IF(&font != font_);
+    TL_RETURN_IF_FALSE(&font != font_);
 
     changeTextAndFont(nullptr, &font, fontSize_);
 }
 
 void FontTexture::ChangeTextAndFont(const std::string& text, Font& font,
                                     uint8_t size) {
-    TL_RETURN_IF(text != text_ && &font != font_ && size != fontSize_);
+    TL_RETURN_IF_FALSE(text != text_ && &font != font_ && size != fontSize_);
 
     changeTextAndFont(&text, &font, size);
 }
 
 void FontTexture::ChangeText(const std::string& text) {
-    TL_RETURN_IF(text_ != text);
+    TL_RETURN_IF_FALSE(text_ != text);
 
     changeTextAndFont(&text, nullptr, fontSize_);
 }
 
 void FontTexture::ChangeFontSize(uint8_t size) {
-    TL_RETURN_IF(size != fontSize_);
+    TL_RETURN_IF_FALSE(size != fontSize_);
 
     changeTextAndFont(&text_, font_, size);
 }
@@ -114,18 +114,18 @@ void FontTexture::changeTextAndFont(const std::string* text, Font* font,
 
     fontSize_ = size;
 
-    TL_RETURN_IF(!text->empty());
+    TL_RETURN_IF_FALSE(!text->empty());
 
     font_->SetPtSize(size);
 
     SDL_Surface* surface = TTF_RenderUTF8_Blended_Wrapped(
         font_->font_, text_.c_str(), SDL_Color{255, 255, 255, 255}, 0);
-    TL_RETURN_IF(surface);
+    TL_RETURN_IF_FALSE(surface);
 
     texture_ = std::make_unique<Texture>(surface);
     SDL_FreeSurface(surface);
 
-    TL_RETURN_IF_LOGE(texture_, "font texture create failed with text %s",
+    TL_RETURN_IF_FALSE_LOGE(texture_, "font texture create failed with text %s",
                       text_.c_str());
 }
 
@@ -139,7 +139,7 @@ Texture* TextureManager::Load(const std::string& filename,
     }
 
     Texture texture(filename);
-    TL_RETURN_NULL_IF(texture);
+    TL_RETURN_NULL_IF_FALSE(texture);
 
     return &textures_.emplace(name, std::move(texture)).first->second;
 }

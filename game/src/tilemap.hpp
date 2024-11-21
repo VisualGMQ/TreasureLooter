@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.hpp"
 #include "math.hpp"
+#include "physics.hpp"
 #include "renderer.hpp"
 #include "texture.hpp"
 
@@ -21,11 +22,23 @@ enum class MapLayerType {
     Tiles,
 };
 
+class ObjectLayer;
+class TileLayer;
+
 struct MapLayer {
     explicit MapLayer(MapLayerType type) : type_{type} {}
     virtual ~MapLayer() = default;
 
     MapLayerType GetType() const { return type_; }
+
+    ObjectLayer* AsObjectLayer() {
+        return const_cast<ObjectLayer*>(std::as_const(*this).AsObjectLayer());
+    }
+    TileLayer* AsTileLayer() {
+        return const_cast<TileLayer*>(std::as_const(*this).AsTileLayer());
+    }
+    const ObjectLayer* AsObjectLayer() const;
+    const TileLayer* AsTileLayer() const;
 
 private:
     MapLayerType type_;
@@ -50,10 +63,13 @@ struct ObjectLayer: public MapLayer {
     ObjectLayer() : MapLayer{MapLayerType::Object} {}
 };
 
+using TileMapCollisionShape = std::variant<Circle, AABB>;
+
 struct Tile {
     std::optional<size_t >tilesetIndex;
     Rect region;
     Flags<Flip> flip;
+    PhysicActor actor;
 
     operator bool() const {
         return tilesetIndex.has_value();
@@ -66,6 +82,7 @@ public:
 
     void SetTile(uint32_t x, uint32_t y, const Tile&);
     const Tile* GetTile(uint32_t x, uint32_t y) const;
+    Tile* GetTile(uint32_t x, uint32_t y);
     Vec2 GetSize() const;
 
 private:
@@ -79,17 +96,20 @@ public:
     TileMap(const std::string& filename);
     auto& GetLayers() const { return layers_; }
     auto& GetTileSet(uint32_t idx) const { return tileSets_[idx]; }
+    auto& GetLayers() { return layers_; }
+    auto& GetTileSet(uint32_t idx) { return tileSets_[idx]; }
 
 private:
     std::vector<std::unique_ptr<MapLayer>> layers_;
     std::vector<TileSet> tileSets_;
+    std::unordered_map<uint32_t, TileMapCollisionShape> collisionMap_;
 
     std::unique_ptr<ObjectLayer> parseObjectLayer(const tson::Layer&) const;
     std::unique_ptr<TileLayer> parseTileLayer(const tson::Layer&) const;
-    TileSet parseTileSet(const tson::Tileset&) const;
+    TileSet parseTileSet(const tson::Tileset&);
 };
 
-struct TileMapManager {
+class TileMapManager {
 public:
     TileMap* Load(const std::string& filename, const std::string& name);
     TileMap* Find(const std::string& name);

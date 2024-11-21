@@ -1,0 +1,16 @@
+<gameobject>
+    <transform>
+        <position>100 100</position>
+        <rotation>0</rotation>
+        <scale>2 2</scale>
+    </transform>
+    <sprite>
+        <anchor>0.5 0.5</anchor>
+        <is_enable>true</is_enable>
+        <texture>SpriteSheet.png</texture>
+        <region>0 0 16 16</region>
+    </sprite>
+    <physic_actor>
+        <circle>0 0 8</circle>
+    </physic_actor>
+</gameobject>

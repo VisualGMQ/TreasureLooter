@@ -89,7 +89,7 @@ void Renderer::SetScale(const Vec2& scale) const {
 void Renderer::DrawTexture(const Texture& texture, const Rect& region,
                            const Transform& trans, const Vec2& anchor,
                            Flags<Flip> flip, const Color& color) const {
-    TL_RETURN_IF(texture);
+    TL_RETURN_IF_FALSE(texture);
 
     Rect dstRect;
     Vec2 unsignedScale = trans.scale;
@@ -116,8 +116,8 @@ void Renderer::DrawTexture(const Texture& texture, const Rect& region,
 
     Flags<Flip> f = Flip::None;
 
-    Vec2 flipStatus{flip & Flip::Horizontal ? -1.0f : 1.0f,
-                    flip & Flip::Vertical ? -1.0f : 1.0f};
+    Vec2 flipStatus{(flip & Flip::Horizontal) != Flip::None ? -1.0f : 1.0f,
+                    (flip & Flip::Vertical) != Flip::None ? -1.0f : 1.0f};
 
     if (trans.scale.x * flipStatus.x < 0) {
         f |= Flip::Horizontal;

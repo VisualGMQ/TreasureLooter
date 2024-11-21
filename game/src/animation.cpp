@@ -7,48 +7,48 @@ namespace tl {
 Animation::Animation(const std::string& filename) {
     size_t fileSize;
     void* fileContent = SDL_LoadFile(filename.c_str(), &fileSize);
-    TL_RETURN_IF_LOGE(fileContent, "%s load failed", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGE(fileContent, "%s load failed", filename.c_str());
 
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLError err = doc.Parse((const char*)fileContent, fileSize);
-    TL_RETURN_IF_LOGE(!err, "animation %s load failed", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGE(!err, "animation %s load failed", filename.c_str());
 
     auto animElem = doc.FirstChildElement("animation");
-    TL_RETURN_IF(animElem);
+    TL_RETURN_IF_FALSE(animElem);
 
     auto tracksElem = animElem->FirstChildElement("tracks");
-    TL_RETURN_IF(tracksElem);
+    TL_RETURN_IF_FALSE(tracksElem);
 
     auto trackElem = tracksElem->FirstChildElement("track");
     while (trackElem) {
         auto bindElem = trackElem->FirstChildElement("bind");
-        TL_RETURN_IF(bindElem);
+        TL_RETURN_IF_FALSE(bindElem);
 
         std::string_view bind = bindElem->GetText();
         if (bind == "go_position" || bind == "go_scale") {
             Vec2BindPoint bindPoint;
             Vec2Track track;
-            TL_RETURN_IF(parseVec2Track(*trackElem, bindPoint, track));
+            TL_RETURN_IF_FALSE(parseVec2Track(*trackElem, bindPoint, track));
             vec2Tracks[static_cast<size_t>(bindPoint)] = std::move(track);
         } else if (bind == "go_rotation") {
             FloatBindPoint bindPoint;
             FloatTrack track;
-            TL_RETURN_IF(parseFloatTrack(*trackElem, bindPoint, track));
+            TL_RETURN_IF_FALSE(parseFloatTrack(*trackElem, bindPoint, track));
             floatTracks[static_cast<size_t>(bindPoint)] = std::move(track);
         } else if (bind == "sprite_region") {
             RectBindPoint bindPoint;
             RectTrack track;
-            TL_RETURN_IF(parseRectTrack(*trackElem, bindPoint, track));
+            TL_RETURN_IF_FALSE(parseRectTrack(*trackElem, bindPoint, track));
             rectTracks[static_cast<size_t>(bindPoint)] = std::move(track);
         } else if (bind == "sprite_texture") {
             TextureBindPoint bindPoint;
             TextureTrack track;
-            TL_RETURN_IF(parseTextureTrack(*trackElem, bindPoint, track));
+            TL_RETURN_IF_FALSE(parseTextureTrack(*trackElem, bindPoint, track));
             textureTracks[static_cast<size_t>(bindPoint)] = std::move(track);
         }
 
         auto sibling = trackElem->NextSibling();
-        TL_BREAK_IF(sibling);
+        TL_BREAK_IF_FALSE(sibling);
         trackElem = sibling->ToElement();
     }
 
@@ -59,7 +59,7 @@ bool Animation::parseVec2Track(const tinyxml2::XMLElement& elem,
                                Vec2BindPoint& bindPoint,
                                Vec2Track& track) const {
     auto bindElem = elem.FirstChildElement("bind");
-    TL_RETURN_FALSE_IF(bindElem);
+    TL_RETURN_FALSE_IF_FALSE(bindElem);
 
     if (strcmp(bindElem->GetText(), "go_position") == 0) {
         bindPoint = Vec2BindPoint::GOPosition;
@@ -68,7 +68,7 @@ bool Animation::parseVec2Track(const tinyxml2::XMLElement& elem,
     }
 
     auto dataElem = elem.FirstChildElement("data");
-    TL_RETURN_FALSE_IF(dataElem);
+    TL_RETURN_FALSE_IF_FALSE(dataElem);
 
     auto element = dataElem->FirstChildElement("element");
     while (element) {
@@ -82,7 +82,7 @@ bool Animation::parseVec2Track(const tinyxml2::XMLElement& elem,
         track.keyframes.emplace_back(value, time, interpolate);
 
         auto sibling = element->NextSibling();
-        TL_BREAK_IF(sibling);
+        TL_BREAK_IF_FALSE(sibling);
         element = sibling->ToElement();
     }
 
@@ -93,14 +93,14 @@ bool Animation::parseFloatTrack(const tinyxml2::XMLElement& elem,
                                 FloatBindPoint& bindPoint,
                                 FloatTrack& track) const {
     auto bindElem = elem.FirstChildElement("bind");
-    TL_RETURN_FALSE_IF(bindElem);
+    TL_RETURN_FALSE_IF_FALSE(bindElem);
 
     if (strcmp(bindElem->GetText(), "go_rotation") == 0) {
         bindPoint = FloatBindPoint::GORotation;
     }
 
     auto dataElem = elem.FirstChildElement("data");
-    TL_RETURN_FALSE_IF(dataElem);
+    TL_RETURN_FALSE_IF_FALSE(dataElem);
 
     auto element = dataElem->FirstChildElement("element");
     while (element) {
@@ -114,7 +114,7 @@ bool Animation::parseFloatTrack(const tinyxml2::XMLElement& elem,
         track.keyframes.emplace_back(value, time, interpolate);
 
         auto sibling = element->NextSibling();
-        TL_BREAK_IF(sibling);
+        TL_BREAK_IF_FALSE(sibling);
         element = sibling->ToElement();
     }
 
@@ -125,14 +125,14 @@ bool Animation::parseRectTrack(const tinyxml2::XMLElement& elem,
                                RectBindPoint& bindPoint,
                                RectTrack& track) const {
     auto bindElem = elem.FirstChildElement("bind");
-    TL_RETURN_FALSE_IF(bindElem);
+    TL_RETURN_FALSE_IF_FALSE(bindElem);
 
     if (strcmp(bindElem->GetText(), "sprite_region") == 0) {
         bindPoint = RectBindPoint::Sprite;
     }
 
     auto dataElem = elem.FirstChildElement("data");
-    TL_RETURN_FALSE_IF(dataElem);
+    TL_RETURN_FALSE_IF_FALSE(dataElem);
 
     auto element = dataElem->FirstChildElement("element");
     while (element) {
@@ -146,7 +146,7 @@ bool Animation::parseRectTrack(const tinyxml2::XMLElement& elem,
         track.keyframes.emplace_back(value, time, interpolate);
 
         auto sibling = element->NextSibling();
-        TL_BREAK_IF(sibling);
+        TL_BREAK_IF_FALSE(sibling);
         element = sibling->ToElement();
     }
 
@@ -157,14 +157,14 @@ bool Animation::parseTextureTrack(const tinyxml2::XMLElement& elem,
                                   TextureBindPoint& bindPoint,
                                   TextureTrack& track) const {
     auto bindElem = elem.FirstChildElement("bind");
-    TL_RETURN_FALSE_IF(bindElem);
+    TL_RETURN_FALSE_IF_FALSE(bindElem);
 
     if (strcmp(bindElem->GetText(), "sprite_texture") == 0) {
         bindPoint = TextureBindPoint::Sprite;
     }
 
     auto dataElem = elem.FirstChildElement("data");
-    TL_RETURN_FALSE_IF(dataElem);
+    TL_RETURN_FALSE_IF_FALSE(dataElem);
 
     auto element = dataElem->FirstChildElement("element");
     while (element) {
@@ -175,12 +175,12 @@ bool Animation::parseTextureTrack(const tinyxml2::XMLElement& elem,
         std::string_view textureName = element->GetText();
         Texture* texture = Context::GetInst().textureMgr->Find(
             std::string(element->GetText()));
-        TL_RETURN_FALSE_IF(texture);
+        TL_RETURN_FALSE_IF_FALSE(texture);
 
         track.keyframes.emplace_back(texture, time, interpolate);
 
         auto sibling = element->NextSibling();
-        TL_BREAK_IF(sibling);
+        TL_BREAK_IF_FALSE(sibling);
         element = sibling->ToElement();
     }
 
@@ -191,13 +191,13 @@ bool Animation::parseDataAttributes(const tinyxml2::XMLElement& element,
                                     TimeType& time,
                                     Interpolate& interpolate) const {
     auto timeAttr = element.FindAttribute("time");
-    TL_RETURN_FALSE_IF(timeAttr);
+    TL_RETURN_FALSE_IF_FALSE(timeAttr);
     time = timeAttr->Int64Value();
 
     interpolate = Interpolate::Linear;
     auto interpAttr = element.FindAttribute("interpolate");
 
-    TL_RETURN_FALSE_IF(interpAttr);
+    TL_RETURN_FALSE_IF_FALSE(interpAttr);
     if (strcmp(interpAttr->Value(), "linear") == 0) {
         interpolate = Interpolate::Linear;
     } else if (strcmp(interpAttr->Value(), "none") == 0) {
@@ -213,25 +213,25 @@ bool Animation::parseDataAttributes(const tinyxml2::XMLElement& element,
 TimeType Animation::findMaxTime() const {
     uint32_t maxTime = 0;
     for (auto& track : vec2Tracks) {
-        TL_CONTINUE_IF(!track.keyframes.empty());
+        TL_CONTINUE_IF_FALSE(!track.keyframes.empty());
 
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
     }
     for (auto& track : floatTracks) {
-        TL_CONTINUE_IF(!track.keyframes.empty());
+        TL_CONTINUE_IF_FALSE(!track.keyframes.empty());
 
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
     }
     for (auto& track : textureTracks) {
-        TL_CONTINUE_IF(!track.keyframes.empty());
+        TL_CONTINUE_IF_FALSE(!track.keyframes.empty());
 
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
     }
     for (auto& track : rectTracks) {
-        TL_CONTINUE_IF(!track.keyframes.empty());
+        TL_CONTINUE_IF_FALSE(!track.keyframes.empty());
 
         uint32_t trackMaxTime = track.keyframes.back().time;
         maxTime = std::max(trackMaxTime, maxTime);
@@ -297,7 +297,7 @@ float Animator::GetRate() const {
 }
 
 void Animator::Update(uint32_t elapse) {
-    TL_RETURN_IF(rate_ != 0 && isPlaying_ && animation);
+    TL_RETURN_IF_FALSE(rate_ != 0 && isPlaying_ && animation);
 
     updateAllTrack();
 
@@ -353,7 +353,7 @@ void Animator::updateAllTrack() {
 Animation* AnimationManager::Load(const std::string& filename,
                                   const std::string& name) {
     auto result = animations_.emplace(name, filename);
-    TL_RETURN_NULL_IF_LOGE(result.second, "load animation %s failed",
+    TL_RETURN_NULL_IF_FALSE_LOGE(result.second, "load animation %s failed",
                            name.c_str());
 
     return &result.first->second;

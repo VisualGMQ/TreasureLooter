@@ -43,6 +43,8 @@ public:
     void ChangeFontSize(uint8_t size);
     void ChangeTextAndFont(const std::string& text, Font& font, uint8_t size);
     uint8_t GetFontSize() const { return fontSize_; }
+    Font* GetFont() { return font_; }
+    const Font* GetFont() const { return font_; }
 
     operator bool() const { return font_ && texture_; }
 

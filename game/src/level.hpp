@@ -7,10 +7,10 @@ public:
     friend class SceneManager;
 
     virtual ~Level() = default;
-    virtual void Init() = 0;
-    virtual void Enter() = 0;
-    virtual void Quit() = 0;
-    virtual void Update() = 0;
+    virtual void Init() {}
+    virtual void Enter() {}
+    virtual void Quit() {}
+    virtual void Update() {}
     bool IsInited() const { return isInited_; }
 
 private:

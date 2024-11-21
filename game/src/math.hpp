@@ -75,14 +75,22 @@ Color operator*(float value, const Color& v1);
 Color operator/(float value, const Color& v1);
 
 struct Circle {
-    float radius;
     Vec2 center;
+    float radius = 0;
+
+    operator bool() const {
+        return radius > 0;
+    }
 };
 
 struct Ellipse {
     Vec2 center;
-    float halfX;
-    float halfY;
+    float halfX = 0;
+    float halfY = 0;
+
+    operator bool() const {
+        return halfX > 0 && halfY > 0;
+    }
 };
 
 struct Polygon {
@@ -94,7 +102,8 @@ struct Polyline {
 };
 
 struct Rect {
-    Vec2 position, size;
+    Vec2 position = {};
+    Vec2 size = {};
 
     Rect() = default;
 
@@ -108,6 +117,10 @@ struct Rect {
 
     static Rect CreateFromCenter(const Vec2& center, const Vec2& halfSize) {
         return {center - halfSize, halfSize * 2.0f};
+    }
+
+    operator bool() const {
+        return size.w > 0 && size.h > 0;
     }
 };
 
@@ -152,6 +165,6 @@ T Sign(T value) {
     }
 }
 
-bool IsPointInCircle(const Vec2& p, const Circle& c);
+Vec2 ProjectOn(const Vec2& v, const Vec2& dir);
 
 }  // namespace tl

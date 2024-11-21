@@ -6,46 +6,50 @@ namespace tl {
 
 class Scene {
 public:
+    Scene() = default;  // trivial constructor to construct a NULL-like object
     Scene(const std::string& filename);
     void RegisterLevel(std::unique_ptr<Level>&& level);
     Level* GetLevel() const { return level_.get(); }
     void Update();
 
-    operator bool() const;
     GameObjectID GetRootGOID() const;
     GameObject* GetRootGO();
-    bool HasGO(GameObjectID) const;
-
-    const std::vector<GameObjectID>& GetAllGOID() const;
+    GameObjectManager& GetGOMgr();
+    const GameObjectManager& GetGOMgr() const;
 
 private:
-    std::vector<GameObjectID> goList_;
     std::unique_ptr<Level> level_;
+    GameObjectID rootGO_;
+    GameObjectManager goMgr_;
 
     void load(tinyxml2::XMLDocument& doc);
     void clear();
-    void parseGOInfo(tinyxml2::XMLElement& elem);
 
     GameObject* parseGORecurse(const tinyxml2::XMLElement& node);
-    GameObject* parseGO(const tinyxml2::XMLElement& node) const;
+    GameObject* parseGO(const tinyxml2::XMLElement& node);
     Sprite parseSprite(const tinyxml2::XMLElement& elem) const;
     Transform parseTransform(const tinyxml2::XMLElement& elem) const;
     TileMap* parseTileMap(const tinyxml2::XMLElement& elem) const;
+    PhysicActor parsePhysicActor(const tinyxml2::XMLElement& elem) const;
     Animator parseAnimator(const tinyxml2::XMLElement& elem) const;
 
     void drawSprite(const GameObject&) const;
     void syncAnim2GO(GameObject&);
+    void updateGOTransformRecurse(GameObject* parent, GameObject& child, bool syncPhysics);
+    void addGOs2PhysicsScene();
+
     void updateGO(GameObject* parent, GameObject* go);
     void drawTileMap(const GameObject&) const;
     void drawTileLayer(const Transform&, const TileMap&, const TileLayer&) const;
     void drawObjectLayer(const Transform&, const TileMap&, const ObjectLayer&) const;
+    void deleteGORecurse(GameObjectID go);
 };
 
 class SceneManager {
 public:
     SceneManager();
     Scene* Find(const std::string& name);
-    Scene* GetCurScene();
+    Scene& GetCurScene();
 
     void Update();
     void PostUpdate();
@@ -55,6 +59,7 @@ public:
 
 private:
     std::unordered_map<std::string, Scene> sceneMap_;
+    static Scene null_;
     Scene* curScene_ = nullptr;
     Scene* changeDstScene_ = nullptr;
 };

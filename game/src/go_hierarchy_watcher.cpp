@@ -5,15 +5,16 @@
 #include "controller/touch_controller.hpp"
 #include "macro.hpp"
 
-
 namespace tl {
 
 void GOHierarchyWatcher::Update() {
     auto& ctx = Context::GetInst();
 
     if (ImGui::Begin("hierarchy")) {
-        ImGui::LabelText("fps", "%u", ctx.time->GetFPS());
+        ImGui::LabelText("fps", "%u", ctx.time->GetAverageFPS());
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);
+        ImGui::Checkbox("draw collision shapes",
+                        &ctx.debugMgr->enableDrawCollisionShapes);
 
         if (ImGui::Checkbox("simulate touch", &ctx.debugMgr->simulateTouch)) {
             if (ctx.debugMgr->simulateTouch) {
@@ -34,7 +35,7 @@ void GOHierarchyWatcher::Update() {
         std::string curSceneName = "<no scene>";
         auto& sceneMgr = Context::GetInst().sceneMgr;
         for (auto& [name, scene] : sceneMgr->GetAllScenes()) {
-            if (sceneMgr->GetCurScene() == &scene) {
+            if (&sceneMgr->GetCurScene() == &scene) {
                 curSceneName = name;
                 break;
             }
@@ -49,8 +50,8 @@ void GOHierarchyWatcher::Update() {
             ImGui::EndCombo();
         }
 
-        auto curScene = ctx.sceneMgr->GetCurScene();
-        GameObject* root = curScene ? curScene->GetRootGO() : nullptr;
+        auto& curScene = ctx.sceneMgr->GetCurScene();
+        GameObject* root = curScene.GetRootGO();
         if (!root) {
             ImGui::End();
             return;
@@ -83,7 +84,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    auto scene = Context::GetInst().sceneMgr->GetCurScene();
+    auto& scene = Context::GetInst().sceneMgr->GetCurScene();
     bool isNodeOpen = false;
 
     std::string nameWithID = go.name + "###" + std::to_string(++id);
@@ -97,7 +98,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
             selectedGO_ = goID;
         }
 
-        if (goID != scene->GetRootGOID()) {
+        if (goID != scene.GetRootGOID()) {
             isDragging = ImGui::BeginDragDropSource();
         }
         if (isDragging) {
@@ -108,7 +109,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
         } else {
             bool toBeChild = !ImGui::IsKeyDown(ImGuiKey_S);
             if (!isParentDragging &&
-                (toBeChild || goID != scene->GetRootGOID()) &&
+                (toBeChild || goID != scene.GetRootGOID()) &&
                 ImGui::BeginDragDropTarget()) {
                 const ImGuiPayload* payload =
                     ImGui::AcceptDragDropPayload("go");
@@ -129,7 +130,8 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
     }
 
     for (auto child : go.GetChildren()) {
-        GameObject* go = Context::GetInst().goMgr->Find(child);
+        GameObject* go =
+            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(child);
         if (!go) {
             continue;
         }
@@ -142,28 +144,29 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
 }
 
 void GOHierarchyWatcher::applyGOMove() {
-    TL_RETURN_IF(goMoveInfo_);
+    TL_RETURN_IF_FALSE(goMoveInfo_);
 
-    auto& goMgr = Context::GetInst().goMgr;
-    auto scene = Context::GetInst().sceneMgr->GetCurScene();
-    GameObject* source = goMgr->Find(goMoveInfo_.source);
-    TL_RETURN_IF(source);
+    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
+    auto& scene = Context::GetInst().sceneMgr->GetCurScene();
+    GameObject* source = goMgr.Find(goMoveInfo_.source);
+    TL_RETURN_IF_FALSE(source);
 
-    GameObject* parent = goMgr->Find(source->GetParentID());
-    TL_RETURN_IF(parent);
+    GameObject* parent = goMgr.Find(source->GetParentID());
+    TL_RETURN_IF_FALSE(parent);
 
-    GameObject* target = goMgr->Find(goMoveInfo_.target);
-    TL_RETURN_IF(target);
+    GameObject* target = goMgr.Find(goMoveInfo_.target);
+    TL_RETURN_IF_FALSE(target);
 
-    GameObject* targetParent = goMgr->Find(target->GetParentID());
-    TL_RETURN_IF(target->GetParentID() != scene->GetRootGOID() || targetParent);
+    GameObject* targetParent = goMgr.Find(target->GetParentID());
+    TL_RETURN_IF_FALSE(target->GetParentID() != scene.GetRootGOID() ||
+                       targetParent);
 
-    parent->RemoveChild(source->GetID());
+    parent->RemoveChild(*source);
 
     if (goMoveInfo_.toBeChild) {
-        target->AppendChild(source->GetID());
+        target->AppendChild(*source);
     } else {
-        targetParent->SetChildToNext(target->GetID(), source->GetID());
+        targetParent->SetChildToNext(*target, *source);
     }
 }
 

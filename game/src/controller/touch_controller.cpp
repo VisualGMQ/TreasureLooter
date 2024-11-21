@@ -148,11 +148,11 @@ void TouchController::updateFingerState(std::optional<SDL_FingerID>& id,
 
 void TouchController::renderVirtualButtons() {
     auto& renderer = Context::GetInst().renderer;
-    renderer->DrawCircle(axisCircle_, {255, 0, 0});
-    renderer->DrawCircle(axisTouchCircle_, {255, 0, 0});
-    renderer->DrawCircle(button1Circle_, {0, 255, 0});
-    renderer->DrawCircle(button2Circle_, {0, 255, 0});
-    renderer->DrawCircle(button3Circle_, {0, 255, 0});
+    renderer->DrawCircle(axisCircle_, {1, 0, 0});
+    renderer->DrawCircle(axisTouchCircle_, {1, 0, 0});
+    renderer->DrawCircle(button1Circle_, {0, 1, 0});
+    renderer->DrawCircle(button2Circle_, {0, 1, 0});
+    renderer->DrawCircle(button3Circle_, {0, 1, 0});
 }
 
 }  // namespace tl::controller

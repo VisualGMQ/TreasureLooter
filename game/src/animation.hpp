@@ -20,7 +20,7 @@ struct Keyframe {
         : value{value}, time{time}, interpolate{interpolate} {}
 
     T value;
-    uint32_t time;
+    TimeType time;
     Interpolate interpolate = Interpolate::Linear;
 };
 
@@ -144,8 +144,8 @@ private:
 
     template <typename T, bool CanInterp>
     void updateTrack(Track<T, CanInterp>& track, TrackPlayInfo<T, CanInterp>& playInfo) {
-        TL_RETURN_IF(!track.keyframes.empty());
-        TL_RETURN_IF(curTime_ >= track.keyframes[0].time &&
+        TL_RETURN_IF_FALSE(!track.keyframes.empty());
+        TL_RETURN_IF_FALSE(curTime_ >= track.keyframes[0].time &&
                      curTime_ <= track.keyframes.back().time);
 
         if (rate_ > 0) {
@@ -184,7 +184,7 @@ private:
 
     template <typename T, bool CanInterp>
     void updateTrackCurFrame(Track<T, CanInterp>& track, TrackPlayInfo<T, CanInterp>& playInfo) {
-        TL_RETURN_IF(!track.keyframes.empty());
+        TL_RETURN_IF_FALSE(!track.keyframes.empty());
 
         if (rate_ > 0) {
             int i = 0;

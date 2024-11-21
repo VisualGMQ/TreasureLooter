@@ -13,7 +13,7 @@ void Sprite::SetTexture(Texture& texture) {
 
 void Sprite::SetFontTexture(FontTexture&& texture) {
     const Texture* innerTexture = texture.GetTexture();
-    TL_RETURN_IF(innerTexture);
+    TL_RETURN_IF_FALSE(innerTexture);
 
     region_.size = innerTexture->GetSize();
     region_.position = Vec2::ZERO;
@@ -23,7 +23,7 @@ void Sprite::SetFontTexture(FontTexture&& texture) {
 
 void Sprite::SetText(const std::string& text) {
     auto fontTexture = getFontTexture();
-    TL_RETURN_IF(fontTexture);
+    TL_RETURN_IF_FALSE(fontTexture);
 
     fontTexture->ChangeText(text);
     updateRegionFromFontTexture();
@@ -31,7 +31,7 @@ void Sprite::SetText(const std::string& text) {
 
 void Sprite::SetFontSize(uint8_t size) {
     auto fontTexture = getFontTexture();
-    TL_RETURN_IF(fontTexture);
+    TL_RETURN_IF_FALSE(fontTexture);
 
     fontTexture->ChangeFontSize(size);
     updateRegionFromFontTexture();
@@ -39,7 +39,7 @@ void Sprite::SetFontSize(uint8_t size) {
 
 void Sprite::SetFont(Font& font) {
     auto fontTexture = getFontTexture();
-    TL_RETURN_IF(fontTexture);
+    TL_RETURN_IF_FALSE(fontTexture);
 
     fontTexture->ChangeFont(font);
     updateRegionFromFontTexture();
@@ -47,21 +47,28 @@ void Sprite::SetFont(Font& font) {
 
 std::string Sprite::GetText() const {
     auto fontTexture = getFontTexture();
-    TL_RETURN_VALUE_IF(fontTexture, {});
+    TL_RETURN_VALUE_IF_FALSE(fontTexture, {});
 
     return fontTexture->GetText();
 }
 
 uint8_t Sprite::GetFontSize() {
     auto fontTexture = getFontTexture();
-    TL_RETURN_VALUE_IF(fontTexture, {});
+    TL_RETURN_VALUE_IF_FALSE(fontTexture, {});
 
     return fontTexture->GetFontSize();
 }
 
+Font* Sprite::GetFont() {
+    auto fontTexture = getFontTexture();
+    TL_RETURN_VALUE_IF_FALSE(fontTexture, {});
+
+    return fontTexture->GetFont();
+}
+
 void Sprite::updateRegionFromFontTexture() {
     auto fontTexture = getFontTexture();
-    TL_RETURN_IF(fontTexture && fontTexture->GetTexture());
+    TL_RETURN_IF_FALSE(fontTexture && fontTexture->GetTexture());
     region_.position = Vec2::ZERO;
     region_.size = fontTexture->GetTexture()->GetSize();
 }
@@ -96,7 +103,7 @@ FontTexture* Sprite::getFontTexture() {
 void Sprite::SetRegion(const Rect& region) {
     auto texture = GetTexture();
 
-    TL_RETURN_IF(texture);
+    TL_RETURN_IF_FALSE(texture);
 
     Vec2 size = texture->GetSize();
     if (region.position.x < 0 || region.position.y < 0 || region.size.w < 0 ||

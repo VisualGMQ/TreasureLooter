@@ -1,65 +1,64 @@
 #include "gameobject.hpp"
-#include "log.hpp"
-#include "math.hpp"
 #include "context.hpp"
+#include "log.hpp"
 #include "macro.hpp"
+#include "math.hpp"
 
 namespace tl {
 
-void GameObject::RemoveChild(GameObjectID go) {
-    auto it = std::remove(children_.begin(), children_.end(), go);
+void GameObject::RemoveChild(GameObject& go) {
+    auto it = std::remove(children_.begin(), children_.end(), go.GetID());
     if (it == children_.end()) {
         return;
     }
-    GameObject* removedGO = Context::GetInst().goMgr->Find(go);
-    TL_RETURN_IF(removedGO);
 
-    removedGO->parent_ = GameObjectID{};
+    go.parent_ = GameObjectID{};
     children_.erase(it, children_.end());
 }
 
-void GameObject::AppendChild(GameObjectID go) {
-    GameObject* appendGO = Context::GetInst().goMgr->Find(go);
-    if (!appendGO) {
-        return;
-    }
-    children_.push_back(go);
-    appendGO->parent_ = id_;
+void GameObject::AppendChild(GameObject& go) {
+    children_.push_back(go.GetID());
+    go.parent_ = id_;
 }
 
-void GameObject::SetChildToNext(GameObjectID target, GameObjectID go) {
-    auto it = std::find(children_.begin(), children_.end(), target);
+void GameObject::SetChildToNext(GameObject& target, GameObject& go) {
+    auto it = std::find(children_.begin(), children_.end(), target.GetID());
     if (it == children_.end()) {
         return;
     }
 
-    GameObject* insertGO = Context::GetInst().goMgr->Find(go);
-    TL_RETURN_IF(insertGO);
+    target.parent_ = id_;
 
-    insertGO->parent_ = id_;
-
-    children_.insert(it + 1, go);
+    children_.insert(it + 1, go.GetID());
 }
 
-void GameObject::SetChildToPrev(GameObjectID target, GameObjectID go) {
-    auto it = std::find(children_.begin(), children_.end(), target);
+void GameObject::SetChildToPrev(GameObject& target, GameObject& go) {
+    auto it = std::find(children_.begin(), children_.end(), target.GetID());
     if (it == children_.end()) {
         return;
     }
 
-    GameObject* insertGO = Context::GetInst().goMgr->Find(go);
-    TL_RETURN_IF(insertGO);
-    insertGO->parent_ = id_;
+    target.parent_ = id_;
 
-    children_.insert(it, go);
+    children_.insert(it, go.GetID());
 }
 
-void GameObject::InsertChild(GameObjectID go, size_t idx) {
-    GameObject* insertGO = Context::GetInst().goMgr->Find(go);
-    TL_RETURN_IF(insertGO);
-    insertGO->parent_ = id_;
+void GameObject::InsertChild(GameObject& go, size_t idx) {
+    go.parent_ = id_;
 
-    children_.insert(children_.begin() + idx, go);
+    children_.insert(children_.begin() + idx, go.GetID());
+}
+
+void GameObject::Move(const Vec2& offset) {
+    if (physicActor) {
+        physicActor.SetMovement(offset);
+    } else {
+        transform.position += offset;
+    }
+}
+
+void GameObject::Teleport(const Vec2& pos) {
+    transform.position = pos;
 }
 
 GameObject* GameObjectManager::Create() {
@@ -70,6 +69,8 @@ GameObject* GameObjectManager::Create() {
     }
     return nullptr;
 }
+
+GameObjectID::underlying_type GameObjectManager::curID_ = 0;
 
 void GameObjectManager::Destroy(GameObjectID o) {
     goMap_.erase(o.id_);
@@ -93,6 +94,40 @@ GameObject* GameObjectManager::Find(std::string_view name) {
 
 void GameObjectManager::Clear() {
     goMap_.clear();
+}
+
+GameObject* GameObjectManager::Clone(GameObject& src) {
+    GameObject* go = Create();
+
+    go->name = "<no-name>";
+    go->transform = src.transform;
+    go->tilemap = src.tilemap;
+    go->physicActor = src.physicActor;
+    go->animator = src.animator;
+
+    go->sprite.SetRegion(src.sprite.GetRegion());
+    if (go->sprite.IsTexture() && src.sprite.GetTexture()) {
+        go->sprite.SetTexture(*src.sprite.GetTexture());
+    } else if (go->sprite.IsText() && go->sprite.GetFont()) {
+        go->sprite.SetFontTexture(FontTexture{*go->sprite.GetFont(),
+                                              go->sprite.GetText(),
+                                              go->sprite.GetFontSize()});
+    }
+    go->sprite.anchor = src.sprite.anchor;
+    go->sprite.color = src.sprite.color;
+    go->sprite.flip = src.sprite.flip;
+    go->sprite.isEnable = src.sprite.isEnable;
+
+    return go;
+}
+
+GameObject* GameObjectManager::Clone(GameObjectID id) {
+    TL_RETURN_NULL_IF_FALSE(id);
+
+    GameObject* src = Find(id);
+    TL_RETURN_NULL_IF_FALSE(src);
+
+    return Clone(*src);
 }
 
 }  // namespace tl

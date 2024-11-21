@@ -22,71 +22,71 @@ AssetTable::AssetTable() {
     }
 
     auto assetsElem = doc.FirstChildElement("assets");
-    TL_RETURN_IF_LOGE(assetsElem, "assets.xml don't has `assets` element");
+    TL_RETURN_IF_FALSE_LOGE(assetsElem, "assets.xml don't has `assets` element");
 
     // parse textures
     tinyxml2::XMLElement* textureList =
         assetsElem->FirstChildElement("texture");
-    TL_RETURN_IF(textureList);
+    TL_RETURN_IF_FALSE(textureList);
 
     auto node = textureList->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
         parseTexture(*elem);
     }
 
     // parse tile map
     tinyxml2::XMLElement* tilemapList =
         assetsElem->FirstChildElement("tilemap");
-    TL_RETURN_IF(tilemapList);
+    TL_RETURN_IF_FALSE(tilemapList);
 
     node = tilemapList->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
         parseTilemap(*elem);
     }
 
     // parse font
     tinyxml2::XMLElement* fontList = assetsElem->FirstChildElement("font");
-    TL_RETURN_IF(fontList);
+    TL_RETURN_IF_FALSE(fontList);
 
     node = fontList->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
         parseFont(*elem);
     }
 
     // parse animation
     tinyxml2::XMLElement* animList = assetsElem->FirstChildElement("animation");
-    TL_RETURN_IF(animList);
+    TL_RETURN_IF_FALSE(animList);
 
     node = animList->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
         parseAnimation(*elem);
     }
 
     // parse audio
     tinyxml2::XMLElement* audioList = assetsElem->FirstChildElement("audio");
-    TL_RETURN_IF(audioList);
+    TL_RETURN_IF_FALSE(audioList);
 
     node = audioList->FirstChild();
     while (node) {
         auto elem = node->ToElement();
         node = node->NextSibling();
-        TL_CONTINUE_IF(elem);
+        TL_CONTINUE_IF_FALSE(elem);
 
         bool isMusic = strcmp(elem->Name(), "music") == 0;
 
-        TL_CONTINUE_IF(isMusic || strcmp(elem->Name(), "sound") == 0);
+        TL_CONTINUE_IF_FALSE(isMusic || strcmp(elem->Name(), "sound") == 0);
         parseAudio(*elem, isMusic);
     }
 }
@@ -110,7 +110,7 @@ void AssetTable::parseTilemap(tinyxml2::XMLElement& node) {
 void AssetTable::parseFont(tinyxml2::XMLElement& node) {
     auto attr = node.FindAttribute("path");
     std::string name = attr->Value();
-    TL_RETURN_IF(!name.empty());
+    TL_RETURN_IF_FALSE(!name.empty());
     auto path = "assets/font/" + name;
 
     Context::GetInst().fontMgr->Load(path, name);
@@ -119,7 +119,7 @@ void AssetTable::parseFont(tinyxml2::XMLElement& node) {
 void AssetTable::parseAnimation(tinyxml2::XMLElement& node) {
     auto attr = node.FindAttribute("path");
     std::string name = attr->Value();
-    TL_RETURN_IF(!name.empty());
+    TL_RETURN_IF_FALSE(!name.empty());
     auto path = "assets/anim/" + name + ".xml";
 
     Context::GetInst().animMgr->Load(path, name);
@@ -128,7 +128,7 @@ void AssetTable::parseAnimation(tinyxml2::XMLElement& node) {
 void AssetTable::parseAudio(tinyxml2::XMLElement& node, bool isMusic) {
     auto attr = node.FindAttribute("path");
     std::string name = attr->Value();
-    TL_RETURN_IF(!name.empty());
+    TL_RETURN_IF_FALSE(!name.empty());
 
     auto path = "assets/audio/" + name;
     if (isMusic) {

@@ -10,7 +10,7 @@ Keyboard::Keyboard() {
 }
 
 void Keyboard::Button::HandleEvent(const SDL_KeyboardEvent& event) {
-    TL_RETURN_IF(event.keysym.scancode == key_);
+    TL_RETURN_IF_FALSE(event.keysym.scancode == key_);
 
     if (event.type == SDL_KEYDOWN) {
         isPressing_ = true;
@@ -28,7 +28,7 @@ const Keyboard::Button& Keyboard::GetKey(SDL_Scancode key) const {
 }
 
 void Keyboard::HandleEvent(const SDL_Event& event) {
-    TL_RETURN_IF(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP);
+    TL_RETURN_IF_FALSE(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP);
 
     buttons_[event.key.keysym.scancode].HandleEvent(event.key);
 }

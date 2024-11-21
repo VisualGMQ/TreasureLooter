@@ -20,6 +20,8 @@
 #include "timer.hpp"
 #include "font.hpp"
 #include "audio.hpp"
+#include "physics.hpp"
+#include "physics_scene.hpp"
 #include "event.hpp"
 
 namespace tl {
@@ -37,7 +39,6 @@ public:
     std::unique_ptr<Window> window;
     std::unique_ptr<Renderer> renderer;
     std::unique_ptr<TextureManager> textureMgr;
-    std::unique_ptr<GameObjectManager> goMgr;
     std::unique_ptr<AnimationManager> animMgr;
     std::unique_ptr<DebugManager> debugMgr;
     std::unique_ptr<SceneManager> sceneMgr;
@@ -53,6 +54,7 @@ public:
     std::unique_ptr<TimerManager> timerMgr;
     std::unique_ptr<FontManager> fontMgr;
     std::unique_ptr<AudioManager> audioMgr;
+    std::unique_ptr<PhysicsScene> physicsScene;
     std::unique_ptr<EventManager> eventMgr;
 
     void Update();
@@ -71,6 +73,7 @@ private:
     void initImGui();
     void quitImGui();
     void postInit();
+    void registerLevel2Scene(std::unique_ptr<Level>&& level, const std::string& sceneName);
 
     static Context* inst;
 };

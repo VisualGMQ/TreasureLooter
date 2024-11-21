@@ -43,7 +43,6 @@ Vec2 operator/(float value, const Vec2& v1) {
     return v1 / value;
 }
 
-
 Vec2& Vec2::operator+=(const Vec2& o) {
     x += o.x;
     y += o.y;
@@ -87,7 +86,7 @@ bool Vec2::operator!=(const Vec2& o) const {
 }
 
 float Vec2::Dot(const Vec2& o) const {
-    return x * o.x + y * o.y; 
+    return x * o.x + y * o.y;
 }
 
 float Vec2::Cross(const Vec2& o) const {
@@ -110,14 +109,14 @@ float Vec2::LengthSqrd() const {
 }
 
 float Vec2::Length() const {
-    return std::sqrt(LengthSqrd()); 
+    return std::sqrt(LengthSqrd());
 }
 
 const Color Color::White{1, 1, 1, 1};
 const Color Color::Black{0, 0, 0, 1};
 const Color Color::Red{1, 0, 0, 1};
-const Color Color::Blue{0, 1, 0, 1};
-const Color Color::Green{0, 0, 1, 1};
+const Color Color::Green{0, 1, 0, 1};
+const Color Color::Blue{0, 0, 1, 1};
 const Color Color::Yellow{1, 1, 0, 1};
 
 Color& Color::operator*=(const Color& o) {
@@ -212,8 +211,8 @@ Vec2 Rotate(const Vec2& p, float degree) {
     return Vec2{cos * p.x - sin * p.y, sin * p.x + cos * p.y};
 }
 
-bool IsPointInCircle(const Vec2& p, const Circle& c) {
-    return (p - c.center).LengthSqrd() <= c.radius * c.radius;
+Vec2 ProjectOn(const Vec2& v, const Vec2& dir) {
+    return v.Dot(dir) * dir;
 }
 
 }  // namespace tl

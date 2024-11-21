@@ -11,6 +11,9 @@ aux_source_directory(src/3rdlib/imgui GAME_SRC)
 aux_source_directory(src/3rdlib/tinyxml2 GAME_SRC)
 aux_source_directory(src/input GAME_SRC)
 aux_source_directory(src/controller GAME_SRC)
+aux_source_directory(src/level GAME_SRC)
+file(GLOB_RECURSE GAME_HEADERS src/*.hpp)
+file(GLOB_RECURSE GAME_ASSETS assets/*)
 
 
 if (ANDROID)
@@ -62,7 +65,10 @@ else()
     target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 endif()
 
-target_sources(main PRIVATE ${GAME_SRC} ${HEADERS})
+
+target_sources(main PRIVATE ${GAME_SRC} ${GAME_HEADERS})
+target_sources(main PRIVATE ${GAME_ASSETS})
+
 target_compile_features(main PRIVATE cxx_std_17)
 target_include_directories(main PRIVATE src)
 target_compile_definitions(main PRIVATE _CRT_SECURE_NO_WARNINGS)

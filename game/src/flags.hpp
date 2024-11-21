@@ -37,8 +37,12 @@ public:
         return *this;
     }
 
+    Flags operator~() const noexcept {
+        return ~value_;         
+    }
+
     operator T() const { return static_cast<T>(value_); }
-    operator bool() const { return value_; }
+    operator underlying_type() const { return value_; }
 
 private:
     underlying_type value_{};
