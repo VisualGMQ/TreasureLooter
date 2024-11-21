@@ -1,4 +1,5 @@
 <scene>
     <element path="test/trigger_area/playerPrefabe"/>
     <element path="test/trigger_area/strike"/>
+    <element path="test/trigger_area/cold"/>
 </scene>

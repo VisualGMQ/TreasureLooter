@@ -17,12 +17,15 @@ void TestTriggerLevel::Enter() {
     auto& eventMgr = Context::GetInst().eventMgr;
     eventMgr->RegistCallback(Event::Type::EnterTriggerArea, [&, id = go->GetID()](const Event& e) {
         TL_RETURN_IF_FALSE(id == e.enterTriggerArea.go->GetID());
-        e.enterTriggerArea.go->sprite.color = Color::Red;
+        if (e.enterTriggerArea.area.go->GetID() == Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find("test/trigger_area/strike")->GetID()) {
+            e.enterTriggerArea.go->sprite.color = Color::Red;
+        } else if (e.enterTriggerArea.area.go->GetID() == Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find("test/trigger_area/cold")->GetID()) {
+            e.enterTriggerArea.go->sprite.color = Color::Blue;
+        }
     }, false, "test-trigger-entred");
     eventMgr->RegistCallback(Event::Type::LeaveTriggerArea, [&, id = go->GetID()](const Event& e) {
         TL_RETURN_IF_FALSE(id == e.leaveTriggerArea.go->GetID());
         e.leaveTriggerArea.go->sprite.color = Color::White;
-        Context::GetInst().eventMgr->RemoveCallback(Event::Type::LeaveTriggerArea, "test-trigger-leave");
     }, false, "test-trigger-leave");
 }
 
