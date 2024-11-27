@@ -4,6 +4,12 @@
 
 namespace tl {
 
+enum class Flip {
+    None = SDL_FLIP_NONE,
+    Horizontal = SDL_FLIP_HORIZONTAL,
+    Vertical = SDL_FLIP_VERTICAL,
+};
+
 uint32_t ParseFloat(std::string_view text, float* values, uint32_t count);
 
 class GameObject;

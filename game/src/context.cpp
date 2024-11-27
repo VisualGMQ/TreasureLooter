@@ -150,6 +150,8 @@ void Context::Update() {
     timerMgr->Update(time->GetElapse());
     eventMgr->Update();
 
+    renderer->Update();
+
     ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
     renderer->SetScale(
