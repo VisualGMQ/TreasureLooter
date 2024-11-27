@@ -7,7 +7,7 @@ namespace tl {
 
 class Texture {
 public:
-    friend class Renderer;
+    friend class DrawList;
     friend class Inspector;
 
     Texture() = default;
