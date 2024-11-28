@@ -34,19 +34,19 @@ void Renderer::Present() const {
 }
 
 void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& c,
-                        uint32_t order) {
+                        float order) {
     drawList_.PushLineDrawCmd(p1, p2, c, order);
 }
 
-void Renderer::DrawRect(const Rect& r, const Color& c, uint32_t order) {
+void Renderer::DrawRect(const Rect& r, const Color& c, float order) {
     drawList_.PushRectDrawCmd(r.position, r.size, c, order);
 }
 
-void Renderer::FillRect(const Rect& r, const Color& c, uint32_t order) {
+void Renderer::FillRect(const Rect& r, const Color& c, float order) {
     drawList_.PushRectFillCmd(r.position, r.size, c, order);
 }
 
-void Renderer::DrawCircle(const Circle& c, const Color& color, uint32_t order) {
+void Renderer::DrawCircle(const Circle& c, const Color& color, float order) {
     drawList_.PushCircleDrawCmd(c.center, c.radius, color, order);
 }
 
@@ -57,7 +57,7 @@ void Renderer::SetScale(const Vec2& scale) const {
 void Renderer::DrawTexture(const Texture& texture, const Rect& region,
                            const Transform& trans, const Vec2& anchor,
                            Flags<Flip> flip, const Color& color,
-                           uint32_t order) {
+                           float order) {
     drawList_.PushTextureDrawCmd(&texture, region, trans, anchor, flip, color,
                                  order);
 }

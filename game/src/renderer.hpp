@@ -20,13 +20,13 @@ public:
     void Update();
     void Present() const;
     void SetScale(const Vec2& scale) const;
-    void DrawLine(const Vec2& p1, const Vec2& p2, const Color&, uint32_t order = 0) ;
-    void DrawRect(const Rect&, const Color&, uint32_t order = 0);
-    void DrawCircle(const Circle&, const Color&, uint32_t order = 0);
-    void FillRect(const Rect&, const Color&, uint32_t order = 0);
+    void DrawLine(const Vec2& p1, const Vec2& p2, const Color&, float order = 0) ;
+    void DrawRect(const Rect&, const Color&, float order = 0);
+    void DrawCircle(const Circle&, const Color&, float order = 0);
+    void FillRect(const Rect&, const Color&, float order = 0);
     void DrawTexture(const Texture&, const Rect& region, const Transform& trans,
                      const Vec2& anchor, Flags<Flip> flip,
-                     const Color&, uint32_t order = 0);
+                     const Color&, float order = 0);
 
     operator bool() const;
 

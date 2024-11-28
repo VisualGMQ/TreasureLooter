@@ -62,7 +62,7 @@ private:
             Geom,
         } type;
         size_t beginIdx = 0;
-        uint32_t order = 0;
+        float order = 0;
 
         explicit DrawCmd(Type type) : type{type} {}
 
