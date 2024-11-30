@@ -202,7 +202,7 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
         }
 
         // find collision shape
-        uint32_t id = tile->getGid() & static_cast<uint32_t>(~flipFlags);
+        uint32_t id = tile->getId() & static_cast<uint32_t>(~flipFlags);
         if (auto it = collisionMap_.find(id); it != collisionMap_.end()) {
             if (const Circle* c = std::get_if<Circle>(&it->second); c) {
                 myTile.actor.enable = true;
@@ -239,23 +239,19 @@ TileSet TileMap::parseTileSet(const tson::Tileset& tileset) {
 
     auto& tiles = tileset.getTiles();
     for (auto& tile : tiles) {
-        auto& objGroup = tile.getObjectgroup();
-        auto& objs = objGroup.getObjects();
-        for (auto& obj : objs) {
-            auto gid = tile.getId();
-            uint32_t id = gid & static_cast<uint32_t>(~flipFlags);
-            auto layer = parseObjectLayer(tile.getObjectgroup());
-            // NOTE: we only use one collision body in layer, and we only support Circle & AABB
-            if (!layer->ellipses.empty()) {
-                const Ellipse& ellipse = layer->ellipses[0];
-                TL_CONTINUE_IF_FALSE(ellipse);
-                collisionMap_[id] = Circle{ellipse.center, ellipse.halfX};
-            } else if (!layer->rects.empty()) {
-                const Rect& rect = layer->rects[0];
-                TL_CONTINUE_IF_FALSE(rect);
-                collisionMap_[id] = AABB{rect.position + rect.size * 0.5,
-                                         rect.size * 0.5};
-            }
+        auto id = tile.getId();
+        id = id & static_cast<uint32_t>(~flipFlags);
+        auto layer = parseObjectLayer(tile.getObjectgroup());
+        // NOTE: we only use one collision body in layer, and we only support Circle & AABB
+        if (!layer->ellipses.empty()) {
+            const Ellipse& ellipse = layer->ellipses[0];
+            TL_CONTINUE_IF_FALSE(ellipse);
+            collisionMap_[id] = Circle{ellipse.center, ellipse.halfX};
+        } else if (!layer->rects.empty()) {
+            const Rect& rect = layer->rects[0];
+            TL_CONTINUE_IF_FALSE(rect);
+            collisionMap_[id] = AABB{rect.position + rect.size * 0.5,
+                                     rect.size * 0.5};
         }
     }
 
