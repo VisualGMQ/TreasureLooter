@@ -1,9 +1,10 @@
 <scenes>
-    <startup>test-trigger</startup>
+    <startup>game</startup>
     <scene>
-        <element path="test-playground"/>
-        <element path="test-sweep"/>
-        <element path="test-maze"/>
-        <element path="test-trigger"/>
+        <element path="game"/>
+        <element path="test/test-playground"/>
+        <element path="test/test-sweep"/>
+        <element path="test/test-maze"/>
+        <element path="test/test-trigger"/>
     </scene>
 </scenes>

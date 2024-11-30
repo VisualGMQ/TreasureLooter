@@ -1,0 +1,6 @@
+﻿<role>
+    <type>ninja</type>
+    <template>role</template>
+    <texture>Ninja.png</texture>
+    <speed>0.6</speed>
+</role>

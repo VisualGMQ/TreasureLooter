@@ -1,0 +1,18 @@
+<animation>
+    <tracks>
+        <track>
+            <bind>sprite_region</bind>
+            <data>
+                <element time="0">0 0 16 16</element>
+                <element time="20">16 0 16 16</element>
+                <element time="40">16 0 16 16</element>
+            </data>
+        </track>
+        <track>
+            <bind>sprite_texture</bind>
+            <data>
+                <element time="0">Shuriken.png</element>
+            </data>
+        </track>
+    </tracks>
+</animation>

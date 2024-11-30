@@ -1,0 +1,10 @@
+<gameobject>
+    <transform>
+        <position>100 100</position>
+        <rotation>0</rotation>
+        <scale>1 1</scale>
+    </transform>
+    <tilemap>
+        <name>test</name>
+    </tilemap>
+</gameobject>

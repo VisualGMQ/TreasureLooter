@@ -1,0 +1,15 @@
+<animation>
+    <tracks>
+        <track>
+            <bind>sprite_region</bind>
+            <data>
+                <element time="0">0 0 32 32</element>
+                <element time="20">32 0 32 32</element>
+                <element time="40">64 0 32 32</element>
+                <element time="60">96 0 32 32</element>
+                <element time="80">128 0 32 32</element>
+                <element time="100">150 0 32 32</element>
+            </data>
+        </track>
+    </tracks>
+</animation>

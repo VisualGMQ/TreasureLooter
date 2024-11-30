@@ -12,7 +12,7 @@ public:
 
 private:
     void updateRecursive(GameObject& go, int& id, bool isParentOpen,
-                         bool isParentDragging);
+                         bool isParentDragging, bool isDisabled);
     GameObjectID selectedGO_;
     int curSelectFpsLimit_ = 0;
 

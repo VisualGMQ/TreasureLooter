@@ -16,13 +16,14 @@ AssetTable::AssetTable() {
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLError err = doc.Parse((const char*)fileContent);
     if (err) {
-        LOGE("assets.xml parse failed");
+        LOGE("assets.xml parse failed: %s", GetXMLErrStr(err));
         Context::GetInst().Exit();
         return;
     }
 
     auto assetsElem = doc.FirstChildElement("assets");
-    TL_RETURN_IF_FALSE_LOGE(assetsElem, "assets.xml don't has `assets` element");
+    TL_RETURN_IF_FALSE_LOGE(assetsElem,
+                            "assets.xml don't has `assets` element");
 
     // parse textures
     tinyxml2::XMLElement* textureList =
@@ -89,6 +90,18 @@ AssetTable::AssetTable() {
         TL_CONTINUE_IF_FALSE(isMusic || strcmp(elem->Name(), "sound") == 0);
         parseAudio(*elem, isMusic);
     }
+
+    // parse role config
+    tinyxml2::XMLElement* roleList = assetsElem->FirstChildElement("role");
+    TL_RETURN_IF_FALSE(roleList);
+
+    node = roleList->FirstChild();
+    while (node) {
+        auto elem = node->ToElement();
+        node = node->NextSibling();
+        TL_CONTINUE_IF_FALSE(elem);
+        parseRoleConfig(*elem);
+    }
 }
 
 void AssetTable::parseTexture(tinyxml2::XMLElement& node) {
@@ -136,6 +149,15 @@ void AssetTable::parseAudio(tinyxml2::XMLElement& node, bool isMusic) {
     } else {
         Context::GetInst().audioMgr->LoadSound(path, name);
     }
+}
+
+void AssetTable::parseRoleConfig(tinyxml2::XMLElement& node) {
+    auto attr = node.FindAttribute("path");
+    std::string name = attr->Value();
+    TL_RETURN_IF_FALSE(!name.empty());
+
+    auto path = "assets/game/role/" + name + ".xml";
+    Context::GetInst().roleConfigMgr->Load(path, name);
 }
 
 }  // namespace tl

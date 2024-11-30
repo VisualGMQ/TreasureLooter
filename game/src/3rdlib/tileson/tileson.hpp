@@ -3537,8 +3537,9 @@ namespace tson
 			inline void setProperty(const std::string &name, const tson::Property &value);
 			inline void setId(const std::string &id);
 
-			inline bool hasProperty(const std::string &name);
+			inline bool hasProperty(const std::string &name) const;
 			inline tson::Property * getProperty(const std::string &name);
+			inline const tson::Property * getProperty(const std::string &name) const;
 			inline std::map<std::string, Property> &getProperties();
 			inline std::vector<Property*> get();
 			template <typename T>
@@ -3616,7 +3617,7 @@ void tson::PropertyCollection::setId(const std::string &id)
 	m_id = id;
 }
 
-bool tson::PropertyCollection::hasProperty(const std::string &name)
+bool tson::PropertyCollection::hasProperty(const std::string &name) const
 {
 	return m_properties.count(name) > 0;
 }
@@ -3624,6 +3625,15 @@ bool tson::PropertyCollection::hasProperty(const std::string &name)
 tson::Property *tson::PropertyCollection::getProperty(const std::string &name)
 {
 	return (m_properties.count(name) > 0) ? &m_properties[name] : nullptr;
+}
+
+const tson::Property *tson::PropertyCollection::getProperty(const std::string &name) const
+{
+    auto it = m_properties.find(name);
+    if (it != m_properties.end()) {
+        return &it->second;
+    }
+    return nullptr;
 }
 
 std::map<std::string, tson::Property> &tson::PropertyCollection::getProperties()
@@ -3780,11 +3790,13 @@ namespace tson
 			[[nodiscard]] inline const std::vector<tson::Vector2i> &getPolygons() const;
 			[[nodiscard]] inline const std::vector<tson::Vector2i> &getPolylines() const;
 			[[nodiscard]] inline PropertyCollection &getProperties();
+			[[nodiscard]] inline const PropertyCollection &getProperties() const;
 			[[nodiscard]] inline const Text &getText() const;
 
 			template <typename T>
-			inline T get(const std::string &name);
+			inline T get(const std::string &name) const;
 			inline tson::Property * getProp(const std::string &name);
+			inline const tson::Property * getProp(const std::string &name) const;
 
 			//v1.2.0-stuff
 			[[nodiscard]] inline TileFlipFlags getFlipFlags() const;
@@ -3824,7 +3836,7 @@ namespace tson
 	 * @return The actual value, if it exists. Otherwise: The default value of the type.
 	 */
 	template<typename T>
-	T tson::Object::get(const std::string &name)
+	T tson::Object::get(const std::string &name) const
 	{
 		return m_properties.getValue<T>(name);
 	}
@@ -4084,6 +4096,12 @@ tson::PropertyCollection &tson::Object::getProperties()
 	return m_properties;
 }
 
+const tson::PropertyCollection &tson::Object::getProperties() const
+{
+	return m_properties;
+}
+
+
 /*!
  * 'type': String assigned to type field in editor
  * @return
@@ -4104,6 +4122,14 @@ tson::Property *tson::Object::getProp(const std::string &name)
 		return m_properties.getProperty(name);
 	return nullptr;
 }
+
+const tson::Property *tson::Object::getProp(const std::string &name) const
+{
+	if(m_properties.hasProperty(name))
+		return m_properties.getProperty(name);
+	return nullptr;
+}
+
 
 /*!
  * Get all flip flags
@@ -4340,6 +4366,7 @@ namespace tson
 			template <typename T>
 			inline T get(const std::string &name);
 			inline tson::Property * getProp(const std::string &name);
+			inline const tson::Property * getProp(const std::string &name) const;
 
 			inline void assignTileMap(std::map<uint32_t, tson::Tile*> *tileMap);
 			inline void createTileData(const Vector2i &mapSize, bool isInfiniteMap);
@@ -4709,6 +4736,14 @@ tson::Property *tson::Layer::getProp(const std::string &name)
 		return m_properties.getProperty(name);
 	return nullptr;
 }
+
+const tson::Property *tson::Layer::getProp(const std::string &name) const
+{
+	if(m_properties.hasProperty(name))
+            return m_properties.getProperty(name);
+	return nullptr;
+}
+
 
 /*!
  * Get layer type
@@ -5750,8 +5785,9 @@ namespace tson
 			[[nodiscard]] inline const std::vector<int> &getTerrain() const;
 
 			template <typename T>
-			inline T get(const std::string &name);
+			inline T get(const std::string &name) const;
 			inline tson::Property * getProp(const std::string &name);
+			inline const tson::Property * getProp(const std::string &name) const;
 
 			//v1.2.0-stuff
 			inline void setProperties(const tson::PropertyCollection &properties);
@@ -5803,7 +5839,7 @@ namespace tson
 	 * @return The actual value, if it exists. Otherwise: The default value of the type.
 	 */
 	template<typename T>
-	T tson::Tile::get(const std::string &name)
+	T tson::Tile::get(const std::string &name) const
 	{
 		return m_properties.getValue<T>(name);
 	}
@@ -5941,12 +5977,16 @@ const std::vector<int> &tson::Tile::getTerrain() const
  * @param name Name of the property
  * @return
  */
-tson::Property *tson::Tile::getProp(const std::string &name)
-{
-	if(m_properties.hasProperty(name))
-		return m_properties.getProperty(name);
+tson::Property *tson::Tile::getProp(const std::string &name) {
+    if (m_properties.hasProperty(name)) return m_properties.getProperty(name);
 
-	return nullptr;
+    return nullptr;
+}
+
+const tson::Property *tson::Tile::getProp(const std::string &name) const {
+    if (m_properties.hasProperty(name)) return m_properties.getProperty(name);
+
+    return nullptr;
 }
 
 /*!

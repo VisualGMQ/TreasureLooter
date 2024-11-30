@@ -38,6 +38,9 @@ struct Shape {
     }
 
     Shape() : aabb{} {}
+
+    void SetAABB(const AABB&);
+    void SetCircle(const Circle&);
 };
 
 struct PhysicActor {

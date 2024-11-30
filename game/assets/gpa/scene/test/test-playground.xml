@@ -1,0 +1,8 @@
+<scene>
+    <element path="test/playground/tilemap"/>
+    <element path="test/playground/test-controller"/>
+    <element path="test/playground/test-transform-anim"/>
+    <element path="test/playground/font_test1"/>
+    <element path="test/playground/font_test2"/>
+    <element path="test/playground/test-texture-anim"/>
+</scene>

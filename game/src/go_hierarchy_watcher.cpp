@@ -29,6 +29,7 @@ void GOHierarchyWatcher::Update() {
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);
         ImGui::Checkbox("draw collision shapes",
                         &ctx.debugMgr->enableDrawCollisionShapes);
+        ImGui::Checkbox("enable camera", &ctx.GetCamera().enable);
 
         if (ImGui::Checkbox("simulate touch", &ctx.debugMgr->simulateTouch)) {
             if (ctx.debugMgr->simulateTouch) {
@@ -71,7 +72,7 @@ void GOHierarchyWatcher::Update() {
             return;
         }
         int id = 0;
-        updateRecursive(*root, id, true, false);
+        updateRecursive(*root, id, true, false, !root->enable);
     }
     ImGui::End();
 
@@ -85,7 +86,8 @@ void GOHierarchyWatcher::Update() {
 
 void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
                                          bool isParentOpen,
-                                         bool isParentDragging) {
+                                         bool isParentDragging,
+                                         bool isDisabled) {
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                    ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -105,8 +107,13 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
 
     auto goID = go.GetID();
     bool isDragging = false;
+    bool disabled = isDisabled || !go.enable;
 
     if (isParentOpen) {
+        if (disabled) {
+            ImGui::PushStyleColor(0, ImVec4{0.5, 0.5, 0.5, 1});
+        }
+        
         isNodeOpen = ImGui::TreeNodeEx(nameWithID.c_str(), nodeFlags);
         if (ImGui::IsItemClicked()) {
             selectedGO_ = goID;
@@ -141,6 +148,10 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
                 shouldChangeDraggingState_ = true;
             }
         }
+        
+        if (disabled) {
+            ImGui::PopStyleColor();
+        }
     }
 
     for (auto child : go.GetChildren()) {
@@ -150,7 +161,7 @@ void GOHierarchyWatcher::updateRecursive(GameObject& go, int& id,
             continue;
         }
         updateRecursive(*go, id, isNodeOpen,
-                        isParentDragging || draggingGOID_ == goID);
+                        isParentDragging || draggingGOID_ == goID, disabled);
     }
     if (isNodeOpen && hasChildren) {
         ImGui::TreePop();

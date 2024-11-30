@@ -87,8 +87,11 @@ public:
 
     TimeType GetMaxTime() const { return maxTime_; }
 
+    operator bool() const noexcept;
+
 private:
     TimeType maxTime_ = 0;
+    bool isValid_ = false;
 
     TimeType findMaxTime() const;
 

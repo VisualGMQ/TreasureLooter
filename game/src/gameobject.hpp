@@ -1,12 +1,14 @@
 #pragma once
-#include "pch.hpp"
+#include "role_config.hpp"
 #include "animation.hpp"
-#include "math.hpp"
-#include "sprite.hpp"
-#include "transform.hpp"
-#include "tilemap.hpp"
+#include "camera.hpp"
 #include "id.hpp"
+#include "math.hpp"
+#include "pch.hpp"
 #include "physics.hpp"
+#include "sprite.hpp"
+#include "tilemap.hpp"
+#include "transform.hpp"
 
 namespace tl {
 
@@ -22,6 +24,9 @@ public:
     Animator animator;
     TileMap* tilemap = nullptr;
     PhysicActor physicActor;
+    Camera camera;
+    RoleConfig role;
+    bool enable = true;
 
     const Transform& GetGlobalTransform() const { return globalTransform_; }
     GameObjectID GetID() const { return id_; }

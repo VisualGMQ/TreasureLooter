@@ -1,6 +1,0 @@
-<scene>
-    <element path="test-aabb"/>
-    <element path="test-aabb2"/>
-    <element path="test-circle"/>
-    <element path="test-circle2"/>
-</scene>

@@ -1,21 +1,44 @@
 <assets>
     <texture>
-        <element path="SpriteSheet.png"/>
+        <element path="OrdinaryMan.png"/>
+        <element path="Ninja.png"/>
         <element path="TilesetFloor.png"/>
         <element path="TilesetNature.png"/>
+        <element path="TilesetDesert.png"/>
+        <element path="TilesetDungeon.png"/>
+        <element path="TilesetElement.png"/>
+        <element path="TilesetHouse.png"/>
+        <element path="TilesetWater.png"/>
+        <element path="Shuriken.png"/>
+        <element path="Smoke.png"/>
+        <element path="scrolls/ScrollFire.png"/>
+        <element path="scrolls/ScrollIce.png"/>
+        <element path="scrolls/ScrollPlant.png"/>
+        <element path="scrolls/ScrollRock.png"/>
+        <element path="scrolls/ScrollThunder.png"/>
     </texture>
     <tilemap>
         <element path="test"/>
+        <element path="game/game"/>
     </tilemap>
     <font>
         <element path="Pixel.ttf"/>
     </font>
     <animation>
-        <element path="transform-test"/>
-        <element path="texture-test"/>
+        <element path="test/transform-test"/>
+        <element path="test/texture-test"/>
+        <element path="game/role/walk_down"/>
+        <element path="game/role/walk_left"/>
+        <element path="game/role/walk_up"/>
+        <element path="game/weapon/shuriken"/>
+        <element path="game/effect/smoke"/>
     </animation>
     <audio>
         <music path="quiet-bgm.ogg"/> 
         <sound path="Fire2.wav"/>
     </audio>
+    <role>
+        <element path="ordinary_man"/>
+        <element path="ninja"/>
+    </role>
 </assets>

@@ -51,11 +51,12 @@ struct ObjectLayer: public MapLayer {
         Rect region;
         const TileSet* tileset = nullptr;
         Flags<Flip> flip = Flip::None;
+        const tson::PropertyCollection* properties = nullptr;
     };
 
     std::vector<Ellipse> ellipses;
     std::vector<Rect> rects;
-    std::vector<Vec2> points;
+    std::vector<Point> points;
     std::vector<Polygon> polygons;
     std::vector<Polyline> polylines;
     std::vector<TileObject> tileObjects;
@@ -63,9 +64,13 @@ struct ObjectLayer: public MapLayer {
     ObjectLayer() : MapLayer{MapLayerType::Object} {}
 };
 
-using TileMapCollisionShape = std::variant<Circle, AABB>;
+struct TileMapCollision {
+    Shape shape;
+    bool isTrigger = false;
+};
 
 struct Tile {
+    std::string name;
     std::optional<size_t >tilesetIndex;
     Rect region;
     Flags<Flip> flip;
@@ -102,7 +107,7 @@ public:
 private:
     std::vector<std::unique_ptr<MapLayer>> layers_;
     std::vector<TileSet> tileSets_;
-    std::unordered_map<uint32_t, TileMapCollisionShape> collisionMap_;
+    std::unordered_map<uint32_t, TileMapCollision> collisionMap_;
 
     std::unique_ptr<ObjectLayer> parseObjectLayer(const tson::Layer&) const;
     std::unique_ptr<TileLayer> parseTileLayer(const tson::Layer&) const;

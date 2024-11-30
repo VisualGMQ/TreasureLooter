@@ -64,6 +64,8 @@ TileMap::TileMap(const std::string& filename) {
         tileSets_.emplace_back(parseTileSet(tileset));
     }
 
+    auto properties = map->getProperties();
+
     for (auto& layer : map->getLayers()) {
         if (layer.getType() == tson::LayerType::ObjectGroup) {
             auto result = parseObjectLayer(layer);
@@ -93,11 +95,13 @@ std::unique_ptr<ObjectLayer> TileMap::parseObjectLayer(
             ellipse.center.y = object.getPosition().y;
             ellipse.halfX = object.getSize().x * 0.5;
             ellipse.halfY = object.getSize().y * 0.5;
+            ellipse.properties = &object.getProperties();
             result->ellipses.emplace_back(std::move(ellipse));
         } else if (object.getObjectType() == tson::ObjectType::Point) {
-            Vec2 point;
+            Point point;
             point.x = object.getPosition().x;
             point.y = object.getPosition().y;
+            point.properties = &object.getProperties();
             result->points.emplace_back(std::move(point));
         } else if (object.getObjectType() == tson::ObjectType::Rectangle) {
             Rect rect;
@@ -105,6 +109,7 @@ std::unique_ptr<ObjectLayer> TileMap::parseObjectLayer(
             rect.position.y = object.getPosition().y;
             rect.size.w = object.getSize().x;
             rect.size.h = object.getSize().y;
+            rect.properties = &object.getProperties();
             result->rects.emplace_back(std::move(rect));
         } else if (object.getObjectType() == tson::ObjectType::Polygon) {
             Polygon polygon;
@@ -114,6 +119,7 @@ std::unique_ptr<ObjectLayer> TileMap::parseObjectLayer(
                 point.y = p.y;
                 polygon.points.emplace_back(std::move(point));
             }
+            polygon.properties = &object.getProperties();
             result->polygons.emplace_back(std::move(polygon));
         } else if (object.getObjectType() == tson::ObjectType::Polyline) {
             Polyline polyline;
@@ -123,6 +129,7 @@ std::unique_ptr<ObjectLayer> TileMap::parseObjectLayer(
                 point.y = p.y;
                 polyline.points.emplace_back(std::move(point));
             }
+            polyline.properties = &object.getProperties();
             result->polylines.emplace_back(std::move(polyline));
         } else if (object.getObjectType() == tson::ObjectType::Object) {
             ObjectLayer::TileObject obj;
@@ -152,6 +159,7 @@ std::unique_ptr<ObjectLayer> TileMap::parseObjectLayer(
                     break;
                 }
             }
+            obj.properties = &object.getProperties();
             result->tileObjects.emplace_back(std::move(obj));
         }
     }
@@ -169,7 +177,6 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
     flipFlags |= tson::TileFlipFlags::Horizontally;
     flipFlags |= tson::TileFlipFlags::Vertically;
 
-    auto& tileData = layer.getTileData();
     for (auto& [pos, tileObj] : layer.getTileObjects()) {
         auto [x, y] = pos;
 
@@ -196,22 +203,30 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
         for (int i = 0; i < tileSets_.size(); i++) {
             if (tileSets_[i].name == tilesetName) {
                 myTile.tilesetIndex = i;
-
                 break;
             }
+        }
+
+        auto nameProp = tile->getProp("name");
+        if (nameProp) {
+            myTile.name = nameProp->getValue<std::string>();
         }
 
         // find collision shape
         uint32_t id = tile->getId() & static_cast<uint32_t>(~flipFlags);
         if (auto it = collisionMap_.find(id); it != collisionMap_.end()) {
-            if (const Circle* c = std::get_if<Circle>(&it->second); c) {
+            if (it->second.shape.type== Shape::Type::Circle) {
+                const Circle& c = it->second.shape.circle;
                 myTile.actor.enable = true;
                 myTile.actor.shape.type = Shape::Type::Circle;
-                myTile.actor.shape.circle = *c;
-            } else if (const AABB* a = std::get_if<AABB>(&it->second); a) {
+                myTile.actor.shape.circle = c;
+                myTile.actor.isTrigger = it->second.isTrigger;
+            } else if (it->second.shape.type== Shape::Type::AABB) {
+                const AABB& a = it->second.shape.aabb;
                 myTile.actor.enable = true;
                 myTile.actor.shape.type = Shape::Type::AABB;
-                myTile.actor.shape.aabb = *a;
+                myTile.actor.shape.aabb = a;
+                myTile.actor.isTrigger = it->second.isTrigger;
             }
         }
 
@@ -239,19 +254,31 @@ TileSet TileMap::parseTileSet(const tson::Tileset& tileset) {
 
     auto& tiles = tileset.getTiles();
     for (auto& tile : tiles) {
-        auto id = tile.getId();
-        id = id & static_cast<uint32_t>(~flipFlags);
+        auto gid = tile.getId();
+        uint32_t id = gid & static_cast<uint32_t>(~flipFlags);
         auto layer = parseObjectLayer(tile.getObjectgroup());
-        // NOTE: we only use one collision body in layer, and we only support Circle & AABB
+        // NOTE: we only use one collision body in layer, and we only support
+        // Circle & AABB
+        TileMapCollision collision;
         if (!layer->ellipses.empty()) {
             const Ellipse& ellipse = layer->ellipses[0];
             TL_CONTINUE_IF_FALSE(ellipse);
-            collisionMap_[id] = Circle{ellipse.center, ellipse.halfX};
+            collision.shape.SetCircle(Circle{ellipse.center, ellipse.halfX});
+            auto property = ellipse.properties->getProperty("trigger");
+            if (property) {
+                collision.isTrigger = property->getValue<bool>();
+            }
+            collisionMap_[id] = collision;
         } else if (!layer->rects.empty()) {
             const Rect& rect = layer->rects[0];
             TL_CONTINUE_IF_FALSE(rect);
-            collisionMap_[id] = AABB{rect.position + rect.size * 0.5,
-                                     rect.size * 0.5};
+            auto property = rect.properties->getProperty("trigger");
+            if (property) {
+                collision.isTrigger = property->getValue<bool>();
+            }
+            collision.shape.SetAABB(
+                AABB{rect.position + rect.size * 0.5, rect.size * 0.5});
+            collisionMap_[id] = collision;
         }
     }
 
@@ -283,4 +310,4 @@ TileMap* TileMapManager::Find(const std::string& name) {
     }
     return nullptr;
 }
-} // namespace tl
+}  // namespace tl

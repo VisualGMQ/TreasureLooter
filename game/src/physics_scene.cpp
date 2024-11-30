@@ -2,6 +2,7 @@
 
 #include "context.hpp"
 #include "gameobject.hpp"
+#include "profile.hpp"
 
 namespace tl {
 VectorSplitResult SplitVector(const Vec2& vel, const Vec2& norm) {
@@ -11,6 +12,8 @@ VectorSplitResult SplitVector(const Vec2& vel, const Vec2& norm) {
 }
 
 void PhysicsScene::MarkAsPhysics(GameObject* go) {
+    TL_RETURN_IF_FALSE(go && go->enable);
+
     if (go->physicActor) {
         go->physicActor.collideShape_ = GetShapeRelateBy(*go);
         MarkedActor actor;
@@ -25,8 +28,8 @@ void PhysicsScene::MarkAsPhysics(GameObject* go) {
                 for (int i = 0; i < tileLayer->GetSize().w; i++) {
                     for (int j = 0; j < tileLayer->GetSize().h; j++) {
                         Tile* tile = tileLayer->GetTile(i, j);
-                        TL_CONTINUE_IF_FALSE(
-                            tile && tile->tilesetIndex && tile->actor);
+                        TL_CONTINUE_IF_FALSE(tile && tile->tilesetIndex &&
+                                             tile->actor);
                         bool isVFlip = tile->flip & Flip::Vertical;
                         bool isHFlip = tile->flip & Flip::Horizontal;
                         const TileSet& tileset =
@@ -35,8 +38,8 @@ void PhysicsScene::MarkAsPhysics(GameObject* go) {
                         Transform scaleTransform{
                             Vec2{isHFlip ? tile->region.size.w : 0,
                                  isVFlip ? tile->region.size.h : 0},
-                            Vec2{isHFlip ? -1.0f : 1.0f,
-                                 isVFlip ? -1.0f : 1.0f}
+                            Vec2{           isHFlip ? -1.0f : 1.0f,
+                                 isVFlip ? -1.0f : 1.0f           }
                         };
                         Transform tileLocalTransform = CalcTransformFromParent(
                             localTransform, scaleTransform);
@@ -58,6 +61,7 @@ void PhysicsScene::MarkAsPhysics(GameObject* go) {
 }
 
 void PhysicsScene::Update(TimeType delta) {
+    PROFILE_FUNC();
     constexpr int MaxIterCount = 16;
     int iterCount = MaxIterCount;
 
@@ -76,7 +80,7 @@ void PhysicsScene::Update(TimeType delta) {
 
     hitInfos_.clear();
 
-    handleTrigger();    
+    handleTrigger();
 }
 
 void PhysicsScene::ClearActors() {
@@ -84,21 +88,25 @@ void PhysicsScene::ClearActors() {
 }
 
 void PhysicsScene::handleNoContactMove() {
+    PROFILE_FUNC();
     for (auto actor : actors_) {
         actor.actor->collideShape_.SetCenter(
-            actor.actor->collideShape_.GetCenter() +
-            actor.actor->movement_);
+            actor.actor->collideShape_.GetCenter() + actor.actor->movement_);
         actor.actor->movement_ = Vec2::ZERO;
     }
 }
 
 void PhysicsScene::generateContacts() {
+    PROFILE_FUNC();
     for (size_t i = 0; i < actors_.size(); i++) {
         std::optional<SweepHitInfo> minHitInfo;
         PhysicActor* actor1 = actors_[i].actor;
-        for (size_t j = i + 1; j < actors_.size(); j++) {
+        TL_CONTINUE_IF_FALSE(actor1->movement_ != Vec2::ZERO);
+        
+        // for (size_t j = i + 1; j < actors_.size(); j++) {
+        for (size_t j = 0; j < actors_.size(); j++) {
             PhysicActor* actor2 = actors_[j].actor;
-
+            TL_CONTINUE_IF_FALSE(actor1 != actor2);
             TL_CONTINUE_IF_FALSE(actor1->filter & actor2->filter);
             TL_CONTINUE_IF_FALSE(!actor1->isTrigger && !actor2->isTrigger);
 
@@ -120,6 +128,7 @@ void PhysicsScene::generateContacts() {
 }
 
 void PhysicsScene::sortContacts() {
+    PROFILE_FUNC();
     std::stable_sort(std::begin(hitInfos_), std::end(hitInfos_),
                      [](const SweepHitInfo& h1, const SweepHitInfo& h2) {
                          return h1.t < h2.t;
@@ -127,6 +136,7 @@ void PhysicsScene::sortContacts() {
 }
 
 void PhysicsScene::handleContacts() {
+    PROFILE_FUNC();
     SweepHitInfo hit = hitInfos_[0];
     moveAndSlide(hit, 0.01);
     hitInfos_.clear();
@@ -169,15 +179,14 @@ void PhysicsScene::moveAndSlide(SweepHitInfo& hit, float Threshould) {
 
 bool PhysicsScene::quickCheckNeedSweep(const AABB& a, const AABB& b,
                                        const Vec2& dir) const {
-    AABB aabb1 = b;
-    aabb1.halfSize += a.halfSize;
-    AABB aabb2;
-    Vec2 halfDir = dir * 0.5;
-    aabb2.center = halfDir + a.center;
-    aabb2.halfSize.x = std::abs(halfDir.x);
-    aabb2.halfSize.y = std::abs(halfDir.y);
+    PROFILE_FUNC();
 
-    return IsAABBOverlap(aabb1, aabb2);
+    AABB src;
+    Vec2 halfDir = dir * 0.5;
+    src.center = a.center + halfDir;
+    src.halfSize = a.halfSize + halfDir;
+
+    return IsAABBOverlap(src, b);
 }
 
 SweepHitInfo PhysicsScene::sweep(const PhysicActor& actor1,
@@ -189,15 +198,13 @@ SweepHitInfo PhysicsScene::sweep(const PhysicActor& actor1,
 
 SweepHitInfo PhysicsScene::sweep(const Shape& shape1, const Shape& shape2,
                                  const Vec2& dir) {
+    PROFILE_FUNC();
     if (FLT_EQ(dir.LengthSqrd(), 0)) {
         return {};
     }
 
-    if (shape1.type != Shape::Type::Circle ||
-        shape2.type != Shape::Type::Circle) {
-        TL_RETURN_VALUE_IF_FALSE(
-            quickCheckNeedSweep(shape1.aabb, shape2.aabb, dir), SweepHitInfo{});
-    }
+    TL_RETURN_VALUE_IF_FALSE(
+        quickCheckNeedSweep(shape1.aabb, shape2.aabb, dir), SweepHitInfo{});
 
     SweepHitInfo hitInfo;
     if (shape1.type == Shape::Type::Circle) {
@@ -227,6 +234,7 @@ SweepHitInfo PhysicsScene::sweep(const Shape& shape1, const Shape& shape2,
 }
 
 void PhysicsScene::handleTrigger() {
+    PROFILE_FUNC();
     auto& eventMgr = Context::GetInst().eventMgr;
 
     for (int i = 0; i < actors_.size(); i++) {
@@ -246,12 +254,12 @@ void PhysicsScene::handleTrigger() {
                 continue;
             }
 
-            auto it = std::find_if(trigger->actor->enteredGOList_.begin(),
-                                   trigger->actor->enteredGOList_.end(),
-                                   [goid = solid->go->GetID()](
-                                   const GameObjectID& id) {
-                                       return id == goid;
-                                   });
+            auto it = std::find_if(
+                trigger->actor->enteredGOList_.begin(),
+                trigger->actor->enteredGOList_.end(),
+                [goid = solid->go->GetID()](const GameObjectID& id) {
+                    return id == goid;
+                });
             bool isInArea = trigger->actor->enteredGOList_.end() != it;
             bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
             if (isInArea && !isOverlap) {
@@ -290,5 +298,7 @@ bool PhysicsScene::checkOverlap(const PhysicActor& trigger,
         }
         return false;
     }
+
+    return false;
 }
-} // namespace tl
+}  // namespace tl
