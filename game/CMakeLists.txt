@@ -78,7 +78,7 @@ target_precompile_headers(main PRIVATE src/pch.hpp)
 
 option(ENABLE_PROFILE "enable profile " ON)
 
-if (ENABLE_PROFILE AND NOT EMSCRIPTEN)
+if (ENABLE_PROFILE AND NOT EMSCRIPTEN AND NOT ANDROID)
     add_subdirectory(src/3rdlib/easy_profiler)
     target_link_libraries(main PRIVATE easy_profiler)
     target_compile_definitions(main PRIVATE TL_ENABLE_PROFILE)
