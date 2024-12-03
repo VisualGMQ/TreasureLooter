@@ -9,3 +9,4 @@ game/cmake-build/
 compile_commands.json
 game/.cache
 game/imgui.ini
+game/log/

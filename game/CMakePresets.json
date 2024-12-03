@@ -6,7 +6,8 @@
             "binaryDir": "${sourceDir}/cmake-build",
             "cacheVariables": {
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "ENABLE_PROFILE": "ON"
             }
         },
         {
