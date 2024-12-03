@@ -2,14 +2,15 @@
 #include "asset_table.hpp"
 #include "controller/touch_controller.hpp"
 #include "flags.hpp"
-#include "level/test_pushActor.hpp"
+#include "level/test_maze.hpp"
 #include "level/test_physics.hpp"
 #include "level/test_playground.hpp"
+#include "level/test_pushActor.hpp"
+#include "level/test_trigger.hpp"
 #include "log.hpp"
 #include "math.hpp"
+#include "profile.hpp"
 #include "renderer.hpp"
-#include "level/test_maze.hpp"
-#include "level/test_trigger.hpp"
 
 namespace tl {
 
@@ -115,6 +116,8 @@ Context::~Context() {
 }
 
 void Context::Update() {
+    PROFILE_FUNC();
+    
     time->BeginRecordElapse();
 
     while (SDL_PollEvent(&event_)) {

@@ -9,12 +9,12 @@ file(GLOB_RECURSE HEADERS ./src/*.hpp)
 aux_source_directory(src GAME_SRC)
 aux_source_directory(src/3rdlib/imgui GAME_SRC)
 aux_source_directory(src/3rdlib/tinyxml2 GAME_SRC)
+aux_source_directory(src/3rdlib/easy_profiler GAME_SRC)
 aux_source_directory(src/input GAME_SRC)
 aux_source_directory(src/controller GAME_SRC)
 aux_source_directory(src/level GAME_SRC)
-file(GLOB_RECURSE GAME_HEADERS src/*.hpp)
+file(GLOB_RECURSE GAME_HEADERS src/*.hpp src/*.h)
 file(GLOB_RECURSE GAME_ASSETS assets/*)
-
 
 if (ANDROID)
     add_library(main SHARED)
@@ -73,6 +73,18 @@ target_compile_features(main PRIVATE cxx_std_17)
 target_include_directories(main PRIVATE src)
 target_compile_definitions(main PRIVATE _CRT_SECURE_NO_WARNINGS)
 target_precompile_headers(main PRIVATE src/pch.hpp)
+
+############ profile config ###############
+
+option(ENABLE_PROFILE "enable profile " ON)
+
+if (ENABLE_PROFILE AND NOT EMSCRIPTEN AND NOT ANDROID)
+    add_subdirectory(src/3rdlib/easy_profiler)
+    target_link_libraries(main PRIVATE easy_profiler)
+    target_compile_definitions(main PRIVATE TL_ENABLE_PROFILE)
+endif()
+
+############# asset fixer #################
 
 find_package(Python3 QUIET)
 if (NOT Python3_Interpreter_FOUND)
