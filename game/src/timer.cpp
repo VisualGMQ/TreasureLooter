@@ -1,5 +1,6 @@
 #include "timer.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl {
 
@@ -15,10 +16,23 @@ void Time::EndRecordElapse() {
     elapseTime_ = SDL_GetTicks64() - elapseTime_;
     lastElapseTime_ = elapseTime_;
 
-    for (int i = 0; i < fpsStatistic_.size() - 1; i++) { 
+    for (int i = 0; i < fpsStatistic_.size() - 1; i++) {
         fpsStatistic_[i] = fpsStatistic_[i + 1];
     }
     fpsStatistic_.back() = elapseTime_;
+}
+
+void Time::WaitForFps() {
+    PROFILE_FUNC();
+    
+    float limitElapseTime = 1000.0f / limitFps_;
+    float elapseTime = SDL_GetTicks64() - elapseTime_;
+    float waitTime = limitElapseTime - elapseTime;
+    SDL_Delay(std::max(waitTime, 0.0f));
+}
+
+void Time::SetFpsLimit(uint32_t fps) {
+    limitFps_ = fps;
 }
 
 TimeType Time::GetElapse() const {
@@ -96,6 +110,7 @@ Timer* TimerManager::Find(TimerID id) {
 }
 
 void TimerManager::Update(TimeType elapse) {
+    PROFILE_FUNC(); 
     for (auto& [id, timer] : timers_) {
         timer.Update(elapse);
     }

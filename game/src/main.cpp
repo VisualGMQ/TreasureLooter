@@ -14,10 +14,10 @@ int main(int argc, char** argv) {
     auto now = std::chrono::system_clock::now();
     std::time_t now_time = std::chrono::system_clock::to_time_t(now);
     tm* tm = std::localtime(&now_time);
+    PROFILE_STARTUP();
 
 #ifdef TL_ENABLE_PROFILE
-    EASY_PROFILER_ENABLE
-    profiler::startListen();
+    // profiler
     auto curPath = std::filesystem::current_path();
     curPath /= "log";
     if (!std::filesystem::exists(curPath)) {
@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 #else
 
     while (!ctx.ShouldExit()) {
+        PROFILE_FRAME("MainLoop");
         ctx.Update();
     }
 #endif
@@ -42,8 +43,9 @@ int main(int argc, char** argv) {
     char filename[1024] = {0};
     snprintf(filename, sizeof(filename), "log/%d-%d-%d_%d-%d-%d.prof", tm->tm_year,
              tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-    profiler::dumpBlocksToFile(filename);
-    profiler::stopListen();
+
+    // TODO: save profile file 
+    PROFILE_SHUTDOWN();
 #endif
 
     return 0;

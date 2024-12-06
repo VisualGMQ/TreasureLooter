@@ -14,6 +14,7 @@ private:
     void updateRecursive(GameObject& go, int& id, bool isParentOpen,
                          bool isParentDragging);
     GameObjectID selectedGO_;
+    int curSelectFpsLimit_ = 0;
 
     struct GOMoveInfo {
         GameObjectID target;

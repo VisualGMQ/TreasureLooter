@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 #include "log.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl {
 
@@ -24,12 +25,14 @@ void Renderer::Clear(const Color& c) {
 }
 
 void Renderer::Update() {
+    PROFILE_FUNC(); 
     drawList_.SortByOrder();
     drawList_.Execute(renderer_);
     drawList_.Clear();
 }
 
 void Renderer::Present() const {
+    PROFILE_FUNC(); 
     SDL_RenderPresent(renderer_);
 }
 

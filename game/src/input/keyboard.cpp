@@ -1,5 +1,6 @@
 #include "input/keyboard.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl::input {
 
@@ -34,6 +35,7 @@ void Keyboard::HandleEvent(const SDL_Event& event) {
 }
 
 void Keyboard::Update() {
+    PROFILE_FUNC();
     for (auto& btn : buttons_) {
         btn.Update();
     }

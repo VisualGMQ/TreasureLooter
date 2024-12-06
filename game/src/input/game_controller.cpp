@@ -1,5 +1,6 @@
 #include "input/game_controller.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl::input {
 
@@ -101,6 +102,8 @@ SDL_JoystickID GameControllerManager::GetJoystickID(int index) {
 }
 
 void GameControllerManager::Update() {
+    PROFILE_FUNC(); 
+    
     for (auto& [_, controller] : controllers_) {
         controller.Update();
     }

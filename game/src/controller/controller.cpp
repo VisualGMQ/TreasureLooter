@@ -3,6 +3,7 @@
 #include "controller/gamepad_controller.hpp"
 #include "controller/keyboard_controller.hpp"
 #include "controller/touch_controller.hpp"
+#include "profile.hpp"
 
 namespace tl::controller {
 
@@ -51,6 +52,8 @@ void ControllerManager::ChangeController(
 }
 
 void ControllerManager::Update() {
+    PROFILE_FUNC();
+    
     if (controller_) {
         controller_->Update();
     }

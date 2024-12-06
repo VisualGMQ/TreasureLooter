@@ -3,6 +3,7 @@
 #include "context.hpp"
 #include "macro.hpp"
 #include "physics.hpp"
+#include "profile.hpp"
 #include "tilemap.hpp"
 
 namespace tl {
@@ -318,9 +319,12 @@ void Scene::RegisterLevel(std::unique_ptr<Level>&& level) {
 }
 
 void Scene::Update() {
+    PROFILE_SECTION_BEGIN("level update");
     if (level_) {
         level_->Update();
     }
+    PROFILE_SECTION_END();
+   
     updateGOTransformRecurse(nullptr, *GetRootGO(), false);
     Context::GetInst().physicsScene->ClearActors();
     addGOs2PhysicsScene();
@@ -330,6 +334,7 @@ void Scene::Update() {
 }
 
 void Scene::updateGO(GameObject* parent, GameObject* go) {
+    PROFILE_FUNC();
     if (go->animator.animation) {
         go->animator.Update(1);
         if (go->animator.IsPlaying()) {
@@ -351,6 +356,8 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
 
 void Scene::updateGOTransformRecurse(GameObject* parent, GameObject& child,
                                      bool syncPhysics) {
+    PROFILE_FUNC();
+    
     if (syncPhysics && child.physicActor) {
         Vec2 dir = child.physicActor.shape.GetCenter() * child.transform.scale;
         child.globalTransform_.position = child.physicActor.GetCollideShape().GetCenter() - Rotate(dir, child.transform.rotation);
@@ -379,6 +386,8 @@ void Scene::updateGOTransformRecurse(GameObject* parent, GameObject& child,
 }
 
 void Scene::drawSprite(const GameObject& go) const {
+    PROFILE_FUNC();
+    
     if (!go.sprite.isEnable || !go.sprite) {
         return;
     }
@@ -389,12 +398,15 @@ void Scene::drawSprite(const GameObject& go) const {
 }
 
 void Scene::addGOs2PhysicsScene() {
+    PROFILE_FUNC();
     for (auto&& [_, go] : GetGOMgr().GetAllGO()) {
         Context::GetInst().physicsScene->MarkAsPhysics(&go);
     }
 }
 
 void Scene::syncAnim2GO(GameObject& go) {
+    PROFILE_FUNC();
+    
     TL_RETURN_IF_FALSE(go.animator);
 
     auto& floatTrack = go.animator.floatTracks_;
@@ -458,6 +470,8 @@ void Scene::syncAnim2GO(GameObject& go) {
 }
 
 void Scene::drawTileMap(const GameObject& go) const {
+    PROFILE_FUNC();
+    
     TL_RETURN_IF_FALSE(go.tilemap);
 
     for (auto& layer : go.tilemap->GetLayers()) {
@@ -561,6 +575,7 @@ Scene& SceneManager::GetCurScene() {
 }
 
 void SceneManager::Update() {
+    PROFILE_FUNC(); 
     if (curScene_) {
         curScene_->Update();
     }
@@ -576,6 +591,7 @@ bool SceneManager::ChangeScene(const std::string& name) {
 }
 
 void SceneManager::PostUpdate() {
+    PROFILE_FUNC(); 
     if (changeDstScene_) {
         if (curScene_) {
             Level* level = curScene_->GetLevel();
