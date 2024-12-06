@@ -17,6 +17,8 @@ namespace tl {
 Context* Context::inst = nullptr;
 
 void Context::Init() {
+    PROFILE_FUNC();
+    
     inst = new Context;
     inst->postInit();
 }
