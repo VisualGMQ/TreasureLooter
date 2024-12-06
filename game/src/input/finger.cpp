@@ -1,5 +1,6 @@
 #include "input/finger.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl::input {
 
@@ -32,6 +33,7 @@ void FingerManager::HandleEvent(const SDL_Event& event) {
 }
 
 void FingerManager::Update() {
+    PROFILE_FUNC(); 
     for (auto& finger : fingers_) {
         finger.Update();
     }

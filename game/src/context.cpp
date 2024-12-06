@@ -118,27 +118,17 @@ Context::~Context() {
 }
 
 void Context::Update() {
-    PROFILE_FUNC();
-    
     time->BeginRecordElapse();
+    PROFILE_FUNC();
 
-    while (SDL_PollEvent(&event_)) {
-        ImGui_ImplSDL2_ProcessEvent(&event_);
-        if (event_.type == SDL_QUIT) {
-            shouldExit_ = true;
-        }
-        keyboard->HandleEvent(event_);
-        mouse->HandleEvent(event_);
-        gameCtrlMgr->HandleEvent(event_);
-        fingerMgr->HandleEvent(event_);
-        controllerMgr->HandleEvent(event_);
-    }
+    handleEvent();
 
+    PROFILE_SECTION_BEGIN("imgui prepare");
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-
     ImGui::ShowDemoWindow();
+    PROFILE_SECTION_END();
 
     renderer->Clear(Color{0.3, 0.3, 0.3});
 
@@ -157,17 +147,35 @@ void Context::Update() {
 
     renderer->Update();
 
+    PROFILE_SECTION_BEGIN("imgui render");
     ImGui::Render();
     ImGuiIO& io = ImGui::GetIO();
     renderer->SetScale(
         {io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y});
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(),
                                           renderer->renderer_);
+    PROFILE_SECTION_END();
 
     renderer->Present();
     sceneMgr->PostUpdate();
 
+    time->WaitForFps();
     time->EndRecordElapse();
+}
+
+void Context::handleEvent() {
+    PROFILE_FUNC();
+    while (SDL_PollEvent(&event_)) {
+        ImGui_ImplSDL2_ProcessEvent(&event_);
+        if (event_.type == SDL_QUIT) {
+            shouldExit_ = true;
+        }
+        keyboard->HandleEvent(event_);
+        mouse->HandleEvent(event_);
+        gameCtrlMgr->HandleEvent(event_);
+        fingerMgr->HandleEvent(event_);
+        controllerMgr->HandleEvent(event_);
+    }
 }
 
 void Context::initImGui() {

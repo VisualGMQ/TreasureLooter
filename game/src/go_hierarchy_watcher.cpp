@@ -12,6 +12,20 @@ void GOHierarchyWatcher::Update() {
 
     if (ImGui::Begin("hierarchy")) {
         ImGui::LabelText("fps", "%u", ctx.time->GetAverageFPS());
+
+        const char* fpsLimitOptions[] = {"no fps limit", "30", "60", "120"};
+        ImGui::Combo("fps limit", &curSelectFpsLimit_, fpsLimitOptions, 4);
+        if (curSelectFpsLimit_ == 0) {
+            ctx.time->SetFpsLimit(Time::NoFpsLimit);
+        } else if (curSelectFpsLimit_ == 1) {
+            ctx.time->SetFpsLimit(30);
+        } else if (curSelectFpsLimit_ == 2) {
+            ctx.time->SetFpsLimit(60);
+        } else if (curSelectFpsLimit_ == 3) {
+            ctx.time->SetFpsLimit(120);
+        }
+        
+        ImGui::LabelText("limit fps", "%u", ctx.time->GetAverageFPS());
         ImGui::Checkbox("draw GO", &ctx.debugMgr->enableDrawGO);
         ImGui::Checkbox("draw collision shapes",
                         &ctx.debugMgr->enableDrawCollisionShapes);

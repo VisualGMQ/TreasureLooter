@@ -74,6 +74,7 @@ private:
     void quitImGui();
     void postInit();
     void registerLevel2Scene(std::unique_ptr<Level>&& level, const std::string& sceneName);
+    void handleEvent();
 
     static Context* inst;
 };

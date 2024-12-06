@@ -1,6 +1,7 @@
 #include "debugger.hpp"
 #include "context.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl {
 
@@ -9,6 +10,7 @@ DebugManager::DebugManager()
       inspector{std::make_unique<Inspector>()} {}
 
 void DebugManager::Update() {
+    PROFILE_FUNC(); 
     if (inspector) {
         inspector->Update();
     }

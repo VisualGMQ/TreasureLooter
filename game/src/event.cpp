@@ -1,6 +1,7 @@
 #include "event.hpp"
 
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl {
 void EventManager::RegistCallback(Event::Type type, const CallbackFn& callback,
@@ -46,6 +47,7 @@ void EventManager::EnqueueLeaveTriggerAreaEvent(GameObject* go,
 }
 
 void EventManager::Update() {
+    PROFILE_FUNC(); 
     for (auto& event : events_) {
         TL_CONTINUE_IF_FALSE(event.type != Event::Type::Unknown);
         std::vector<size_t> needRemoveCallbacks;
