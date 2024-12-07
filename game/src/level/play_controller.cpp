@@ -26,6 +26,14 @@ Bullet& BulletPool::Create(const Vec2& pos, float duration, Animation* anim, Vec
         go->transform.scale = Vec2{2, 2};
         go->physicActor.enable = true;
         go->physicActor.shape.SetCircle(Circle{Vec2::ZERO, 8});
+        // Context::GetInst().eventMgr->RegistCallback(
+        //     Event::Type::Collision,
+        //     [=](const Event& event) {
+        //         if (event.collision.src.go == go ||
+        //             event.collision.dst.go == go) {
+        //             go->enable = false;
+        //         }
+        // });
         bullet.go = go;
         bullets_.push_back(std::move(bullet));
 

@@ -15,12 +15,20 @@ struct LeaveTriggerArea {
     MarkedActor area;
 };
 
+struct CollisionEvent {
+    MarkedActor src;
+    MarkedActor dst;
+};
+
+
 
 struct Event {
     enum class Type {
         Unknown = 0,
         EnterTriggerArea,
         LeaveTriggerArea,
+
+        Collision,
         // add your event type here
         
         _EventCount,
@@ -29,6 +37,7 @@ struct Event {
     union {
         EnterTriggerArea enterTriggerArea;
         LeaveTriggerArea leaveTriggerArea;
+        CollisionEvent collision;
     };
 
     Event() : enterTriggerArea{} { }
@@ -45,6 +54,7 @@ public:
     void RemoveAllCallback();
     void EnqueueEnterTriggerAreaEvent(GameObject*, const MarkedActor& dst);
     void EnqueueLeaveTriggerAreaEvent(GameObject*, const MarkedActor& dst);
+    void EnqueueCollisionEvent(MarkedActor, MarkedActor dst);
 
     void Update();
 

@@ -40,13 +40,13 @@ size_t PhysicsScene::Raycast(const Vec2& start, const Vec2& dir,
         if (actor->shape.type == Shape::Type::AABB) {
             SweepHitInfo info = RaycastByAABB(start, dir, actor->collideShape_.aabb);
             TL_CONTINUE_IF_FALSE(info.t >= 0);
-            info.dst = actor;
+            info.dst = &act;
             outInfo[resultCount++] = std::move(info);
         } else if (actor->shape.type == Shape::Type::Circle) {
             SweepHitInfo info =
                 RaycastByCircle(start, dir, actor->collideShape_.circle);
             TL_CONTINUE_IF_FALSE(info.t >= 0);
-            info.dst = actor;
+            info.dst = &act;
             outInfo[resultCount++] = std::move(info);
         }
     }

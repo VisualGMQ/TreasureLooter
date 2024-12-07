@@ -65,6 +65,11 @@
         continue;               \
     }
 
+#define TL_CONTINUE_IF(x) \
+    if ((x)) {            \
+        continue;         \
+    }
+
 #define TL_BREAK_IF_FALSE(x) \
     if (!(x)) {              \
         break;               \
