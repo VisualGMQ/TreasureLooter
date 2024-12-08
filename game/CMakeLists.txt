@@ -13,6 +13,8 @@ aux_source_directory(src/3rdlib/easy_profiler GAME_SRC)
 aux_source_directory(src/input GAME_SRC)
 aux_source_directory(src/controller GAME_SRC)
 aux_source_directory(src/level GAME_SRC)
+aux_source_directory(src/level/test GAME_SRC)
+
 file(GLOB_RECURSE GAME_HEADERS src/*.hpp src/*.h)
 file(GLOB_RECURSE GAME_ASSETS assets/*)
 

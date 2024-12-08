@@ -11,6 +11,7 @@ enum class Flip {
 };
 
 uint32_t ParseFloat(std::string_view text, float* values, uint32_t count);
+const char* GetXMLErrStr(tinyxml2::XMLError);
 
 class GameObject;
 class GameObjectManager;

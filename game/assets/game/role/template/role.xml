@@ -1,0 +1,9 @@
+﻿<role>
+    <stand_down_region>0 0 16 16</stand_down_region>
+    <stand_up_region>16 0 16 16</stand_up_region>
+    <stand_left_region>32 0 16 16</stand_left_region>
+    <walk_left_anim>game/role/walk_left</walk_left_anim>
+    <walk_up_anim>game/role/walk_up</walk_up_anim>
+    <walk_down_anim>game/role/walk_down</walk_down_anim>
+    <speed>0.6</speed>
+</role>

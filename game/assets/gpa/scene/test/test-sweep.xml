@@ -1,0 +1,6 @@
+<scene>
+    <element path="test/sweep/test-aabb"/>
+    <element path="test/sweep/test-aabb2"/>
+    <element path="test/sweep/test-circle"/>
+    <element path="test/sweep/test-circle2"/>
+</scene>

@@ -51,6 +51,16 @@ void Scene::load(tinyxml2::XMLDocument& doc) {
 
         root->AppendChild(*go);
     }
+
+    if (auto cameraElem = sceneElem->FirstChildElement("camera")) {
+        auto attr = cameraElem->FindAttribute("name");
+        if (attr) {
+            GameObject* go = GetGOMgr().Find(attr->Value());
+            if (go) {
+                Context::GetInst().cameraGOID = go->GetID();
+            }
+        }
+    }
 }
 
 GameObject* Scene::parseGORecurse(const tinyxml2::XMLElement& node) {
@@ -89,7 +99,8 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) {
 
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLError err = doc.Parse((const char*)fileContent);
-    TL_RETURN_NULL_IF_FALSE_LOGW(!err, "%s parse failed", filename.c_str());
+    TL_RETURN_NULL_IF_FALSE_LOGW(!err, "%s parse failed: %s", filename.c_str(),
+                                 GetXMLErrStr(err));
 
     auto goElem = doc.FirstChildElement("gameobject");
     TL_RETURN_NULL_IF_FALSE_LOGE(goElem, "%s don't exists `gameobject` elem",
@@ -113,14 +124,33 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) {
         go->tilemap = parseTileMap(*tilemapElem);
     }
 
-    auto animationElem = goElem->FirstChildElement("animation");
-    if (animationElem) {
-        go->animator = parseAnimator(*animationElem);
+    auto animatorElem = goElem->FirstChildElement("animator");
+    if (animatorElem) {
+        go->animator = parseAnimator(*animatorElem);
     }
 
     auto physicActorElem = goElem->FirstChildElement("physic_actor");
     if (physicActorElem) {
         go->physicActor = parsePhysicActor(*physicActorElem);
+    }
+
+    auto cameraElem = goElem->FirstChildElement("camera");
+    if (cameraElem) {
+        go->camera = parseCamera(*cameraElem);
+    }
+    
+    auto roleElem = goElem->FirstChildElement("role");
+    if (roleElem) {
+        go->role = parseRole(*roleElem);
+    }
+    
+    auto enableElem = goElem->FirstChildElement("enable");
+    if (enableElem) {
+        if (std::string_view{enableElem->GetText()} == "true") {
+           go->enable = true; 
+        } else {
+            go->enable = false;
+        }
     }
 
     return go;
@@ -139,7 +169,7 @@ Animator Scene::parseAnimator(const tinyxml2::XMLElement& elem) const {
     animator.animation = anim;
 
     if (!anim) {
-        LOGW("animation %s not exists", elem.GetText());
+        LOGW("animator %s not exists", elem.GetText());
     }
 
     auto rate = elem.FindAttribute("rate");
@@ -288,6 +318,22 @@ PhysicActor Scene::parsePhysicActor(const tinyxml2::XMLElement& elem) const {
     return actor;
 }
 
+Camera Scene::parseCamera(const tinyxml2::XMLElement& elem) const {
+    Camera camera;
+    camera.enable = true;
+    if (auto offsetNode = elem.FirstChildElement("offset")) {
+        ParseFloat(offsetNode->GetText(), (float*)&camera.offset, 2);
+    }
+    if (auto scaleNode = elem.FirstChildElement("scale")) {
+        ParseFloat(scaleNode->GetText(), (float*)&camera.scale, 2);
+    }
+    return camera;
+}
+
+const RoleConfig& Scene::parseRole(const tinyxml2::XMLElement& elem) const {
+    return Context::GetInst().roleConfigMgr->Find(elem.GetText());
+}
+
 void Scene::clear() {
     auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
     deleteGORecurse(rootGO_);
@@ -330,16 +376,24 @@ void Scene::Update() {
     addGOs2PhysicsScene();
     Context::GetInst().physicsScene->Update(1);
     updateGOTransformRecurse(nullptr, *GetRootGO(), true);
-    updateGO(nullptr, GetRootGO());
+
+    Context::GetInst().renderer->SetCamera(Context::GetInst().GetCamera());
+    updateGO(GetRootGO());
 }
 
-void Scene::updateGO(GameObject* parent, GameObject* go) {
+void Scene::updateGO(GameObject* go) {
     PROFILE_FUNC();
+    TL_RETURN_IF_FALSE(go->enable);
+    
     if (go->animator.animation) {
         go->animator.Update(1);
         if (go->animator.IsPlaying()) {
             syncAnim2GO(*go);
         }
+    }
+
+    if (go->camera) {
+        go->camera.Update(*go);
     }
 
     drawTileMap(*go);
@@ -349,7 +403,7 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
         GameObject* child =
             Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(id);
         if (child) {
-            updateGO(go, child);
+            updateGO(child);
         }
     }
 }
@@ -357,10 +411,13 @@ void Scene::updateGO(GameObject* parent, GameObject* go) {
 void Scene::updateGOTransformRecurse(GameObject* parent, GameObject& child,
                                      bool syncPhysics) {
     PROFILE_FUNC();
+    TL_RETURN_IF_FALSE(child.enable);
     
     if (syncPhysics && child.physicActor) {
-        Vec2 dir = child.physicActor.shape.GetCenter() * child.transform.scale;
-        child.globalTransform_.position = child.physicActor.GetCollideShape().GetCenter() - Rotate(dir, child.transform.rotation);
+        Vec2 dir = child.physicActor.shape.GetCenter() * child.GetGlobalTransform().scale;
+        child.globalTransform_.position =
+            child.physicActor.GetCollideShape().GetCenter() -
+            Rotate(dir, child.transform.rotation);
         if (parent) {
             child.transform = CalcLocalTransformToParent(
                 parent->GetGlobalTransform(), child.GetGlobalTransform());
@@ -498,6 +555,18 @@ void Scene::drawTileLayer(const Transform& trans, const TileMap& map,
             Transform globalTrans =
                 CalcTransformFromParent(trans, localTransform);
 
+            AABB aabb{
+                globalTrans.position -
+                    Context::GetInst().GetCamera().GetGlobalOffset(),
+                Vec2{std::abs(globalTrans.scale.x),
+                     std::abs(globalTrans.scale.y)}
+                *
+                    tile->region.size
+            };
+            auto halfWinSize = Context::GetInst().window->GetSize() * 0.5;
+            TL_CONTINUE_IF_FALSE(
+                IsAABBOverlap(aabb, AABB{halfWinSize, halfWinSize}));
+            
             renderer->DrawTexture(*tileset.texture, tile->region, globalTrans,
                                   Vec2{}, tile->flip, Color::White);
         }
@@ -575,7 +644,7 @@ Scene& SceneManager::GetCurScene() {
 }
 
 void SceneManager::Update() {
-    PROFILE_FUNC(); 
+    PROFILE_FUNC();
     if (curScene_) {
         curScene_->Update();
     }
@@ -591,7 +660,7 @@ bool SceneManager::ChangeScene(const std::string& name) {
 }
 
 void SceneManager::PostUpdate() {
-    PROFILE_FUNC(); 
+    PROFILE_FUNC();
     if (changeDstScene_) {
         if (curScene_) {
             Level* level = curScene_->GetLevel();

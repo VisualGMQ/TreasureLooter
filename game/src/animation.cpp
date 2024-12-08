@@ -11,7 +11,8 @@ Animation::Animation(const std::string& filename) {
 
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLError err = doc.Parse((const char*)fileContent, fileSize);
-    TL_RETURN_IF_FALSE_LOGE(!err, "animation %s load failed", filename.c_str());
+    TL_RETURN_IF_FALSE_LOGE(!err, "animation %s parse failed: %s",
+                            filename.c_str(), GetXMLErrStr(err));
 
     auto animElem = doc.FirstChildElement("animation");
     TL_RETURN_IF_FALSE(animElem);
@@ -53,6 +54,8 @@ Animation::Animation(const std::string& filename) {
     }
 
     maxTime_ = findMaxTime();
+
+    isValid_ = true;
 }
 
 bool Animation::parseVec2Track(const tinyxml2::XMLElement& elem,
@@ -172,7 +175,6 @@ bool Animation::parseTextureTrack(const tinyxml2::XMLElement& elem,
         TimeType time;
         parseDataAttributes(*element, time, interpolate);
 
-        std::string_view textureName = element->GetText();
         Texture* texture = Context::GetInst().textureMgr->Find(
             std::string(element->GetText()));
         TL_RETURN_FALSE_IF_FALSE(texture);
@@ -208,6 +210,10 @@ bool Animation::parseDataAttributes(const tinyxml2::XMLElement& element,
     }
 
     return true;
+}
+
+Animation::operator bool() const noexcept {
+    return isValid_;
 }
 
 TimeType Animation::findMaxTime() const {
@@ -352,9 +358,11 @@ void Animator::updateAllTrack() {
 
 Animation* AnimationManager::Load(const std::string& filename,
                                   const std::string& name) {
-    auto result = animations_.emplace(name, filename);
-    TL_RETURN_NULL_IF_FALSE_LOGE(result.second, "load animation %s failed",
-                           name.c_str());
+    Animation anim{filename};
+    TL_RETURN_NULL_IF_FALSE_LOGE(anim, "load animation %s failed", name.c_str());
+    
+    auto result = animations_.emplace(name, std::move(anim));
+    TL_RETURN_NULL_IF_FALSE_LOGE(result.second, "construct animation failed");
 
     return &result.first->second;
 }

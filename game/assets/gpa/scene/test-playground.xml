@@ -1,8 +1,0 @@
-<scene>
-    <element path="tilemap"/>
-    <element path="test-controller"/>
-    <element path="test-transform-anim"/>
-    <element path="font_test1"/>
-    <element path="font_test2"/>
-    <element path="test-texture-anim"/>
-</scene>

@@ -47,7 +47,7 @@ void EventManager::EnqueueLeaveTriggerAreaEvent(GameObject* go,
 }
 
 void EventManager::Update() {
-    PROFILE_FUNC(); 
+    PROFILE_FUNC();
     for (auto& event : events_) {
         TL_CONTINUE_IF_FALSE(event.type != Event::Type::Unknown);
         std::vector<size_t> needRemoveCallbacks;

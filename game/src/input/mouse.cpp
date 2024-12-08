@@ -1,5 +1,6 @@
 #include "input/mouse.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 
 namespace tl::input {
 
@@ -49,6 +50,7 @@ const Vec2& Mouse::GetOffset() const {
 }
 
 void Mouse::Update() {
+    PROFILE_FUNC();
     for (auto& btn : buttons_) {
         btn.Update();
     }

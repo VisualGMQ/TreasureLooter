@@ -25,6 +25,7 @@
 #include "event.hpp"
 
 namespace tl {
+class RoleConfigManager;
 
 class Context {
 public:
@@ -43,6 +44,7 @@ public:
     std::unique_ptr<DebugManager> debugMgr;
     std::unique_ptr<SceneManager> sceneMgr;
     std::unique_ptr<TileMapManager> tilemapMgr;
+    std::unique_ptr<RoleConfigManager> roleConfigMgr;
     std::unique_ptr<AssetTable> assetTbl;
     std::unique_ptr<input::Keyboard> keyboard;
     std::unique_ptr<input::Mouse> mouse;
@@ -56,6 +58,9 @@ public:
     std::unique_ptr<AudioManager> audioMgr;
     std::unique_ptr<PhysicsScene> physicsScene;
     std::unique_ptr<EventManager> eventMgr;
+    GameObjectID cameraGOID;
+    Camera& GetCamera();
+    const Camera& GetCamera() const;
 
     void Update();
 
@@ -65,6 +70,7 @@ public:
 private:
     SDL_Event event_;
     bool shouldExit_ = false;
+    Camera defaultCamera_;
 
     ~Context();
 
@@ -73,8 +79,14 @@ private:
     void initImGui();
     void quitImGui();
     void postInit();
-    void registerLevel2Scene(std::unique_ptr<Level>&& level, const std::string& sceneName);
     void handleEvent();
+
+    template <typename Level>
+    void registerLevel2Scene(const std::string& sceneName) {
+        auto scene = sceneMgr->Find(sceneName);
+        TL_RETURN_IF_FALSE(scene);
+        scene->RegisterLevel(std::make_unique<Level>(*scene));
+    }
 
     static Context* inst;
 };

@@ -13,6 +13,7 @@ void Inspector::Update() {
         GameObject* go = goMgr.Find(id);
         if (go) {
             updateName(go->name);
+            ImGui::Checkbox("enable", &go->enable);
             updateTransform("transform", go->transform);
             updateTransform("global transform", go->GetGlobalTransform());
             if (go->sprite) {
@@ -58,6 +59,8 @@ void Inspector::updateTransform(const std::string& title, const Transform& trans
 void Inspector::updateTransformGeneric(Transform& transform) {
     ImGui::DragFloat2("position", (float*)&transform.position);
     ImGui::DragFloat2("scale", (float*)&transform.scale, 0.1);
+    transform.scale.x = transform.scale.x == 0 ? 0.000001f : transform.scale.x;
+    transform.scale.y = transform.scale.y == 0 ? 0.000001f : transform.scale.y;
     ImGui::DragFloat("rotation", &transform.rotation, 1.0, 0.0, 0.0,
                      "%.3f(deg)");
 }

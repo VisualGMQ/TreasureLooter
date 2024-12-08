@@ -24,29 +24,24 @@ Texture::Texture(SDL_Surface* surface) {
     size_.h = surface->h;
 }
 
-Texture::Texture(const std::string& filename) {
+Texture::Texture(const std::string& filename) : texture_{nullptr} {
     SDL_Surface* surface = IMG_Load(filename.c_str());
-    if (!surface) {
-        LOGW("load texture %s failed: %s", filename.c_str(), IMG_GetError());
-    } else {
-        SDL_Surface* newSurface =
-            SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
-        if (!newSurface) {
-            LOGW("convert surface %s to RGBA8888 failed: %s", filename.c_str(),
-                 SDL_GetError());
-        }
-        SDL_FreeSurface(surface);
-        texture_ = SDL_CreateTextureFromSurface(
-            Context::GetInst().renderer->renderer_, newSurface);
-        if (!texture_) {
-            LOGW("create texture %s from surface failed: %s", filename.c_str(),
-                 SDL_GetError());
-        } else {
-            size_.w = newSurface->w;
-            size_.h = newSurface->h;
-        }
-        SDL_FreeSurface(newSurface);
-    }
+    TL_RETURN_IF_FALSE_LOGE(surface, "load texture %s failed: %s",
+                            filename.c_str(), IMG_GetError());
+    SDL_Surface* newSurface =
+        SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
+    TL_RETURN_IF_FALSE_LOGE(newSurface,
+                            "convert surface %s to RGBA8888 failed: %s",
+                            filename.c_str(), SDL_GetError());
+    SDL_FreeSurface(surface);
+    texture_ = SDL_CreateTextureFromSurface(
+        Context::GetInst().renderer->renderer_, newSurface);
+    TL_RETURN_IF_FALSE_LOGE(texture_,
+                            "create texture %s from surface failed: %s",
+                            filename.c_str(), SDL_GetError());
+    size_.w = newSurface->w;
+    size_.h = newSurface->h;
+    SDL_FreeSurface(newSurface);
 }
 
 Texture::Texture(Texture&& o) : texture_{o.texture_}, size_{o.size_} {
@@ -100,8 +95,6 @@ void FontTexture::ChangeFontSize(uint8_t size) {
     changeTextAndFont(&text_, font_, size);
 }
 
-
-
 void FontTexture::changeTextAndFont(const std::string* text, Font* font,
                                     uint8_t size) {
     if (font) {
@@ -126,7 +119,7 @@ void FontTexture::changeTextAndFont(const std::string* text, Font* font,
     SDL_FreeSurface(surface);
 
     TL_RETURN_IF_FALSE_LOGE(texture_, "font texture create failed with text %s",
-                      text_.c_str());
+                            text_.c_str());
 }
 
 Texture* TextureManager::Load(const std::string& filename,

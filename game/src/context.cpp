@@ -2,15 +2,16 @@
 #include "asset_table.hpp"
 #include "controller/touch_controller.hpp"
 #include "flags.hpp"
-#include "level/test_maze.hpp"
-#include "level/test_physics.hpp"
-#include "level/test_playground.hpp"
-#include "level/test_pushActor.hpp"
-#include "level/test_trigger.hpp"
+#include "level/game.hpp"
+#include "level/test/test_maze.hpp"
+#include "level/test/test_physics.hpp"
+#include "level/test/test_playground.hpp"
+#include "level/test/test_trigger.hpp"
 #include "log.hpp"
 #include "math.hpp"
 #include "profile.hpp"
 #include "renderer.hpp"
+#include "role_config.hpp"
 
 namespace tl {
 
@@ -46,6 +47,7 @@ void Context::postInit() {
     fingerMgr = std::make_unique<input::FingerManager>();
     controllerMgr = std::make_unique<controller::ControllerManager>();
     textureMgr = std::make_unique<TextureManager>();
+    roleConfigMgr = std::make_unique<RoleConfigManager>();
     tilemapMgr = std::make_unique<TileMapManager>();
     fontMgr = std::make_unique<FontManager>();
     animMgr = std::make_unique<AnimationManager>();
@@ -60,10 +62,11 @@ void Context::postInit() {
     debugMgr = std::make_unique<DebugManager>();
     eventMgr = std::make_unique<EventManager>();
 
-    registerLevel2Scene(std::make_unique<TestLevel>(), "test-playground");
-    registerLevel2Scene(std::make_unique<TestPhysicsLevel>(), "test-sweep");
-    registerLevel2Scene(std::make_unique<TestMazeLevel>(), "test-maze");
-    registerLevel2Scene(std::make_unique<TestTriggerLevel>(), "test-trigger");
+    registerLevel2Scene<TestLevel>("test/test-playground");
+    registerLevel2Scene<TestPhysicsLevel>("test/test-sweep");
+    registerLevel2Scene<TestMazeLevel>("test/test-maze");
+    registerLevel2Scene<TestTriggerLevel>("test/test-trigger");
+    registerLevel2Scene<GameLevel>("game");
 }
 
 void Context::initSDL() {
@@ -111,10 +114,27 @@ Context::~Context() {
     debugMgr.reset();
     animMgr.reset();
     textureMgr.reset();
+    roleConfigMgr.reset();
     renderer.reset();
     window.reset();
 
     quitSDL();
+}
+
+Camera& Context::GetCamera() {
+    GameObject* go = sceneMgr->GetCurScene().GetGOMgr().Find(cameraGOID);
+    if (go) {
+        return go->camera;
+    }
+    return defaultCamera_;
+}
+
+const Camera& Context::GetCamera() const {
+    GameObject* go = sceneMgr->GetCurScene().GetGOMgr().Find(cameraGOID);
+    if (go && go->camera) {
+        return go->camera;
+    }
+    return defaultCamera_;
 }
 
 void Context::Update() {
@@ -194,13 +214,6 @@ void Context::quitImGui() {
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
-}
-
-void Context::registerLevel2Scene(std::unique_ptr<Level>&& level,
-                                  const std::string& sceneName) {
-    auto scene = sceneMgr->Find(sceneName);
-    TL_RETURN_IF_FALSE(scene);
-    scene->RegisterLevel(std::move(level));
 }
 
 }  // namespace tl

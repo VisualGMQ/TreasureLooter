@@ -1,4 +1,5 @@
 #include "transform.hpp"
+#include "log.hpp"
 
 namespace tl {
 
@@ -7,9 +8,6 @@ Transform CalcTransformFromParent(const Transform& parentGlobalTransform,
     Transform trans;
     trans.scale = localTransform.scale * parentGlobalTransform.scale;
     trans.rotation = localTransform.rotation + parentGlobalTransform.rotation;
-    float radians = Deg2Rad(localTransform.rotation);
-    float cos = std::cos(radians);
-    float sin = std::sin(radians);
     trans.position =
         Rotate(localTransform.position * parentGlobalTransform.scale,
                parentGlobalTransform.rotation);
@@ -18,11 +16,17 @@ Transform CalcTransformFromParent(const Transform& parentGlobalTransform,
 }
 
 Transform CalcLocalTransformToParent(const Transform& parentGlobalTransform,
-                                  const Transform& globalTrans) {
+                                     const Transform& globalTrans) {
+    if (parentGlobalTransform.scale.x == 0 ||
+        parentGlobalTransform.scale.y == 0) {
+        LOGE("divide with zero");
+    }
+
     Transform trans;
     trans.scale = globalTrans.scale / parentGlobalTransform.scale;
     trans.rotation = globalTrans.rotation - parentGlobalTransform.rotation;
-    trans.position = (globalTrans.position - parentGlobalTransform.position) / parentGlobalTransform.scale;
+    trans.position = (globalTrans.position - parentGlobalTransform.position) /
+                     parentGlobalTransform.scale;
     trans.position = Rotate(trans.position, -parentGlobalTransform.rotation);
 
     return trans;

@@ -9,7 +9,9 @@ public:
     Scene() = default;  // trivial constructor to construct a NULL-like object
     Scene(const std::string& filename);
     void RegisterLevel(std::unique_ptr<Level>&& level);
+
     Level* GetLevel() const { return level_.get(); }
+
     void Update();
 
     GameObjectID GetRootGOID() const;
@@ -32,16 +34,21 @@ private:
     TileMap* parseTileMap(const tinyxml2::XMLElement& elem) const;
     PhysicActor parsePhysicActor(const tinyxml2::XMLElement& elem) const;
     Animator parseAnimator(const tinyxml2::XMLElement& elem) const;
+    Camera parseCamera(const tinyxml2::XMLElement& elem) const;
+    const RoleConfig& parseRole(const tinyxml2::XMLElement& elem) const;
 
-    void drawSprite(const GameObject&) const;
     void syncAnim2GO(GameObject&);
-    void updateGOTransformRecurse(GameObject* parent, GameObject& child, bool syncPhysics);
+    void updateGOTransformRecurse(GameObject* parent, GameObject& child,
+                                  bool syncPhysics);
     void addGOs2PhysicsScene();
 
-    void updateGO(GameObject* parent, GameObject* go);
+    void updateGO(GameObject* go);
+    void drawSprite(const GameObject&) const;
     void drawTileMap(const GameObject&) const;
-    void drawTileLayer(const Transform&, const TileMap&, const TileLayer&) const;
-    void drawObjectLayer(const Transform&, const TileMap&, const ObjectLayer&) const;
+    void drawTileLayer(const Transform&, const TileMap&,
+                       const TileLayer&) const;
+    void drawObjectLayer(const Transform&, const TileMap&,
+                         const ObjectLayer&) const;
     void deleteGORecurse(GameObjectID go);
 };
 

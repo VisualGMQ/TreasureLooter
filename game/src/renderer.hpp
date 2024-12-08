@@ -17,6 +17,7 @@ public:
     ~Renderer();
 
     void Clear(const Color&);
+    void SetCamera(const Camera& camera);
     void Update();
     void Present() const;
     void SetScale(const Vec2& scale) const;
@@ -33,6 +34,7 @@ public:
 private:
     SDL_Renderer* renderer_;
     DrawList drawList_;
+    Camera camera_;
 };
 
 }  // namespace tl

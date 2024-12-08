@@ -1,6 +1,7 @@
 #include "draw_list.hpp"
 
 #include "common.hpp"
+#include "context.hpp"
 #include "flags.hpp"
 #include "log.hpp"
 #include "macro.hpp"
@@ -8,7 +9,7 @@
 namespace tl {
 
 void DrawList::SortByOrder() {
-    std::sort(drawCmds_.begin(), drawCmds_.end(),
+    std::stable_sort(drawCmds_.begin(), drawCmds_.end(),
               [](const DrawCmd& lhs, const DrawCmd& rhs) {
                   return lhs.order < rhs.order;
               });
@@ -193,6 +194,7 @@ void DrawList::executeGeomCmd(SDL_Renderer* renderer, const GeomDrawCmd& cmd,
                                drawDatas_[startDataIdx + 1],
                                drawDatas_[startDataIdx + cmd.elemCount - 1],
                                drawDatas_[startDataIdx + cmd.elemCount]);
+
             break;
         case GeomDrawCmd::Type::Rect:
             if (cmd.fill) {

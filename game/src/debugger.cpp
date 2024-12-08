@@ -26,6 +26,8 @@ void DebugManager::Update() {
 }
 
 void DebugManager::updateRecurse(GameObject& go) {
+    TL_RETURN_IF_FALSE(go.enable);
+    
     if (enableDrawGO) {
         drawGO(go);
     }

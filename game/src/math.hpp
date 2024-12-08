@@ -87,6 +87,7 @@ struct Ellipse {
     Vec2 center;
     float halfX = 0;
     float halfY = 0;
+    const tson::PropertyCollection* properties = nullptr;
 
     operator bool() const {
         return halfX > 0 && halfY > 0;
@@ -95,15 +96,18 @@ struct Ellipse {
 
 struct Polygon {
     std::vector<Vec2> points;
+    const tson::PropertyCollection* properties = nullptr;
 };
 
 struct Polyline {
     std::vector<Vec2> points;
+    const tson::PropertyCollection* properties = nullptr;
 };
 
 struct Rect {
     Vec2 position = {};
     Vec2 size = {};
+    const tson::PropertyCollection* properties = nullptr;
 
     Rect() = default;
 
@@ -124,9 +128,14 @@ struct Rect {
     }
 };
 
+struct Point: public Vec2 {
+    const tson::PropertyCollection* properties = nullptr;
+};
+
 struct Line {
     Vec2 p;
     Vec2 dir;
+    const tson::PropertyCollection* properties = nullptr;
 
     Line(const Vec2& p, const Vec2& dir) : p{p}, dir{dir} {}
 

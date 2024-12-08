@@ -1,8 +1,9 @@
 #pragma once
-#include "texture.hpp"
-#include "transform.hpp"
+#include "camera.hpp"
 #include "common.hpp"
 #include "flags.hpp"
+#include "texture.hpp"
+#include "transform.hpp"
 
 namespace tl {
 

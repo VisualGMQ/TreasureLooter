@@ -2,9 +2,20 @@
 #include "context.hpp"
 #include "log.hpp"
 #include "macro.hpp"
+#include "profile.hpp"
 #include "scene.hpp"
 
 namespace tl {
+
+void Shape::SetAABB(const AABB& a) {
+    type = Type::AABB;
+    aabb = a;
+}
+
+void Shape::SetCircle(const Circle& c) {
+    type = Type::Circle;
+    circle = c;
+}
 
 void PhysicActor::SetMovement(const Vec2& v) {
     movement_ = v;
@@ -222,6 +233,7 @@ std::optional<std::tuple<float, float>> LinesIntersect(const Vec2& p1,
                                                        const Vec2& d1,
                                                        const Vec2& p2,
                                                        const Vec2& d2) {
+    PROFILE_FUNC();
     double delta = d2.Cross(d1);
     if (FLT_EQ(delta, 0)) {
         return std::nullopt;
@@ -266,8 +278,7 @@ Shape GetShapeRelateBy(const Transform& transform, const PhysicActor& actor) {
         // NOTE: hack way to generate bounding volume(AABB & Circle)
         shape.aabb.halfSize = Vec2{shape.circle.radius};
     } else if (actor.shape.type == Shape::Type::AABB) {
-        shape.aabb.halfSize =
-            (actor.shape.aabb.halfSize) * globalTrans.scale;
+        shape.aabb.halfSize = actor.shape.aabb.halfSize * globalTrans.scale;
     } else {
         LOGW("unknown shape type in tile");
     }

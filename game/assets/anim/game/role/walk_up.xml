@@ -1,0 +1,13 @@
+<animation>
+    <tracks>
+        <track>
+            <bind>sprite_region</bind>
+            <data>
+                <element time="0">16 16 16 16</element>
+                <element time="50">16 32 16 16</element>
+                <element time="100">16 48 16 16</element>
+                <element time="150">16 64 16 16</element>
+            </data>
+        </track>
+    </tracks>
+</animation>
