@@ -10,5 +10,16 @@
     "properties": [
     ],
     "propertyTypes": [
+        {
+            "id": 2,
+            "name": "CollisionGroup",
+            "storageType": "int",
+            "type": "enum",
+            "values": [
+                "Pawn",
+                "Weapon"
+            ],
+            "valuesAsFlags": true
+        }
     ]
 }

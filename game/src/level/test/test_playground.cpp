@@ -28,17 +28,17 @@ void CharacterController::Update() {
     constexpr float Speed = 0.1;
 
     if (axis.LengthSqrd() > 0.01) {
-        go->transform.position += Speed * axis;
+        go->SetLocalPosition(go->GetLocalPosition() + Speed * axis);
     }
 
     if (controller->GetAttackButton().IsPressed()) {
-        go->transform.rotation += 5;
+        go->SetLocalRotation(go->GetLocalRotation() + 5);
     }
     if (controller->GetDefendButton().IsPressing()) {
-        go->transform.rotation -= 0.1;
+        go->SetLocalRotation(go->GetLocalRotation() - 0.1);
     }
     if (controller->GetInteractButton().IsPressed()) {
-        go->transform.rotation = 0;
+        go->SetLocalRotation(0);
     }
 }
 

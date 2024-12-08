@@ -14,7 +14,13 @@ void Inspector::Update() {
         if (go) {
             updateName(go->name);
             ImGui::Checkbox("enable", &go->enable);
-            updateTransform("transform", go->transform);
+            
+            Transform transform = go->GetLocalTransform(); 
+            updateTransform("transform", transform);
+            if (transform != go->GetLocalTransform()) {
+                go->SetLocalTransform(transform);
+            }
+            
             updateTransform("global transform", go->GetGlobalTransform());
             if (go->sprite) {
                 updateSprite(go->sprite);

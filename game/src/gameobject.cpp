@@ -3,8 +3,49 @@
 #include "log.hpp"
 #include "macro.hpp"
 #include "math.hpp"
+#include "profile.hpp"
 
 namespace tl {
+
+void GameObject::SetLocalPosition(const Vec2& position) {
+    localTransform_.position = position;
+    needUpdateTransform_ = true;
+}
+
+void GameObject::SetLocalRotation(float rotation) {
+    localTransform_.rotation = rotation;
+    needUpdateTransform_ = true;
+}
+
+void GameObject::SetLocalScale(const Vec2& scale) {
+    localTransform_.scale = scale;
+    needUpdateTransform_ = true;
+}
+
+Vec2 GameObject::GetLocalPosition() const {
+    return localTransform_.position;
+}
+
+float GameObject::GetLocalRotation() const {
+    return localTransform_.rotation;
+}
+
+Vec2 GameObject::GetLocalScale() const {
+    return localTransform_.scale;
+}
+
+const Transform& GameObject::GetGlobalTransform() const {
+    return globalTransform_;
+}
+
+void GameObject::SetLocalTransform(const Transform& transform) {
+    needUpdateTransform_ = true;
+    localTransform_ = transform;
+}
+
+const Transform& GameObject::GetLocalTransform() const {
+    return localTransform_;
+}
 
 void GameObject::RemoveChild(GameObject& go) {
     auto it = std::remove(children_.begin(), children_.end(), go.GetID());
@@ -53,12 +94,41 @@ void GameObject::Move(const Vec2& offset) {
     if (physicActor) {
         physicActor.SetMovement(offset);
     } else {
-        transform.position += offset;
+        localTransform_.position += offset;
+        needUpdateTransform_ = true;
     }
 }
 
-void GameObject::Teleport(const Vec2& pos) {
-    transform.position = pos;
+void GameObject::UpdateTransform(const Transform& parentTrans,
+                                 bool syncPhysics) {
+    PROFILE_FUNC();
+    TL_RETURN_IF_FALSE(enable);
+
+    if (syncPhysics && physicActor) {
+        Vec2 dir = physicActor.shape.GetCenter() * GetGlobalTransform().scale;
+        globalTransform_.position = physicActor.GetCollideShape().GetCenter() -
+                                    Rotate(dir, localTransform_.rotation);
+        localTransform_ =
+            CalcLocalTransformToParent(parentTrans, GetGlobalTransform());
+    } else {
+        if (needUpdateTransform_) {
+            globalTransform_ =
+                CalcTransformFromParent(parentTrans, localTransform_);
+            if (tilemap) {
+                tilemap->UpdateTransform(globalTransform_);
+            }
+        }
+    }
+
+    for (auto c : GetChildren()) {
+        GameObject* go =
+            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(c);
+        TL_CONTINUE_IF_FALSE(go);
+
+        go->UpdateTransform(GetGlobalTransform(), syncPhysics);
+    }
+
+    needUpdateTransform_ = false;
 }
 
 GameObject* GameObjectManager::Create() {
@@ -100,7 +170,9 @@ GameObject* GameObjectManager::Clone(GameObject& src) {
     GameObject* go = Create();
 
     go->name = "<no-name>";
-    go->transform = src.transform;
+    go->localTransform_ = src.localTransform_;
+    go->camera = src.camera;
+    go->role = src.role;
     go->tilemap = src.tilemap;
     go->physicActor = src.physicActor;
     go->animator = src.animator;

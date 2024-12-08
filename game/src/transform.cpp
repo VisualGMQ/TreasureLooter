@@ -3,6 +3,14 @@
 
 namespace tl {
 
+bool Transform::operator==(const Transform& o) const noexcept {
+    return o.rotation == rotation && o.position == position && o.scale == scale;
+}
+
+bool Transform::operator!=(const Transform& o) const noexcept {
+    return !(*this == o);
+}
+
 Transform CalcTransformFromParent(const Transform& parentGlobalTransform,
                                   const Transform& localTransform) {
     Transform trans;

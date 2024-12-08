@@ -66,6 +66,7 @@ struct ObjectLayer: public MapLayer {
 
 struct TileMapCollision {
     Shape shape;
+    uint32_t collisionGroup = 0;
     bool isTrigger = false;
 };
 
@@ -79,7 +80,16 @@ struct Tile {
     operator bool() const {
         return tilesetIndex.has_value();
     }
+
+    void UpdateTransform(const Transform& parentTrans, const Vec2& grid,
+                         const Vec2& tileSize);
+    const Transform& GetGlobalTransform() const;
+
+private:
+    Transform globalTransform_;
 };
+
+class TileMap;
 
 class TileLayer: public MapLayer {
 public:
@@ -90,6 +100,10 @@ public:
     Tile* GetTile(uint32_t x, uint32_t y);
     Vec2 GetSize() const;
 
+    const auto& GetAllTiles() const { return tiles_; }
+
+    void UpdateTransform(const Transform& parentTrans, const TileMap*);
+
 private:
     // Row-major
     std::vector<Tile> tiles_;
@@ -99,10 +113,16 @@ private:
 class TileMap {
 public:
     TileMap(const std::string& filename);
+
     auto& GetLayers() const { return layers_; }
+
     auto& GetTileSet(uint32_t idx) const { return tileSets_[idx]; }
+
     auto& GetLayers() { return layers_; }
+
     auto& GetTileSet(uint32_t idx) { return tileSets_[idx]; }
+
+    void UpdateTransform(const Transform& parentTrans);
 
 private:
     std::vector<std::unique_ptr<MapLayer>> layers_;

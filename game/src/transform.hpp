@@ -7,6 +7,9 @@ struct Transform {
     Vec2 position;
     Vec2 scale = Vec2::ONES;
     float rotation = 0;  // in degrees
+
+    bool operator==(const Transform& o) const noexcept;
+    bool operator!=(const Transform& o) const noexcept;
 };
 
 Transform CalcTransformFromParent(const Transform& parentGlobalTransform,

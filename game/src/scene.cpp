@@ -111,7 +111,7 @@ GameObject* Scene::parseGO(const tinyxml2::XMLElement& node) {
 
     auto transformElem = goElem->FirstChildElement("transform");
     if (transformElem) {
-        go->transform = parseTransform(*transformElem);
+        go->SetLocalTransform(parseTransform(*transformElem));
     }
 
     auto spriteElem = goElem->FirstChildElement("sprite");
@@ -314,6 +314,12 @@ PhysicActor Scene::parsePhysicActor(const tinyxml2::XMLElement& elem) const {
     if (auto node = elem.FirstChildElement("trigger")) {
         actor.isTrigger = true;
     }
+    
+    if (auto node = elem.FirstChildElement("filter")) {
+        float value;
+        ParseFloat(node->GetText(), &value, 1);
+        actor.filter = value;
+    }
 
     return actor;
 }
@@ -370,12 +376,12 @@ void Scene::Update() {
         level_->Update();
     }
     PROFILE_SECTION_END();
-   
-    updateGOTransformRecurse(nullptr, *GetRootGO(), false);
+
+    GetRootGO()->UpdateTransform({}, false);
     Context::GetInst().physicsScene->ClearActors();
     addGOs2PhysicsScene();
     Context::GetInst().physicsScene->Update(1);
-    updateGOTransformRecurse(nullptr, *GetRootGO(), true);
+    GetRootGO()->UpdateTransform({}, true);
 
     Context::GetInst().renderer->SetCamera(Context::GetInst().GetCamera());
     updateGO(GetRootGO());
@@ -405,40 +411,6 @@ void Scene::updateGO(GameObject* go) {
         if (child) {
             updateGO(child);
         }
-    }
-}
-
-void Scene::updateGOTransformRecurse(GameObject* parent, GameObject& child,
-                                     bool syncPhysics) {
-    PROFILE_FUNC();
-    TL_RETURN_IF_FALSE(child.enable);
-    
-    if (syncPhysics && child.physicActor) {
-        Vec2 dir = child.physicActor.shape.GetCenter() * child.GetGlobalTransform().scale;
-        child.globalTransform_.position =
-            child.physicActor.GetCollideShape().GetCenter() -
-            Rotate(dir, child.transform.rotation);
-        if (parent) {
-            child.transform = CalcLocalTransformToParent(
-                parent->GetGlobalTransform(), child.GetGlobalTransform());
-        } else {
-            child.transform = child.globalTransform_;
-        }
-    } else {
-        if (parent) {
-            child.globalTransform_ = CalcTransformFromParent(
-                parent->GetGlobalTransform(), child.transform);
-        } else {
-            child.globalTransform_ = child.transform;
-        }
-    }
-
-    for (auto c : child.GetChildren()) {
-        GameObject* go =
-            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(c);
-        TL_CONTINUE_IF_FALSE(go);
-
-        updateGOTransformRecurse(&child, *go, syncPhysics);
     }
 }
 
@@ -475,7 +447,7 @@ void Scene::syncAnim2GO(GameObject& go) {
         auto bind = static_cast<FloatBindPoint>(i);
         switch (bind) {
             case FloatBindPoint::GORotation:
-                go.transform.rotation = track.curData;
+                go.SetLocalRotation(track.curData);
                 break;
         }
     }
@@ -489,10 +461,10 @@ void Scene::syncAnim2GO(GameObject& go) {
         auto& track = vec2Track[i];
         switch (bind) {
             case Vec2BindPoint::GOPosition:
-                go.transform.position = track.curData;
+                go.SetLocalPosition(track.curData);
                 break;
             case Vec2BindPoint::GOScale:
-                go.transform.scale = track.curData;
+                go.SetLocalScale(track.curData);
                 break;
         }
     }
@@ -534,41 +506,40 @@ void Scene::drawTileMap(const GameObject& go) const {
     for (auto& layer : go.tilemap->GetLayers()) {
         if (layer->GetType() == MapLayerType::Object) {
             drawObjectLayer(go.globalTransform_, *go.tilemap,
-                            (ObjectLayer&)*layer);
+                            *layer->AsObjectLayer());
         } else if (layer->GetType() == MapLayerType::Tiles) {
-            drawTileLayer(go.globalTransform_, *go.tilemap, (TileLayer&)*layer);
+            drawTileLayer(*go.tilemap, *layer->AsTileLayer());
         }
     }
 }
 
-void Scene::drawTileLayer(const Transform& trans, const TileMap& map,
+void Scene::drawTileLayer(const TileMap& map,
                           const TileLayer& layer) const {
     auto& renderer = Context::GetInst().renderer;
+    auto halfWinSize = Context::GetInst().window->GetSize() * 0.5;
+
     for (uint32_t y = 0; y < layer.GetSize().h; y++) {
         for (uint32_t x = 0; x < layer.GetSize().w; x++) {
             const Tile* tile = layer.GetTile(x, y);
             TL_CONTINUE_IF_FALSE(tile && tile->tilesetIndex);
-            const TileSet& tileset = map.GetTileSet(tile->tilesetIndex.value());
 
-            Transform localTransform;
-            localTransform.position = Vec2(x, y) * tileset.tileSize;
-            Transform globalTrans =
-                CalcTransformFromParent(trans, localTransform);
-
+            auto& globalTransform = tile->GetGlobalTransform();
             AABB aabb{
-                globalTrans.position -
+                globalTransform.position -
                     Context::GetInst().GetCamera().GetGlobalOffset(),
-                Vec2{std::abs(globalTrans.scale.x),
-                     std::abs(globalTrans.scale.y)}
+                Vec2{std::abs(globalTransform.scale.x),
+                     std::abs(globalTransform.scale.y)}
                 *
                     tile->region.size
             };
-            auto halfWinSize = Context::GetInst().window->GetSize() * 0.5;
+
             TL_CONTINUE_IF_FALSE(
                 IsAABBOverlap(aabb, AABB{halfWinSize, halfWinSize}));
             
-            renderer->DrawTexture(*tileset.texture, tile->region, globalTrans,
-                                  Vec2{}, tile->flip, Color::White);
+            const TileSet& tileset = map.GetTileSet(tile->tilesetIndex.value());
+            renderer->DrawTexture(*tileset.texture, tile->region,
+                                  tile->GetGlobalTransform(), Vec2{},
+                                  tile->flip, Color::White);
         }
     }
 }

@@ -6,7 +6,9 @@
     "activeFile": "test.tmx",
     "automapping.whileDrawing": false,
     "expandedProjectPaths": [
+        "."
     ],
+    "file.lastUsedOpenFilter": "全部文件 (*)",
     "fileStates": {
         "": {
             "scaleInDock": 1.5
@@ -21,12 +23,15 @@
             "scaleInDock": 1
         },
         "test.tmx": {
-            "scale": 2,
+            "scale": 5.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 120,
-                "y": 133.75
+                "x": 162.0909090909091,
+                "y": 172.27272727272725
             }
+        },
+        "test.tmx#land": {
+            "scaleInDock": 1
         },
         "test.tmx#nature": {
             "scaleInDock": 4

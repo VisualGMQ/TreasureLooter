@@ -47,11 +47,12 @@ void TestMazeLevel::Init() {
             if (c == '#') {
                 GameObject* newGO = goMgr.Clone(go->GetID());
                 TL_CONTINUE_IF_FALSE(newGO);
-                newGO->transform.position =
-                    newGO->physicActor.shape.aabb.halfSize * 2.0;
-                newGO->transform.position.x *= j;
-                newGO->transform.position.y *= i;
-                newGO->transform.position += Vec2{25, 25};
+                Vec2 position = newGO->physicActor.shape.aabb.halfSize * 2.0;
+                position.x *= j;
+                position.y *= i;
+                position += Vec2{25, 25};
+                newGO->SetLocalPosition(position);
+                
                 root->AppendChild(*newGO);
             }
         }

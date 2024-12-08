@@ -1,5 +1,6 @@
 #include "play_controller.hpp"
 
+#include "collision_group.hpp"
 #include "context.hpp"
 
 namespace tl {
@@ -23,9 +24,10 @@ Bullet& BulletPool::Create(const Vec2& pos, float duration, Animation* anim, Vec
         go->name = "bullet";
         go->animator.animation = anim;
         go->animator.SetLoop(InfLoop);
-        go->transform.scale = Vec2{2, 2};
+        go->SetLocalScale(Vec2{2, 2});
         go->physicActor.enable = true;
         go->physicActor.shape.SetCircle(Circle{Vec2::ZERO, 8});
+        go->physicActor.filter = CollisionGroupFlags{CollisionGroup::Pawn};
         // Context::GetInst().eventMgr->RegistCallback(
         //     Event::Type::Collision,
         //     [=](const Event& event) {
@@ -41,7 +43,7 @@ Bullet& BulletPool::Create(const Vec2& pos, float duration, Animation* anim, Vec
     }
 
     bullets_.back().go->animator.Play();
-    bullets_.back().go->transform.position = pos;
+    bullets_.back().go->SetLocalPosition(pos);
 
     return bullets_.back();
 }
@@ -79,7 +81,7 @@ void PlayController::Update() {
     if (go->role.type == RoleConfig::Type::Ninja &&
         controller->GetAttackButton().IsPressed()) {
         bulletPool_.Create(
-            go->transform.position + dir_ * 16, 1000,
+            go->GetLocalPosition() + dir_ * 16, 1000,
             Context::GetInst().animMgr->Find("game/weapon/shuriken"), dir_ * 1);
     }
 

@@ -18,6 +18,17 @@ const TileLayer* MapLayer::AsTileLayer() const {
     return static_cast<const TileLayer*>(this);
 }
 
+void Tile::UpdateTransform(const Transform& parentTrans, const Vec2& grid,
+                           const Vec2& tileSize) {
+    Transform localTransform;
+    localTransform.position = grid * tileSize;
+    globalTransform_ = CalcTransformFromParent(parentTrans, localTransform);
+}
+
+const Transform& Tile::GetGlobalTransform() const {
+    return globalTransform_;
+}
+
 TileLayer::TileLayer(uint32_t w, uint32_t h)
     : MapLayer{MapLayerType::Tiles}, w_{w}, h_{h} {
     tiles_.resize(w * h);
@@ -43,6 +54,18 @@ Tile* TileLayer::GetTile(uint32_t x, uint32_t y) {
 
 Vec2 TileLayer::GetSize() const {
     return Vec2(w_, h_);
+}
+
+void TileLayer::UpdateTransform(const Transform& parentTrans,
+                                const TileMap* tilemap) {
+    for (uint32_t y = 0; y < h_; y++) {
+        for (uint32_t x = 0; x < w_; x++) {
+            auto tile = GetTile(x, y);
+            TL_CONTINUE_IF_FALSE(tile->tilesetIndex);
+            auto& tileset = tilemap->GetTileSet(tile->tilesetIndex.value());
+            tile->UpdateTransform(parentTrans, Vec2(x, y), tileset.tileSize);
+        }
+    }
 }
 
 TileMap::TileMap(const std::string& filename) {
@@ -79,6 +102,14 @@ TileMap::TileMap(const std::string& filename) {
             }
         } else {
             // TODO: parse other layer type
+        }
+    }
+}
+
+void TileMap::UpdateTransform(const Transform& parentTrans) {
+    for (auto& layer : layers_) {
+        if (layer->GetType() == MapLayerType::Tiles) {
+            layer->AsTileLayer()->UpdateTransform(parentTrans, this);
         }
     }
 }
@@ -221,12 +252,14 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
                 myTile.actor.shape.type = Shape::Type::Circle;
                 myTile.actor.shape.circle = c;
                 myTile.actor.isTrigger = it->second.isTrigger;
+                myTile.actor.filter = it->second.collisionGroup;
             } else if (it->second.shape.type== Shape::Type::AABB) {
                 const AABB& a = it->second.shape.aabb;
                 myTile.actor.enable = true;
                 myTile.actor.shape.type = Shape::Type::AABB;
                 myTile.actor.shape.aabb = a;
                 myTile.actor.isTrigger = it->second.isTrigger;
+                myTile.actor.filter = it->second.collisionGroup;
             }
         }
 
@@ -264,17 +297,25 @@ TileSet TileMap::parseTileSet(const tson::Tileset& tileset) {
             const Ellipse& ellipse = layer->ellipses[0];
             TL_CONTINUE_IF_FALSE(ellipse);
             collision.shape.SetCircle(Circle{ellipse.center, ellipse.halfX});
-            auto property = ellipse.properties->getProperty("trigger");
-            if (property) {
-                collision.isTrigger = property->getValue<bool>();
+            auto triggerProperty = ellipse.properties->getProperty("trigger");
+            if (triggerProperty) {
+                collision.isTrigger = triggerProperty->getValue<bool>();
+            }
+            if (ellipse.properties->hasProperty("collision_group")) {
+                auto collisionGroupProperty = ellipse.properties->getProperty("collision_group");
+                collision.collisionGroup = collisionGroupProperty->getValue<int>();
             }
             collisionMap_[id] = collision;
         } else if (!layer->rects.empty()) {
             const Rect& rect = layer->rects[0];
             TL_CONTINUE_IF_FALSE(rect);
-            auto property = rect.properties->getProperty("trigger");
-            if (property) {
+            if (rect.properties->hasProperty("trigger")) {
+                auto property = rect.properties->getProperty("trigger");
                 collision.isTrigger = property->getValue<bool>();
+            }
+            if (rect.properties->hasProperty("collision_group")) {
+                auto collisionGroupProperty = rect.properties->getProperty("collision_group");
+                collision.collisionGroup = collisionGroupProperty->getValue<int>();
             }
             collision.shape.SetAABB(
                 AABB{rect.position + rect.size * 0.5, rect.size * 0.5});
@@ -310,4 +351,6 @@ TileMap* TileMapManager::Find(const std::string& name) {
     }
     return nullptr;
 }
+
+
 }  // namespace tl
