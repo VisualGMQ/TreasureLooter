@@ -14,20 +14,20 @@ public:
     void PushClearCmd(const Color& color);
     void PushTextureDrawCmd(const Texture*, const Rect& region,
                             const Transform& trans, const Vec2& anchor,
-                            Flags<Flip> flip, const Color&, uint32_t order);
+                            Flags<Flip> flip, const Color&, float order);
 
     void PushLineDrawCmd(const Vec2& p1, const Vec2& p2, const Color& color,
-                         uint32_t order);
+                         float order);
     void PushLineStripDrawCmd(const Vec2* pts, uint32_t count,
-                              const Color& color, uint32_t order);
+                              const Color& color, float order);
     void PushLineLoopDrawCmd(const Vec2* pts, uint32_t count,
-                             const Color& color, uint32_t order);
+                             const Color& color, float order);
     void PushRectDrawCmd(const Vec2& topleft, const Vec2& size,
-                         const Color& color, uint32_t order);
+                         const Color& color, float order);
     void PushRectFillCmd(const Vec2& topleft, const Vec2& size,
-                         const Color& color, uint32_t order);
+                         const Color& color, float order);
     void PushCircleDrawCmd(const Vec2& center, float radius, const Color& color,
-                           uint32_t order);
+                           float order);
 
 private:
     struct TextureDrawCmd {
