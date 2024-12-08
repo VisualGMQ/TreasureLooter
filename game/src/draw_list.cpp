@@ -29,7 +29,7 @@ void DrawList::PushClearCmd(const Color& color) {
 void DrawList::PushTextureDrawCmd(const Texture* texture, const Rect& region,
                                   const Transform& trans, const Vec2& anchor,
                                   Flags<Flip> flip, const Color& color,
-                                  uint32_t order) {
+                                  float order) {
     DrawCmd cmd{DrawCmd::Type::Texture};
     cmd.texture.texture = texture;
     cmd.texture.region = region;
@@ -49,7 +49,7 @@ void DrawList::PushTextureDrawCmd(const Texture* texture, const Rect& region,
 }
 
 void DrawList::PushLineDrawCmd(const Vec2& p1, const Vec2& p2,
-                               const Color& color, uint32_t order) {
+                               const Color& color, float order) {
     DrawCmd cmd{DrawCmd::Type::Geom};
     cmd.geom.type = GeomDrawCmd::Type::Line;
     cmd.geom.elemCount = 1;
@@ -65,7 +65,7 @@ void DrawList::PushLineDrawCmd(const Vec2& p1, const Vec2& p2,
 }
 
 void DrawList::PushLineStripDrawCmd(const Vec2* pts, uint32_t count,
-                                    const Color& color, uint32_t order) {
+                                    const Color& color, float order) {
     DrawCmd cmd{DrawCmd::Type::Geom};
     cmd.geom.type = GeomDrawCmd::Type::LineStrip;
     cmd.geom.elemCount = count;
@@ -81,7 +81,7 @@ void DrawList::PushLineStripDrawCmd(const Vec2* pts, uint32_t count,
 }
 
 void DrawList::PushLineLoopDrawCmd(const Vec2* pts, uint32_t count,
-                                   const Color& color, uint32_t order) {
+                                   const Color& color, float order) {
     DrawCmd cmd{DrawCmd::Type::Geom};
     cmd.geom.type = GeomDrawCmd::Type::LineLoop;
     cmd.geom.elemCount = count;
@@ -97,7 +97,7 @@ void DrawList::PushLineLoopDrawCmd(const Vec2* pts, uint32_t count,
 }
 
 void DrawList::PushRectDrawCmd(const Vec2& topleft, const Vec2& size,
-                               const Color& color, uint32_t order) {
+                               const Color& color, float order) {
     DrawCmd cmd{DrawCmd::Type::Geom};
     cmd.geom.type = GeomDrawCmd::Type::Rect;
     cmd.geom.elemCount = 1;
@@ -114,7 +114,7 @@ void DrawList::PushRectDrawCmd(const Vec2& topleft, const Vec2& size,
 }
 
 void DrawList::PushRectFillCmd(const Vec2& topleft, const Vec2& size,
-                               const Color& color, uint32_t order) {
+                               const Color& color, float order) {
     DrawCmd cmd{DrawCmd::Type::Geom};
     cmd.geom.type = GeomDrawCmd::Type::Rect;
     cmd.geom.elemCount = 1;
@@ -131,7 +131,7 @@ void DrawList::PushRectFillCmd(const Vec2& topleft, const Vec2& size,
 }
 
 void DrawList::PushCircleDrawCmd(const Vec2& center, float radius,
-                                 const Color& color, uint32_t order) {
+                                 const Color& color, float order) {
     DrawCmd cmd{DrawCmd::Type::Geom};
     cmd.geom.type = GeomDrawCmd::Type::Circle;
     cmd.geom.elemCount = 1;
@@ -287,7 +287,7 @@ void DrawList::executeTextureCmd(SDL_Renderer* renderer,
     SDL_RenderCopyExF(
         renderer, cmd.texture->texture_, &src, (SDL_FRect*)&dstRect,
         trans->rotation, &rotCenter,
-        static_cast<SDL_RendererFlip>(static_cast<uint32_t>(cmd.flip)));
+        static_cast<SDL_RendererFlip>(static_cast<uint32_t>(f)));
 }
 
 }  // namespace tl
