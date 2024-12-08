@@ -12,11 +12,11 @@
             "scaleInEditor": 45
         },
         "game.tmx": {
-            "scale": 2,
+            "scale": 4,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 353.25,
-                "y": 271.75
+                "x": 222.625,
+                "y": 217.875
             }
         },
         "game.tmx#ScrollIce": {

@@ -7,6 +7,7 @@
 namespace tl {
 
 class GameObject;
+class Tile;
 
 struct AABB {
     Vec2 center;
@@ -66,9 +67,16 @@ private:
     std::vector<GameObjectID> enteredGOList_;
 };
 
+
+struct MarkedActor {
+    GameObject* go = nullptr;
+    Tile* tile = nullptr;
+    PhysicActor* actor = nullptr;
+};
+
 struct SweepHitInfo {
-    PhysicActor* src = nullptr;
-    PhysicActor* dst = nullptr;
+    MarkedActor* src = nullptr;
+    MarkedActor* dst = nullptr;
     float t = -1;
     Vec2 normal;
 

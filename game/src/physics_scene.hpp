@@ -10,12 +10,6 @@ struct VectorSplitResult {
 
 VectorSplitResult SplitVector(const Vec2& dir, const Vec2& norm);
 
-struct MarkedActor {
-    GameObject* go = nullptr;
-    Tile* tile = nullptr;
-    PhysicActor* actor = nullptr;
-};
-
 class PhysicsScene {
 public:
     void MarkAsPhysics(GameObject*);
@@ -39,7 +33,6 @@ private:
     bool quickCheckNeedSweep(const AABB& aabb1, const AABB& aabb2,
                              const Vec2& dir) const;
 
-    SweepHitInfo sweep(const PhysicActor& actor1, const PhysicActor& actor2);
     SweepHitInfo sweep(const Shape& shape1, const Shape& shape2,
                        const Vec2& dir);
     void handleTrigger();

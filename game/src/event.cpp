@@ -37,6 +37,15 @@ void EventManager::EnqueueEnterTriggerAreaEvent(
     events_.emplace_back(std::move(event));
 }
 
+void EventManager::EnqueueCollisionEvent(
+    MarkedActor src, MarkedActor dst) {
+    Event event;
+    event.type = Event::Type::Collision;
+    event.collision.src = src;
+    event.collision.dst = dst;
+    events_.emplace_back(std::move(event));
+}
+
 void EventManager::EnqueueLeaveTriggerAreaEvent(GameObject* go,
                                                 const MarkedActor& area) {
     Event event;
