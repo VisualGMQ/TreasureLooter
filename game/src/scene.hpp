@@ -38,14 +38,12 @@ private:
     const RoleConfig& parseRole(const tinyxml2::XMLElement& elem) const;
 
     void syncAnim2GO(GameObject&);
-    void updateGOTransformRecurse(GameObject* parent, GameObject& child,
-                                  bool syncPhysics);
     void addGOs2PhysicsScene();
 
     void updateGO(GameObject* go);
     void drawSprite(const GameObject&) const;
     void drawTileMap(const GameObject&) const;
-    void drawTileLayer(const Transform&, const TileMap&,
+    void drawTileLayer(const TileMap&,
                        const TileLayer&) const;
     void drawObjectLayer(const Transform&, const TileMap&,
                          const ObjectLayer&) const;

@@ -104,14 +104,14 @@ void PhysicsScene::generateContacts() {
     PROFILE_FUNC();
     
     for (size_t i = 0; i < actors_.size(); i++) {
-        std::optional<SweepHitInfo> minHitInfo;
         PhysicActor* actor1 = actors_[i].actor;
         TL_CONTINUE_IF(actor1->movement_ == Vec2::ZERO);
+        std::optional<SweepHitInfo> minHitInfo;
         
         for (size_t j = 0; j < actors_.size(); j++) {
             PhysicActor* actor2 = actors_[j].actor;
 
-            TL_CONTINUE_IF(actor1 == actor2);
+            TL_CONTINUE_IF(i == j);
             TL_CONTINUE_IF_FALSE(actor1->filter & actor2->filter);
             TL_CONTINUE_IF_FALSE(!actor1->isTrigger && !actor2->isTrigger);
 
@@ -242,36 +242,31 @@ void PhysicsScene::handleTrigger() {
     auto& eventMgr = Context::GetInst().eventMgr;
 
     for (int i = 0; i < actors_.size(); i++) {
-        for (int j = i; j < actors_.size(); j++) {
-            const MarkedActor* trigger = nullptr;
-            const MarkedActor* solid = nullptr;
+        const MarkedActor& solid = actors_[i];
+        TL_CONTINUE_IF(solid.actor->isTrigger);
+        for (int j = 0; j < actors_.size(); j++) {
+            TL_CONTINUE_IF(i == j);
+            
+            const MarkedActor& trigger = actors_[j];
+            TL_CONTINUE_IF_FALSE(trigger.actor->isTrigger);
+            TL_CONTINUE_IF_FALSE(trigger.actor->filter & solid.actor->filter);
 
-            MarkedActor& actor1 = actors_[i];
-            MarkedActor& actor2 = actors_[j];
-            if (actor1.actor->isTrigger && !actor2.actor->isTrigger) {
-                trigger = &actor1;
-                solid = &actor2;
-            } else if (!actor1.actor->isTrigger && actor2.actor->isTrigger) {
-                trigger = &actor2;
-                solid = &actor1;
-            } else {
-                continue;
-            }
-
-            auto it = std::find_if(trigger->actor->enteredGOList_.begin(),
-                                   trigger->actor->enteredGOList_.end(),
-                                   [goid = solid->go->GetID()](
+            auto it = std::find_if(trigger.actor->enteredGOList_.begin(),
+                                   trigger.actor->enteredGOList_.end(),
+                                   [goid = solid.go->GetID()](
                                    const GameObjectID& id) {
                                        return id == goid;
                                    });
-            bool isInArea = trigger->actor->enteredGOList_.end() != it;
-            bool isOverlap = checkOverlap(*trigger->actor, *solid->actor);
+
+            bool isInArea = trigger.actor->enteredGOList_.end() != it;
+            bool isOverlap = checkOverlap(*trigger.actor, *solid.actor);
+
             if (isInArea && !isOverlap) {
-                trigger->actor->enteredGOList_.erase(it);
-                eventMgr->EnqueueLeaveTriggerAreaEvent(solid->go, *trigger);
+                trigger.actor->enteredGOList_.erase(it);
+                eventMgr->EnqueueLeaveTriggerAreaEvent(solid.go, trigger);
             } else if (!isInArea && isOverlap) {
-                trigger->actor->enteredGOList_.push_back(solid->go->GetID());
-                eventMgr->EnqueueEnterTriggerAreaEvent(solid->go, *trigger);
+                trigger.actor->enteredGOList_.push_back(solid.go->GetID());
+                eventMgr->EnqueueEnterTriggerAreaEvent(solid.go, trigger);
             }
         }
     }
@@ -285,16 +280,22 @@ bool PhysicsScene::checkOverlap(const PhysicActor& trigger,
                                    solid.collideShape_.circle);
         }
         if (solid.collideShape_.type == Shape::Type::AABB) {
-            return IsCircleAABBOverlap(trigger.collideShape_.circle,
-                                       solid.collideShape_.aabb);
+            if (IsAABBOverlap(trigger.collideShape_.aabb, solid.collideShape_.aabb)) {
+                return IsCircleAABBOverlap(trigger.collideShape_.circle,
+                                           solid.collideShape_.aabb);
+            }
+            return false;
         }
         return false;
     }
 
     if (trigger.collideShape_.type == Shape::Type::AABB) {
         if (solid.collideShape_.type == Shape::Type::Circle) {
-            return IsCircleAABBOverlap(solid.collideShape_.circle,
-                                       trigger.collideShape_.aabb);
+            if (IsAABBOverlap(trigger.collideShape_.aabb, solid.collideShape_.aabb)) {
+                return IsCircleAABBOverlap(solid.collideShape_.circle,
+                                           trigger.collideShape_.aabb);
+            }
+            return false;
         }
         if (solid.collideShape_.type == Shape::Type::AABB) {
             return IsAABBOverlap(solid.collideShape_.aabb,

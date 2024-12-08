@@ -14,12 +14,12 @@ void TestPushActor::Init() {
 
     box1_ = goMgr.Clone(*prefab);
     box1_->name = "box1";
-    box1_->transform.position = Vec2{400, 100};
+    box1_->SetLocalPosition(Vec2{400, 100});
     root->AppendChild(*box1_);
 
     box2_ = goMgr.Clone(*prefab);
     box2_->name = "box2";
-    box2_->transform.position = Vec2{400, 141};
+    box2_->SetLocalPosition(Vec2{400, 141});
     root->AppendChild(*box2_);
 }
 

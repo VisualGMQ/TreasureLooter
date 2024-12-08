@@ -19,7 +19,6 @@ public:
     friend class PhysicsScene;
 
     std::string name = "<no-name>";
-    Transform transform;
     Sprite sprite;
     Animator animator;
     TileMap* tilemap = nullptr;
@@ -28,7 +27,16 @@ public:
     RoleConfig role;
     bool enable = true;
 
-    const Transform& GetGlobalTransform() const { return globalTransform_; }
+    const Transform& GetLocalTransform() const;
+    void SetLocalTransform(const Transform& transform);
+    void SetLocalPosition(const Vec2& position);
+    void SetLocalRotation(float rotation);
+    void SetLocalScale(const Vec2& scale);
+    Vec2 GetLocalPosition() const;
+    float GetLocalRotation() const;
+    Vec2 GetLocalScale() const;
+
+    const Transform& GetGlobalTransform() const;
     GameObjectID GetID() const { return id_; }
     GameObjectID GetParentID() const { return parent_; }
 
@@ -40,9 +48,12 @@ public:
     void InsertChild(GameObject& go, size_t idx);
 
     void Move(const Vec2& offset);
-    void Teleport(const Vec2& pos);
+
+    void UpdateTransform(const Transform& parentTrans, bool syncPhysics);
 
 private:
+    Transform localTransform_;
+    bool needUpdateTransform_ = true;
     Transform globalTransform_;
     GameObjectID id_;
     GameObjectID parent_;
