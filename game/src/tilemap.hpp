@@ -66,6 +66,7 @@ struct ObjectLayer: public MapLayer {
 
 struct TileMapCollision {
     Shape shape;
+    uint32_t collisionGroup = 0;
     bool isTrigger = false;
 };
 

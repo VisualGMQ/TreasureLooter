@@ -252,12 +252,14 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
                 myTile.actor.shape.type = Shape::Type::Circle;
                 myTile.actor.shape.circle = c;
                 myTile.actor.isTrigger = it->second.isTrigger;
+                myTile.actor.filter = it->second.collisionGroup;
             } else if (it->second.shape.type== Shape::Type::AABB) {
                 const AABB& a = it->second.shape.aabb;
                 myTile.actor.enable = true;
                 myTile.actor.shape.type = Shape::Type::AABB;
                 myTile.actor.shape.aabb = a;
                 myTile.actor.isTrigger = it->second.isTrigger;
+                myTile.actor.filter = it->second.collisionGroup;
             }
         }
 
@@ -295,17 +297,25 @@ TileSet TileMap::parseTileSet(const tson::Tileset& tileset) {
             const Ellipse& ellipse = layer->ellipses[0];
             TL_CONTINUE_IF_FALSE(ellipse);
             collision.shape.SetCircle(Circle{ellipse.center, ellipse.halfX});
-            auto property = ellipse.properties->getProperty("trigger");
-            if (property) {
-                collision.isTrigger = property->getValue<bool>();
+            auto triggerProperty = ellipse.properties->getProperty("trigger");
+            if (triggerProperty) {
+                collision.isTrigger = triggerProperty->getValue<bool>();
+            }
+            if (ellipse.properties->hasProperty("collision_group")) {
+                auto collisionGroupProperty = ellipse.properties->getProperty("collision_group");
+                collision.collisionGroup = collisionGroupProperty->getValue<int>();
             }
             collisionMap_[id] = collision;
         } else if (!layer->rects.empty()) {
             const Rect& rect = layer->rects[0];
             TL_CONTINUE_IF_FALSE(rect);
-            auto property = rect.properties->getProperty("trigger");
-            if (property) {
+            if (rect.properties->hasProperty("trigger")) {
+                auto property = rect.properties->getProperty("trigger");
                 collision.isTrigger = property->getValue<bool>();
+            }
+            if (rect.properties->hasProperty("collision_group")) {
+                auto collisionGroupProperty = rect.properties->getProperty("collision_group");
+                collision.collisionGroup = collisionGroupProperty->getValue<int>();
             }
             collision.shape.SetAABB(
                 AABB{rect.position + rect.size * 0.5, rect.size * 0.5});

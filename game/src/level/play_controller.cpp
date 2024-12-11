@@ -1,5 +1,6 @@
 #include "play_controller.hpp"
 
+#include "collision_group.hpp"
 #include "context.hpp"
 
 namespace tl {
@@ -26,6 +27,7 @@ Bullet& BulletPool::Create(const Vec2& pos, float duration, Animation* anim, Vec
         go->SetLocalScale(Vec2{2, 2});
         go->physicActor.enable = true;
         go->physicActor.shape.SetCircle(Circle{Vec2::ZERO, 8});
+        go->physicActor.filter = CollisionGroupFlags{CollisionGroup::Pawn};
         // Context::GetInst().eventMgr->RegistCallback(
         //     Event::Type::Collision,
         //     [=](const Event& event) {

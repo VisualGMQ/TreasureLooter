@@ -12,6 +12,7 @@
     </sprite>
     <physic_actor>
         <circle>0 1 7</circle>
+        <filter>1</filter>
     </physic_actor>
     <camera>
         <offset>-512 -360</offset>

@@ -9144,18 +9144,18 @@ void tson::Property::setValueByType(IJson &json) {
             break;
 
         case Type::Int:
-            if (!m_propertyType.empty()) {
-                m_type = Type::Enum;
-                tson::EnumDefinition *def =
-                    (m_project != nullptr)
-                        ? m_project->getEnumDefinition(m_propertyType)
-                        : nullptr;
-                if (def != nullptr) {
-                    uint32_t v = json.get<uint32_t>();
-                    m_value = tson::EnumValue(v, def);
-                } else
-                    m_value = tson::EnumValue();
-            } else
+            // if (!m_propertyType.empty()) {
+            //     m_type = Type::Enum;
+            //     tson::EnumDefinition *def =
+            //         (m_project != nullptr)
+            //             ? m_project->getEnumDefinition(m_propertyType)
+            //             : nullptr;
+            //     if (def != nullptr) {
+            //         uint32_t v = json.get<uint32_t>();
+            //         m_value = tson::EnumValue(v, def);
+            //     } else
+            //         m_value = tson::EnumValue();
+            // } else
                 m_value = json.get<int>();
 
             break;
@@ -9169,18 +9169,18 @@ void tson::Property::setValueByType(IJson &json) {
             break;
 
         case Type::String:
-            if (!m_propertyType.empty()) {
-                m_type = Type::Enum;
-                tson::EnumDefinition *def =
-                    (m_project != nullptr)
-                        ? m_project->getEnumDefinition(m_propertyType)
-                        : nullptr;
-                if (def != nullptr) {
-                    std::string v = json.get<std::string>();
-                    m_value = tson::EnumValue(v, def);
-                } else
-                    m_value = tson::EnumValue();
-            } else
+            // if (!m_propertyType.empty()) {
+            //     m_type = Type::Enum;
+            //     tson::EnumDefinition *def =
+            //         (m_project != nullptr)
+            //             ? m_project->getEnumDefinition(m_propertyType)
+            //             : nullptr;
+            //     if (def != nullptr) {
+            //         std::string v = json.get<std::string>();
+            //         m_value = tson::EnumValue(v, def);
+            //     } else
+            //         m_value = tson::EnumValue();
+            // } else
                 setStrValue(json.get<std::string>());
 
             break;

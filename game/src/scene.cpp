@@ -314,6 +314,12 @@ PhysicActor Scene::parsePhysicActor(const tinyxml2::XMLElement& elem) const {
     if (auto node = elem.FirstChildElement("trigger")) {
         actor.isTrigger = true;
     }
+    
+    if (auto node = elem.FirstChildElement("filter")) {
+        float value;
+        ParseFloat(node->GetText(), &value, 1);
+        actor.filter = value;
+    }
 
     return actor;
 }

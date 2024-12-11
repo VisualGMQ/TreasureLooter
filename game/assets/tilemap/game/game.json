@@ -1007,7 +1007,7 @@
                 771,
                 771,
                 769,
-                769,
+                750,
                 771,
                 771,
                 750,
@@ -7874,6 +7874,14 @@
                                 "height": 12,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -7900,6 +7908,14 @@
                                 "height": 12,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -7926,6 +7942,14 @@
                                 "height": 12,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -7952,6 +7976,14 @@
                                 "height": 12,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -7978,6 +8010,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8004,6 +8044,14 @@
                                 "height": 14,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8030,6 +8078,14 @@
                                 "height": 14,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8056,6 +8112,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8082,6 +8146,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8108,6 +8180,14 @@
                                 "height": 15,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8134,6 +8214,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8160,6 +8248,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8186,6 +8282,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8212,6 +8316,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8238,6 +8350,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8264,6 +8384,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8290,6 +8418,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8316,6 +8452,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8342,6 +8486,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8368,6 +8520,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8394,6 +8554,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8420,6 +8588,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8446,6 +8622,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8472,6 +8656,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8498,6 +8690,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8524,6 +8724,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8550,6 +8758,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8576,6 +8792,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8602,6 +8826,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8628,6 +8860,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8654,6 +8894,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8680,6 +8928,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8706,6 +8962,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8732,6 +8996,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8758,6 +9030,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8784,6 +9064,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8810,6 +9098,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8836,6 +9132,14 @@
                                 "height": 15,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8862,6 +9166,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8888,6 +9200,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8914,6 +9234,14 @@
                                 "height": 15,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8940,6 +9268,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8964,8 +9300,16 @@
                         "objects": [
                             {
                                 "height": 14,
-                                "id": 2,
+                                "id": 3,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 1
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -8979,7 +9323,15 @@
                         "visible": true,
                         "x": 0,
                         "y": 0
-                    }
+                    },
+                    "properties": [
+                        {
+                            "name": "collision_group",
+                            "propertytype": "CollisionGroup",
+                            "type": "int",
+                            "value": 3
+                        }
+                    ]
                 },
                 {
                     "id": 141,
@@ -8992,6 +9344,14 @@
                                 "height": 14,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -9018,6 +9378,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -9044,6 +9412,14 @@
                                 "height": 16,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -9070,6 +9446,14 @@
                                 "height": 14,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -9096,6 +9480,14 @@
                                 "height": 14,
                                 "id": 1,
                                 "name": "",
+                                "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 3
+                                    }
+                                ],
                                 "rotation": 0,
                                 "type": "",
                                 "visible": true,
@@ -9138,6 +9530,12 @@
                                 "id": 1,
                                 "name": "",
                                 "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 1
+                                    },
                                     {
                                         "name": "trigger",
                                         "type": "bool",
@@ -9193,6 +9591,12 @@
                                 "id": 1,
                                 "name": "",
                                 "properties": [
+                                    {
+                                        "name": "collision_group",
+                                        "propertytype": "CollisionGroup",
+                                        "type": "int",
+                                        "value": 1
+                                    },
                                     {
                                         "name": "trigger",
                                         "type": "bool",

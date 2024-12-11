@@ -9,19 +9,20 @@
     ],
     "fileStates": {
         "": {
-            "scaleInEditor": 45
+            "scaleInDock": 32,
+            "scaleInEditor": 32
         },
         "game.tmx": {
-            "scale": 4,
+            "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 222.625,
-                "y": 217.875
+                "x": 574.3333333333334,
+                "y": 512.3333333333333
             }
         },
         "game.tmx#ScrollIce": {
             "scaleInDock": 32,
-            "scaleInEditor": 1
+            "scaleInEditor": 23
         },
         "game.tmx#ScrollPlant": {
             "scaleInDock": 16,
@@ -32,14 +33,16 @@
         },
         "game.tmx#TilesetHouse": {
             "scaleInDock": 2,
-            "scaleInEditor": 4
+            "scaleInEditor": 5.5
         },
         "game.tmx#nature": {
-            "scaleInDock": 2
+            "scaleInDock": 2,
+            "scaleInEditor": 4
         }
     },
     "last.exportedFilePath": "C:/Users/visualgmq/codes/myself/TreasureLooter/game/assets/tilemap/game",
     "last.imagePath": "C:/Users/visualgmq/codes/myself/TreasureLooter/game/assets/image/scrolls",
+    "last.objectTypesPath": "C:/Users/visualgmq/codes/myself/TreasureLooter/game/assets/tilemap/game/propertytypes.json",
     "map.fixedSize": false,
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
@@ -49,7 +52,7 @@
         "game.tmx"
     ],
     "project": "game.tiled-project",
-    "property.type": "string",
+    "property.type": "CollisionGroup",
     "recentFiles": [
         "game.tmx"
     ],
