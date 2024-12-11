@@ -49,6 +49,13 @@ void PhysicsScene::MarkAsPhysics(GameObject* go) {
                         tile->actor.collideShape_ =
                             GetShapeRelateBy(tileGlobalTransform, tile->actor);
 
+                        Vec2 canvaHalfSize =
+                            Context::GetInst().window->GetSize() * 0.5f;
+                        const Camera& camera = Context::GetInst().GetCamera();
+                        TL_CONTINUE_IF_FALSE(IsAABBOverlap(
+                            AABB{canvaHalfSize + camera.GetGlobalOffset(), canvaHalfSize},
+                            tile->actor.collideShape_.aabb));
+
                         MarkedActor actor;
                         actor.go = go;
                         actor.tile = tile;
