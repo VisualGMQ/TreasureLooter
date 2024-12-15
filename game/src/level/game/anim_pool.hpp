@@ -3,6 +3,8 @@
 
 namespace tl {
 
+class Scene;
+
 struct Anim {
     GameObject* go = nullptr;
     bool hideWhenFinish = true;

@@ -1,24 +1,19 @@
 <gameobject>
     <transform>
-        <position>300 300</position>
+        <position>400 400</position>
         <scale>2 2</scale>
         <rotation>0</rotation>
     </transform>
     <sprite>
         <anchor>0.5 0.5</anchor>
         <is_enable>true</is_enable>
-        <texture>OrdinaryMan.png</texture>
+        <texture>BlueChest.png</texture>
         <region>0 0 16 16</region>
     </sprite>
     <physic_actor>
-        <circle>0 1 7</circle>
-        <filter>1</filter>
+        <aabb>0 1 7 6</aabb>
     </physic_actor>
-    <camera>
-        <offset>-512 -360</offset>
-    </camera>
     <game>
-        <type>role</type>
-        <role>ordinary_man</role>
+        <type>chest</type>
     </game>
 </gameobject>

@@ -50,11 +50,11 @@ Controller::Button KeyboardController::GetAttackButton() const {
 }
 
 Controller::Button KeyboardController::GetDefendButton() const {
-    return cvtKey2Button(SDL_SCANCODE_K);
+    return cvtKey2Button(SDL_SCANCODE_L);
 }
 
 Controller::Button KeyboardController::GetInteractButton() const {
-    return cvtKey2Button(SDL_SCANCODE_L);
+    return cvtKey2Button(SDL_SCANCODE_K);
 }
 
 Controller::Button KeyboardController::cvtKey2Button(

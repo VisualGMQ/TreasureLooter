@@ -16,6 +16,8 @@
         <element path="scrolls/ScrollPlant.png"/>
         <element path="scrolls/ScrollRock.png"/>
         <element path="scrolls/ScrollThunder.png"/>
+        <element path="BlueChest.png"/>
+        <element path="RedChest.png"/>
     </texture>
     <tilemap>
         <element path="test"/>

@@ -146,7 +146,7 @@ void Context::Update() {
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
     PROFILE_SECTION_END();
 
     renderer->Clear(Color{0.3, 0.3, 0.3});

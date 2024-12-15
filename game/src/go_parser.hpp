@@ -1,6 +1,7 @@
 #pragma once
 #include "3rdlib/tinyxml2/tinyxml2.h"
 #include "animation.hpp"
+#include "level/game/game_component.hpp"
 #include "role_config.hpp"
 #include "sprite.hpp"
 #include "tilemap.hpp"
@@ -28,6 +29,8 @@ private:
     PhysicActor parsePhysicActor(const tinyxml2::XMLElement& elem) const;
     Animator parseAnimator(const tinyxml2::XMLElement& elem) const;
     Camera parseCamera(const tinyxml2::XMLElement& elem) const;
+    GameComponent parseGameComponent(const tinyxml2::XMLElement& elem) const;
+    GameObjectType parseGameObjectType(const tinyxml2::XMLElement& elem) const;
     const RoleConfig& parseRole(const tinyxml2::XMLElement& elem) const;
 };
 

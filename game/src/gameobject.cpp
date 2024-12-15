@@ -131,7 +131,7 @@ void GameObject::UpdateTransform(const Transform& parentTrans,
 }
 
 GameObject* GameObjectManager::Create() {
-    auto result = goMap_.emplace(++curID_, GameObject{});
+    auto result = goMap_.emplace(GameObjectID{++curID_}, GameObject{});
     if (result.second) {
         result.first->second.id_ = result.first->first;
         return &result.first->second;
@@ -142,18 +142,18 @@ GameObject* GameObjectManager::Create() {
 GameObjectID::UnderlyingType GameObjectManager::curID_ = 0;
 
 void GameObjectManager::Destroy(GameObjectID o) {
-    goMap_.erase(o.id_);
+    goMap_.erase(o);
 }
 
 GameObject* GameObjectManager::Find(GameObjectID o) {
-    if (auto it = goMap_.find(o.id_); it != goMap_.end()) {
+    if (auto it = goMap_.find(o); it != goMap_.end()) {
         return &it->second;
     }
     return nullptr;
 }
 
 const GameObject* GameObjectManager::Find(GameObjectID o) const {
-     if (auto it = goMap_.find(o.id_); it != goMap_.end()) {
+     if (auto it = goMap_.find(o); it != goMap_.end()) {
          return &it->second;
      }
      return nullptr;   
@@ -179,42 +179,6 @@ const GameObject* GameObjectManager::Find(std::string_view name) const {
 
 void GameObjectManager::Clear() {
     goMap_.clear();
-}
-
-GameObject* GameObjectManager::Clone(GameObject& src) {
-    GameObject* go = Create();
-
-    go->name = src.name;
-    go->localTransform_ = src.localTransform_;
-    go->camera = src.camera;
-    go->role = src.role;
-    go->tilemap = src.tilemap;
-    go->physicActor = src.physicActor;
-    go->animator = src.animator;
-
-    go->sprite.SetRegion(src.sprite.GetRegion());
-    if (go->sprite.IsTexture() && src.sprite.GetTexture()) {
-        go->sprite.SetTexture(*src.sprite.GetTexture());
-    } else if (go->sprite.IsText() && go->sprite.GetFont()) {
-        go->sprite.SetFontTexture(FontTexture{*go->sprite.GetFont(),
-                                              go->sprite.GetText(),
-                                              go->sprite.GetFontSize()});
-    }
-    go->sprite.anchor = src.sprite.anchor;
-    go->sprite.color = src.sprite.color;
-    go->sprite.flip = src.sprite.flip;
-    go->sprite.enable = src.sprite.enable;
-
-    return go;
-}
-
-GameObject* GameObjectManager::Clone(GameObjectID id) {
-    TL_RETURN_NULL_IF_FALSE(id);
-
-    GameObject* src = Find(id);
-    TL_RETURN_NULL_IF_FALSE(src);
-
-    return Clone(*src);
 }
 
 }  // namespace tl

@@ -2,4 +2,5 @@
     <camera name="game/player"/>
     <element path="game/tilemap"/>
     <element path="game/player"/>
+    <element path="game/blue_chest"/>
 </scene>

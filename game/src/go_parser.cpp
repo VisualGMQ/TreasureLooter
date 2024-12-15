@@ -86,9 +86,9 @@ GameObject* GameObjectParser::parseGO(const tinyxml2::XMLElement& node) {
         go->camera = parseCamera(*cameraElem);
     }
     
-    auto roleElem = goElem->FirstChildElement("role");
-    if (roleElem) {
-        go->role = parseRole(*roleElem);
+    auto gameElem = goElem->FirstChildElement("game");
+    if (gameElem) {
+        go->game = parseGameComponent(*gameElem);
     }
     
     auto enableElem = goElem->FirstChildElement("enable");
@@ -243,9 +243,7 @@ PhysicActor GameObjectParser::parsePhysicActor(const tinyxml2::XMLElement& elem)
         float values[4] = {0};
         ParseFloat(aabbElem->GetText(), values, 4);
         actor.enable = true;
-        actor.shape.type = Shape::Type::AABB;
-        actor.shape.aabb.center = Vec2{values[0], values[1]};
-        actor.shape.aabb.halfSize = Vec2{values[2], values[3]};
+        actor.shape.SetAABB(AABB{Vec2{values[0], values[1]}, Vec2{values[2], values[3]}});
     }
 
     auto circleElem = elem.FirstChildElement("circle");
@@ -253,9 +251,7 @@ PhysicActor GameObjectParser::parsePhysicActor(const tinyxml2::XMLElement& elem)
         float values[3] = {0};
         ParseFloat(circleElem->GetText(), values, 3);
         actor.enable = true;
-        actor.shape.type = Shape::Type::Circle;
-        actor.shape.circle.center = Vec2{values[0], values[1]};
-        actor.shape.circle.radius = values[2];
+        actor.shape.SetCircle(Circle{Vec2{values[0], values[1]}, values[2]});
     }
 
     if (auto node = elem.FirstChildElement("trigger")) {
@@ -281,6 +277,38 @@ Camera GameObjectParser::parseCamera(const tinyxml2::XMLElement& elem) const {
         ParseFloat(scaleNode->GetText(), (float*)&camera.scale, 2);
     }
     return camera;
+}
+
+GameComponent GameObjectParser::parseGameComponent(
+    const tinyxml2::XMLElement& elem) const {
+    GameComponent game;
+    
+    auto typeElem = elem.FirstChildElement("type");
+    if (typeElem) {
+        game.type = parseGameObjectType(*typeElem);
+    }
+
+    auto roleElem = elem.FirstChildElement("role");
+    if (roleElem) {
+        game.role = parseRole(*roleElem);
+    }
+    
+    return game;
+}
+
+GameObjectType GameObjectParser::parseGameObjectType(
+    const tinyxml2::XMLElement& elem) const {
+    std::string_view text = elem.GetText();
+    if (text == "role") {
+        return GameObjectType::Role;
+    }
+    if (text == "wall") {
+        return GameObjectType::Wall;
+    }
+    if (text == "chest") {
+        return GameObjectType::Chest;
+    }
+    return GameObjectType::Unknown;
 }
 
 const RoleConfig& GameObjectParser::parseRole(const tinyxml2::XMLElement& elem) const {

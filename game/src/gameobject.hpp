@@ -1,11 +1,12 @@
 #pragma once
-#include "role_config.hpp"
 #include "animation.hpp"
 #include "camera.hpp"
 #include "id.hpp"
+#include "level/game/game_component.hpp"
 #include "math.hpp"
 #include "pch.hpp"
 #include "physics.hpp"
+#include "role_config.hpp"
 #include "sprite.hpp"
 #include "tilemap.hpp"
 #include "transform.hpp"
@@ -25,7 +26,7 @@ public:
     TileMap* tilemap = nullptr;
     PhysicActor physicActor;
     Camera camera;
-    RoleConfig role;
+    GameComponent game;
     bool enable = true;
 
     const Transform& GetLocalTransform() const;
@@ -75,15 +76,13 @@ public:
     const GameObject* Find(GameObjectID) const;
     GameObject* Find(std::string_view);
     const GameObject* Find(std::string_view) const;
-    GameObject* Clone(GameObjectID);
-    GameObject* Clone(GameObject&);
     void Clear();
 
     auto& GetAllGO() const { return goMap_; }
     auto& GetAllGO() { return goMap_; }
 
 private:
-    std::unordered_map<GameObjectID::UnderlyingType, GameObject> goMap_;
+    std::unordered_map<GameObjectID, GameObject> goMap_;
     static GameObjectID::UnderlyingType curID_;
 };
 

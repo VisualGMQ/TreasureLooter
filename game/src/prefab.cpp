@@ -19,7 +19,7 @@ void Prefab::clone(GameObject& src, GameObject& dst) {
     dst.name = src.name;
     dst.localTransform_ = src.localTransform_;
     dst.camera = src.camera;
-    dst.role = src.role;
+    dst.game = src.game;
     dst.tilemap = src.tilemap;
     dst.physicActor = src.physicActor;
     dst.animator = src.animator;
