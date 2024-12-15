@@ -33,11 +33,11 @@ constexpr std::string_view Maze =
 // clang-format on
 
 void TestMazeLevel::Init() {
-    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
-    GameObject* go = goMgr.Find("test/maze/rectPrefab");
-    TL_RETURN_IF_FALSE(go);
+    auto& goMgr = GetScene().GetGOMgr();
+    Prefab prefab = Context::GetInst().prefabMgr->Find("test/maze/rectPrefab");
+    TL_RETURN_IF_FALSE(prefab);
 
-    auto& curScene = Context::GetInst().sceneMgr->GetCurScene();
+    auto& curScene = GetScene();
 
     GameObject* root = curScene.GetRootGO();
 
@@ -45,7 +45,7 @@ void TestMazeLevel::Init() {
         for (size_t j = 0; j < MazeWidth; j++) {
             const char c = Maze[i * MazeWidth + j];
             if (c == '#') {
-                GameObject* newGO = goMgr.Clone(go->GetID());
+                GameObject* newGO = prefab.Instantiate(goMgr);
                 TL_CONTINUE_IF_FALSE(newGO);
                 Vec2 position = newGO->physicActor.shape.aabb.halfSize * 2.0;
                 position.x *= j;
@@ -59,12 +59,11 @@ void TestMazeLevel::Init() {
     }
 }
 
-
 void TestMazeLevel::Enter() {
     Context::GetInst().debugMgr->enableDrawCollisionShapes = true;
 
     GameObject* go = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
-        "test/maze/circlePrefab");
+        "test/maze/circle");
     TL_RETURN_IF_FALSE(go);
     Context::GetInst().gameController = std::make_unique<CommonMoveController>(
         go->GetID());

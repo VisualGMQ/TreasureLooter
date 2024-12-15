@@ -60,10 +60,25 @@
         }                                         \
     } while (0)
 
+#define TL_RETURN_DEFAULT_IF_FALSE_LOGW(x, msg, ...) \
+    do {                                             \
+        if (!(x)) {                                  \
+            LOGW(msg, ##__VA_ARGS__);                \
+            return {};                               \
+        }                                            \
+    } while (0)
+
 #define TL_CONTINUE_IF_FALSE(x) \
     if (!(x)) {                 \
         continue;               \
     }
+
+#define TL_CONTINUE_IF_FALSE_WITH_LOGW(x, msg, ...) \
+    if (!(x)) {                                     \
+        LOGW(msg, ##__VA_ARGS__);                   \
+        continue;                                   \
+    }
+
 
 #define TL_CONTINUE_IF(x) \
     if ((x)) {            \
