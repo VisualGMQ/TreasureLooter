@@ -17,6 +17,7 @@ public:
     friend class Scene;
     friend class GameObjectManager;
     friend class PhysicsScene;
+    friend class Prefab;
 
     std::string name = "<no-name>";
     Sprite sprite;
@@ -71,7 +72,9 @@ public:
     GameObject* Create();
     void Destroy(GameObjectID);
     GameObject* Find(GameObjectID);
+    const GameObject* Find(GameObjectID) const;
     GameObject* Find(std::string_view);
+    const GameObject* Find(std::string_view) const;
     GameObject* Clone(GameObjectID);
     GameObject* Clone(GameObject&);
     void Clear();

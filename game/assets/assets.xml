@@ -41,4 +41,7 @@
         <element path="ordinary_man"/>
         <element path="ninja"/>
     </role>
+    <prefab>
+        <element path="test/maze/rectPrefab"/>
+    </prefab>
 </assets>

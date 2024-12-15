@@ -1,0 +1,10 @@
+<gameobject>
+    <transform>
+        <position>-100 -100</position>
+        <rotation>0</rotation>
+    </transform>
+    <physic_actor>
+        <aabb>16 16 16 16</aabb>
+        <mass>0</mass>
+    </physic_actor>
+</gameobject>

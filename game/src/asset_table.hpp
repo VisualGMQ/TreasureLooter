@@ -15,6 +15,7 @@ private:
     void parseAnimation(tinyxml2::XMLElement&);
     void parseAudio(tinyxml2::XMLElement&, bool isMusic);
     void parseRoleConfig(tinyxml2::XMLElement&);
+    void parsePrefab(tinyxml2::XMLElement&);
 };
 
 }

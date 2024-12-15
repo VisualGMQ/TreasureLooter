@@ -1,4 +1,3 @@
 <scene>
-    <element path="test/maze/circlePrefab"/>
-    <element path="test/maze/rectPrefab"/>
+    <element path="test/maze/circle"/>
 </scene>

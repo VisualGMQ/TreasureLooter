@@ -27,16 +27,6 @@ private:
     void load(tinyxml2::XMLDocument& doc);
     void clear();
 
-    GameObject* parseGORecurse(const tinyxml2::XMLElement& node);
-    GameObject* parseGO(const tinyxml2::XMLElement& node);
-    Sprite parseSprite(const tinyxml2::XMLElement& elem) const;
-    Transform parseTransform(const tinyxml2::XMLElement& elem) const;
-    TileMap* parseTileMap(const tinyxml2::XMLElement& elem) const;
-    PhysicActor parsePhysicActor(const tinyxml2::XMLElement& elem) const;
-    Animator parseAnimator(const tinyxml2::XMLElement& elem) const;
-    Camera parseCamera(const tinyxml2::XMLElement& elem) const;
-    const RoleConfig& parseRole(const tinyxml2::XMLElement& elem) const;
-
     void syncAnim2GO(GameObject&);
     void addGOs2PhysicsScene();
 

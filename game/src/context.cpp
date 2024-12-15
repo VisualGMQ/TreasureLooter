@@ -52,6 +52,7 @@ void Context::postInit() {
     fontMgr = std::make_unique<FontManager>();
     animMgr = std::make_unique<AnimationManager>();
     audioMgr = std::make_unique<AudioManager>();
+    prefabMgr = std::make_unique<PrefabManager>();
     assetTbl = std::make_unique<AssetTable>();
     sceneMgr = std::make_unique<SceneManager>();
     keyboard = std::make_unique<input::Keyboard>();
@@ -97,6 +98,7 @@ Context::~Context() {
     quitImGui();
 
     physicsScene.reset();
+    prefabMgr.reset();
     eventMgr.reset();
     audioMgr.reset();
     fontMgr.reset();

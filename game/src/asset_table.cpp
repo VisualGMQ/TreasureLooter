@@ -102,6 +102,18 @@ AssetTable::AssetTable() {
         TL_CONTINUE_IF_FALSE(elem);
         parseRoleConfig(*elem);
     }
+
+    // parse prefab
+    tinyxml2::XMLElement* prefabList = assetsElem->FirstChildElement("prefab");
+    TL_RETURN_IF_FALSE(prefabList);
+
+    node = prefabList->FirstChild();
+    while (node) {
+        auto elem = node->ToElement();
+        node = node->NextSibling();
+        TL_CONTINUE_IF_FALSE(elem);
+        parsePrefab(*elem);
+    }
 }
 
 void AssetTable::parseTexture(tinyxml2::XMLElement& node) {
@@ -158,6 +170,14 @@ void AssetTable::parseRoleConfig(tinyxml2::XMLElement& node) {
 
     auto path = "assets/game/role/" + name + ".xml";
     Context::GetInst().roleConfigMgr->Load(path, name);
+}
+
+void AssetTable::parsePrefab(tinyxml2::XMLElement& node) {
+    auto attr = node.FindAttribute("path");
+    std::string name = attr->Value();
+    TL_RETURN_IF_FALSE(!name.empty());
+
+    Context::GetInst().prefabMgr->Load(name);
 }
 
 }  // namespace tl

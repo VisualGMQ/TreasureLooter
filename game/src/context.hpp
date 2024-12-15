@@ -1,28 +1,29 @@
 #pragma once
 
 #include "animation.hpp"
+#include "asset_table.hpp"
+#include "audio.hpp"
+#include "controller/controller.hpp"
 #include "debugger.hpp"
+#include "event.hpp"
+#include "font.hpp"
+#include "game_controller.hpp"
 #include "gameobject.hpp"
+#include "input/finger.hpp"
+#include "input/game_controller.hpp"
+#include "input/keyboard.hpp"
+#include "input/mouse.hpp"
 #include "pch.hpp"
+#include "physics.hpp"
+#include "physics_scene.hpp"
+#include "prefab.hpp"
 #include "renderer.hpp"
 #include "scene.hpp"
 #include "sprite.hpp"
 #include "texture.hpp"
-#include "window.hpp"
-#include "asset_table.hpp"
 #include "tilemap.hpp"
-#include "input/keyboard.hpp"
-#include "input/mouse.hpp"
-#include "input/game_controller.hpp"
-#include "input/finger.hpp"
-#include "controller/controller.hpp"
-#include "game_controller.hpp"
 #include "timer.hpp"
-#include "font.hpp"
-#include "audio.hpp"
-#include "physics.hpp"
-#include "physics_scene.hpp"
-#include "event.hpp"
+#include "window.hpp"
 
 namespace tl {
 class RoleConfigManager;
@@ -58,6 +59,7 @@ public:
     std::unique_ptr<AudioManager> audioMgr;
     std::unique_ptr<PhysicsScene> physicsScene;
     std::unique_ptr<EventManager> eventMgr;
+    std::unique_ptr<PrefabManager> prefabMgr;
     GameObjectID cameraGOID;
     Camera& GetCamera();
     const Camera& GetCamera() const;
