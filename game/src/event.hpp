@@ -47,6 +47,8 @@ class EventManager {
 public:
     using CallbackFn = std::function<void(const Event&)>;
 
+    EventManager();
+
     void RegistCallback(Event::Type type, const CallbackFn& callback,
                         bool callOnce = false, const std::string& name = "");
     void RemoveCallback(Event::Type type, const std::string& name);
@@ -65,10 +67,11 @@ private:
         bool callOnce = false;
     };
     
+    static constexpr size_t EventCount = static_cast<size_t>(Event::Type::_EventCount);
     std::vector<Event> events_;
-    std::array<std::vector<EventCallback>, static_cast<size_t>(Event::Type::_EventCount)> callbacks_;
-    std::array<std::vector<std::string>, static_cast<size_t>(Event::Type::_EventCount)> pendingRemoveCallbacks_;
-    std::array<bool, static_cast<size_t>(Event::Type::_EventCount)> pendingClearOneType_;
+    std::array<std::vector<EventCallback>, EventCount> callbacks_;
+    std::array<std::vector<std::string>, EventCount> pendingRemoveCallbacks_;
+    std::array<bool, EventCount> pendingClearOneType_;
     bool pendingClearAll_ = false;
 
     void removePendingCallbacks();

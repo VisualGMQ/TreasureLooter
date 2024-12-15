@@ -4,6 +4,10 @@
 #include "profile.hpp"
 
 namespace tl {
+EventManager::EventManager() {
+    pendingClearOneType_.fill(false);
+}
+
 void EventManager::RegistCallback(Event::Type type, const CallbackFn& callback,
                                   bool callOnce, const std::string& name) {
     EventCallback cb;
@@ -93,16 +97,14 @@ void EventManager::removePendingCallbacks() {
 
     pendingClearOneType_.fill(false);
 
-    for (int i = 0; i < static_cast<uint32_t>(Event::Type::_EventCount); i++) {
+    for (int i = 0; i < EventCount; i++) {
         auto& callbackNameList = pendingRemoveCallbacks_[i];
         for (auto& callbackName : callbackNameList) {
-            callbacks_[i].erase(std::find_if(callbacks_[i].begin(),
-                                             callbacks_[i].end(),
-                                             [&](const EventCallback&
-                                             callback) {
-                                                 return callback.name ==
-                                                     callbackName;
-                                             }));
+            callbacks_[i].erase(
+                std::find_if(callbacks_[i].begin(), callbacks_[i].end(),
+                             [&](const EventCallback& callback) {
+                                 return callback.name == callbackName;
+                             }));
         }
 
         callbackNameList.clear();

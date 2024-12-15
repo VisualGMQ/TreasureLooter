@@ -33,6 +33,14 @@ const GameObjectManager& Scene::GetGOMgr() const {
     return goMgr_;
 }
 
+EventManager& Scene::GetEventMgr() {
+    return eventMgr_;
+}
+
+const EventManager& Scene::GetEventMgr() const {
+    return eventMgr_;
+}
+
 void Scene::load(tinyxml2::XMLDocument& doc) {
     auto root = GetGOMgr().Create();
     root->name = "root";
@@ -66,17 +74,16 @@ void Scene::load(tinyxml2::XMLDocument& doc) {
 }
 
 void Scene::clear() {
-    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
     deleteGORecurse(rootGO_);
 }
 
 void Scene::deleteGORecurse(GameObjectID id) {
-    auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
+    auto& goMgr = GetGOMgr();
     auto go = goMgr.Find(id);
     TL_RETURN_IF_FALSE(go);
 
     for (auto child : go->GetChildren()) {
-        deleteGORecurse(id);
+        deleteGORecurse(child);
     }
 
     goMgr.Destroy(id);
@@ -87,8 +94,7 @@ GameObjectID Scene::GetRootGOID() const {
 }
 
 GameObject* Scene::GetRootGO() {
-    return Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
-        GetRootGOID());
+    return GetGOMgr().Find(GetRootGOID());
 }
 
 void Scene::RegisterLevel(std::unique_ptr<Level>&& level) {
@@ -110,6 +116,8 @@ void Scene::Update() {
 
     Context::GetInst().renderer->SetCamera(Context::GetInst().GetCamera());
     updateGO(GetRootGO());
+
+    eventMgr_.Update();
 }
 
 void Scene::updateGO(GameObject* go) {
@@ -131,8 +139,7 @@ void Scene::updateGO(GameObject* go) {
     drawSprite(*go);
 
     for (GameObjectID id : go->GetChildren()) {
-        GameObject* child =
-            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(id);
+        GameObject* child = GetGOMgr().Find(id);
         if (child) {
             updateGO(child);
         }
@@ -320,8 +327,7 @@ SceneManager::SceneManager() {
         std::string name = attr->Value();
         Scene scene("assets/gpa/scene/" + name + ".xml");
 
-        auto& emplacedScene =
-            sceneMap_.emplace(name, std::move(scene)).first->second;
+        sceneMap_.emplace(name, std::move(scene));
     }
 
     ChangeScene(startupName);

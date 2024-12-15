@@ -7,7 +7,7 @@ class ID {
 public:
     friend Friend;
 
-    using underlying_type = uint32_t;
+    using UnderlyingType = uint32_t;
 
     ID(const ID&) = default;
     ID() : id_{Invalid} {}
@@ -24,16 +24,25 @@ public:
         return !(*this == o);
     }
 
-    explicit operator underlying_type() const {
+    explicit operator UnderlyingType() const {
         return id_;
     }
 
 private:
-    underlying_type id_;
+    UnderlyingType id_;
 
-    static const underlying_type Invalid = 0;
+    static const UnderlyingType Invalid = 0;
 
-    ID(underlying_type id) : id_{id} {}
+    ID(UnderlyingType id) : id_{id} {}
 };
 
 }
+
+template <typename T, typename Friend>
+class std::hash<tl::ID<T, Friend>> {
+public: 
+    size_t operator()(const tl::ID<T, Friend>& id) const {
+        using UnderlyingType = typename tl::ID<T, Friend>::UnderlyingType;
+        return std::hash<UnderlyingType>{}(static_cast<UnderlyingType>(id));
+    } 
+};

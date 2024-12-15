@@ -196,7 +196,8 @@ void PhysicsScene::moveAndSlide(SweepHitInfo& hit, float Threshould) {
         }
     } while (0);
 
-    Context::GetInst().eventMgr->EnqueueCollisionEvent(*hit.src, *hit.dst);
+    Context::GetInst().GetCurScene().GetEventMgr().EnqueueCollisionEvent(
+        *hit.src, *hit.dst);
 }
 
 bool PhysicsScene::quickCheckNeedSweep(const AABB& a, const AABB& b,
@@ -246,7 +247,7 @@ SweepHitInfo PhysicsScene::sweep(const Shape& shape1, const Shape& shape2,
 void PhysicsScene::handleTrigger() {
     PROFILE_FUNC();
     
-    auto& eventMgr = Context::GetInst().eventMgr;
+    auto& eventMgr = Context::GetInst().GetCurScene().GetEventMgr();
 
     for (int i = 0; i < actors_.size(); i++) {
         const MarkedActor& solid = actors_[i];
@@ -270,10 +271,10 @@ void PhysicsScene::handleTrigger() {
 
             if (isInArea && !isOverlap) {
                 trigger.actor->enteredGOList_.erase(it);
-                eventMgr->EnqueueLeaveTriggerAreaEvent(solid.go, trigger);
+                eventMgr.EnqueueLeaveTriggerAreaEvent(solid.go, trigger);
             } else if (!isInArea && isOverlap) {
                 trigger.actor->enteredGOList_.push_back(solid.go->GetID());
-                eventMgr->EnqueueEnterTriggerAreaEvent(solid.go, trigger);
+                eventMgr.EnqueueEnterTriggerAreaEvent(solid.go, trigger);
             }
         }
     }

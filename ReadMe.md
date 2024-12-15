@@ -9,6 +9,10 @@ A game
 * [vcpkg](https://vcpkg.io/): use to install SDL
 * `python3`(optional): use to run tools(need when you want develop this game)
 
+## Assets
+
+* [ninja-adventure-asset-pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack): CC0
+
 ## How to build
 
 ### Windows/MacOS/Linux

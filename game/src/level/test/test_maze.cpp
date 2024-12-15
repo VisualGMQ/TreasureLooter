@@ -65,7 +65,11 @@ void TestMazeLevel::Enter() {
     GameObject* go = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
         "test/maze/circle");
     TL_RETURN_IF_FALSE(go);
-    Context::GetInst().gameController = std::make_unique<CommonMoveController>(
-        go->GetID());
+    controller_.SetMovePlayer(go->GetID());
 }
+
+void TestMazeLevel::Update() {
+    controller_.Update();
 }
+
+}  // namespace tl

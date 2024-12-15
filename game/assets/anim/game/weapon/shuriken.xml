@@ -4,8 +4,8 @@
             <bind>sprite_region</bind>
             <data>
                 <element time="0">0 0 16 16</element>
-                <element time="20">16 0 16 16</element>
-                <element time="40">16 0 16 16</element>
+                <element time="2">16 0 16 16</element>
+                <element time="4">16 0 16 16</element>
             </data>
         </track>
         <track>

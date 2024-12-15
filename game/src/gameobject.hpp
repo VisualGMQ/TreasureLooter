@@ -83,8 +83,8 @@ public:
     auto& GetAllGO() { return goMap_; }
 
 private:
-    std::unordered_map<GameObjectID::underlying_type, GameObject> goMap_;
-    static GameObjectID::underlying_type curID_;
+    std::unordered_map<GameObjectID::UnderlyingType, GameObject> goMap_;
+    static GameObjectID::UnderlyingType curID_;
 };
 
 }  // namespace tl

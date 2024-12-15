@@ -4,9 +4,9 @@
             <bind>sprite_region</bind>
             <data>
                 <element time="0">0 16 16 16</element>
-                <element time="50">0 32 16 16</element>
-                <element time="100">0 48 16 16</element>
-                <element time="150">0 64 16 16</element>
+                <element time="5">0 32 16 16</element>
+                <element time="10">0 48 16 16</element>
+                <element time="15">0 64 16 16</element>
             </data>
         </track>
     </tracks>

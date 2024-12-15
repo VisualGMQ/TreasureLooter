@@ -83,8 +83,8 @@ public:
     void Update(TimeType);
 
 private:
-    std::unordered_map<TimerID::underlying_type, Timer> timers_;
-    TimerID::underlying_type curID_ = 0;
+    std::unordered_map<TimerID::UnderlyingType, Timer> timers_;
+    TimerID::UnderlyingType curID_ = 0;
 };
 
 }  // namespace tl

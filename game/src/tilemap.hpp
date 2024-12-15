@@ -66,7 +66,7 @@ struct ObjectLayer: public MapLayer {
 
 struct TileMapCollision {
     Shape shape;
-    uint32_t collisionGroup = 0;
+    uint32_t collisionGroup = std::numeric_limits<uint32_t>::max();
     bool isTrigger = false;
 };
 

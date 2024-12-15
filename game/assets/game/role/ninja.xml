@@ -2,5 +2,5 @@
     <type>ninja</type>
     <template>role</template>
     <texture>Ninja.png</texture>
-    <speed>0.6</speed>
+    <speed>4</speed>
 </role>

@@ -14,6 +14,9 @@ aux_source_directory(src/input GAME_SRC)
 aux_source_directory(src/controller GAME_SRC)
 aux_source_directory(src/level GAME_SRC)
 aux_source_directory(src/level/test GAME_SRC)
+aux_source_directory(src/level/game GAME_SRC)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 file(GLOB_RECURSE GAME_HEADERS src/*.hpp src/*.h)
 file(GLOB_RECURSE GAME_ASSETS assets/*)
@@ -84,6 +87,7 @@ if (ENABLE_PROFILE AND NOT EMSCRIPTEN AND NOT ANDROID)
     add_subdirectory(src/3rdlib/optick)
     target_link_libraries(main PRIVATE OptickCore)
     target_compile_definitions(main PRIVATE TL_ENABLE_PROFILE)
+    set_target_properties(OptickCore PROPERTIES FOLDER ExternalLib)
 endif()
 
 ############# asset fixer #################

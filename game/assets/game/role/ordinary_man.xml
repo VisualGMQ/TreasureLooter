@@ -2,5 +2,5 @@
     <template>role</template>
     <type>ordinary</type>
     <texture>OrdinaryMan.png</texture>
-    <speed>0.6</speed>
+    <speed>4</speed>
 </role>

@@ -2,7 +2,7 @@
 #include "asset_table.hpp"
 #include "controller/touch_controller.hpp"
 #include "flags.hpp"
-#include "level/game.hpp"
+#include "level/game/game.hpp"
 #include "level/test/test_maze.hpp"
 #include "level/test/test_physics.hpp"
 #include "level/test/test_playground.hpp"
@@ -61,13 +61,12 @@ void Context::postInit() {
     gameCtrlMgr = std::make_unique<input::GameControllerManager>();
     fingerMgr = std::make_unique<input::FingerManager>();
     debugMgr = std::make_unique<DebugManager>();
-    eventMgr = std::make_unique<EventManager>();
 
     registerLevel2Scene<TestLevel>("test/test-playground");
     registerLevel2Scene<TestPhysicsLevel>("test/test-sweep");
     registerLevel2Scene<TestMazeLevel>("test/test-maze");
     registerLevel2Scene<TestTriggerLevel>("test/test-trigger");
-    registerLevel2Scene<GameLevel>("game");
+    registerLevel2Scene<GameLevel>("game/game");
 }
 
 void Context::initSDL() {
@@ -99,12 +98,10 @@ Context::~Context() {
 
     physicsScene.reset();
     prefabMgr.reset();
-    eventMgr.reset();
     audioMgr.reset();
     fontMgr.reset();
     timerMgr.reset();
     time.reset();
-    gameController.reset();
     controllerMgr.reset();
     fingerMgr.reset();
     gameCtrlMgr.reset();
@@ -154,18 +151,14 @@ void Context::Update() {
 
     renderer->Clear(Color{0.3, 0.3, 0.3});
 
+    sceneMgr->Update();
     controllerMgr->Update();
-    if (gameController) {
-        gameController->Update();
-    }
     keyboard->Update();
     mouse->Update();
     gameCtrlMgr->Update();
     fingerMgr->Update();
-    sceneMgr->Update();
     debugMgr->Update();
     timerMgr->Update(time->GetElapse());
-    eventMgr->Update();
 
     renderer->Update();
 
@@ -183,6 +176,14 @@ void Context::Update() {
 
     time->WaitForFps();
     time->EndRecordElapse();
+}
+
+Scene& Context::GetCurScene() {
+    return sceneMgr->GetCurScene();
+}
+
+const Scene& Context::GetCurScene() const {
+    return sceneMgr->GetCurScene();
 }
 
 void Context::handleEvent() {

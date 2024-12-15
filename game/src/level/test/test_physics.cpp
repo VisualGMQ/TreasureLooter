@@ -6,7 +6,6 @@ namespace tl {
 
 void TestPhysicsLevel::Enter() {
     Context::GetInst().debugMgr->enableDrawCollisionShapes = true;
-    Context::GetInst().gameController = std::make_unique<RaycastController>();
 }
 
 void TestPhysicsLevel::Quit() {
@@ -32,15 +31,14 @@ void DrawShape(const Shape& shape, const Vec2& dir, float t) {
     }
 }
 
-void RaycastController::Update() {
+void TestPhysicsLevel::Update() {
     auto& mouse = Context::GetInst().mouse;
     if (mouse->GetButton(input::Mouse::Button::Type::Left).IsPressing()) {
         hoverPoint_ = mouse->GetPosition();
     }
 
-    GameObject* go =
-        Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
-            Context::GetInst().debugMgr->hierarchyWatcher->GetSelected());
+    GameObject* go = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
+        Context::GetInst().debugMgr->hierarchyWatcher->GetSelected());
     TL_RETURN_IF_FALSE(go && go->physicActor);
 
     Vec2 pos = hoverPoint_;

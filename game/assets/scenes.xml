@@ -1,7 +1,7 @@
 <scenes>
-    <startup>game</startup>
+    <startup>game/game</startup>
     <scene>
-        <element path="game"/>
+        <element path="game/game"/>
         <element path="test/test-playground"/>
         <element path="test/test-sweep"/>
         <element path="test/test-maze"/>

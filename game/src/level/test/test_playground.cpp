@@ -3,21 +3,16 @@
 
 namespace tl {
 
-void CharacterController::SetCharacter(GameObjectID goID) {
-    go_ = goID;
+void TestLevel::Enter() {
+    auto go = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
+        "test/playground/test-controller");
+    TL_RETURN_IF_FALSE(go);
+    selectedGO_ = go->GetID();
 }
 
-GameObject* CharacterController::GetCharacter() {
-    return Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(go_);
-}
-
-bool CharacterController::HasCharacter() const {
-    return Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(go_);
-}
-
-void CharacterController::Update() {
+void TestLevel::Update() {
     auto& goMgr = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr();
-    GameObject* go = goMgr.Find(go_);
+    GameObject* go = goMgr.Find(selectedGO_);
     TL_RETURN_IF_FALSE(go);
 
     const controller::Controller* controller =
@@ -40,15 +35,6 @@ void CharacterController::Update() {
     if (controller->GetInteractButton().IsPressed()) {
         go->SetLocalRotation(0);
     }
-}
-
-void TestLevel::Enter() {
-    auto controller = std::make_unique<CharacterController>();
-    auto go = Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(
-        "test/playground/test-controller");
-    TL_RETURN_IF_FALSE(go);
-    controller->SetCharacter(go->GetID());
-    Context::GetInst().gameController = std::move(controller);
 }
 
 }  // namespace tl

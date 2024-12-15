@@ -1,0 +1,5 @@
+﻿<scene>
+    <camera name="game/player"/>
+    <element path="game/tilemap"/>
+    <element path="game/player"/>
+</scene>

@@ -1,12 +1,11 @@
 #pragma once
 #include "common.hpp"
-#include "game_controller.hpp"
 
 namespace tl {
 
-class CommonMoveController: public GameController {
+class CommonMoveController {
 public:
-    explicit CommonMoveController(GameObjectID id);
+    void SetMovePlayer(GameObjectID id);
     void Update();
     
 private:

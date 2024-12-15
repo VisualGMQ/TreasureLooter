@@ -248,19 +248,14 @@ std::unique_ptr<TileLayer> TileMap::parseTileLayer(
         if (auto it = collisionMap_.find(id); it != collisionMap_.end()) {
             if (it->second.shape.type== Shape::Type::Circle) {
                 const Circle& c = it->second.shape.circle;
-                myTile.actor.enable = true;
-                myTile.actor.shape.type = Shape::Type::Circle;
-                myTile.actor.shape.circle = c;
-                myTile.actor.isTrigger = it->second.isTrigger;
-                myTile.actor.filter = it->second.collisionGroup;
+                myTile.actor.shape.SetCircle(c);
             } else if (it->second.shape.type== Shape::Type::AABB) {
                 const AABB& a = it->second.shape.aabb;
-                myTile.actor.enable = true;
-                myTile.actor.shape.type = Shape::Type::AABB;
-                myTile.actor.shape.aabb = a;
-                myTile.actor.isTrigger = it->second.isTrigger;
-                myTile.actor.filter = it->second.collisionGroup;
+                myTile.actor.shape.SetAABB(a);
             }
+            myTile.actor.enable = true;
+            myTile.actor.isTrigger = it->second.isTrigger;
+            myTile.actor.filter = it->second.collisionGroup;
         }
 
         tileLayer->SetTile(x, y, myTile);

@@ -1,6 +1,6 @@
 <gameobject>
     <transform>
-        <position>100 100</position>
+        <position>300 300</position>
         <scale>2 2</scale>
         <rotation>0</rotation>
     </transform>

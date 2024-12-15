@@ -22,6 +22,11 @@
 #include "sprite.hpp"
 #include "texture.hpp"
 #include "tilemap.hpp"
+#include "input/keyboard.hpp"
+#include "input/mouse.hpp"
+#include "input/game_controller.hpp"
+#include "input/finger.hpp"
+#include "controller/controller.hpp"
 #include "timer.hpp"
 #include "window.hpp"
 
@@ -52,13 +57,11 @@ public:
     std::unique_ptr<input::GameControllerManager> gameCtrlMgr;
     std::unique_ptr<input::FingerManager> fingerMgr;
     std::unique_ptr<controller::ControllerManager> controllerMgr;
-    std::unique_ptr<GameController> gameController;
     std::unique_ptr<Time> time;
     std::unique_ptr<TimerManager> timerMgr;
     std::unique_ptr<FontManager> fontMgr;
     std::unique_ptr<AudioManager> audioMgr;
     std::unique_ptr<PhysicsScene> physicsScene;
-    std::unique_ptr<EventManager> eventMgr;
     std::unique_ptr<PrefabManager> prefabMgr;
     GameObjectID cameraGOID;
     Camera& GetCamera();
@@ -68,6 +71,9 @@ public:
 
     void Exit() { shouldExit_ = true; }
     bool ShouldExit() const { return shouldExit_; }
+
+    Scene& GetCurScene();
+    const Scene& GetCurScene() const;
 
 private:
     SDL_Event event_;

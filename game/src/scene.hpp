@@ -1,4 +1,5 @@
 #pragma once
+#include "event.hpp"
 #include "gameobject.hpp"
 #include "level.hpp"
 
@@ -18,11 +19,14 @@ public:
     GameObject* GetRootGO();
     GameObjectManager& GetGOMgr();
     const GameObjectManager& GetGOMgr() const;
+    EventManager& GetEventMgr();
+    const EventManager& GetEventMgr() const;
 
 private:
     std::unique_ptr<Level> level_;
     GameObjectID rootGO_;
     GameObjectManager goMgr_;
+    EventManager eventMgr_;
 
     void load(tinyxml2::XMLDocument& doc);
     void clear();

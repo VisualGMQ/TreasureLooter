@@ -121,8 +121,7 @@ void GameObject::UpdateTransform(const Transform& parentTrans,
     }
 
     for (auto c : GetChildren()) {
-        GameObject* go =
-            Context::GetInst().sceneMgr->GetCurScene().GetGOMgr().Find(c);
+        GameObject* go = Context::GetInst().GetCurScene().GetGOMgr().Find(c);
         TL_CONTINUE_IF_FALSE(go);
 
         go->UpdateTransform(GetGlobalTransform(), syncPhysics);
@@ -140,7 +139,7 @@ GameObject* GameObjectManager::Create() {
     return nullptr;
 }
 
-GameObjectID::underlying_type GameObjectManager::curID_ = 0;
+GameObjectID::UnderlyingType GameObjectManager::curID_ = 0;
 
 void GameObjectManager::Destroy(GameObjectID o) {
     goMap_.erase(o.id_);

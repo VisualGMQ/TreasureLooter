@@ -1,7 +1,0 @@
-﻿<scene>
-    <camera name="player"/>
-    <element path="tilemap"/>
-    <element path="player">
-        <element path="effect"/>
-    </element>
-</scene>

@@ -10,14 +10,14 @@
     "fileStates": {
         "": {
             "scaleInDock": 32,
-            "scaleInEditor": 32
+            "scaleInEditor": 23
         },
         "game.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 0,
+            "scale": 3,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 574.3333333333334,
-                "y": 512.3333333333333
+                "x": 227.83333333333331,
+                "y": 248.83333333333337
             }
         },
         "game.tmx#ScrollIce": {
@@ -29,14 +29,14 @@
             "scaleInEditor": 1
         },
         "game.tmx#TilesetFloor": {
-            "scaleInDock": 1
+            "scaleInDock": 3
         },
         "game.tmx#TilesetHouse": {
             "scaleInDock": 2,
             "scaleInEditor": 5.5
         },
         "game.tmx#nature": {
-            "scaleInDock": 2,
+            "scaleInDock": 3,
             "scaleInEditor": 4
         }
     },

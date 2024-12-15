@@ -4,8 +4,8 @@
 
 namespace tl {
 
-CommonMoveController::CommonMoveController(GameObjectID id): id_{id} {
-    
+void CommonMoveController::SetMovePlayer(GameObjectID id) {
+    id_ = id;
 }
 
 void CommonMoveController::Update() {
