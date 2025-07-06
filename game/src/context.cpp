@@ -21,6 +21,7 @@ Context& Context::GetInst() {
 }
 
 Context::~Context() {
+    m_inspector.reset();
     m_image_manager.reset();
     m_renderer.reset();
     m_window.reset();
@@ -34,6 +35,7 @@ void Context::Update() {
 }
 
 void Context::HandleEvents(const SDL_Event& event) {
+    m_inspector->HandleEvents(event);
     if (event.type == SDL_EVENT_QUIT) {
         m_should_exit = true;
     }
@@ -51,6 +53,8 @@ Context::Context() {
     m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
 
     m_image_manager = std::make_unique<ImageManager>(*m_renderer);
+
+    m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
 
     GameObject go;
     go.m_pose.m_position = {200, 300};
@@ -101,9 +105,13 @@ void Context::logicUpdate() {
 }
 
 void Context::renderUpdate() {
+    m_inspector->BeginFrame();
     m_renderer->Clear();
 
     drawSpriteRecursive(m_root);
 
+    m_inspector->Update();
+
+    m_inspector->EndFrame();
     m_renderer->Present();
 }

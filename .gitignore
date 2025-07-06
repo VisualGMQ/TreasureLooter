@@ -6,3 +6,4 @@ android/org.visualgmq.tl/app/jni/game
 .cxx
 .idea
 .gradle
+imgui.ini
