@@ -1,0 +1,11 @@
+if (ANDROID)
+    set(SDL_SHARED ON)
+    set(SDL_STATIC OFF)
+else()
+    set(SDL_SHARED OFF)
+    set(SDL_STATIC ON)
+endif()
+
+add_subdirectory(SDL)
+add_subdirectory(spdlog)
+add_subdirectory(stb)
