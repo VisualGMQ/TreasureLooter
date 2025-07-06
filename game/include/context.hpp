@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "gameobject.hpp"
 #include "image.hpp"
+#include "inspector.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
 #include <memory>
@@ -27,6 +28,7 @@ private:
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<ImageManager> m_image_manager;
+    std::unique_ptr<Inspector> m_inspector;
     bool m_should_exit = false;
 
     GameObject m_root;
