@@ -1,0 +1,8 @@
+cmake-build
+logs
+android/org.visualgmq.tl/build
+android/org.visualgmq.tl/app/build
+android/org.visualgmq.tl/app/jni/game
+.cxx
+.idea
+.gradle
