@@ -7,7 +7,7 @@ Window::Window(const std::string& title, int w, int h) {
 #ifdef SDL_PLATFORM_ANDROID
     m_window = SDL_CreateWindow(title.c_str(), 0, 0, 0);
 #else
-    m_window = SDL_CreateWindow(title.c_str(), w, h, 0);
+    m_window = SDL_CreateWindow(title.c_str(), w, h, SDL_WINDOW_RESIZABLE);
 #endif
     if (!m_window) {
         LOGE("create SDL window failed! {}", SDL_GetError());
