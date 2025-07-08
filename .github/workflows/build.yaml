@@ -28,6 +28,8 @@ jobs:
     - name: Prepare cmake
       uses: lukka/get-cmake@latest
 
+
+
     - name: Prepare Ubuntu
       if: contains(matrix.os, 'ubuntu') && matrix.android == 'none'
       run: |
@@ -39,11 +41,17 @@ jobs:
       run: |
         brew install ninja
 
-    - name: Config CMake under PC
-      if: matrix.android == 'none'
-      working-directory: ./game
+    - name: Config cmake(Ubuntu&MacOS)
+      if: ${{ !contains(matrix.os, 'windows') && matrix.android == 'none' }}
+      working-directory: ./engine
       run: |
-        ${{ matrix.cmake-path }}cmake -S . -B cmake-build
+        ${{ matrix.cmake-path }}cmake --preset=CI-Linux
+
+    - name: Config cmake(Windows)
+      if: contains(matrix.os, 'windows')
+      working-directory: ./engine
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-Windows
 
     - name: Build under PC
       if: matrix.android == 'none'
