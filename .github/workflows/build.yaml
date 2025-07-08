@@ -1,0 +1,47 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build-cmake:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+            - name: Windows
+              os: windows-latest
+            - name: Ubuntu
+              os: ubuntu-22.04
+            - name: MacOS
+              os: macOS-latest
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Prepare cmake
+      uses: lukka/get-cmake@latest
+
+    - name: Prepare Ubuntu
+      if: contains(matrix.os, 'ubuntu')
+      run: |
+        sudo apt update -y
+        sudo apt install build-essential make pkg-config gnome-desktop-testing libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev -y
+
+    - name: Prepare MacOS
+      if: contains(matrix.os, 'macOS')
+      run: |
+        brew install ninja
+
+    - name: Config cmake(Ubuntu&MacOS)
+      if: ${{ !contains(matrix.os, 'windows') }}
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-Linux
+
+    - name: Config cmake(Windows)
+      if: contains(matrix.os, 'windows')
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-Windows
+
+    - name: Build under PC
+      run: ${{ matrix.cmake-path }}cmake --build cmake-build
