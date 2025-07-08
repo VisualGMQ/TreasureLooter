@@ -9,3 +9,5 @@ android/org.visualgmq.tl/app/jni/game
 imgui.ini
 game/schema/generate
 android/org.visualgmq.tl/local.properties
+capn-build
+capn_install

@@ -69,6 +69,13 @@ jobs:
       if: runner.os == 'Linux' && matrix.android != 'none'
       uses: android-actions/setup-android@v3
 
+    - name: Precompile & Install CapN under Android
+      if: runner.os == 'Linux' && matrix.android != 'none'
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake -S 3rdlibs/capnproto/ -B 3rdlibs/capn-build/ -DCMAKE_INSTALL_PREFIX=3rdlibs/capn_install
+        ${{ matrix.cmake-path }}cmake --build 3rdlibs/capn-build/ --target install --config Release
+
     - name: Prepare Android Project
       if: runner.os == 'Linux' && matrix.android != 'none'
       run: |

@@ -10,4 +10,7 @@ add_3rdlib(SDL)
 add_3rdlib(spdlog)
 add_3rdlib(stb)
 add_3rdlib(imgui)
-add_3rdlib(capnproto)
+
+if (NOT ANDROID)
+    add_3rdlib(capnproto)
+endif()
