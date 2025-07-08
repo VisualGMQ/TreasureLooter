@@ -224,7 +224,7 @@ endif()  # NOT CAPNP_LITE
 
 # Tests ========================================================================
 
-if(BUILD_TESTING)
+if(CAPNP_BUILD_TEST)
   set(test_capnp_files
     test.capnp
     test-import.capnp
@@ -317,7 +317,7 @@ if(BUILD_TESTING)
     add_dependencies(check capnp-evolution-tests)
     add_test(NAME capnp-evolution-tests-run COMMAND capnp-evolution-tests)
   endif()  # NOT CAPNP_LITE
-endif()  # BUILD_TESTING
+endif()  # CAPNP_BUILD_TEST
 
 if(DEFINED ENV{LIB_FUZZING_ENGINE})
   add_executable(capnp_llvm_fuzzer_testcase llvm-fuzzer-testcase.c++ test-util.c++ test-util.h ${test_capnp_cpp_files} ${test_capnp_h_files})

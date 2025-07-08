@@ -1,7 +1,7 @@
 
 # Tests ========================================================================
 
-if(BUILD_TESTING)
+if(CAPNP_BUILD_TEST)
   include(CTest)
 
   if(EXTERNAL_CAPNP)
@@ -39,7 +39,7 @@ if(BUILD_TESTING)
 
   # Sadly, we can't use the 'test' target, as that's coopted by ctest
   add_custom_target(check "${CMAKE_CTEST_COMMAND}" -V)
-endif()  # BUILD_TESTING
+endif()  # CAPNP_BUILD_TEST
 
 # kj ===========================================================================
 

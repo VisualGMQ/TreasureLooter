@@ -10,10 +10,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
-################# capn id generator target #####################
-
-add_custom_target(capn_gen_id $<TARGET_FILE:capnp_tool> id)
-
 ################# compile schema #####################
 
 set(SCHEMA_COMPILE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/schema/generate)
@@ -64,6 +60,10 @@ foreach(schema ${SCHEMAS})
     set(OUTPUT_SRC_FILE ${SCHEMA_COMPILE_OUTPUT_PATH}/${schema_pure_filename}.c++)
     list(APPEND SCHEMA_OUTPUTS ${OUTPUT_HEADER_FILE} ${OUTPUT_SRC_FILE})
 endforeach()
+
+################# capn id generator target #####################
+
+add_custom_target(capn_gen_id ${capnp} id)
 
 ################ compile game ######################
 

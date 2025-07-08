@@ -236,7 +236,7 @@ endif()
 
 # Tests ========================================================================
 
-if(BUILD_TESTING)
+if(CAPNP_BUILD_TEST)
   add_executable(kj-tests
     common-test.c++
     memory-test.c++
@@ -310,4 +310,4 @@ if(BUILD_TESTING)
     add_dependencies(check kj-heavy-tests)
     add_test(NAME kj-heavy-tests-run COMMAND kj-heavy-tests)
   endif()  # NOT CAPNP_LITE
-endif()  # BUILD_TESTING
+endif()  # CAPNP_BUILD_TEST
