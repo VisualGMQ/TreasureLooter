@@ -10,8 +10,4 @@ add_3rdlib(SDL)
 add_3rdlib(spdlog)
 add_3rdlib(stb)
 add_3rdlib(imgui)
-
-if (ANDROID)
-    set(CAPNP_LITE ON)
-endif()
 add_3rdlib(capnproto)

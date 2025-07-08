@@ -16,37 +16,11 @@ set(SCHEMA_COMPILE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/schema/generate)
 file(MAKE_DIRECTORY ${SCHEMA_COMPILE_OUTPUT_PATH})
 file(GLOB_RECURSE SCHEMAS ./schema/*.capnp)
 
-# find capn tools under different platforms
-set(capnp "")
-set(capnpc-c++ "")
-if (ANDROID)
-    # on Android, we must precompile CapN after this project, than use generated tools to compile schemas
-    set(capn_install_dir ${CMAKE_CURRENT_SOURCE_DIR}/3rdlibs/capn_install)
-    find_program(capn_tool
-        NAMES capnp capnp.exe
-        PATHS ${capn_install_dir}
-        PATH_SUFFIXES bin
-        NO_DEFAULT_PATH
-        REQUIRED)
-    set(capnp ${capn_tool})
-
-    find_program(capnc_cpp_tool
-        NAMES capnpc-c++ capnpc-c++.exe
-        PATHS ${capn_install_dir}
-        PATH_SUFFIXES bin
-        NO_DEFAULT_PATH
-        REQUIRED)
-    set(capnpc-c++ ${capnc_cpp_tool})
-else()
-    set(capnpc-c++ $<TARGET_FILE:capnpc_cpp>)
-    set(capnp $<TARGET_FILE:capnp_tool>)
-endif()
-
 macro(compile_capn_schema filename)
     add_custom_command(OUTPUT ${SCHEMA_COMPILE_OUTPUT_PATH}/${filename}.h ${SCHEMA_COMPILE_OUTPUT_PATH}/${filename}.c++
-        COMMAND ${capnp} compile --output=${capnpc-c++}:${SCHEMA_COMPILE_OUTPUT_PATH} schema/${filename} --src-prefix=schema -Ischema
+        COMMAND $<TARGET_FILE:capnp_tool> compile --output=$<TARGET_FILE:capnpc_cpp>:${SCHEMA_COMPILE_OUTPUT_PATH} schema/${filename} --src-prefix=schema -Ischema
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS ${capnp} ${capnpc-c++} schema/${filename}
+        DEPENDS $<TARGET_FILE:capnp_tool> $<TARGET_FILE:capnpc_cpp> schema/${filename}
         COMMENT "compiling schema: schema/${filename} ..."
         VERBATIM
     )
@@ -72,12 +46,7 @@ file(GLOB_RECURSE HEADER ./include/*.hpp ./include/*.h)
 file(GLOB_RECURSE ASSETS ./assets/*)
 
 set(GAME_NAME ${PROJECT_NAME})
-if (ANDROID)
-    set(GAME_NAME main)
-    add_library(${GAME_NAME} SHARED)
-else()
-    add_executable(${GAME_NAME})
-endif()
+add_executable(${GAME_NAME})
 
 target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS} ${SCHEMA_OUTPUTS} ${SCHEMAS})
 target_include_directories(${GAME_NAME} PRIVATE include schema)
