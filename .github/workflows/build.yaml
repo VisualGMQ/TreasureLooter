@@ -43,13 +43,13 @@ jobs:
 
     - name: Config cmake(Ubuntu&MacOS)
       if: ${{ !contains(matrix.os, 'windows') && matrix.android == 'none' }}
-      working-directory: ./engine
+      working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-Linux
 
     - name: Config cmake(Windows)
       if: contains(matrix.os, 'windows')
-      working-directory: ./engine
+      working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-Windows
 
