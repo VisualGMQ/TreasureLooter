@@ -3,7 +3,10 @@
     "configurePresets": [
         {
             "name": "default",
-            "binaryDir": "${sourceDir}/cmake-build"
+            "binaryDir": "${sourceDir}/cmake-build",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install"
+            }
         },
         {
             "name": "CI-Linux",
