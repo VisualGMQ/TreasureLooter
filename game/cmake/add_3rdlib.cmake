@@ -14,7 +14,7 @@ function(get_all_subdir dir out_paths)
 endfunction()
 
 macro(add_3rdlib dir)
-    add_subdirectory(${dir})
+    add_subdirectory(${dir} EXCLUDE_FROM_ALL)
     get_all_subdir(${CMAKE_CURRENT_SOURCE_DIR}/${dir} paths)
     foreach(path ${paths})
         get_property(target_names DIRECTORY ${path} PROPERTY BUILDSYSTEM_TARGETS)
