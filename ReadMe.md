@@ -9,14 +9,33 @@ TreasureLooter is a 2D game made in SDL3
 
 ## How To Build
 
+### Build For PC
+
+Goto `game` folder
+
 ```bash
 cmake --preset=default
 cmake --build cmake-build
 ```
 
+### Build For Android
+
+copy `game` folder to `android/app/jni`
+
+```bash
+cp -r game android/app/jni
+```
+
+then use `gradle` to build (or use AndroidStudio)
+
+```bash
+cd android
+gradlew build
+```
+
 ## How To Run
 
-Run `TreasureLooter[.exe]` under current directory.
+Run `TreasureLooter[.exe]` under `game` directory.
 
 Or you can install:
 
