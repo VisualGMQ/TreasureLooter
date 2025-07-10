@@ -2,3 +2,12 @@ cmake-build
 logs
 imgui.ini
 install
+
+.gradle
+.cxx
+.idea
+android/app/jni/game
+android/build
+android/app/build
+local.properties
+android/app/src/main/res/assets/
