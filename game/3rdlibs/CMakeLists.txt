@@ -1,0 +1,12 @@
+if (ANDROID)
+    set(SDL_SHARED ON)
+    set(SDL_STATIC OFF)
+else()
+    set(SDL_SHARED OFF)
+    set(SDL_STATIC ON)
+endif()
+
+add_3rdlib(SDL)
+add_3rdlib(spdlog)
+add_3rdlib(stb)
+add_3rdlib(imgui)
