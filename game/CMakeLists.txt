@@ -17,7 +17,12 @@ file(GLOB_RECURSE HEADER ./include/*.hpp ./include/*.h)
 file(GLOB_RECURSE ASSETS ./assets/*)
 
 set(GAME_NAME ${PROJECT_NAME})
-add_executable(${GAME_NAME})
+if (ANDROID)
+    set(GAME_NAME main)
+    add_library(${GAME_NAME} SHARED)
+else()
+    add_executable(${GAME_NAME})
+endif()
 
 target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS})
 target_include_directories(${GAME_NAME} PRIVATE include)
