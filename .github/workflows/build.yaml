@@ -73,7 +73,7 @@ jobs:
         sudo apt update -y
         sudo apt install cmake ninja-build -y
         yes | sdkmanager --licenses
-        cp -r ./game ./android-project/app/jni/
+        cp -r ./game ./android/app/jni/
         chmod +x ./android/gradlew
 
     - name: Build under Android
