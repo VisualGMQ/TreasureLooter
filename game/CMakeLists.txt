@@ -29,6 +29,11 @@ target_include_directories(${GAME_NAME} PRIVATE include)
 target_compile_features(${GAME_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui)
 
+################ compile tools ######################
+if(NOT ANDROID)
+    add_subdirectory(tools)
+endif()
+
 ################ instal #######################
 install(TARGETS ${GAME_NAME} DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
