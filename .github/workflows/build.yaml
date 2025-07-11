@@ -106,7 +106,7 @@ jobs:
       working-directory: ./android
       run: |
         ninja --version
-        ./gradlew installRelease
+        ./gradlew build
 
     - name: Package under PC
       if: matrix.android == 'none'

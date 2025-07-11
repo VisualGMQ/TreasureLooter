@@ -23,13 +23,17 @@
         {
             "name": "CI-Linux-Release",
             "binaryDir": "${sourceDir}/cmake-build-release",
-            "generator": "Ninja"
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install"
+            }
         },
         {
             "name": "CI-Windows-Release",
             "binaryDir": "${sourceDir}/cmake-build-release",
             "cacheVariables": {
-                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0"
+                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0",
+                "CMAKE_INSTALL_PREFIX" : "install"
             }
         }
     ]
