@@ -39,11 +39,17 @@ jobs:
       run: |
         brew install ninja
 
-    - name: Config cmake(Ubuntu&MacOS) Debug
-      if: ${{ !contains(matrix.os, 'windows') && matrix.android == 'none' }}
+    - name: Config cmake(Ubuntu) Debug
+      if: ${{ !contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
       working-directory: ./game
       run: |
-        ${{ matrix.cmake-path }}cmake --preset=CI-Linux-Debug
+        ${{ matrix.cmake-path }}cmake --preset=CI-Ubuntu-Debug
+
+    - name: Config cmake(MacOS) Debug
+      if: ${{ !contains(matrix.os, 'macOS') && matrix.android == 'none' }}
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-MacOS-Debug
 
     - name: Config cmake(Windows) Debug
       if: contains(matrix.os, 'windows')
@@ -56,11 +62,17 @@ jobs:
       working-directory: ./game
       run: ${{ matrix.cmake-path }}cmake --build cmake-build-debug
 
-    - name: Config cmake(Ubuntu&MacOS) Release
-      if: ${{ !contains(matrix.os, 'windows') && matrix.android == 'none' }}
+    - name: Config cmake(Ubuntu) Release
+      if: ${{ !contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
       working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-Linux-Release
+
+    - name: Config cmake(MacOS) Release
+      if: ${{ !contains(matrix.os, 'macOS') && matrix.android == 'none' }}
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-MacOS-Release
 
     - name: Config cmake(Windows) Release
       if: contains(matrix.os, 'windows')
@@ -94,14 +106,7 @@ jobs:
         cp -r ./game/assets ./android/app/src/main/res
         chmod +x ./android/gradlew
 
-    - name: Build Debug under Android
-      if: runner.os == 'Linux' && matrix.android != 'none'
-      working-directory: ./android
-      run: |
-        ninja --version
-        ./gradlew installDebug
-
-    - name: Build Debug under Android
+    - name: Build under Android
       if: runner.os == 'Linux' && matrix.android != 'none'
       working-directory: ./android
       run: |
@@ -113,8 +118,26 @@ jobs:
       working-directory: ./game
       run: ${{ matrix.cmake-path }}cmake --build cmake-build-release --target install --config Release
 
-    - name: Upload PC Build Artifact
+    - name: Upload Ubuntu Build Artifact
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
       uses: actions/upload-artifact@v4
       with:
         name: TreasureLooter-${{ matrix.os }}
-        path: game/install
+        path: game/install/ubuntu
+        retention-days: 5
+
+    - name: Upload Windows Build Artifact
+      if: ${{ contains(matrix.os, 'windows') && matrix.android == 'none' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: TreasureLooter-${{ matrix.os }}
+        path: game/install/windows
+        retention-days: 5
+
+    - name: Upload MacOS Build Artifact
+      if: ${{ contains(matrix.os, 'macOS') && matrix.android == 'none' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: TreasureLooter-${{ matrix.os }}
+        path: game/install/macOS
+        retention-days: 5

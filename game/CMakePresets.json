@@ -9,9 +9,30 @@
             }
         },
         {
-            "name": "CI-Linux-Debug",
+            "name": "CI-Ubuntu-Debug",
             "binaryDir": "${sourceDir}/cmake-build-debug",
             "generator": "Ninja"
+        },
+        {
+            "name": "CI-Ubuntu-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install/ubuntu"
+            }
+        },
+        {
+            "name": "CI-MacOS-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "generator": "Ninja"
+        },
+        {
+            "name": "CI-MacOS-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install/macOS"
+            }
         },
         {
             "name": "CI-Windows-Debug",
@@ -21,19 +42,11 @@
             }
         },
         {
-            "name": "CI-Linux-Release",
-            "binaryDir": "${sourceDir}/cmake-build-release",
-            "generator": "Ninja",
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX" : "install"
-            }
-        },
-        {
             "name": "CI-Windows-Release",
             "binaryDir": "${sourceDir}/cmake-build-release",
             "cacheVariables": {
                 "CMAKE_SYSTEM_VERSION" : "10.0.26100.0",
-                "CMAKE_INSTALL_PREFIX" : "install"
+                "CMAKE_INSTALL_PREFIX" : "install/windows"
             }
         }
     ]
