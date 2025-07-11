@@ -40,13 +40,13 @@ jobs:
         brew install ninja
 
     - name: Config cmake(Ubuntu) Debug
-      if: ${{ !contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
       working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-Ubuntu-Debug
 
     - name: Config cmake(MacOS) Debug
-      if: ${{ !contains(matrix.os, 'macOS') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'macOS') && matrix.android == 'none' }}
       working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-MacOS-Debug
@@ -55,7 +55,7 @@ jobs:
       if: contains(matrix.os, 'windows')
       working-directory: ./game
       run: |
-        ${{ matrix.cmake-path}}cmake --preset=CI-Windows-Debug
+        ${{ matrix.cmake-path }}cmake --preset=CI-Windows-Debug
 
     - name: Build Debug under PC
       if: matrix.android == 'none'
@@ -63,13 +63,13 @@ jobs:
       run: ${{ matrix.cmake-path }}cmake --build cmake-build-debug
 
     - name: Config cmake(Ubuntu) Release
-      if: ${{ !contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
       working-directory: ./game
       run: |
-        ${{ matrix.cmake-path }}cmake --preset=CI-Linux-Release
+        ${{ matrix.cmake-path }}cmake --preset=CI-Ubuntu-Release
 
     - name: Config cmake(MacOS) Release
-      if: ${{ !contains(matrix.os, 'macOS') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'macOS') && matrix.android == 'none' }}
       working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-MacOS-Release
