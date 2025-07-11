@@ -1,18 +1,15 @@
 name: Publish Release
 
 on:
-  push:
-    branches:
-      - auto_release
-    # tags:
-    #   - '*'
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v4.3.0
         # with:
