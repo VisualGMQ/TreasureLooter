@@ -9,13 +9,25 @@
             }
         },
         {
-            "name": "CI-Linux",
-            "binaryDir": "${sourceDir}/cmake-build",
+            "name": "CI-Linux-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
             "generator": "Ninja"
         },
         {
-            "name": "CI-Windows",
-            "binaryDir": "${sourceDir}/cmake-build",
+            "name": "CI-Windows-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0"
+            }
+        },
+        {
+            "name": "CI-Linux-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja"
+        },
+        {
+            "name": "CI-Windows-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
             "cacheVariables": {
                 "CMAKE_SYSTEM_VERSION" : "10.0.26100.0"
             }
