@@ -1,6 +1,6 @@
 name: Build
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build-cmake:
@@ -119,7 +119,7 @@ jobs:
       run: ${{ matrix.cmake-path }}cmake --build cmake-build-release --target install --config Release
 
     - name: Upload Ubuntu Build Artifact
-      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' &&  github.ref == 'refs/heads/main' }}
       uses: actions/upload-artifact@v4
       with:
         name: TreasureLooter-${{ matrix.os }}
@@ -127,7 +127,7 @@ jobs:
         retention-days: 5
 
     - name: Upload Windows Build Artifact
-      if: ${{ contains(matrix.os, 'windows') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'windows') && matrix.android == 'none'  &&  github.ref == 'refs/heads/main' }}
       uses: actions/upload-artifact@v4
       with:
         name: TreasureLooter-${{ matrix.os }}
@@ -135,7 +135,7 @@ jobs:
         retention-days: 5
 
     - name: Upload MacOS Build Artifact
-      if: ${{ contains(matrix.os, 'macOS') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'macOS') && matrix.android == 'none' &&  github.ref == 'refs/heads/main' }}
       uses: actions/upload-artifact@v4
       with:
         name: TreasureLooter-${{ matrix.os }}
