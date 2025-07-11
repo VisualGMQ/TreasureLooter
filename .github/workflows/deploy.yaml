@@ -1,0 +1,28 @@
+name: Publish Release
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4.3.0
+        # with:
+        #   pattern: TreasureLooter-*
+        #   merge-multiple: false
+      - name: output files
+        run: ls -R
+      - name: Deploy
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            TreasureLooter-ubuntu
+            TreasureLooter-windows
+            TreasureLooter-macOS
+            TreasureLooter-android
+          prerelease: true

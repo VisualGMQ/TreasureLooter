@@ -9,20 +9,57 @@
             }
         },
         {
-            "name": "CI-Linux",
-            "binaryDir": "${sourceDir}/cmake-build",
+            "name": "CI-Ubuntu-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
             "generator": "Ninja"
         },
         {
-            "name": "CI-Emscripten",
-            "binaryDir": "${sourceDir}/emcmake-build",
+            "name": "CI-Ubuntu-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install/ubuntu"
+            }
+        },
+        {
+            "name": "CI-Emscripten-Debug",
+            "binaryDir": "${sourceDir}/emcmake-build-debug",
             "generator": "Ninja"
         },
         {
-            "name": "CI-Windows",
-            "binaryDir": "${sourceDir}/cmake-build",
+            "name": "CI-Emscripten-Release",
+            "binaryDir": "${sourceDir}/emcmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install/emscripten"
+            }
+        },
+        {
+            "name": "CI-MacOS-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "generator": "Ninja"
+        },
+        {
+            "name": "CI-MacOS-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX" : "install/macOS"
+            }
+        },
+        {
+            "name": "CI-Windows-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
             "cacheVariables": {
                 "CMAKE_SYSTEM_VERSION" : "10.0.26100.0"
+            }
+        },
+        {
+            "name": "CI-Windows-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0",
+                "CMAKE_INSTALL_PREFIX" : "install/windows"
             }
         }
     ]

@@ -13,4 +13,5 @@ android/app/build
 local.properties
 android/app/src/main/assets/assets
 emcmake-build
+android/app/src/main/res/assets/
 android/app/release
