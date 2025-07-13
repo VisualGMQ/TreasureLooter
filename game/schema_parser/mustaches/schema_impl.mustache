@@ -1,0 +1,10 @@
+﻿#include "schema/{{filename}}"
+
+template <>
+rapidxml::xml_node<>* Serialize<{{type}}(const {{type}}& payload) {
+
+}
+
+template <>
+void Deserialize<{{type}}>({{type}}& payload, rapidxml::xml_node<>* node) {
+}

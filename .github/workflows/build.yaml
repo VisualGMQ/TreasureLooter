@@ -89,6 +89,14 @@ jobs:
       if: matrix.android
       uses: android-actions/setup-android@v3
 
+    - name: Precompile schema parser
+      if: runner.os == 'Linux' && matrix.android != 'none'
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=default
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target schema_parser
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target run_schema_parser
+
     - name: Prepare Android Project
       if: matrix.android
       run: |

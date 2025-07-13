@@ -10,6 +10,37 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
+################ compile schema parser ################
+if (NOT ANDROID)
+    add_subdirectory(schema_parser)
+endif()
+
+################ run schema parser ################
+file(GLOB_RECURSE SCHEMAS ./schema/*)
+file(GLOB_RECURSE MUSTACHES ./schema_parser/mustaches/*.mustache)
+set(SCHEMA_OUTPUT_PATH "schema_generate/schema")
+set(SCHEMA_OUTPUT_FILES)
+foreach(schema ${SCHEMAS})
+    cmake_path(GET schema FILENAME schema_filename)
+    cmake_path(REPLACE_EXTENSION schema_filename ".hpp" OUTPUT_VARIABLE schema_generate_hpp)
+    set(schema_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/${schema_generate_hpp}")
+    list(APPEND SCHEMA_OUTPUT_FILES ${schema_final_path})
+endforeach()
+
+if (NOT ANDROID)
+    add_custom_target(run_schema_parser
+        COMMAND $<TARGET_FILE:schema_parser> ./schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "parsing schemas...")
+
+    add_custom_command(OUTPUT ${SCHEMA_OUTPUT_FILES}
+        COMMAND $<TARGET_FILE:schema_parser> ./schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "parsing schemas...")
+endif()
+
 ################ compile game ######################
 
 file(GLOB_RECURSE SRC ./src/*.cpp ./src/*.c)

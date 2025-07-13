@@ -81,7 +81,7 @@ Context::Context() {
     sprite.m_region.m_size = tile_size;
     sprite.m_size = tile_size * 3;
     m_sprite_manager->RegisterEntity(entity, std::move(sprite));
-    m_transform_manager->RegisterEntity(entity, Pose{{200, 300}});
+    m_transform_manager->RegisterEntity(entity, Transform{Pose{{200, 300}}, Pose{}});
 }
 
 void Context::logicUpdate() {
