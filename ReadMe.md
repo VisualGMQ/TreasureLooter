@@ -20,10 +20,13 @@ cmake --build cmake-build
 
 ### Build For Android
 
-copy `game` folder to `android/app/jni`
+copy `game` folder to `android/app/jni`,
+
+copy assets folder to `android/app/assets`
 
 ```bash
 cp -r game android/app/jni
+cp -r game/assets android/app/assets/
 ```
 
 then use `gradle` to build (or use AndroidStudio)

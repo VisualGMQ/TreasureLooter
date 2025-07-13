@@ -48,6 +48,7 @@ bool Context::ShouldExit() {
 Context::Context() {
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
                       SDL_INIT_GAMEPAD));
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
     m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
