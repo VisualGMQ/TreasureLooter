@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(GAME)
+project(TreasureLooter)
 
 # Compilation of companion libraries
 #add_subdirectory(SDL_image)
