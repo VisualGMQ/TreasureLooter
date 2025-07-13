@@ -3,11 +3,17 @@
 #include "renderer.hpp"
 #include "sdl_call.hpp"
 #include "stb_image.h"
+#include "storage.hpp"
 
 Image::Image(Renderer& renderer, const Path& filename) {
     int w, h;
+
+    auto file = IOStream::CreateFromFile(filename, IOMode::Read, true);
+    auto content = file->ReadData();
+
     stbi_uc* data =
-        stbi_load(filename.string().c_str(), &w, &h, nullptr, STBI_rgb_alpha);
+        stbi_load_from_memory((const stbi_uc*)content.data(), content.size(),
+                              &w, &h, nullptr, STBI_rgb_alpha);
     if (!data) {
         LOGE("load image {} failed", filename);
         return;
@@ -32,7 +38,7 @@ Image::Image(Renderer& renderer, const Path& filename) {
 
     SDL_CALL(SDL_SetTextureBlendMode(m_texture, SDL_BLENDMODE_BLEND));
     stbi_image_free(data);
-    
+
     SDL_SetTextureScaleMode(m_texture, SDL_SCALEMODE_NEAREST);
 }
 

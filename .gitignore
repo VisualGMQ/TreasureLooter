@@ -10,4 +10,4 @@ android/app/jni/game
 android/build
 android/app/build
 local.properties
-android/app/src/main/res/assets/
+android/app/src/main/assets/assets

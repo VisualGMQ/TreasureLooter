@@ -3,6 +3,7 @@
 #include "spdlog/sinks/android_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/null_sink.h"
 #include <iostream>
 
 
@@ -16,6 +17,8 @@ LogManager::LogManager() {
 #ifdef SDL_PLATFORM_ANDROID
     std::string tag = "spdlog-android";
     m_console_logger = spdlog::android_logger_mt("android", tag);
+
+    m_file_logger = spdlog::null_logger_mt("file_logger");
 #else
     m_console_logger = spdlog::stdout_color_mt("console");
 
