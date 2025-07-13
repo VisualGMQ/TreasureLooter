@@ -19,6 +19,7 @@ Image::Image(Renderer& renderer, const Path& filename) {
         return;
     }
 
+
     SDL_Renderer* sdl_renderer = renderer.GetRenderer();
     SDL_Surface* surface =
         SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_RGBA32, data, w * 4);

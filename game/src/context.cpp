@@ -1,6 +1,9 @@
 ﻿#include "context.hpp"
 #include "log.hpp"
+#include "relationship.hpp"
 #include "sdl_call.hpp"
+#include "sprite.hpp"
+#include "transform.hpp"
 
 std::unique_ptr<Context> Context::instance;
 
@@ -21,6 +24,8 @@ Context& Context::GetInst() {
 }
 
 Context::~Context() {
+    m_sprite_manager.reset();
+    m_transform_manager.reset();
     m_inspector.reset();
     m_image_manager.reset();
     m_renderer.reset();
@@ -57,62 +62,43 @@ Context::Context() {
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
 
-    GameObject go;
-    go.m_pose.m_position = {200, 300};
-    go.m_sprite.m_image =
+    m_root_entity = createEntity();
+
+    m_transform_manager = std::make_unique<TransformManager>();
+    m_sprite_manager = std::make_unique<SpriteManager>();
+    m_relationship_manager =
+        std::make_unique<RelationshipManager>(m_root_entity);
+
+    ////// this is a test //////
+    Entity entity = createEntity();
+    m_relationship_manager->Get(m_root_entity)->m_children.push_back(entity);
+    m_transform_manager->RegisterEntity(m_root_entity);
+
+    Sprite sprite;
+    sprite.m_image =
         m_image_manager->Load("assets/Characters/Statue/SpriteSheet.png");
-    auto tile_size = go.m_sprite.m_image->GetSize() / Vec2{4, 7};
-    go.m_sprite.m_region.m_size = tile_size;
-    go.m_sprite.m_size = tile_size * 3;
-
-    m_root.m_children.push_back(go);
-}
-
-void Context::drawSpriteRecursive(const GameObject& go) {
-    if (go.m_sprite) {
-        auto src_region = go.m_sprite.m_region;
-        Region dst_region;
-        auto& global_pose = go.GetGlobalPose();
-        auto image_size = go.m_sprite.m_region.m_size;
-        dst_region.m_topleft = global_pose.m_position - image_size * 0.5;
-        dst_region.m_size = go.m_sprite.m_size * global_pose.m_scale;
-
-        m_renderer->DrawImage(*go.m_sprite.m_image, src_region, dst_region,
-                              global_pose.m_rotation.Value(),
-                              dst_region.m_size * 0.5, go.m_sprite.m_flip);
-    }
-
-    for (auto& child : go.m_children) {
-        drawSpriteRecursive(child);
-    }
-}
-
-void Context::updateGOPoses() {
-    for (auto& child : m_root.m_children) {
-        updatePoseRecursive(m_root, child);
-    }
-}
-
-void Context::updatePoseRecursive(const GameObject& parent, GameObject& child) {
-    child.m_global_pose = parent.m_global_pose * child.m_pose;
-
-    for (auto& c : child.m_children) {
-        updatePoseRecursive(child, c);
-    }
+    auto tile_size = sprite.m_image->GetSize() / Vec2{4, 7};
+    sprite.m_region.m_size = tile_size;
+    sprite.m_size = tile_size * 3;
+    m_sprite_manager->RegisterEntity(entity, std::move(sprite));
+    m_transform_manager->RegisterEntity(entity, Pose{{200, 300}});
 }
 
 void Context::logicUpdate() {
-    updateGOPoses();
+    m_relationship_manager->Update();
 }
 
 void Context::renderUpdate() {
     m_inspector->BeginFrame();
     m_renderer->Clear();
 
-    drawSpriteRecursive(m_root);
-
+    m_sprite_manager->Update();
     m_inspector->Update();
 
     m_inspector->EndFrame();
     m_renderer->Present();
+}
+
+Entity Context::createEntity() {
+    return m_last_entity++;
 }
