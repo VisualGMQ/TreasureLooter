@@ -2,7 +2,7 @@ cmake-build
 logs
 imgui.ini
 install
-schema_generate
+schema_generate/
 
 .gradle
 .cxx
