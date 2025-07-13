@@ -1,8 +1,6 @@
 #include "code_generate.hpp"
 #include "common.hpp"
 
-#include <shobjidl_core.h>
-
 std::string generateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
     
