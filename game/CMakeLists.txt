@@ -23,8 +23,13 @@ set(SCHEMA_OUTPUT_FILES)
 foreach(schema ${SCHEMAS})
     cmake_path(GET schema FILENAME schema_filename)
     cmake_path(REPLACE_EXTENSION schema_filename ".hpp" OUTPUT_VARIABLE schema_generate_hpp)
-    set(schema_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/${schema_generate_hpp}")
-    list(APPEND SCHEMA_OUTPUT_FILES ${schema_final_path})
+    cmake_path(REPLACE_EXTENSION schema_filename ".cpp" OUTPUT_VARIABLE schema_generate_cpp)
+    set(schema_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}")
+    list(APPEND
+        SCHEMA_OUTPUT_FILES
+        "${schema_final_path}/${schema_generate_hpp}"
+        "${schema_final_path}/serialize/${schema_generate_hpp}"
+        "${schema_final_path}/serialize/${schema_generate_cpp}")
 endforeach()
 
 if (NOT ANDROID)

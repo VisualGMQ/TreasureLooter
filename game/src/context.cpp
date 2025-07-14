@@ -1,9 +1,15 @@
 ﻿#include "context.hpp"
 #include "log.hpp"
+#include "rapidxml_print.hpp"
 #include "relationship.hpp"
 #include "sdl_call.hpp"
+#include "serialize.hpp"
 #include "sprite.hpp"
 #include "transform.hpp"
+#include "schema/serialize/sprite.hpp"
+
+#include <iostream>
+#include <sstream>
 
 std::unique_ptr<Context> Context::instance;
 

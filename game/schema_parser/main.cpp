@@ -23,6 +23,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    std::filesystem::path serd_output_dir = output_dir / "serialize";
+
     if (!std::filesystem::exists(parse_dir)) {
         std::cerr << "invalid parse directory: " << parse_dir << std::endl;
         return 1;
@@ -57,14 +59,40 @@ int main(int argc, char** argv) {
     if (!std::filesystem::exists(output_dir)) {
         std::filesystem::create_directories(output_dir);
     }
-    
-    for (auto& info : manager.m_infos) {
-        std::string code = generateSchemaCode(info);
-        auto filename = info.m_filename.filename();
-        filename.replace_extension(".hpp");
-        std::ofstream file(output_dir / filename);
-        file.write(code.c_str(), code.length());
+
+    if (!std::filesystem::exists(serd_output_dir)) {
+        std::filesystem::create_directories(serd_output_dir);
     }
-    
+
+    for (auto& info : manager.m_infos) {
+        // generate class declare codes
+        {
+            std::string code = GenerateSchemaCode(info);
+            auto filename = info.m_pure_filename;
+            filename.replace_extension(".hpp");
+            std::ofstream file(output_dir / filename);
+            file.write(code.c_str(), code.length());
+        }
+
+        // generate serialize codes
+        {
+            {
+                std::string header_code = GenerateSchemaSerializeHeaderCode(info);
+                auto header_filename = info.m_pure_filename;
+                header_filename.replace_extension(".hpp");
+                std::ofstream file(serd_output_dir / header_filename);
+                file.write(header_code.c_str(), header_code.length());
+            }
+
+            {
+                std::string impl_code = GenerateSchemaSerializeImplCode(info);
+                auto impl_filename = info.m_pure_filename;
+                impl_filename.replace_extension(".cpp");
+                std::ofstream file(serd_output_dir / impl_filename);
+                file.write(impl_code.c_str(), impl_code.length());
+            }
+        }
+    }
+
     return 0;
 }

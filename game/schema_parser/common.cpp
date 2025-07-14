@@ -15,7 +15,19 @@ MustacheManager::MustacheManager()
           readMustache("schema_parser/mustaches/schema.mustache")},
       m_include_mustache{
           readMustache("schema_parser/mustaches/include.mustache")},
-      m_enum_mustache{readMustache("schema_parser/mustaches/enum.mustache")} {}
+      m_enum_mustache{readMustache("schema_parser/mustaches/enum.mustache")},
+      m_enum_serd_header_mustache{
+          readMustache("schema_parser/mustaches/enum_serd_header.mustache")},
+      m_enum_serd_impl_mustache{
+          readMustache("schema_parser/mustaches/enum_serd_impl.mustache")},
+      m_schema_serd_header_mustache{
+          readMustache("schema_parser/mustaches/schema_serd_header.mustache")},
+      m_schema_serd_impl_mustache{
+          readMustache("schema_parser/mustaches/schema_serd_impl.mustache")},
+      m_class_serd_header_mustache{
+          readMustache("schema_parser/mustaches/class_serd_header.mustache")},
+      m_class_serd_impl_mustache{
+          readMustache("schema_parser/mustaches/class_serd_impl.mustache")} {}
 
 kainjow::mustache::mustache MustacheManager::readMustache(
     const std::filesystem::path& path) {

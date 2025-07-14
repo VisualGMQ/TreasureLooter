@@ -118,6 +118,9 @@ std::optional<SchemaInfo> parseSchema(const std::filesystem::path& filename) {
 
     SchemaInfo schema_info;
     schema_info.m_filename = filename;
+    schema_info.m_pure_filename = filename.filename();
+    schema_info.m_pure_filename =
+        schema_info.m_pure_filename.replace_extension("");
 
     auto child = node->first_node();
     while (child) {

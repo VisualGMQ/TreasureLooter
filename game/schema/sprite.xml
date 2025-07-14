@@ -2,6 +2,7 @@
     <include>flag.hpp</include>
     <include>image.hpp</include>
     <include>renderer.hpp</include>
+    <include>schema/serialize/flip.hpp</include>
     
     <class name="Sprite">
         <element type="Image*" name="image"/>

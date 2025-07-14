@@ -1,0 +1,67 @@
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const {{type}}& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    switch(payload) {
+        {{#branches}}
+        case {{type}}::{{enum_item}}:
+            node->value("{{enum_item}}");
+            break;
+        {{/branches}}
+    }
+    return node;
+}
+
+void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload) {
+    std::string_view value = node.value();
+    if (value.empty()) {
+        LOGE("[Deserialize] parse enum {{type}} failed: no value");
+    }
+    {{#branches}}
+    else if (value == "{{enum_item}}") {
+        payload = {{type}}::{{enum_item}};
+    }
+    {{/branches}}
+    else {
+        LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
+    }
+}
+
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Flags<{{type}}>& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+    doc.allocate_string(name.c_str()));
+   
+    {{#branches}}
+    if (static_cast<int>({{type}}::{{enum_item}}) == 0 && payload.Value() == 0) {
+        auto item_node = doc.allocate_node(rapidxml::node_type::node_data);
+        item_node->value("{{enum_item}}");
+        node->append_node(item_node);
+    }
+    if (payload & {{type}}::{{enum_item}}) {
+        auto item_node = doc.allocate_node(rapidxml::node_type::node_data);
+        item_node->value("{{enum_item}}");
+        node->append_node(item_node);
+    }
+    {{/branches}}
+    return node;
+}
+
+void Deserialize(rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
+    std::string_view value = node.value();
+    if (value.empty()) {
+        LOGE("[Deserialize] parse enum {{type}} failed: no value");
+    }
+
+    {{#branches}}
+    else if (value == "{{enum_item}}") {
+        payload = {{type}}::{{enum_item}};
+    }
+    {{/branches}}
+    else {
+        LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
+    }
+}

@@ -16,12 +16,12 @@ public:
     Flags(const Flags&) = default;
     Flags(Flags&&) = default;
 
-    Flags operator|(T o) const {
-        return Flags{m_value | static_cast<underlying_type>(o)};
+    underlying_type operator|(T o) const {
+        return m_value | static_cast<underlying_type>(o);
     }
 
-    Flags operator&(T o) const {
-        return Flags{m_value & static_cast<underlying_type>(o)};
+    underlying_type operator&(T o) const {
+        return m_value & static_cast<underlying_type>(o);
     }
 
     Flags& operator=(const Flags&) = default;
@@ -45,8 +45,18 @@ public:
 
     operator T() const { return static_cast<T>(m_value); }
 
-    operator underlying_type() const { return m_value; }
+    underlying_type Value() const { return m_value; }
 
 private:
     underlying_type m_value{};
 };
+
+template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+typename Flags<T>::underlying_type operator&(T o, Flags<T>& flags) {
+    return flags & o;
+}
+
+template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+typename Flags<T>::underlying_type operator|(T o, Flags<T>& flags) {
+    return flags | o;
+}
