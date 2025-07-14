@@ -35,6 +35,24 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
             include_mustache.render({"filename", "\"" + include + "\""})};
     }
 
+    if (schema_info.m_stb_lib_flag & STDLibs::Option) {
+        include_datas << kainjow::mustache::data{
+            "include", include_mustache.render({"filename", "<optional>"})};
+    }
+    if (schema_info.m_stb_lib_flag & STDLibs::Array) {
+        include_datas << kainjow::mustache::data{"include",
+                                                 include_mustache.render(
+                                                     {"filename", "<array>"})}
+                      << kainjow::mustache::data{
+                             "include",
+                             include_mustache.render({"filename", "<vector>"})};
+    }
+    if (schema_info.m_stb_lib_flag & STDLibs::UnorderedMap) {
+        include_datas << kainjow::mustache::data{
+            "include",
+            include_mustache.render({"filename", "<unordered_map>"})};
+    }
+
     for (auto& clazz : schema_info.m_classes) {
         std::string code = GenerateClassCode(clazz);
         class_datas << kainjow::mustache::data{"class", code};
@@ -96,7 +114,7 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
         auto code = GenerateEnumSerializeHeaderCode(enum_value);
         enum_datas << kainjow::mustache::data{"enum", code};
     }
-    
+
     kainjow::mustache::data class_datas{kainjow::mustache::data::type::list};
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassSerializeHeaderCode(class_value);
@@ -120,7 +138,7 @@ std::string GenerateSchemaSerializeImplCode(const SchemaInfo& schema) {
         auto code = GenerateEnumSerializeImplCode(enum_value);
         enum_datas << kainjow::mustache::data{"enum_impl", code};
     }
-    
+
     kainjow::mustache::data class_datas{kainjow::mustache::data::type::list};
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassSerializeImplCode(class_value);
@@ -175,7 +193,10 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
     kainjow::mustache::data properties_data{
         kainjow::mustache::data::type::list};
     for (auto& prop : info.m_properties) {
-        properties_data << kainjow::mustache::data{"property", prop.m_name};
+        kainjow::mustache::data property_data;
+        property_data.set("property", prop.m_name);
+        property_data.set("is_optional", prop.m_optional ? "true" : "false");
+        properties_data << property_data;
     }
 
     data.set("properties", properties_data);

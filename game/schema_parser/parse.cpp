@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-std::optional<EnumInfo> parseEnum(rapidxml::xml_node<>* node) {
+std::optional<EnumInfo> ParseEnum(rapidxml::xml_node<>* node) {
     EnumInfo info;
     auto name_node = node->first_attribute("name");
     if (!name_node) {
@@ -42,14 +42,14 @@ std::optional<EnumInfo> parseEnum(rapidxml::xml_node<>* node) {
     return info;
 }
 
-std::optional<std::string> parseInclude(rapidxml::xml_node<>* node) {
+std::optional<std::string> ParseInclude(rapidxml::xml_node<>* node) {
     if (node->value() == nullptr) {
         return std::nullopt;
     }
     return node->value();
 }
 
-std::optional<PropertyInfo> parseElement(rapidxml::xml_node<>* node) {
+std::optional<PropertyInfo> ParseElement(rapidxml::xml_node<>* node) {
     auto type = node->first_attribute("type");
     if (!type) {
         std::cerr << "Error parsing element, no type" << std::endl;
@@ -68,7 +68,99 @@ std::optional<PropertyInfo> parseElement(rapidxml::xml_node<>* node) {
     return property;
 }
 
-std::optional<ClassInfo> parseClass(rapidxml::xml_node<>* node) {
+std::optional<PropertyInfo> ParseOption(SchemaInfo& schema,
+                                        rapidxml::xml_node<>* node) {
+    auto type = node->first_attribute("type");
+    if (!type) {
+        std::cerr << "Error parsing element, no type" << std::endl;
+        return std::nullopt;
+    }
+
+    auto name = node->first_attribute("name");
+    if (!type) {
+        std::cerr << "Error parsing element, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    PropertyInfo property;
+    property.m_name = name->value();
+    property.m_type = "std::optional<" + std::string{type->value()} + ">";
+    property.m_optional = true;
+    schema.m_stb_lib_flag = schema.m_stb_lib_flag | STDLibs::Option;
+    return property;
+}
+
+std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
+                                       rapidxml::xml_node<>* node) {
+    auto type = node->first_attribute("type");
+    if (!type) {
+        std::cerr << "Error parsing element, no type" << std::endl;
+        return std::nullopt;
+    }
+
+    auto name = node->first_attribute("name");
+    if (!type) {
+        std::cerr << "Error parsing element, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    bool is_dynamic = false;
+    size_t count = 0;
+
+    auto count_node = node->first_attribute("count");
+    if (!count_node) {
+        is_dynamic = true;
+    } else {
+        try {
+            count = std::stoll(count_node->value());
+        } catch (std::exception const& ex) {
+            std::cerr << "Error parsing array, count invalid: "
+                      << count_node->value() << std::endl;
+        }
+    }
+
+    PropertyInfo property;
+    property.m_name = name->value();
+    if (is_dynamic) {
+        property.m_type = "std::vector<" + std::string{type->value()} + ">";
+    } else {
+        property.m_type = "std::array<" + std::string{type->value()} + ", " +
+                          std::to_string(count) + ">";
+    }
+    schema.m_stb_lib_flag = schema.m_stb_lib_flag | STDLibs::Array;
+    return property;
+}
+
+std::optional<PropertyInfo> ParseUnorderedMap(SchemaInfo& schema,
+                                              rapidxml::xml_node<>* node) {
+    auto key_node = node->first_attribute("key");
+    if (!key_node) {
+        std::cerr << "Error parsing element, no key" << std::endl;
+        return std::nullopt;
+    }
+
+    auto value_node = node->first_attribute("value");
+    if (!value_node) {
+        std::cerr << "Error parsing element, no value" << std::endl;
+        return std::nullopt;
+    }
+
+    auto name_node = node->first_attribute("name");
+    if (!name_node) {
+        std::cerr << "Error parsing element, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    PropertyInfo property;
+    property.m_name = name_node->value();
+    property.m_type = std::string{"std::unordered_map<"} + key_node->value() +
+                      ", " + value_node->value() + ">";
+    schema.m_stb_lib_flag = schema.m_stb_lib_flag | STDLibs::UnorderedMap;
+    return property;
+}
+
+std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
+                                    rapidxml::xml_node<>* node) {
     ClassInfo class_info;
     auto name_attr = node->first_attribute("name");
     if (!name_attr) {
@@ -80,15 +172,31 @@ std::optional<ClassInfo> parseClass(rapidxml::xml_node<>* node) {
 
     auto element = node->first_node();
     while (element) {
-        if (std::string_view{element->name()} != "element") {
+        std::string_view name = element->name();
+        if (name == "element") {
+            auto property = ParseElement(element);
+            if (property) {
+                class_info.m_properties.push_back(property.value());
+            }
+        } else if (name == "option") {
+            auto property = ParseOption(schema, element);
+            if (property) {
+                class_info.m_properties.push_back(property.value());
+            }
+        } else if (name == "array") {
+            auto property = ParseArray(schema, element);
+            if (property) {
+                class_info.m_properties.push_back(property.value());
+            }
+        } else if (name == "unodered_map") {
+            auto property = ParseUnorderedMap(schema, element);
+            if (property) {
+                class_info.m_properties.push_back(property.value());
+            }
+        } else {
             std::cerr << "Error parsing class, unknown node " << element->name()
                       << std::endl;
             return std::nullopt;
-        }
-
-        auto property = parseElement(element);
-        if (property) {
-            class_info.m_properties.push_back(property.value());
         }
 
         element = element->next_sibling();
@@ -97,7 +205,7 @@ std::optional<ClassInfo> parseClass(rapidxml::xml_node<>* node) {
     return class_info;
 }
 
-std::optional<SchemaInfo> parseSchema(const std::filesystem::path& filename) {
+std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
     std::cout << "parsing " << filename << std::endl;
     rapidxml::xml_document<> doc;
     std::ifstream file(filename);
@@ -126,17 +234,17 @@ std::optional<SchemaInfo> parseSchema(const std::filesystem::path& filename) {
     while (child) {
         std::string_view name = std::string_view{child->name()};
         if (name == "class") {
-            auto class_info = parseClass(child);
+            auto class_info = ParseClass(schema_info, child);
             if (class_info) {
                 schema_info.m_classes.push_back(class_info.value());
             }
         } else if (name == "include") {
-            auto include_info = parseInclude(child);
+            auto include_info = ParseInclude(child);
             if (include_info) {
                 schema_info.m_includes.push_back(include_info.value());
             }
         } else if (name == "enum") {
-            auto info = parseEnum(child);
+            auto info = ParseEnum(child);
             if (info) {
                 schema_info.m_enums.push_back(info.value());
             }

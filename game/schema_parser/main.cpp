@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
     SchemaInfoManager manager;
     for (auto& filename : filenames) {
-        auto schema_info = parseSchema(filename);
+        auto schema_info = ParseSchema(filename);
         if (schema_info) {
             manager.m_infos.push_back(schema_info.value());
         }

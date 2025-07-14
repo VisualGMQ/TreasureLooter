@@ -5,8 +5,11 @@
 #include <optional>
 #include <rapidxml.hpp>
 
-std::optional<EnumInfo> parseEnum(rapidxml::xml_node<>* node);
-std::optional<std::string> parseInclude(rapidxml::xml_node<>* node);
-std::optional<PropertyInfo> parseElement(rapidxml::xml_node<>* node);
-std::optional<ClassInfo> parseClass(rapidxml::xml_node<>* node);
-std::optional<SchemaInfo> parseSchema(const std::filesystem::path& filename);
+std::optional<EnumInfo> ParseEnum(rapidxml::xml_node<>* node);
+std::optional<std::string> ParseInclude(rapidxml::xml_node<>* node);
+std::optional<PropertyInfo> ParseElement(rapidxml::xml_node<>* node);
+std::optional<PropertyInfo> ParseOption(SchemaInfo&, rapidxml::xml_node<>* node);
+std::optional<PropertyInfo> ParseArray(SchemaInfo&, rapidxml::xml_node<>* node);
+std::optional<PropertyInfo> ParseUnorderedMap(SchemaInfo&, rapidxml::xml_node<>* node);
+std::optional<ClassInfo> ParseClass(SchemaInfo&, rapidxml::xml_node<>* node);
+std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename);

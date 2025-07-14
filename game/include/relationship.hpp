@@ -1,14 +1,11 @@
 ﻿#pragma once
 #include "entity.hpp"
 #include "manager.hpp"
+#include "schema/relationship.hpp"
 
 #include <vector>
 
 class Transform;
-
-struct Relationship {
-    std::vector<Entity> m_children;
-};
 
 class RelationshipManager : public ComponentManager<Relationship> {
 public:

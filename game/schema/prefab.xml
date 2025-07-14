@@ -1,0 +1,20 @@
+﻿<schema>
+    <include>schema/sprite.hpp</include>
+    <include>schema/transform.hpp</include>
+    <include>schema/serialize/sprite.hpp</include>
+    <include>schema/serialize/transform.hpp</include>
+    <include>schema/relationship.hpp</include>
+    <include>schema/serialize/relationship.hpp</include>
+    <include>entity.hpp</include>
+    
+    <class name="Prefab">
+        <option type="Sprite" name="sprite"/>
+        <option type="Transform" name="transform"/>
+        <option type="Relationship" name="relationship"/>
+    </class>
+    
+    <class name="EntityInstance">
+        <element type="Entity" name="entity"/>
+        <element type="Prefab" name="data"/>
+    </class>
+</schema>

@@ -47,10 +47,26 @@ size_t IOStream::GetSize() const {
     return size;
 }
 
-std::vector<char> IOStream::ReadData() const {
+std::vector<char> IOStream::Read() const {
     std::vector<char> result(GetSize());
-    SDL_CALL(SDL_ReadIO(m_stream, result.data(), result.size()));
+    size_t size = 0;
+    size_t read_size;
+    while ((read_size = SDL_ReadIO(m_stream, result.data() + size, result.size())) > 0) {
+        size += read_size; 
+    }
+
+    if (read_size < 0) {
+        LOGE("SDL_ReadIO failed: {}", SDL_GetError());
+        return {};
+    }
     return result;
+}
+
+void IOStream::Write(const char* data, size_t size) {
+    size_t write_size = SDL_WriteIO(m_stream, data, size);
+    if (write_size < size) {
+        LOGE("SDL_WriteIO failed: {}", SDL_GetError());
+    }
 }
 
 IOStream::~IOStream() {

@@ -200,12 +200,29 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const float& payload, const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->value(doc.allocate_string(std::to_string(payload).c_str()));
+    return node;
+}
+
 void Deserialize(rapidxml::xml_node<>& node, double& payload) {
     try {
         double value = std::stod(node.value());
         payload = value;
     } catch (std::exception& e) {
         LOGE("[Deserialize]: stod exception: {}, {}", e.what(), node.value());
+    }
+}
+
+void Deserialize(rapidxml::xml_node<>& node, float& payload) {
+    try {
+        float value = std::stof(node.value());
+        payload = value;
+    } catch (std::exception& e) {
+        LOGE("[Deserialize]: stof exception: {}, {}", e.what(), node.value());
     }
 }
 

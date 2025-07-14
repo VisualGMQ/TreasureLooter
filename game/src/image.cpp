@@ -9,7 +9,7 @@ Image::Image(Renderer& renderer, const Path& filename) : m_filename{filename} {
     int w, h;
 
     auto file = IOStream::CreateFromFile(filename, IOMode::Read, true);
-    auto content = file->ReadData();
+    auto content = file->Read();
 
     stbi_uc* data =
         stbi_load_from_memory((const stbi_uc*)content.data(), content.size(),

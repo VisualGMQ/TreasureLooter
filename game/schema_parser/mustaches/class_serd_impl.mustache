@@ -5,7 +5,9 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     {{#properties}}
     {
         auto prop_node = Serialize(doc, payload.m_{{{property}}}, "{{{property}}}");
-        node->append_node(prop_node);
+        if (prop_node) {
+            node->append_node(prop_node);
+        }
     }
     {{/properties}}
     return node;
@@ -16,9 +18,12 @@ void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload) {
     {
         auto prop_node = node.first_node("{{{property}}}");
         if (!prop_node) {
-            LOGE("[Deserialize] parse {{{type}}}::m_{{{property}}} failed: no this node");
+            if (!{{is_optional}}) {
+                LOGE("[Deserialize] parse {{{type}}}::m_{{{property}}} failed: no this node");
+            }
+        } else {
+            Deserialize(*prop_node, payload.m_{{{property}}});
         }
-        Deserialize(*prop_node, payload.m_{{{property}}});
     }
     {{/properties}}
 }

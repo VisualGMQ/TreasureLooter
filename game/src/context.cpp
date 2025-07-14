@@ -1,12 +1,15 @@
 ﻿#include "context.hpp"
 #include "log.hpp"
 #include "rapidxml_print.hpp"
+#include "rapidxml_utils.hpp"
 #include "relationship.hpp"
+#include "schema/prefab.hpp"
+#include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
 #include "serialize.hpp"
 #include "sprite.hpp"
+#include "storage.hpp"
 #include "transform.hpp"
-#include "schema/serialize/sprite.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -41,6 +44,42 @@ Context::~Context() {
 }
 
 void Context::Update() {
+    ////////// this is a test //////////
+    static bool executed = false;
+
+    if (!executed) {
+        auto file = IOStream::CreateFromFile("assets/gpa/waggo.entity.xml", IOMode::Read, true);
+        auto content = file->Read();
+        content.push_back('\0');
+        rapidxml::xml_document<> doc;
+        try {
+            doc.parse<rapidxml::parse_default>(content.data());
+        } catch (std::exception &e) {
+            LOGE("parse xml failed: {}", e.what());
+        }
+        auto node = doc.first_node("instance");
+        
+        if (node) {
+            EntityInstance entity;
+            Deserialize(*node, entity);
+
+            if (entity.m_data.m_transform) {
+                m_transform_manager->RegisterEntity(entity.m_entity, entity.m_data.m_transform.value());
+            }
+            if (entity.m_data.m_sprite) {
+                m_sprite_manager->RegisterEntity(entity.m_entity, entity.m_data.m_sprite.value());
+            }
+            if (entity.m_data.m_relationship) {
+                m_relationship_manager->RegisterEntity(entity.m_entity, entity.m_data.m_relationship.value());
+            }
+
+            m_relationship_manager->Get(m_root_entity)->m_children.push_back(entity.m_entity);
+        }
+        
+        executed = true;
+    }
+    ////////////////////////////////////
+
     logicUpdate();
     renderUpdate();
 }
@@ -74,20 +113,7 @@ Context::Context() {
     m_sprite_manager = std::make_unique<SpriteManager>();
     m_relationship_manager =
         std::make_unique<RelationshipManager>(m_root_entity);
-
-    ////// this is a test //////
-    Entity entity = createEntity();
-    m_relationship_manager->Get(m_root_entity)->m_children.push_back(entity);
     m_transform_manager->RegisterEntity(m_root_entity);
-
-    Sprite sprite;
-    sprite.m_image =
-        m_image_manager->Load("assets/Characters/Statue/SpriteSheet.png");
-    auto tile_size = sprite.m_image->GetSize() / Vec2{4, 7};
-    sprite.m_region.m_size = tile_size;
-    sprite.m_size = tile_size * 3;
-    m_sprite_manager->RegisterEntity(entity, std::move(sprite));
-    m_transform_manager->RegisterEntity(entity, Transform{Pose{{200, 300}}, Pose{}});
 }
 
 void Context::logicUpdate() {

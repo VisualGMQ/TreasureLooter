@@ -6,9 +6,17 @@
 #include <string>
 #include <vector>
 
+enum STDLibs {
+    None = 0,
+    Array = 0x02,
+    Option = 0x04,
+    UnorderedMap = 0x08,
+};
+
 struct PropertyInfo {
     std::string m_type;
     std::string m_name;
+    bool m_optional = false;
 };
 
 struct ClassInfo {
@@ -27,6 +35,8 @@ struct EnumInfo {
 };
 
 struct SchemaInfo {
+    int m_stb_lib_flag = None;
+    
     std::vector<std::string> m_includes;
     std::filesystem::path m_filename;
     std::filesystem::path m_pure_filename; //! without directory & extension
