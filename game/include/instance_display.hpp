@@ -101,7 +101,7 @@ void InstanceDisplay(const char* name, const std::vector<T>& values) {
 
 template <typename T>
 void InstanceDisplay(const char* name, std::vector<T>& values) {
-    ImGui::Text(name);
+    ImGui::Text("%s", name);
     ImGui::SameLine();
 
     ImGui::PushID(ImGuiIDGenerator::Gen());
@@ -125,7 +125,7 @@ void InstanceDisplay(const char* name, std::vector<T>& values) {
 
 template <typename T, size_t Size>
 void InstanceDisplay(const char* name, const std::array<T, Size>& values) {
-    ImGui::Text(name);
+    ImGui::Text("%s", name);
     for (size_t i = 0; i < values.size(); i++) {
         InstanceDisplay(std::to_string(i).c_str(), values[i]);
     }
@@ -134,7 +134,7 @@ void InstanceDisplay(const char* name, const std::array<T, Size>& values) {
 template <typename T, size_t Size>
 void InstanceDisplay(const char* name, std::array<T, Size>& values) {
     ImGui::BeginDisabled(true);
-    ImGui::Text(name);
+    ImGui::Text("%s", name);
     for (size_t i = 0; i < values.size(); i++) {
         InstanceDisplay(std::to_string(i).c_str(), values[i]);
     }
@@ -143,7 +143,7 @@ void InstanceDisplay(const char* name, std::array<T, Size>& values) {
 
 template <typename Key, typename Value>
 void InstanceDisplay(const char* name, std::unordered_map<Key, Value>& m) {
-    ImGui::Text(name);
+    ImGui::Text("%s", name);
     for (auto&& [key, value] : m) {
         InstanceDisplay("Key", key);
         InstanceDisplay("Val", value);
@@ -154,7 +154,7 @@ template <typename Key, typename Value>
 void InstanceDisplay(const char* name,
                      const std::unordered_map<Key, Value>& m) {
     ImGui::BeginDisabled(true);
-    ImGui::Text(name);
+    ImGui::Text("%s", name);
     for (auto&& [key, value] : m) {
         InstanceDisplay("Key", key);
         InstanceDisplay("Val", value);
