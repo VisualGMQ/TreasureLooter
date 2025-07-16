@@ -14,6 +14,11 @@
             "generator": "Ninja"
         },
         {
+            "name": "CI-Emscripten",
+            "binaryDir": "${sourceDir}/emcmake-build",
+            "generator": "Ninja"
+        },
+        {
             "name": "CI-Windows",
             "binaryDir": "${sourceDir}/cmake-build",
             "cacheVariables": {
