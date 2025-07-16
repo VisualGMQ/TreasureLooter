@@ -298,10 +298,10 @@ void InstanceDisplay(const char* name, Image* value) {
     ImGui::BeginDisabled(true);
 
     if (value) {
-        auto& filename = value->Filename().string();
+        auto filename = value->Filename().string();
         ImGui::InputText(name, (char*)filename.c_str(), filename.length());
     } else {
-        ImGui::InputText(name, "", 0);
+        ImGui::InputText(name, nullptr, 0);
     }
     
     ImGui::EndDisabled();
@@ -314,10 +314,10 @@ void InstanceDisplay(const char* name, const Image* value) {
     
     ImGui::BeginDisabled(true);
     if (value) {
-        auto& filename = value->Filename().string();
+        auto filename = value->Filename().string();
         ImGui::InputText(name, (char*)filename.c_str(), filename.length());
     } else {
-        ImGui::InputText(name, "", 0);
+        ImGui::InputText(name, nullptr, 0);
     }
     ImGui::EndDisabled();
     
