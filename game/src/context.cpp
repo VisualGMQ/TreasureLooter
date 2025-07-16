@@ -48,33 +48,18 @@ void Context::Update() {
     static bool executed = false;
 
     if (!executed) {
-        auto file = IOStream::CreateFromFile("assets/gpa/waggo.entity.xml", IOMode::Read, true);
-        auto content = file->Read();
-        content.push_back('\0');
-        rapidxml::xml_document<> doc;
-        try {
-            doc.parse<rapidxml::parse_default>(content.data());
-        } catch (std::exception &e) {
-            LOGE("parse xml failed: {}", e.what());
+        auto prefab = LoadEntityInstanceAsset("assets/gpa/waggo.entity.xml");
+        if (prefab.m_data.m_transform) {
+            m_transform_manager->RegisterEntity(prefab.m_entity, prefab.m_data.m_transform.value());
         }
-        auto node = doc.first_node("instance");
-        
-        if (node) {
-            EntityInstance entity;
-            Deserialize(*node, entity);
-
-            if (entity.m_data.m_transform) {
-                m_transform_manager->RegisterEntity(entity.m_entity, entity.m_data.m_transform.value());
-            }
-            if (entity.m_data.m_sprite) {
-                m_sprite_manager->RegisterEntity(entity.m_entity, entity.m_data.m_sprite.value());
-            }
-            if (entity.m_data.m_relationship) {
-                m_relationship_manager->RegisterEntity(entity.m_entity, entity.m_data.m_relationship.value());
-            }
-
-            m_relationship_manager->Get(m_root_entity)->m_children.push_back(entity.m_entity);
+        if (prefab.m_data.m_sprite) {
+            m_sprite_manager->RegisterEntity(prefab.m_entity, prefab.m_data.m_sprite.value());
         }
+        if (prefab.m_data.m_relationship) {
+            m_relationship_manager->RegisterEntity(prefab.m_entity, prefab.m_data.m_relationship.value());
+        }
+
+        m_relationship_manager->Get(m_root_entity)->m_children.push_back(prefab.m_entity);
         
         executed = true;
     }

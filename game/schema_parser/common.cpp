@@ -27,7 +27,13 @@ MustacheManager::MustacheManager()
       m_class_serd_header_mustache{
           readMustache("schema_parser/mustaches/class_serd_header.mustache")},
       m_class_serd_impl_mustache{
-          readMustache("schema_parser/mustaches/class_serd_impl.mustache")} {}
+          readMustache("schema_parser/mustaches/class_serd_impl.mustache")},
+      m_asset_sl_header_mustache{
+          readMustache("schema_parser/mustaches/asset_sl_header.mustache")},
+      m_asset_sl_impl_mustache{
+          readMustache("schema_parser/mustaches/asset_sl_impl.mustache")},
+      m_asset_extension_mustache{
+          readMustache("schema_parser/mustaches/asset_extension.mustache")} {}
 
 kainjow::mustache::mustache MustacheManager::readMustache(
     const std::filesystem::path& path) {

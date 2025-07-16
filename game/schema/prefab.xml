@@ -13,8 +13,8 @@
         <option type="Relationship" name="relationship"/>
     </class>
     
-    <class name="EntityInstance">
+    <asset name="EntityInstance" extension=".prefab">
         <element type="Entity" name="entity"/>
         <element type="Prefab" name="data"/>
-    </class>
+    </asset>
 </schema>

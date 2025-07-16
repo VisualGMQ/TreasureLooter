@@ -160,12 +160,22 @@ std::optional<PropertyInfo> ParseUnorderedMap(SchemaInfo& schema,
 }
 
 std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
-                                    rapidxml::xml_node<>* node) {
+                                    rapidxml::xml_node<>* node, bool is_asset) {
     ClassInfo class_info;
+    class_info.is_asset = is_asset;
     auto name_attr = node->first_attribute("name");
     if (!name_attr) {
         std::cerr << "Error parsing class, no name" << std::endl;
         return std::nullopt;
+    }
+
+    if (is_asset) {
+        auto extension_attr = node->first_attribute("extension");
+        if (!extension_attr) {
+            std::cerr << "Error parsing class, no extension" << std::endl;
+            return std::nullopt;
+        }
+        class_info.m_asset_extension = extension_attr->value();
     }
 
     class_info.m_name = name_attr->value();
@@ -233,8 +243,8 @@ std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
     auto child = node->first_node();
     while (child) {
         std::string_view name = std::string_view{child->name()};
-        if (name == "class") {
-            auto class_info = ParseClass(schema_info, child);
+        if (name == "class" || name == "asset") {
+            auto class_info = ParseClass(schema_info, child, name == "asset");
             if (class_info) {
                 schema_info.m_classes.push_back(class_info.value());
             }

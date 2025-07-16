@@ -77,7 +77,8 @@ int main(int argc, char** argv) {
         // generate serialize codes
         {
             {
-                std::string header_code = GenerateSchemaSerializeHeaderCode(info);
+                std::string header_code =
+                    GenerateSchemaSerializeHeaderCode(info);
                 auto header_filename = info.m_pure_filename;
                 header_filename.replace_extension(".hpp");
                 std::ofstream file(serd_output_dir / header_filename);
@@ -91,7 +92,23 @@ int main(int argc, char** argv) {
                 std::ofstream file(serd_output_dir / impl_filename);
                 file.write(impl_code.c_str(), impl_code.length());
             }
+
+            
         }
+    }
+    
+    {
+        kainjow::mustache::data data{kainjow::mustache::data::type::list};
+
+        for (auto& info : manager.m_infos) {
+            GenerateSchemaAssetExtensionMustacheData(info, data);
+        }
+
+        auto code =
+            MustacheManager::GetInst().m_asset_extension_mustache.render(
+                {"extensions", data});
+        std::ofstream file(serd_output_dir / "asset_extensions.hpp");
+        file.write(code.c_str(), code.length());
     }
 
     return 0;

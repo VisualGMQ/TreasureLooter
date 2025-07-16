@@ -38,6 +38,8 @@ foreach(schema ${SCHEMAS})
         "${schema_final_path}/serialize/${schema_generate_cpp}")
 endforeach()
 
+list(APPEND SCHEMA_OUTPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/serialize/asset_extensions.hpp)
+
 if (NEED_SCHEMA_PARSER)
     add_custom_target(run_schema_parser
         COMMAND $<TARGET_FILE:schema_parser> ./schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
@@ -74,7 +76,7 @@ if(EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX .html)
     set_target_properties(${GAME_NAME}
         PROPERTIES
-            LINK_FLAGS "--preload-file=assets -s ALLOW_MEMORY_GROWTH=1")
+            LINK_FLAGS "--preload-file=assets -s ALLOW_MEMORY_GROWTH=1 -s ALLOW_TABLE_GROWTH=1")
 
     add_custom_command(TARGET ${GAME_NAME}
         PRE_BUILD

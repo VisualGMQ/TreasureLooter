@@ -4,6 +4,11 @@
 
 #include "schema/serialize/{{{filename}}}.hpp"
 #include "log.hpp"
+#include <sstream>
+#include "rapidxml_utils.hpp"
+#include "rapidxml_print.hpp"
+#include "storage.hpp"
+#include "serialize.hpp"
 
 {{#class_impls}}
 {{{class_impl}}}
@@ -12,3 +17,7 @@
 {{#enum_impls}}
 {{{enum_impl}}}
 {{/enum_impls}}
+
+{{#assets_sl}}
+{{{asset_sl}}}
+{{/assets_sl}}

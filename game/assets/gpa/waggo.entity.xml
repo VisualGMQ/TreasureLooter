@@ -1,4 +1,4 @@
-<instance>
+<EntityInstance>
 	<entity>1</entity>
 	<data>
 		<sprite>
@@ -27,4 +27,4 @@
 			</value>
 		</transform>
 	</data>
-</instance>
+</EntityInstance>

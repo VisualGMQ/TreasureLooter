@@ -110,6 +110,7 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     data.set("includes", include_datas);
 
     kainjow::mustache::data enum_datas{kainjow::mustache::data::type::list};
+    kainjow::mustache::data asset_datas{kainjow::mustache::data::type::list};
     for (auto& enum_value : schema.m_enums) {
         auto code = GenerateEnumSerializeHeaderCode(enum_value);
         enum_datas << kainjow::mustache::data{"enum", code};
@@ -119,10 +120,16 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassSerializeHeaderCode(class_value);
         class_datas << kainjow::mustache::data{"class", code};
+        
+        if (class_value.is_asset) {
+            auto asset_code = GenerateAssetSLHeaderCode(class_value);
+            asset_datas << kainjow::mustache::data{"asset_sl", asset_code};
+        }
     }
 
     data.set("enums", enum_datas);
     data.set("classes", class_datas);
+    data.set("assets_sl", asset_datas);
 
     return header_mustache.render(data);
 }
@@ -140,13 +147,20 @@ std::string GenerateSchemaSerializeImplCode(const SchemaInfo& schema) {
     }
 
     kainjow::mustache::data class_datas{kainjow::mustache::data::type::list};
+    kainjow::mustache::data asset_datas{kainjow::mustache::data::type::list};
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassSerializeImplCode(class_value);
         class_datas << kainjow::mustache::data{"class_impl", code};
+
+        if (class_value.is_asset) {
+            auto asset_code = GenerateAssetSLImplCode(class_value);
+            asset_datas << kainjow::mustache::data{"asset_sl", asset_code};
+        }
     }
 
     data.set("enum_impls", enum_datas);
     data.set("class_impls", class_datas);
+    data.set("assets_sl", asset_datas);
 
     return mustache.render(data);
 }
@@ -202,4 +216,36 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
     data.set("properties", properties_data);
 
     return mustache.render(data);
+}
+
+std::string GenerateAssetSLHeaderCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_asset_sl_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    return mustache.render(data);   
+}
+
+std::string GenerateAssetSLImplCode(const ClassInfo& info) {
+     auto& mustache = MustacheManager::GetInst().m_asset_sl_impl_mustache;
+ 
+     kainjow::mustache::data data;
+     data.set("type", info.m_name);
+ 
+     return mustache.render(data);   
+}
+
+void GenerateSchemaAssetExtensionMustacheData(const SchemaInfo& schema, kainjow::mustache::data& out_data) {
+    for (auto& clazz : schema.m_classes) {
+        if (!clazz.is_asset) {
+            continue;
+        }
+
+        kainjow::mustache::data ext_data;
+        ext_data.set("type", clazz.m_name);
+        ext_data.set("extension", clazz.m_asset_extension);
+
+        out_data << ext_data;
+    }
 }

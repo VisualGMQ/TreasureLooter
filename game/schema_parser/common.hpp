@@ -22,6 +22,8 @@ struct PropertyInfo {
 struct ClassInfo {
     std::string m_name;
     std::vector<PropertyInfo> m_properties;
+    bool is_asset = false;
+    std::string m_asset_extension;
 };
 
 struct EnumInfo {
@@ -61,6 +63,9 @@ struct MustacheManager {
     kainjow::mustache::mustache m_enum_serd_impl_mustache;
     kainjow::mustache::mustache m_class_serd_header_mustache;
     kainjow::mustache::mustache m_class_serd_impl_mustache;
+    kainjow::mustache::mustache m_asset_sl_header_mustache;
+    kainjow::mustache::mustache m_asset_sl_impl_mustache;
+    kainjow::mustache::mustache m_asset_extension_mustache;
 
     static MustacheManager& GetInst();
 

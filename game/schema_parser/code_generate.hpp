@@ -12,3 +12,8 @@ std::string GenerateClassSerializeHeaderCode(const ClassInfo&);
 std::string GenerateClassSerializeImplCode(const ClassInfo&);
 std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo&);
 std::string GenerateSchemaSerializeImplCode(const SchemaInfo&);
+std::string GenerateAssetSLHeaderCode(const ClassInfo&);
+std::string GenerateAssetSLImplCode(const ClassInfo&);
+
+void GenerateSchemaAssetExtensionMustacheData(const SchemaInfo&,
+                                              kainjow::mustache::data& out_data);
