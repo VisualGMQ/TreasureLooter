@@ -67,6 +67,14 @@ jobs:
       working-directory: ./game
       run: ${{ matrix.cmake-path }}cmake --build cmake-build
 
+    - name: Precompile schema parser
+      if: runner.os == 'Linux' && (matrix.android || matrix.emscripte)
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=default
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target schema_parser
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target run_schema_parser
+
     - name: Config cmake(Emscripten)
       if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}
       working-directory: ./game
@@ -77,14 +85,6 @@ jobs:
       if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}
       working-directory: ./game
       run: ${{ matrix.cmake-path }}cmake --build emcmake-build
-
-    - name: Precompile schema parser
-      if: runner.os == 'Linux' && (matrix.android || matrix.emscripte)
-      working-directory: ./game
-      run: |
-        ${{ matrix.cmake-path }}cmake --preset=default
-        ${{ matrix.cmake-path }}cmake --build cmake-build --target schema_parser
-        ${{ matrix.cmake-path }}cmake --build cmake-build --target run_schema_parser
 
     - name: Prepare Android JDK
       if: matrix.android
