@@ -11,7 +11,13 @@ include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
 ################ compile schema parser ################
-if (NOT ANDROID)
+set(NEED_SCHEMA_PARSER ON)
+
+if (ANDROID OR EMSCRIPTEN)
+    set(NEED_SCHEMA_PARSER OFF)
+endif()
+
+if (NEED_SCHEMA_PARSER)
     add_subdirectory(schema_parser)
 endif()
 
@@ -32,7 +38,7 @@ foreach(schema ${SCHEMAS})
         "${schema_final_path}/serialize/${schema_generate_cpp}")
 endforeach()
 
-if (NOT ANDROID)
+if (NEED_SCHEMA_PARSER)
     add_custom_target(run_schema_parser
         COMMAND $<TARGET_FILE:schema_parser> ./schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
         DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
@@ -78,20 +84,28 @@ if(EMSCRIPTEN)
     )
 endif()
 
-target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui)
-target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS})
-target_include_directories(${GAME_NAME} PRIVATE include)
+target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_OUTPUT_FILES})
+target_include_directories(${GAME_NAME} PRIVATE include schema_generate)
 target_compile_features(${GAME_NAME} PRIVATE cxx_std_17)
+target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML)
 target_compile_definitions(${GAME_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
-
-################ compile tools ######################
-if(NOT ANDROID)
-    add_subdirectory(tools)
-endif()
 
 ################ instal #######################
 install(TARGETS ${GAME_NAME} DESTINATION .)
-install(DIRECTORY assets DESTINATION .)
+
+if (NOT EMSCRIPTEN)
+    install(DIRECTORY assets DESTINATION .)
+endif()
+
+if (EMSCRIPTEN)
+    install(
+        FILES
+            ${CMAKE_BINARY_DIR}/index.js
+            ${CMAKE_BINARY_DIR}/index.data
+            ${CMAKE_BINARY_DIR}/index.wasm
+        DESTINATION .
+    )
+endif()
 
 ################ package ##################
 # include(InstallRequiredSystemLibraries)
