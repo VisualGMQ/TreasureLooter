@@ -21,13 +21,32 @@ if (ANDROID)
     set(GAME_NAME main)
     add_library(${GAME_NAME} SHARED)
 else()
+    if (EMSCRIPTEN)
+        set(GAME_NAME index)
+    endif()
     add_executable(${GAME_NAME})
 endif()
 
+if(EMSCRIPTEN)
+    message("emscripten build")
+    set(CMAKE_EXECUTABLE_SUFFIX .html)
+    set_target_properties(${GAME_NAME}
+        PROPERTIES
+            LINK_FLAGS "--preload-file=assets -s ALLOW_MEMORY_GROWTH=1")
+
+    add_custom_command(TARGET ${GAME_NAME}
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
+        COMMENT "copy assets file to build path"
+        VERBATIM
+    )
+endif()
+
+target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui)
 target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS})
 target_include_directories(${GAME_NAME} PRIVATE include)
 target_compile_features(${GAME_NAME} PRIVATE cxx_std_17)
-target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui)
+target_compile_definitions(${GAME_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 ################ compile tools ######################
 if(NOT ANDROID)
