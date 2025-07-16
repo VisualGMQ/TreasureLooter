@@ -11,15 +11,23 @@ jobs:
             - name: Windows
               os: windows-latest
               android: none
+              emscripte: none
             - name: Ubuntu
               os: ubuntu-22.04
               android: none
+              emscripte: false
+            - name: Emscripten
+              os: ubuntu-22.04
+              android: none
+              emscripte: true
             - name: MacOS
               os: macOS-latest
               android: none
+              emscripte: none
             - name: Android
               os: ubuntu-latest
               android: arm64
+              emscripte: none
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -49,7 +57,7 @@ jobs:
         ${{ matrix.cmake-path }}cmake --preset=CI-Linux
 
     - name: Config cmake(Emscripten)
-      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}
       working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}emcmake cmake --preset=CI-Emscripten
@@ -66,7 +74,7 @@ jobs:
       run: ${{ matrix.cmake-path }}cmake --build cmake-build
 
     - name: Build Emscripten
-      if: ${{ contains(matrix.os, 'ubuntu') && matrix.android == 'none' }}
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}
       working-directory: ./game
       run: ${{ matrix.cmake-path }}cmake --build emcmake-build
 
