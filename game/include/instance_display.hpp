@@ -90,7 +90,7 @@ void InstanceDisplay(const char* name, const std::optional<T>& value) {
 template <typename T>
 void InstanceDisplay(const char* name, const std::vector<T>& values) {
     ImGui::BeginDisabled(true);
-    ImGui::Text(name);
+    ImGui::Text("%s", name);
     for (size_t i = 0; i < values.size(); i++) {
         ImGui::PushID(ImGuiIDGenerator::Gen());
         InstanceDisplay(std::to_string(i).c_str(), values[i]);
