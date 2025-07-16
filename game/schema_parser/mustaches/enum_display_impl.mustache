@@ -1,0 +1,128 @@
+void InstanceDisplay(const char* name, {{type}}& value) {
+    static const std::unordered_map<{{type}}, int> enum_to_idx = {
+        {{#enum_to_idx_list}}
+        { {{type}}::{{item}}, {{idx}} }, 
+        {{/enum_to_idx_list}}
+    };
+
+    static const std::unordered_map<int, {{type}}> idx_to_enum = {
+        {{#idx_to_enum_list}}
+        { {{idx}}, {{type}}::{{item}} },
+        {{/idx_to_enum_list}}
+    };
+
+    const char* const items[] = {
+        {{#items}}
+        "{{item}}",
+        {{/items}}
+    };
+
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+
+    int cur_item = enum_to_idx.at(value);
+    ImGui::Combo(name, &cur_item, items, 3);
+
+    value = idx_to_enum.at(cur_item);
+
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, const {{type}}& value) {
+    ImGui::BeginDisabled(true);
+    static const std::unordered_map<{{type}}, int> enum_to_idx = {
+        {{#enum_to_idx_list}}
+        { {{type}}::{{item}}, {{idx}} },
+        {{/enum_to_idx_list}}
+    };
+
+    const char* const items[] = {
+        {{#items}}
+        "{{item}}",
+        {{/items}}
+    };
+
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+
+    int cur_item = enum_to_idx.at(value);
+    ImGui::Combo(name, &cur_item, items, 3);
+    ImGui::EndDisabled();
+
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, Flags<{{type}}>& value) {
+    static const {{type}} items[] = {
+    {{#items}}
+        {{type}}::{{item}},
+    {{/items}}
+    };
+
+    static const char* item_names[] = {
+    {{#items}}
+        "{{item}}",
+    {{/items}}
+    };
+
+    ImGui::Text("%s", name);
+
+    for (size_t i = 0; i < sizeof(items) / sizeof({{type}}); i++) {
+        auto item = items[i];
+        auto name = item_names[i];
+
+        ImGui::PushID(ImGuiIDGenerator::Gen());
+        if (value.Value() == 0) {
+            if (static_cast<int>(item) == 0) {
+                ImGui::BeginDisabled(false);
+            } else {
+                if (ImGui::Button("add")) {
+                    value |= item;
+                }
+                ImGui::BeginDisabled(true);
+            }
+        } else {
+            if (static_cast<int>(item) == 0){
+                ImGui::BeginDisabled(true);
+            } else if (value & item) {
+                ImGui::BeginDisabled(false);
+                if (ImGui::Button("del")) {
+                    value.Remove(item);
+                }
+            } else {
+                ImGui::BeginDisabled(false);
+                if (ImGui::Button("add")) {
+                    value |= item;
+                }
+                ImGui::EndDisabled();
+                ImGui::BeginDisabled(true);
+            }
+        }
+        ImGui::PopID();
+        ImGui::SameLine();
+        ImGui::Text("%s", name);
+        ImGui::EndDisabled();
+    }
+}
+
+void InstanceDisplay(const char* name, const Flags<{{type}}>& value) {
+    static const {{type}} items[] = {
+        {{#items}}
+            {{type}}::{{item}},
+        {{/items}}
+    };
+
+    static const char* item_names[] = {
+    {{#items}}
+        "{{item}}",
+    {{/items}}
+    };
+
+    ImGui::Text("%s", name);
+
+    for (size_t i = 0; i < sizeof(items) / sizeof({{type}}); i++) {
+        auto item = items[i];
+        auto name = item_names[i];
+        ImGui::BeginDisabled(true);
+        ImGui::Text("%s", name);
+        ImGui::EndDisabled();
+    }
+}

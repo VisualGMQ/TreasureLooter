@@ -27,6 +27,7 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
 
     kainjow::mustache::data class_datas{kainjow::mustache::data::type::list};
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
+    kainjow::mustache::data import_datas{kainjow::mustache::data::type::list};
     kainjow::mustache::data enum_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema_info.m_includes) {
@@ -53,6 +54,12 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
             include_mustache.render({"filename", "<unordered_map>"})};
     }
 
+    for (auto& import_filename : schema_info.m_imports) {
+        import_datas << kainjow::mustache::data{
+            "import_filename",
+            GetSchemaFileGenerateHeaderFilepath(import_filename)};
+    }
+
     for (auto& clazz : schema_info.m_classes) {
         std::string code = GenerateClassCode(clazz);
         class_datas << kainjow::mustache::data{"class", code};
@@ -67,6 +74,7 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
     final_datas.set("classes", class_datas);
     final_datas.set("includes", include_datas);
     final_datas.set("enums", enum_datas);
+    final_datas.set("import_filenames", import_datas);
     return schema_mustache.render(final_datas);
 }
 
@@ -120,7 +128,7 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassSerializeHeaderCode(class_value);
         class_datas << kainjow::mustache::data{"class", code};
-        
+
         if (class_value.is_asset) {
             auto asset_code = GenerateAssetSLHeaderCode(class_value);
             asset_datas << kainjow::mustache::data{"asset_sl", asset_code};
@@ -139,6 +147,13 @@ std::string GenerateSchemaSerializeImplCode(const SchemaInfo& schema) {
 
     kainjow::mustache::data data;
     data.set("filename", schema.m_pure_filename.string().c_str());
+
+    kainjow::mustache::data import_datas{kainjow::mustache::data::type::list};
+    for (auto& import : schema.m_imports) {
+        auto filepath = GetSerdFileGenerateHeaderFilepath(import);
+        import_datas << kainjow::mustache::data{"import_filename", filepath};
+    }
+    data.set("import_filenames", import_datas);
 
     kainjow::mustache::data enum_datas{kainjow::mustache::data::type::list};
     for (auto& enum_value : schema.m_enums) {
@@ -224,19 +239,20 @@ std::string GenerateAssetSLHeaderCode(const ClassInfo& info) {
     kainjow::mustache::data data;
     data.set("type", info.m_name);
 
-    return mustache.render(data);   
+    return mustache.render(data);
 }
 
 std::string GenerateAssetSLImplCode(const ClassInfo& info) {
-     auto& mustache = MustacheManager::GetInst().m_asset_sl_impl_mustache;
- 
-     kainjow::mustache::data data;
-     data.set("type", info.m_name);
- 
-     return mustache.render(data);   
+    auto& mustache = MustacheManager::GetInst().m_asset_sl_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    return mustache.render(data);
 }
 
-void GenerateSchemaAssetExtensionMustacheData(const SchemaInfo& schema, kainjow::mustache::data& out_data) {
+void GenerateSchemaAssetExtensionMustacheData(
+    const SchemaInfo& schema, kainjow::mustache::data& out_data) {
     for (auto& clazz : schema.m_classes) {
         if (!clazz.is_asset) {
             continue;
@@ -248,4 +264,134 @@ void GenerateSchemaAssetExtensionMustacheData(const SchemaInfo& schema, kainjow:
 
         out_data << ext_data;
     }
+}
+
+std::string GenerateEnumDisplayHeaderCode(const EnumInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_enum_display_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    return mustache.render(data);
+}
+
+std::string GenerateEnumDisplayImplCode(const EnumInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_enum_display_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    kainjow::mustache::data items_datas{kainjow::mustache::data::type::list};
+    kainjow::mustache::data enum_to_idx_list{
+        kainjow::mustache::data::type::list};
+    kainjow::mustache::data idx_to_enum_list{
+        kainjow::mustache::data::type::list};
+    for (size_t i = 0; i < info.m_items.size(); i++) {
+        auto& item = info.m_items[i];
+        items_datas << kainjow::mustache::data{"item", item.m_name};
+        kainjow::mustache::data enum_to_idx;
+        enum_to_idx.set("type", info.m_name);
+        enum_to_idx.set("item", item.m_name);
+        enum_to_idx.set("idx", std::to_string(i));
+        enum_to_idx_list << enum_to_idx;
+        idx_to_enum_list << enum_to_idx;
+    }
+
+    data.set("items", items_datas);
+    data.set("enum_to_idx_list", enum_to_idx_list);
+    data.set("idx_to_enum_list", idx_to_enum_list);
+
+    return mustache.render(data);
+}
+
+std::string GenerateClassDisplayHeaderCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_class_display_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    return mustache.render(data);
+}
+
+std::string GenerateClassDisplayImplCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_class_display_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    kainjow::mustache::data properties_data{
+        kainjow::mustache::data::type::list};
+    for (auto& prop : info.m_properties) {
+        kainjow::mustache::data property_data;
+        property_data.set("property", prop.m_name);
+        properties_data << property_data;
+    }
+
+    data.set("properties", properties_data);
+
+    return mustache.render(data);
+}
+
+std::string GenerateSchemaDisplayHeaderCode(const SchemaInfo& schema) {
+    auto& header_mustache =
+        MustacheManager::GetInst().m_instance_display_header_mustache;
+
+    kainjow::mustache::data data;
+    kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
+
+    for (auto& include : schema.m_includes) {
+        include_datas << kainjow::mustache::data{"include", include};
+    }
+
+    auto generate_header_filename = schema.m_pure_filename;
+    generate_header_filename =
+        generate_header_filename.replace_extension(".hpp");
+    auto final_path = "schema/" + generate_header_filename.string();
+    include_datas << kainjow::mustache::data{"include", final_path};
+    data.set("includes", include_datas);
+
+    kainjow::mustache::data display_datas{kainjow::mustache::data::type::list};
+    for (auto& enum_value : schema.m_enums) {
+        auto code = GenerateEnumDisplayHeaderCode(enum_value);
+        display_datas << kainjow::mustache::data{"display", code};
+    }
+
+    for (auto& class_value : schema.m_classes) {
+        auto code = GenerateClassDisplayHeaderCode(class_value);
+        display_datas << kainjow::mustache::data{"display", code};
+    }
+
+    data.set("displays", display_datas);
+
+    return header_mustache.render(data);
+}
+
+std::string GenerateSchemaDisplayImplCode(const SchemaInfo& schema) {
+    auto& mustache =
+        MustacheManager::GetInst().m_instance_display_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("filename", schema.m_pure_filename.string().c_str());
+
+    kainjow::mustache::data import_datas{kainjow::mustache::data::type::list};
+    for (auto& import : schema.m_imports) {
+        import_datas << kainjow::mustache::data{
+            "import_filename", GetDisplayFileGenerateHeaderFilepath(import)};
+    }
+    data.set("import_filenames", import_datas);
+
+    kainjow::mustache::data display_datas{kainjow::mustache::data::type::list};
+    for (auto& enum_value : schema.m_enums) {
+        auto code = GenerateEnumDisplayImplCode(enum_value);
+        display_datas << kainjow::mustache::data{"display_impl", code};
+    }
+
+    for (auto& class_value : schema.m_classes) {
+        auto code = GenerateClassDisplayImplCode(class_value);
+        display_datas << kainjow::mustache::data{"display_impl", code};
+    }
+
+    data.set("display_impls", display_datas);
+
+    return mustache.render(data);
 }

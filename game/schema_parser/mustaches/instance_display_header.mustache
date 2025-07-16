@@ -4,17 +4,10 @@
 
 #pragma once
 {{#includes}}
-{{{include}}}
+#include "{{{include}}}"
 {{/includes}}
+#include "instance_display.hpp"
 
-{{#import_filenames}}
-#include "{{{import_filename}}}"
-{{/import_filenames}}
-
-{{#enums}}
-{{{enum}}}
-{{/enums}}
-
-{{#classes}}
-{{{class}}}
-{{/classes}}
+{{#displays}}
+{{{display}}}
+{{/displays}}

@@ -34,6 +34,8 @@ public:
     std::unique_ptr<SpriteManager> m_sprite_manager;
     std::unique_ptr<RelationshipManager> m_relationship_manager;
 
+    Entity GetRootEntity();
+
 private:
     static std::unique_ptr<Context> instance;
 

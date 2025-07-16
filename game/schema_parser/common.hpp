@@ -44,6 +44,7 @@ struct SchemaInfo {
     std::filesystem::path m_pure_filename; //! without directory & extension
     std::vector<ClassInfo> m_classes;
     std::vector<EnumInfo> m_enums;
+    std::vector<std::string> m_imports;
 };
 
 struct SchemaInfoManager {
@@ -66,6 +67,13 @@ struct MustacheManager {
     kainjow::mustache::mustache m_asset_sl_header_mustache;
     kainjow::mustache::mustache m_asset_sl_impl_mustache;
     kainjow::mustache::mustache m_asset_extension_mustache;
+    
+    kainjow::mustache::mustache m_instance_display_header_mustache;
+    kainjow::mustache::mustache m_instance_display_impl_mustache;
+    kainjow::mustache::mustache m_enum_display_impl_mustache;
+    kainjow::mustache::mustache m_enum_display_header_mustache;
+    kainjow::mustache::mustache m_class_display_header_mustache;
+    kainjow::mustache::mustache m_class_display_impl_mustache;
 
     static MustacheManager& GetInst();
 
@@ -75,3 +83,10 @@ private:
     static kainjow::mustache::mustache readMustache(
         const std::filesystem::path& path);
 };
+
+std::string GetSchemaFileGenerateHeaderFilepath(const std::string& path);
+std::string GetDisplayFileGenerateHeaderFilepath(const std::string& path);
+std::string GetSerdFileGenerateHeaderFilepath(const std::string& path);
+std::string GetSchemaFileGenerateImplFilepath(const std::string& path);
+std::string GetDisplayFileGenerateImplFilepath(const std::string& path);
+std::string GetSerdFileGenerateImplFilepath(const std::string& path);

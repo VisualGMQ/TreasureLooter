@@ -49,6 +49,13 @@ std::optional<std::string> ParseInclude(rapidxml::xml_node<>* node) {
     return node->value();
 }
 
+std::optional<std::string> ParseImport(rapidxml::xml_node<>* node) {
+    if (node->value() == nullptr) {
+        return std::nullopt;
+    }
+    return node->value();
+}
+
 std::optional<PropertyInfo> ParseElement(rapidxml::xml_node<>* node) {
     auto type = node->first_attribute("type");
     if (!type) {
@@ -252,6 +259,11 @@ std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
             auto include_info = ParseInclude(child);
             if (include_info) {
                 schema_info.m_includes.push_back(include_info.value());
+            }
+        } else if (name == "import") {
+            auto import_info = ParseImport(child);
+            if (import_info) {
+                schema_info.m_imports.push_back(import_info.value());
             }
         } else if (name == "enum") {
             auto info = ParseEnum(child);

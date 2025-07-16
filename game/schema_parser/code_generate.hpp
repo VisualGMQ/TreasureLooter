@@ -17,3 +17,10 @@ std::string GenerateAssetSLImplCode(const ClassInfo&);
 
 void GenerateSchemaAssetExtensionMustacheData(const SchemaInfo&,
                                               kainjow::mustache::data& out_data);
+
+std::string GenerateEnumDisplayHeaderCode(const EnumInfo&);
+std::string GenerateEnumDisplayImplCode(const EnumInfo&);
+std::string GenerateClassDisplayHeaderCode(const ClassInfo&);
+std::string GenerateClassDisplayImplCode(const ClassInfo&);
+std::string GenerateSchemaDisplayHeaderCode(const SchemaInfo&);
+std::string GenerateSchemaDisplayImplCode(const SchemaInfo&);

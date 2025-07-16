@@ -43,6 +43,10 @@ public:
 
     Flags operator~() const noexcept { return ~m_value; }
 
+    void Remove(T o) {
+        m_value &= ~static_cast<underlying_type>(o);
+    }
+
     operator T() const { return static_cast<T>(m_value); }
 
     underlying_type Value() const { return m_value; }

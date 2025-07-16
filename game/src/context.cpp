@@ -80,6 +80,10 @@ bool Context::ShouldExit() {
     return m_should_exit;
 }
 
+Entity Context::GetRootEntity() {
+    return m_root_entity;
+}
+
 Context::Context() {
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
                       SDL_INIT_GAMEPAD));

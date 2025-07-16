@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
     }
 
     std::filesystem::path serd_output_dir = output_dir / "serialize";
+    std::filesystem::path display_output_dir = output_dir / "display";
 
     if (!std::filesystem::exists(parse_dir)) {
         std::cerr << "invalid parse directory: " << parse_dir << std::endl;
@@ -63,6 +64,10 @@ int main(int argc, char** argv) {
     if (!std::filesystem::exists(serd_output_dir)) {
         std::filesystem::create_directories(serd_output_dir);
     }
+    
+    if (!std::filesystem::exists(display_output_dir)) {
+        std::filesystem::create_directories(display_output_dir);
+    }
 
     for (auto& info : manager.m_infos) {
         // generate class declare codes
@@ -92,8 +97,26 @@ int main(int argc, char** argv) {
                 std::ofstream file(serd_output_dir / impl_filename);
                 file.write(impl_code.c_str(), impl_code.length());
             }
+        }
 
-            
+        // generate display codes
+        {
+            {
+                std::string code =
+                    GenerateSchemaDisplayHeaderCode(info);
+                auto header_filename = info.m_pure_filename;
+                header_filename.replace_extension(".hpp");
+                std::ofstream file(display_output_dir / header_filename);
+                file.write(code.c_str(), code.length());
+            }
+
+            {
+                std::string impl_code = GenerateSchemaDisplayImplCode(info);
+                auto impl_filename = info.m_pure_filename;
+                impl_filename.replace_extension(".cpp");
+                std::ofstream file(display_output_dir / impl_filename);
+                file.write(impl_code.c_str(), impl_code.length());
+            }
         }
     }
     

@@ -1,0 +1,15 @@
+void InstanceDisplay(const char* name, {{type}}& value) {
+    ImGui::Text("%s", name);
+    {{#properties}}
+    InstanceDisplay("{{{property}}}", value.m_{{{property}}});
+    {{/properties}}
+}
+
+void InstanceDisplay(const char* name, const {{type}}& value) {
+    ImGui::BeginDisabled(true);
+    ImGui::Text("%s", name);
+    {{#properties}}
+        InstanceDisplay("{{{property}}}", value.m_{{{property}}});
+    {{/properties}}
+    ImGui::EndDisabled();
+}

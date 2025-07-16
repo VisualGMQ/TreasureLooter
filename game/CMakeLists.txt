@@ -35,7 +35,9 @@ foreach(schema ${SCHEMAS})
         SCHEMA_OUTPUT_FILES
         "${schema_final_path}/${schema_generate_hpp}"
         "${schema_final_path}/serialize/${schema_generate_hpp}"
-        "${schema_final_path}/serialize/${schema_generate_cpp}")
+        "${schema_final_path}/serialize/${schema_generate_cpp}"
+        "${schema_final_path}/display/${schema_generate_hpp}"
+        "${schema_final_path}/display/${schema_generate_cpp}")
 endforeach()
 
 list(APPEND SCHEMA_OUTPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/serialize/asset_extensions.hpp)
