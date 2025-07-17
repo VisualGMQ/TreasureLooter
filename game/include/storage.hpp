@@ -23,7 +23,8 @@ public:
         bool advance_mode = false);
 
     size_t GetSize() const;
-    std::vector<char> ReadData() const;
+    std::vector<char> Read() const;
+    void Write(const char* data, size_t size);
     ~IOStream();
 
 private:

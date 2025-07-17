@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+project(mustache)
+add_library(mustache INTERFACE mustache.hpp)
+target_include_directories(mustache INTERFACE .)
+target_compile_features(mustache INTERFACE cxx_std_11)

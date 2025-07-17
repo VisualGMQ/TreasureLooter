@@ -1,0 +1,9 @@
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const {{type}}& payload,
+                                const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload);
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Flags<{{type}}>& payload,
+                                const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, Flags<{{type}}>& payload);

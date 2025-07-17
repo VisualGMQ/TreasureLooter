@@ -10,6 +10,52 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
+################ compile schema parser ################
+set(NEED_SCHEMA_PARSER ON)
+
+if (ANDROID OR EMSCRIPTEN)
+    set(NEED_SCHEMA_PARSER OFF)
+endif()
+
+if (NEED_SCHEMA_PARSER)
+    add_subdirectory(schema_parser)
+endif()
+
+################ run schema parser ################
+file(GLOB_RECURSE SCHEMAS ./schema/*)
+file(GLOB_RECURSE MUSTACHES ./schema_parser/mustaches/*.mustache)
+set(SCHEMA_OUTPUT_PATH "schema_generate/schema")
+set(SCHEMA_OUTPUT_FILES)
+foreach(schema ${SCHEMAS})
+    cmake_path(GET schema FILENAME schema_filename)
+    cmake_path(REPLACE_EXTENSION schema_filename ".hpp" OUTPUT_VARIABLE schema_generate_hpp)
+    cmake_path(REPLACE_EXTENSION schema_filename ".cpp" OUTPUT_VARIABLE schema_generate_cpp)
+    set(schema_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}")
+    list(APPEND
+        SCHEMA_OUTPUT_FILES
+        "${schema_final_path}/${schema_generate_hpp}"
+        "${schema_final_path}/serialize/${schema_generate_hpp}"
+        "${schema_final_path}/serialize/${schema_generate_cpp}"
+        "${schema_final_path}/display/${schema_generate_hpp}"
+        "${schema_final_path}/display/${schema_generate_cpp}")
+endforeach()
+
+list(APPEND SCHEMA_OUTPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/serialize/asset_extensions.hpp)
+
+if (NEED_SCHEMA_PARSER)
+    add_custom_target(run_schema_parser
+        COMMAND $<TARGET_FILE:schema_parser> ./schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "parsing schemas...")
+
+    add_custom_command(OUTPUT ${SCHEMA_OUTPUT_FILES}
+        COMMAND $<TARGET_FILE:schema_parser> ./schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "parsing schemas...")
+endif()
+
 ################ compile game ######################
 
 file(GLOB_RECURSE SRC ./src/*.cpp ./src/*.c)
@@ -32,7 +78,7 @@ if(EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX .html)
     set_target_properties(${GAME_NAME}
         PROPERTIES
-            LINK_FLAGS "--preload-file=assets -s ALLOW_MEMORY_GROWTH=1")
+            LINK_FLAGS "--preload-file=assets -s ALLOW_MEMORY_GROWTH=1 -s ALLOW_TABLE_GROWTH=1")
 
     add_custom_command(TARGET ${GAME_NAME}
         PRE_BUILD
@@ -42,20 +88,28 @@ if(EMSCRIPTEN)
     )
 endif()
 
-target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui)
-target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS})
-target_include_directories(${GAME_NAME} PRIVATE include)
+target_sources(${GAME_NAME} PRIVATE ${SRC} ${HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_OUTPUT_FILES})
+target_include_directories(${GAME_NAME} PRIVATE include schema_generate)
 target_compile_features(${GAME_NAME} PRIVATE cxx_std_17)
+target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML)
 target_compile_definitions(${GAME_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
-
-################ compile tools ######################
-if(NOT ANDROID)
-    add_subdirectory(tools)
-endif()
 
 ################ instal #######################
 install(TARGETS ${GAME_NAME} DESTINATION .)
-install(DIRECTORY assets DESTINATION .)
+
+if (NOT EMSCRIPTEN)
+    install(DIRECTORY assets DESTINATION .)
+endif()
+
+if (EMSCRIPTEN)
+    install(
+        FILES
+            ${CMAKE_BINARY_DIR}/index.js
+            ${CMAKE_BINARY_DIR}/index.data
+            ${CMAKE_BINARY_DIR}/index.wasm
+        DESTINATION .
+    )
+endif()
 
 ################ package ##################
 # include(InstallRequiredSystemLibraries)

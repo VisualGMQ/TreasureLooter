@@ -91,7 +91,7 @@ struct Region {
 struct Pose {
     Vec2 m_position;
     Degrees m_rotation;
-    float m_scale{1.0};
+    Vec2 m_scale{1.0, 1.0};
 
     Pose operator*(const Pose& o) const;
 };
