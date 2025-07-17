@@ -11,25 +11,33 @@ TreasureLooter is a 2D game made in SDL3
 
 ### Build For PC
 
-Goto `game` folder
-
 ```bash
+cd game
 cmake --preset=default
 cmake --build cmake-build
 ```
 
 ### Build For Android
 
-copy `game` folder to `android/app/jni`,
+First we must build `schema_parser` under PC and run `run_schema_parser` target:
 
-copy assets folder to `android/app/assets`
+```bash
+cmake -S game/ -B cmake-build
+cmake --build cmake-build --target run_schema_parser
+```
+
+It will generate `game/schema_generate`.
+
+Then copy `game` folder to `android/app/jni`.
+
+Copy `game/assets` folder to `android/app/src/main/assets`.
 
 ```bash
 cp -r game android/app/jni
-cp -r game/assets android/app/assets/
+cp -r game/assets android/app/src/main/assets/
 ```
 
-then use `gradle` to build (or use AndroidStudio)
+Then use `gradle` to build (or use AndroidStudio)
 
 ```bash
 cd android
@@ -46,7 +54,7 @@ Or you can install:
 cmake --build .\cmake-build\ --target install --config Release
 ```
 
-it will install game to `install` dir. Than you can open `install/TreasureLooter[.exe]` to play.
+It will install game to `install` dir. Than you can open `install/TreasureLooter[.exe]` to play.
 
 Also can get a package:
 
@@ -54,4 +62,4 @@ Also can get a package:
 cmake --build .\cmake-build\ --target package --config Release
 ```
 
-it will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
+It will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
