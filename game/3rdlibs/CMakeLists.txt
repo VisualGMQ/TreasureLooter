@@ -13,3 +13,6 @@ add_3rdlib(imgui)
 add_3rdlib(RapidXML)
 add_3rdlib(Lyra)
 add_3rdlib(Mustache)
+
+set(TMXLITE_STATIC_LIB ON)
+add_3rdlib(tmxlite/tmxlite)
