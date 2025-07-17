@@ -1,0 +1,18 @@
+﻿<schema>
+    <include>entity.hpp</include>
+    <import>sprite</import>
+    <import>transform</import>
+    <import>relationship</import>
+    <import>transform</import>
+    
+    <class name="Prefab">
+        <option type="Sprite" name="sprite"/>
+        <option type="Transform" name="transform"/>
+        <option type="Relationship" name="relationship"/>
+    </class>
+    
+    <asset name="EntityInstance" extension=".prefab">
+        <element type="Entity" name="entity"/>
+        <element type="Prefab" name="data"/>
+    </asset>
+</schema>

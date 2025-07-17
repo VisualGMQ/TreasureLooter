@@ -1,10 +1,14 @@
 ﻿#pragma once
-#include "gameobject.hpp"
+#include "entity.hpp"
 #include "image.hpp"
 #include "inspector.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
 #include <memory>
+
+class RelationshipManager;
+class TransformManager;
+class SpriteManager;
 
 class Context {
 public:
@@ -22,23 +26,26 @@ public:
     void HandleEvents(const SDL_Event&);
     bool ShouldExit();
 
-private:
-    static std::unique_ptr<Context> instance;
-    
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<ImageManager> m_image_manager;
     std::unique_ptr<Inspector> m_inspector;
-    bool m_should_exit = false;
+    std::unique_ptr<TransformManager> m_transform_manager;
+    std::unique_ptr<SpriteManager> m_sprite_manager;
+    std::unique_ptr<RelationshipManager> m_relationship_manager;
 
-    GameObject m_root;
+    Entity GetRootEntity();
+
+private:
+    static std::unique_ptr<Context> instance;
+
+    bool m_should_exit = false;
+    Entity m_last_entity = 0;
+    Entity m_root_entity;
 
     Context();
 
-    void drawSpriteRecursive(const GameObject&);
-    void updateGOPoses();
-    void updatePoseRecursive(const GameObject& parent, GameObject& child);
-
     void logicUpdate();
     void renderUpdate();
+    Entity createEntity();
 };

@@ -1,0 +1,13 @@
+<schema>
+    <include>image.hpp</include>
+    <include>renderer.hpp</include>
+    <include>flag.hpp</include>
+    <import>flip</import>
+    
+    <class name="Sprite">
+        <element type="Image*" name="image"/>
+        <element type="Region" name="region"/>
+        <element type="Vec2" name="size"/>
+        <element type="Flags<Flip>" name="flip"/>
+    </class>
+</schema>

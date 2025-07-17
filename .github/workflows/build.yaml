@@ -40,7 +40,7 @@ jobs:
       uses: mymindstorm/setup-emsdk@v14
 
     - name: Prepare Ubuntu
-      if: contains(matrix.os, 'ubuntu') && !matrix.android
+      if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt update -y
         sudo apt install build-essential make pkg-config gnome-desktop-testing libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev -y
@@ -56,12 +56,6 @@ jobs:
       run: |
         ${{ matrix.cmake-path }}cmake --preset=CI-Linux
 
-    - name: Config cmake(Emscripten)
-      if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}
-      working-directory: ./game
-      run: |
-        ${{ matrix.cmake-path }}emcmake cmake --preset=CI-Emscripten
-
     - name: Config cmake(Windows)
       if: contains(matrix.os, 'windows')
       working-directory: ./game
@@ -72,6 +66,20 @@ jobs:
       if: ${{ !matrix.android && !matrix.emscripte }}
       working-directory: ./game
       run: ${{ matrix.cmake-path }}cmake --build cmake-build
+
+    - name: Precompile schema parser
+      if: runner.os == 'Linux' && (matrix.android || matrix.emscripte)
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=default
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target schema_parser
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target run_schema_parser
+
+    - name: Config cmake(Emscripten)
+      if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}emcmake cmake --preset=CI-Emscripten
 
     - name: Build Emscripten
       if: ${{ contains(matrix.os, 'ubuntu') && matrix.emscripte }}

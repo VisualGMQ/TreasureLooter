@@ -59,10 +59,9 @@ void Renderer::DrawImage(const Image& image, const Region& src,
     SDL_FPoint sdl_center;
     sdl_center.x = center.x;
     sdl_center.y = center.y;
-    SDL_CALL(SDL_RenderTextureRotated(
-        m_renderer, image.GetTexture(), &src_rect, &dst_rect, rotation.Value(),
-        &sdl_center,
-        static_cast<SDL_FlipMode>(static_cast<unsigned int>(flip))));
+    SDL_CALL(SDL_RenderTextureRotated(m_renderer, image.GetTexture(), &src_rect,
+                                      &dst_rect, rotation.Value(), &sdl_center,
+                                      static_cast<SDL_FlipMode>(flip.Value())));
 }
 
 void Renderer::Clear() {

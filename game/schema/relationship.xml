@@ -1,0 +1,7 @@
+﻿<schema>
+    <include>entity.hpp</include>
+
+    <class name="Relationship">
+        <array type="Entity" name="children"/>
+    </class>
+</schema>

@@ -19,8 +19,11 @@ public:
 
     SDL_Texture* GetTexture() const;
 
+    const Path& Filename() const;
+
 private:
     SDL_Texture* m_texture{};
+    Path m_filename;
 };
 
 class ImageManager {
