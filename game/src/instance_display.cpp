@@ -324,7 +324,7 @@ void InstanceDisplay(const char* name, const Image* value) {
     ImGui::PopID();
 }
 
-void InstanceDisplay(const char* name, Pose& value) {
+void InstanceDisplay(const char* name, Transform& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
     
     ImGui::Text("%s", name);
@@ -335,7 +335,7 @@ void InstanceDisplay(const char* name, Pose& value) {
     ImGui::PopID();
 }
 
-void InstanceDisplay(const char* name, const Pose& value) {
+void InstanceDisplay(const char* name, const Transform& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
     
     ImGui::BeginDisabled(true);

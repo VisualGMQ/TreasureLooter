@@ -1,8 +1,0 @@
-<schema>
-    <include>math.hpp</include>
-    
-    <class name="Transform">
-        <element type="Pose" name="pose"/>
-        <element type="Pose" name="global_pose"/>
-    </class>
-</schema>

@@ -83,10 +83,10 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, Radians& payload);
 
-// pose
+// transform
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Pose& payload, const std::string& name);
-void Deserialize(rapidxml::xml_node<>& node, Pose& payload);
+                                const Transform& payload, const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, Transform& payload);
 
 // image
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,

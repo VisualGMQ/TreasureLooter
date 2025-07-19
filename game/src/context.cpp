@@ -48,19 +48,46 @@ void Context::Update() {
     static bool executed = false;
 
     if (!executed) {
-        auto prefab = LoadEntityInstanceAsset("assets/gpa/waggo.entity.xml");
-        if (prefab.m_data.m_transform) {
-            m_transform_manager->RegisterEntity(prefab.m_entity, prefab.m_data.m_transform.value());
+        Entity entity1;
+        {
+            auto prefab =
+                LoadEntityInstanceAsset("assets/gpa/waggo.entity.xml");
+            entity1 = prefab.m_entity;
+            if (prefab.m_data.m_transform) {
+                m_transform_manager->RegisterEntity(
+                    prefab.m_entity, prefab.m_data.m_transform.value());
+            }
+            if (prefab.m_data.m_sprite) {
+                m_sprite_manager->RegisterEntity(
+                    prefab.m_entity, prefab.m_data.m_sprite.value());
+            }
+            if (prefab.m_data.m_relationship) {
+                m_relationship_manager->RegisterEntity(
+                    prefab.m_entity, prefab.m_data.m_relationship.value());
+            }
+
+            m_relationship_manager->Get(m_root_entity)
+                ->m_children.push_back(prefab.m_entity);
         }
-        if (prefab.m_data.m_sprite) {
-            m_sprite_manager->RegisterEntity(prefab.m_entity, prefab.m_data.m_sprite.value());
-        }
-        if (prefab.m_data.m_relationship) {
-            m_relationship_manager->RegisterEntity(prefab.m_entity, prefab.m_data.m_relationship.value());
+        {
+            auto prefab =
+                LoadEntityInstanceAsset("assets/gpa/waggo2.entity.xml");
+            if (prefab.m_data.m_transform) {
+                m_transform_manager->RegisterEntity(
+                    prefab.m_entity, prefab.m_data.m_transform.value());
+            }
+            if (prefab.m_data.m_sprite) {
+                m_sprite_manager->RegisterEntity(
+                    prefab.m_entity, prefab.m_data.m_sprite.value());
+            }
+            if (prefab.m_data.m_relationship) {
+                m_relationship_manager->RegisterEntity(
+                    prefab.m_entity, prefab.m_data.m_relationship.value());
+            }
+
+            m_relationship_manager->RegisterEntity(entity1, Relationship{{prefab.m_entity}});
         }
 
-        m_relationship_manager->Get(m_root_entity)->m_children.push_back(prefab.m_entity);
-        
         executed = true;
     }
     ////////////////////////////////////
