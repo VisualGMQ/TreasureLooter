@@ -14,12 +14,14 @@ void RelationshipManager::Update() {
     }
 
     auto& transform_manager = Context::GetInst().m_transform_manager;
-    const Transform* root_transform = transform_manager->Get(m_root);
+    Transform* root_transform = transform_manager->Get(m_root);
     if (!root_transform) {
         LOGE(
             "[Component][RelationshipManager] root entity don't has transform");
         return;
     }
+
+    root_transform->UpdateMat(nullptr);
 
     for (auto& child : relationship->m_children) {
         updatePoseRecursive(*root_transform, child);
@@ -37,8 +39,7 @@ void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
         return;
     }
 
-    transform->m_global_pose =
-        parent_transform.m_global_pose * transform->m_pose;
+    transform->UpdateMat(&parent_transform);
 
     Relationship* child_relationship = Get(child);
     if (!child_relationship) {

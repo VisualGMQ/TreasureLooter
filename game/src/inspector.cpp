@@ -16,7 +16,6 @@
 #include "schema/display/prefab.hpp"
 #include "schema/display/relationship.hpp"
 #include "schema/display/sprite.hpp"
-#include "schema/display/transform.hpp"
 
 Inspector::Inspector(Window& window, Renderer& renderer)
     : m_window{window}, m_renderer{renderer} {
