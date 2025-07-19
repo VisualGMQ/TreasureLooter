@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <cstddef>
 
 struct Vec2 final {
     union {
