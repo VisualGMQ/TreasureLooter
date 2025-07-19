@@ -314,16 +314,17 @@ void Deserialize(rapidxml::xml_node<>& node, Radians& payload) {
 }
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Pose& payload, const std::string& name) {
-    auto node = doc.allocate_node(rapidxml::node_type::node_element,
-                                  doc.allocate_string(name.c_str()));
-    node->append_node(Serialize(doc, payload.m_position, "position"));
-    node->append_node(Serialize(doc, payload.m_scale, "scale"));
-    node->append_node(Serialize(doc, payload.m_rotation, "rotation"));
-    return node;
+                                const Transform& payload,
+                                const std::string& name) {
+     auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                   doc.allocate_string(name.c_str()));
+     node->append_node(Serialize(doc, payload.m_position, "position"));
+     node->append_node(Serialize(doc, payload.m_scale, "scale"));
+     node->append_node(Serialize(doc, payload.m_rotation, "rotation"));
+     return node;   
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Pose& payload) {
+void Deserialize(rapidxml::xml_node<>& node, Transform& payload) {
     auto position_node = node.first_node("position");
     auto scale_node = node.first_node("scale");
     auto rotation_node = node.first_node("rotation");

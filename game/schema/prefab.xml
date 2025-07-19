@@ -1,9 +1,8 @@
 ﻿<schema>
     <include>entity.hpp</include>
+    <include>transform.hpp</include>
     <import>sprite</import>
-    <import>transform</import>
     <import>relationship</import>
-    <import>transform</import>
     
     <class name="Prefab">
         <option type="Sprite" name="sprite"/>

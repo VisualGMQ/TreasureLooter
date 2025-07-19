@@ -1,5 +1,5 @@
 ﻿#pragma once
 #include "manager.hpp"
-#include "schema/transform.hpp"
+#include "math.hpp"
 
 class TransformManager: public ComponentManager<Transform> {};

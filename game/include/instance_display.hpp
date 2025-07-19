@@ -51,8 +51,8 @@ void InstanceDisplay(const char* name, Radians& value);
 void InstanceDisplay(const char* name, const Radians& value);
 void InstanceDisplay(const char* name, Image* value);
 void InstanceDisplay(const char* name, const Image* value);
-void InstanceDisplay(const char* name, Pose& value);
-void InstanceDisplay(const char* name, const Pose& value);
+void InstanceDisplay(const char* name, Transform& value);
+void InstanceDisplay(const char* name, const Transform& value);
 
 template <typename T>
 void InstanceDisplay(const char* name, std::optional<T>& value) {
