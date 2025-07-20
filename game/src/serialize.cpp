@@ -359,3 +359,17 @@ void Deserialize(rapidxml::xml_node<>& node, Image*& payload) {
         payload = image_manager->Load(filename);
     }
 }
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const std::string& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->value(doc.allocate_string(payload.c_str()));
+    return node;
+}
+
+void Deserialize(rapidxml::xml_node<>& node, std::string& payload) {
+    Path filename = node.value();
+    payload = node.value();
+}

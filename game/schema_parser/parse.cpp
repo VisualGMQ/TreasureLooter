@@ -24,16 +24,7 @@ std::optional<EnumInfo> ParseEnum(rapidxml::xml_node<>* node) {
         item.m_name = name->value();
         auto value = item_node->first_attribute("value");
         if (value) {
-            try {
-                int num = std::stoi(value->value());
-                item.m_value = num;
-            } catch (std::invalid_argument const& ex) {
-                std::cerr << "invalid argument when parse item value"
-                          << ex.what() << std::endl;
-            } catch (std::out_of_range const& ex) {
-                std::cerr << "outof range when parse item value" << ex.what()
-                          << std::endl;
-            }
+            item.m_value = value->value();
         }
         info.m_items.push_back(item);
         item_node = item_node->next_sibling("item");

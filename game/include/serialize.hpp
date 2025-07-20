@@ -3,6 +3,7 @@
 #include "log.hpp"
 #include "math.hpp"
 #include "rapidxml.hpp"
+#include "SDL3/SDL.h"
 
 #include <optional>
 #include <string>
@@ -92,6 +93,11 @@ void Deserialize(rapidxml::xml_node<>& node, Transform& payload);
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const Image* payload, const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, Image*& payload);
+
+// std::string 
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const std::string& payload, const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, std::string& payload);
 
 // optional
 template <typename T>
