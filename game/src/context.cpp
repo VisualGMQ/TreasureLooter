@@ -33,6 +33,7 @@ Context& Context::GetInst() {
 }
 
 Context::~Context() {
+    m_gamepad_manager.reset();
     m_touchs.reset();
     m_mouse.reset();
     m_keyboard.reset();
@@ -115,6 +116,7 @@ void Context::HandleEvents(const SDL_Event& event) {
                event.type == SDL_EVENT_FINGER_CANCELED) {
         m_touchs->HandleEvent(event.tfinger);
     }
+    m_gamepad_manager->HandleEvent(event);
     m_mouse->HandleEvent(event);
 }
 
@@ -148,9 +150,11 @@ Context::Context() {
     m_keyboard = std::make_unique<Keyboard>();
     m_mouse = std::make_unique<Mouse>();
     m_touchs = std::make_unique<Touches>();
+    m_gamepad_manager = std::make_unique<GamepadManager>();
 }
 
 void Context::logicUpdate() {
+    m_gamepad_manager->Update();
     m_keyboard->Update();
     m_mouse->Update();
     m_touchs->Update();
@@ -163,22 +167,19 @@ void Context::gameLogicUpdate() {
     Entity entity = children->m_children[0];
 
     Transform* transform = m_transform_manager->Get(entity);
-    if (m_keyboard->Get(SDLK_A).IsPressing()) {
-        transform->m_position.x -= 0.1;
+
+    auto& gamepads = m_gamepad_manager->GetGamepads();
+    if (gamepads.empty()) {
+        return;
     }
-    if (m_keyboard->Get(SDLK_D).IsPressing()) {
-        transform->m_position.x += 0.1;
-    }
-    if (m_keyboard->Get(SDLK_W).IsPressing()) {
-        transform->m_position.y -= 0.1;
-    }
-    if (m_keyboard->Get(SDLK_S).IsPressing()) {
-        transform->m_position.y += 0.1;
-    }
-    if (m_keyboard->Get(SDLK_J).IsPressed()) {
+
+    auto& gamepad = gamepads.begin()->second;
+    transform->m_position.x += 0.1f * gamepad.GetAxis(SDL_GAMEPAD_AXIS_LEFTX).Value();
+    transform->m_position.y += 0.1f * gamepad.GetAxis(SDL_GAMEPAD_AXIS_LEFTY).Value();
+    if (gamepad.GetButton(SDL_GAMEPAD_BUTTON_WEST).IsPressed()) {
         transform->m_rotation += 10;
     }
-    if (m_keyboard->Get(SDLK_K).IsReleased()) {
+    if (gamepad.GetButton(SDL_GAMEPAD_BUTTON_EAST).IsReleased()) {
         transform->m_rotation -= 10;
     }
 }
