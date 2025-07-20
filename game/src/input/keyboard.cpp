@@ -1,6 +1,6 @@
 #include "input/keyboard.hpp"
 
-KeyboardButton::KeyboardButton(SDL_Keycode key) : m_key(key) {}
+KeyboardButton::KeyboardButton(Key key) : m_key(key) {}
 
 bool KeyboardButton::IsPressing() const {
     return m_is_last_frame_press && m_is_press;
@@ -19,7 +19,7 @@ bool KeyboardButton::IsPressed() const {
 }
 
 void KeyboardButton::handleEvent(const SDL_KeyboardEvent& event) {
-    if (event.key != m_key) {
+    if (static_cast<Key>(event.key) != m_key) {
         return;
     }
 
@@ -42,10 +42,13 @@ void KeyboardButton::update() {
 }
 
 void Keyboard::HandleEvent(const SDL_KeyboardEvent& event) {
-    if (auto it = m_buttons.find(event.key); it != m_buttons.end()) {
+    if (auto it = m_buttons.find(static_cast<Key>(event.key));
+        it != m_buttons.end()) {
         it->second.handleEvent(event);
     } else {
-        auto button = m_buttons.emplace(event.key, KeyboardButton{event.key});
+        auto button =
+            m_buttons.emplace(static_cast<Key>(event.key),
+                              KeyboardButton{static_cast<Key>(event.key)});
         button.first->second.handleEvent(event);
     }
 }
@@ -56,7 +59,7 @@ void Keyboard::Update() {
     }
 }
 
-const KeyboardButton& Keyboard::Get(SDL_Keycode key) {
+const KeyboardButton& Keyboard::Get(Key key) {
     if (auto it = m_buttons.find(key); it != m_buttons.end()) {
         return it->second;
     }

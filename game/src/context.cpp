@@ -1,15 +1,18 @@
 ﻿#include "context.hpp"
+#include "imgui.h"
 #include "log.hpp"
 #include "rapidxml_utils.hpp"
+#include "rapidxml_print.hpp"
 #include "relationship.hpp"
 #include "schema/prefab.hpp"
+#include "schema/serialize/asset_extensions.hpp"
+#include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
 #include "serialize.hpp"
 #include "sprite.hpp"
 #include "storage.hpp"
 #include "transform.hpp"
-#include "imgui.h"
 
 #include <iostream>
 #include <sstream>
@@ -33,6 +36,7 @@ Context& Context::GetInst() {
 }
 
 Context::~Context() {
+    m_input_manager.reset();
     m_gamepad_manager.reset();
     m_touchs.reset();
     m_mouse.reset();
@@ -151,6 +155,10 @@ Context::Context() {
     m_mouse = std::make_unique<Mouse>();
     m_touchs = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
+
+    m_input_manager = std::make_unique<InputManager>(
+        *this, std::string{"assets/gpa/input_config"} +
+                   InputConfig_AssetExtension.data() + ".xml");
 }
 
 void Context::logicUpdate() {
@@ -168,19 +176,13 @@ void Context::gameLogicUpdate() {
 
     Transform* transform = m_transform_manager->Get(entity);
 
-    auto& gamepads = m_gamepad_manager->GetGamepads();
-    if (gamepads.empty()) {
-        return;
-    }
-
-    auto& gamepad = gamepads.begin()->second;
-    transform->m_position.x += 0.1f * gamepad.GetAxis(SDL_GAMEPAD_AXIS_LEFTX).Value();
-    transform->m_position.y += 0.1f * gamepad.GetAxis(SDL_GAMEPAD_AXIS_LEFTY).Value();
-    if (gamepad.GetButton(SDL_GAMEPAD_BUTTON_WEST).IsPressed()) {
+    auto& action = m_input_manager->GetAction("Rotate");
+    auto& x_axis = m_input_manager->GetAxis("MoveHorizontal");
+    auto& y_axis = m_input_manager->GetAxis("MoveVertical");
+    transform->m_position.x += 0.1f * x_axis.Value();
+    transform->m_position.y += 0.1f * y_axis.Value();
+    if (action.IsPressed()) {
         transform->m_rotation += 10;
-    }
-    if (gamepad.GetButton(SDL_GAMEPAD_BUTTON_EAST).IsReleased()) {
-        transform->m_rotation -= 10;
     }
 }
 

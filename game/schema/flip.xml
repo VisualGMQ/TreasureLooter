@@ -1,4 +1,4 @@
-﻿<schema>
+<schema>
     <enum name="Flip">
         <item name = "None" value="0"/>
         <item name = "Horizontal" value="1"/>

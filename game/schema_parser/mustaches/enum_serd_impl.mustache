@@ -17,15 +17,16 @@ void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload) {
     std::string_view value = node.value();
     if (value.empty()) {
         LOGE("[Deserialize] parse enum {{type}} failed: no value");
+        return;
     }
     {{#branches}}
-    else if (value == "{{enum_item}}") {
+    if (value == "{{enum_item}}") {
         payload = {{type}}::{{enum_item}};
+        return;
     }
     {{/branches}}
-    else {
-        LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
-    }
+
+    LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
 }
 
 
@@ -54,14 +55,15 @@ void Deserialize(rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
     std::string_view value = node.value();
     if (value.empty()) {
         LOGE("[Deserialize] parse enum {{type}} failed: no value");
+        return;
     }
 
     {{#branches}}
-    else if (value == "{{enum_item}}") {
+    if (value == "{{enum_item}}") {
         payload = {{type}}::{{enum_item}};
+        return;
     }
     {{/branches}}
-    else {
-        LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
-    }
+
+    LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
 }

@@ -1,0 +1,41 @@
+<schema>
+    <enum name="GamepadAxisType">
+        <item name="Invalid" value="-1"/>
+        <item name="LeftX"/>
+        <item name="LeftY"/>
+        <item name="RightX"/>
+        <item name="RightY"/>
+        <item name="LeftTrigger"/>
+        <item name="RightTrigger"/>
+    </enum>
+    
+    <enum name="GamepadButtonType">
+        <item name="Invalid" value="-1"/>
+        <item name="South"/>
+        <item name="East"/>
+        <item name="West"/>            
+        <item name="North"/>           
+        <item name="Back"/>
+        <item name="Guide"/>
+        <item name="Start"/>
+        <item name="LeftStick"/>
+        <item name="RightStick"/>
+        <item name="LeftShoulder"/>
+        <item name="RightShoulder"/>
+        <item name="DpadUp"/>
+        <item name="DpadDown"/>
+        <item name="DpadLeft"/>
+        <item name="DpadRight"/>
+        <item name="Misc1"/>           
+        <item name="RightPaddle1"/>   
+        <item name="LeftPaddle1"/>    
+        <item name="RightPaddle2"/>   
+        <item name="LeftPaddle2"/>    
+        <item name="Touchpad"/>        
+        <item name="Misc2"/>           
+        <item name="Misc3"/>           
+        <item name="Misc4"/>           
+        <item name="Misc5"/>           
+        <item name="Misc6"/>           
+    </enum>
+</schema>

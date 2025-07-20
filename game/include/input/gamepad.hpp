@@ -1,6 +1,7 @@
 #pragma once
 #include "SDL3/SDL.h"
 #include "button.hpp"
+#include "schema/gamepad.hpp"
 
 #include <array>
 #include <memory>
@@ -52,8 +53,8 @@ public:
     explicit Gamepad(SDL_JoystickID id);
     SDL_JoystickID GetID() const;
 
-    const GamepadButton& GetButton(SDL_GamepadButton) const;
-    const GamepadAxis& GetAxis(SDL_GamepadAxis) const;
+    const GamepadButton& GetButton(GamepadButtonType) const;
+    const GamepadAxis& GetAxis(GamepadAxisType) const;
 
 private:
     SDL_JoystickID m_id;

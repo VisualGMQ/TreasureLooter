@@ -1,0 +1,9 @@
+<schema>
+    <enum name="MouseButtonType">
+        <item name="Left" value="1"/>
+        <item name="Right"/>
+        <item name="Middle"/>
+        <item name="X1"/>
+        <item name="X2"/>
+    </enum>
+</schema>

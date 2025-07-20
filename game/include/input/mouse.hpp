@@ -3,16 +3,9 @@
 #include "SDL3/SDL.h"
 #include "input/button.hpp"
 #include "math.hpp"
+#include "schema/mouse.hpp"
 
 #include <array>
-
-enum class MouseButtonType {
-    Left = SDL_BUTTON_LEFT,
-    Right = SDL_BUTTON_RIGHT,
-    Middle = SDL_BUTTON_MIDDLE,
-    X1 = SDL_BUTTON_X1,
-    X2 = SDL_BUTTON_X2,
-};
 
 class MouseButton: public Button {
 public:

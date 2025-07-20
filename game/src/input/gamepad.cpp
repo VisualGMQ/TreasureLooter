@@ -26,18 +26,18 @@ SDL_JoystickID Gamepad::GetID() const {
     return m_id;
 }
 
-const GamepadButton& Gamepad::GetButton(SDL_GamepadButton button) const {
-    if (button == SDL_GAMEPAD_BUTTON_INVALID) {
+const GamepadButton& Gamepad::GetButton(GamepadButtonType button) const {
+    if (button == GamepadButtonType::Invalid) {
         return InvalidButton;
     }
-    return *m_buttons[button];
+    return *m_buttons[static_cast<size_t>(button)];
 }
 
-const GamepadAxis& Gamepad::GetAxis(SDL_GamepadAxis axis) const {
-    if (axis == SDL_GAMEPAD_AXIS_INVALID) {
+const GamepadAxis& Gamepad::GetAxis(GamepadAxisType axis) const {
+    if (axis == GamepadAxisType::Invalid) {
         return InvalidAxis;
     }
-    return *m_axis[axis];
+    return *m_axis[static_cast<size_t>(axis)];
 }
 
 bool GamepadButton::IsPressing() const {
@@ -121,5 +121,5 @@ void GamepadManager::HandleEvent(const SDL_Event& event) {
 void GamepadManager::Update() {
     for (auto& [_, gamepad] : m_gamepads) {
         gamepad.update();
-    } 
+    }
 }

@@ -3,6 +3,7 @@
 #include "image.hpp"
 #include "input/finger_touch.hpp"
 #include "input/gamepad.hpp"
+#include "input/input.hpp"
 #include "input/keyboard.hpp"
 #include "input/mouse.hpp"
 #include "inspector.hpp"
@@ -42,6 +43,7 @@ public:
     std::unique_ptr<Mouse> m_mouse;
     std::unique_ptr<Touches> m_touchs;
     std::unique_ptr<GamepadManager> m_gamepad_manager;
+    std::unique_ptr<InputManager> m_input_manager;
 
     Entity GetRootEntity();
 

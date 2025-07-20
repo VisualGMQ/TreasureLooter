@@ -1,4 +1,4 @@
-﻿<schema>
+<schema>
     <include>entity.hpp</include>
     <include>transform.hpp</include>
     <import>sprite</import>
