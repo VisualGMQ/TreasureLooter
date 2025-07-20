@@ -1,6 +1,7 @@
 ﻿#include "sprite.hpp"
 
 #include "context.hpp"
+#include "sdl_call.hpp"
 #include "transform.hpp"
 
 #include <array>
@@ -17,9 +18,24 @@ void SpriteManager::Update() {
         Vec2 half_size = sprite->m_size * 0.5f;
 
         std::array<Vec2, 3> pts;
-        pts[0] = -half_size;
-        pts[1] = {half_size.x, -half_size.y};
-        pts[2] = {-half_size.x, half_size.y};
+        pts[0] = -half_size;                   // top left
+        pts[1] = {half_size.x, -half_size.y};  // top right
+        pts[2] = {-half_size.x, half_size.y};  // bottom left
+
+        if (sprite->m_flip & Flip::Horizontal &&
+            sprite->m_flip & Flip::Vertical) {
+            pts[0] = half_size;
+            pts[1] = {-half_size.x, half_size.y};
+            pts[2] = {half_size.x, -half_size.y};
+        } else if (sprite->m_flip & Flip::Horizontal) {
+            pts[0] = {half_size.x, -half_size.y};
+            pts[1] = {-half_size.x, -half_size.y};
+            pts[2] = {half_size.x, half_size.y};
+        } else if (sprite->m_flip & Flip::Vertical) {
+            pts[0] = {-half_size.x, half_size.y};
+            pts[1] = {half_size.x, half_size.y};
+            pts[2] = -half_size;
+        }
 
         auto& m = transform->GetGlobalMat();
         for (auto& pt : pts) {
@@ -43,19 +59,8 @@ void SpriteManager::Update() {
         src_rect.w = src_region.m_size.w;
         src_rect.h = src_region.m_size.h;
 
-        SDL_RenderTextureAffine(renderer->GetRenderer(),
-                                sprite->m_image->GetTexture(), &src_rect,
-                                &topleft, &topright, &bottomleft);
-
-        // renderer->DrawImage(*sprite->m_image, src_region, dst_region,
-        //                     global_pose.m_rotation.Value(),
-        //                     dst_region.m_size * 0.5, sprite->m_flip);
-
-        for (auto& pt : pts) {
-            renderer->DrawRect(
-                {
-                    pt, {4, 4}
-            }, {1, 0, 0, 1});
-        }
+        SDL_CALL(SDL_RenderTextureAffine(
+            renderer->GetRenderer(), sprite->m_image->GetTexture(), &src_rect,
+            &topleft, &topright, &bottomleft));
     }
 }

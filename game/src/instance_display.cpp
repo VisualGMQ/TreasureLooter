@@ -213,9 +213,7 @@ void InstanceDisplay(const char* name, std::string_view value) {
 }
 
 void InstanceDisplay(const char* name, Vec2& value) {
-    // ImGui::PushID(ImGuiIDGenerator::Gen());
     ImGui::DragFloat2(name, (float*)&value, 0.1);
-    // ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Vec2& value) {
