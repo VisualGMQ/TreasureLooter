@@ -85,8 +85,8 @@ std::string GenerateEnumCode(const EnumInfo& enum_info) {
 
     for (auto& item : enum_info.m_items) {
         std::string item_declare = item.m_name;
-        if (item.m_value) {
-            item_declare += " = " + std::to_string(item.m_value.value());
+        if (!item.m_value.empty()) {
+            item_declare += " = " + item.m_value;
         }
 
         item_datas << kainjow::mustache::data{"item", item_declare};

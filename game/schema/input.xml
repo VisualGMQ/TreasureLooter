@@ -1,0 +1,42 @@
+<schema>
+    <import>gamepad</import>
+    <import>key</import>
+    <import>mouse</import>
+
+    <class name="KeyboardInput">
+        <element type="float" name="scale"/>
+        <element type="Key" name="key"/>
+    </class>
+    <class name="GamepadButtonInput">
+        <element type="float" name="scale"/>
+        <element type="GamepadButtonType" name="button"/>
+    </class>
+    <class name="GamepadAxisInput">
+        <element type="float" name="scale"/>
+        <element type="GamepadAxisType" name="axis"/>
+    </class>
+    <class name="MouseButtonInput">
+        <element type="float" name="scale"/>
+        <element type="MouseButtonType" name="button"/>
+    </class>
+
+    <class name="InputActionConfig">
+        <element type="std::string" name="name"/>
+        <array type="Key" name="keyboard"/>
+        <array type="GamepadButtonType" name="gamepad"/>
+    </class>
+
+    <class name="InputAxisConfig">
+        <element type="std::string" name="name"/>
+        <array type="KeyboardInput" name="keyboard"/>
+        <array type="GamepadButtonInput" name="gamepad_button"/>
+        <array type="GamepadAxisInput" name="gamepad_axis"/>
+        <option type="float" name="mouse_vertical"/>
+        <option type="float" name="mouse_horizontal"/>
+    </class>
+
+    <asset name="InputConfig" extension=".input_config">
+        <array type="InputActionConfig" name="action"/>
+        <array type="InputAxisConfig" name="axis"/>
+    </asset>
+</schema>

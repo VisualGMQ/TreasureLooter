@@ -1,9 +1,15 @@
 ﻿#pragma once
 #include "entity.hpp"
 #include "image.hpp"
+#include "input/finger_touch.hpp"
+#include "input/gamepad.hpp"
+#include "input/input.hpp"
+#include "input/keyboard.hpp"
+#include "input/mouse.hpp"
 #include "inspector.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
+
 #include <memory>
 
 class RelationshipManager;
@@ -33,6 +39,11 @@ public:
     std::unique_ptr<TransformManager> m_transform_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
     std::unique_ptr<RelationshipManager> m_relationship_manager;
+    std::unique_ptr<Keyboard> m_keyboard;
+    std::unique_ptr<Mouse> m_mouse;
+    std::unique_ptr<Touches> m_touchs;
+    std::unique_ptr<GamepadManager> m_gamepad_manager;
+    std::unique_ptr<InputManager> m_input_manager;
 
     Entity GetRootEntity();
 
@@ -46,6 +57,8 @@ private:
     Context();
 
     void logicUpdate();
+    void gameLogicUpdate();
+    void logicPostUpdate();
     void renderUpdate();
     Entity createEntity();
 };

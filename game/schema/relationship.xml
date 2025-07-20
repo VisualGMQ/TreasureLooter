@@ -1,4 +1,4 @@
-﻿<schema>
+<schema>
     <include>entity.hpp</include>
 
     <class name="Relationship">

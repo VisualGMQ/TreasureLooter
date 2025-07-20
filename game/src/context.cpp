@@ -1,9 +1,12 @@
 ﻿#include "context.hpp"
+#include "imgui.h"
 #include "log.hpp"
-#include "rapidxml_print.hpp"
 #include "rapidxml_utils.hpp"
+#include "rapidxml_print.hpp"
 #include "relationship.hpp"
 #include "schema/prefab.hpp"
+#include "schema/serialize/asset_extensions.hpp"
+#include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
 #include "serialize.hpp"
@@ -33,6 +36,11 @@ Context& Context::GetInst() {
 }
 
 Context::~Context() {
+    m_input_manager.reset();
+    m_gamepad_manager.reset();
+    m_touchs.reset();
+    m_mouse.reset();
+    m_keyboard.reset();
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_inspector.reset();
@@ -85,7 +93,8 @@ void Context::Update() {
                     prefab.m_entity, prefab.m_data.m_relationship.value());
             }
 
-            m_relationship_manager->RegisterEntity(entity1, Relationship{{prefab.m_entity}});
+            m_relationship_manager->RegisterEntity(
+                entity1, Relationship{{prefab.m_entity}});
         }
 
         executed = true;
@@ -93,14 +102,26 @@ void Context::Update() {
     ////////////////////////////////////
 
     logicUpdate();
+    gameLogicUpdate();
     renderUpdate();
+    logicPostUpdate();
 }
 
 void Context::HandleEvents(const SDL_Event& event) {
     m_inspector->HandleEvents(event);
     if (event.type == SDL_EVENT_QUIT) {
         m_should_exit = true;
+    } else if (event.type == SDL_EVENT_KEY_UP ||
+               event.type == SDL_EVENT_KEY_DOWN) {
+        m_keyboard->HandleEvent(event.key);
+    } else if (event.type == SDL_EVENT_FINGER_UP ||
+               event.type == SDL_EVENT_FINGER_DOWN ||
+               event.type == SDL_EVENT_FINGER_MOTION ||
+               event.type == SDL_EVENT_FINGER_CANCELED) {
+        m_touchs->HandleEvent(event.tfinger);
     }
+    m_gamepad_manager->HandleEvent(event);
+    m_mouse->HandleEvent(event);
 }
 
 bool Context::ShouldExit() {
@@ -130,15 +151,75 @@ Context::Context() {
     m_relationship_manager =
         std::make_unique<RelationshipManager>(m_root_entity);
     m_transform_manager->RegisterEntity(m_root_entity);
+    m_keyboard = std::make_unique<Keyboard>();
+    m_mouse = std::make_unique<Mouse>();
+    m_touchs = std::make_unique<Touches>();
+    m_gamepad_manager = std::make_unique<GamepadManager>();
+
+    m_input_manager = std::make_unique<InputManager>(
+        *this, std::string{"assets/gpa/input_config"} +
+                   InputConfig_AssetExtension.data() + ".xml");
 }
 
 void Context::logicUpdate() {
+    m_gamepad_manager->Update();
+    m_keyboard->Update();
+    m_mouse->Update();
+    m_touchs->Update();
     m_relationship_manager->Update();
+}
+
+void Context::gameLogicUpdate() {
+    // TODO: game logic here
+    auto children = m_relationship_manager->Get(m_root_entity);
+    Entity entity = children->m_children[0];
+
+    Transform* transform = m_transform_manager->Get(entity);
+
+    auto& action = m_input_manager->GetAction("Rotate");
+    auto& x_axis = m_input_manager->GetAxis("MoveHorizontal");
+    auto& y_axis = m_input_manager->GetAxis("MoveVertical");
+    transform->m_position.x += 0.1f * x_axis.Value();
+    transform->m_position.y += 0.1f * y_axis.Value();
+    if (action.IsPressed()) {
+        transform->m_rotation += 10;
+    }
+}
+
+void Context::logicPostUpdate() {
+    m_mouse->PostUpdate();
+    m_touchs->PostUpdate();
 }
 
 void Context::renderUpdate() {
     m_inspector->BeginFrame();
     m_renderer->Clear();
+
+    auto& fingers = m_touchs->GetFingers();
+    if (ImGui::Begin("finger test")) {
+        for (int i = 0; i < fingers.size(); ++i) {
+            auto& finger = fingers[i];
+            std::string status;
+            if (finger.IsPressing()) {
+                status = "Pressing";
+            } else if (finger.IsPressed()) {
+                status = "Pressed";
+            } else if (finger.IsReleased()) {
+                status = "Released";
+            } else if (finger.IsReleasing()) {
+                status = "Releasing";
+            } else {
+                status = "Unknown";
+            }
+
+            ImGui::Text("finger index: %d, status: %s, position: (%f, %f), "
+                        "offset: (%f, %f)",
+                        i, status.c_str(), finger.Position().x,
+                        finger.Position().y, finger.Offset().x,
+                        finger.Offset().y);
+        }
+        ImGui::End();
+    }
 
     m_sprite_manager->Update();
     m_inspector->Update();
