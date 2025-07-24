@@ -9,6 +9,7 @@
 #include "inspector.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
+#include "editor/editor.hpp"
 
 #include <memory>
 
@@ -36,6 +37,7 @@ public:
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<ImageManager> m_image_manager;
     std::unique_ptr<Inspector> m_inspector;
+    std::unique_ptr<Editor> m_editor;
     std::unique_ptr<TransformManager> m_transform_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
     std::unique_ptr<RelationshipManager> m_relationship_manager;

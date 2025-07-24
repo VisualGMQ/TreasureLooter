@@ -281,13 +281,17 @@ void InstanceDisplay(const char* name, Radians& value) {
 
 void InstanceDisplay(const char* name, const Radians& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
-    
+
     ImGui::BeginDisabled(true);
     float degree = Degrees{value}.Value();
     ImGui::DragFloat(name, &degree, 0.1);
     ImGui::EndDisabled();
-    
+
     ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, Handle<Image> value) {
+    InstanceDisplay(name, value.Get()); 
 }
 
 void InstanceDisplay(const char* name, Image* value) {

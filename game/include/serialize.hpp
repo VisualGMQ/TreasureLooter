@@ -1,9 +1,11 @@
 ﻿#pragma once
+#include "SDL3/SDL.h"
+#include "asset.hpp"
 #include "flag.hpp"
+#include "handle.hpp"
 #include "log.hpp"
 #include "math.hpp"
 #include "rapidxml.hpp"
-#include "SDL3/SDL.h"
 
 #include <optional>
 #include <string>
@@ -86,18 +88,29 @@ void Deserialize(rapidxml::xml_node<>& node, Radians& payload);
 
 // transform
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Transform& payload, const std::string& name);
+                                const Transform& payload,
+                                const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, Transform& payload);
 
 // image
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Handle<Image> payload,
+                                const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, Handle<Image>& payload);
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const Image* payload, const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, Image*& payload);
 
-// std::string 
+// std::string
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const std::string& payload, const std::string& name);
+                                const std::string& payload,
+                                const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, std::string& payload);
+
+// UUID
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const UUID& payload, const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, UUID& payload);
 
 // optional
 template <typename T>
@@ -241,4 +254,32 @@ void Deserialize(rapidxml::xml_node<>& node,
         Deserialize(*value_node, value);
         payload.emplace(std::move(key), std::move(value));
     }
+}
+
+// AssetLoadResult
+template <typename T>
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const AssetLoadResult<T>& payload,
+                                const std::string& name) {
+    if (!payload.m_uuid) {
+        LOGE("asset uuid is invalid! asset name: {}", name);
+        return nullptr;
+    }
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    auto uuid_node = Serialize(doc, payload.m_uuid, "uuid");
+    node->append_node(uuid_node);
+
+    auto value_node = Serialize(doc, payload.m_payload, "payload");
+    node->append_node(value_node);
+    return node;
+}
+
+template <typename T>
+void Deserialize(rapidxml::xml_node<>& node, AssetLoadResult<T>& payload) {
+    auto uuid_node = node.first_node("uuid");
+    Deserialize(*uuid_node, payload.m_uuid);
+
+    auto value_node = node.first_node("payload");
+    Deserialize(*value_node, payload.m_payload);
 }

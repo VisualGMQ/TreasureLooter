@@ -13,3 +13,9 @@ void InstanceDisplay(const char* name, const {{type}}& value) {
     {{/properties}}
     ImGui::EndDisabled();
 }
+
+{{#has_handle}}
+void InstanceDisplay(const char* name, {{type}}Handle handle) {
+    InstanceDisplay(name, *handle);
+}
+{{/has_handle}}

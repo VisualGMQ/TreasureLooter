@@ -17,6 +17,11 @@ std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data class_data;
     class_data.set("class_name", info.m_name);
     class_data.set("properties", prop_datas);
+
+    if (info.is_asset) {
+        class_data.set("is_asset", true);
+    }
+    
     auto& class_mustache = MustacheManager::GetInst().m_class_mustache;
     return class_mustache.render(class_data);
 }
@@ -36,11 +41,11 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
             include_mustache.render({"filename", "\"" + include + "\""})};
     }
 
-    if (schema_info.m_stb_lib_flag & STDLibs::Option) {
+    if (schema_info.m_include_hints & IncludeHint::Option) {
         include_datas << kainjow::mustache::data{
             "include", include_mustache.render({"filename", "<optional>"})};
     }
-    if (schema_info.m_stb_lib_flag & STDLibs::Array) {
+    if (schema_info.m_include_hints & IncludeHint::Array) {
         include_datas << kainjow::mustache::data{"include",
                                                  include_mustache.render(
                                                      {"filename", "<array>"})}
@@ -48,10 +53,16 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
                              "include",
                              include_mustache.render({"filename", "<vector>"})};
     }
-    if (schema_info.m_stb_lib_flag & STDLibs::UnorderedMap) {
+    if (schema_info.m_include_hints & IncludeHint::UnorderedMap) {
         include_datas << kainjow::mustache::data{
             "include",
             include_mustache.render({"filename", "<unordered_map>"})};
+    }
+    
+    if (schema_info.m_include_hints & IncludeHint::Handle) {
+        include_datas << kainjow::mustache::data{
+            "include",
+            include_mustache.render({"filename", "\"handle.hpp\""})};
     }
 
     for (auto& import_filename : schema_info.m_imports) {
@@ -114,6 +125,9 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     generate_header_filename =
         generate_header_filename.replace_extension(".hpp");
     auto final_path = "schema/" + generate_header_filename.string();
+    if (schema.m_include_hints & IncludeHint::Asset) {
+        include_datas << kainjow::mustache::data{"include", "asset.hpp"};
+    }
     include_datas << kainjow::mustache::data{"include", final_path.c_str()};
     data.set("includes", include_datas);
 
@@ -152,6 +166,9 @@ std::string GenerateSchemaSerializeImplCode(const SchemaInfo& schema) {
     for (auto& import : schema.m_imports) {
         auto filepath = GetSerdFileGenerateHeaderFilepath(import);
         import_datas << kainjow::mustache::data{"import_filename", filepath};
+    }
+    if (schema.m_include_hints & IncludeHint::Asset) {
+        import_datas << kainjow::mustache::data{"import_filename", "asset.hpp"};
     }
     data.set("import_filenames", import_datas);
 
@@ -210,6 +227,10 @@ std::string GenerateClassSerializeHeaderCode(const ClassInfo& info) {
     kainjow::mustache::data data;
     data.set("type", info.m_name);
 
+    if (info.is_asset) {
+        data.set("has_handle", true);
+    }
+
     return mustache.render(data);
 }
 
@@ -229,6 +250,9 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
     }
 
     data.set("properties", properties_data);
+    if (info.is_asset) {
+        data.set("has_handle", true);
+    }
 
     return mustache.render(data);
 }
@@ -309,6 +333,10 @@ std::string GenerateClassDisplayHeaderCode(const ClassInfo& info) {
 
     kainjow::mustache::data data;
     data.set("type", info.m_name);
+    
+    if (info.is_asset) {
+        data.set("has_handle", true);
+    }
 
     return mustache.render(data);
 }
@@ -325,6 +353,10 @@ std::string GenerateClassDisplayImplCode(const ClassInfo& info) {
         kainjow::mustache::data property_data;
         property_data.set("property", prop.m_name);
         properties_data << property_data;
+    }
+
+    if (info.is_asset) {
+        data.set("has_handle", true);
     }
 
     data.set("properties", properties_data);

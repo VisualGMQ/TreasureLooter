@@ -1,2 +1,6 @@
 void InstanceDisplay(const char* name, {{type}}&);
 void InstanceDisplay(const char* name, const {{type}}&);
+
+{{#has_handle}}
+void InstanceDisplay(const char* name, {{type}}Handle);
+{{/has_handle}}

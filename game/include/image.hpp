@@ -1,8 +1,9 @@
 #pragma once
 #include "SDL3/SDL.h"
+#include "asset_manager.hpp"
 #include "math.hpp"
-#include <unordered_map>
 #include "path.hpp"
+#include <unordered_map>
 
 class Renderer;
 
@@ -26,16 +27,14 @@ private:
     Path m_filename;
 };
 
-class ImageManager {
+using ImageHandle = Handle<Image>;
+
+class ImageManager: public AssetManager<Image> {
 public:
     explicit ImageManager(Renderer& renderer);
     
-    Image* Load(const Path& filename);
-    Image* Find(const Path& filename);
-    bool IsExists(const Path& filename);
-    
-private:
-    std::unordered_map<Path, std::unique_ptr<Image>> m_images;
+    ImageHandle Load(const Path& filename) override;
 
+private:
     Renderer& m_renderer;
 };

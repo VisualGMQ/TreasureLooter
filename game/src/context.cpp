@@ -1,8 +1,8 @@
 ﻿#include "context.hpp"
 #include "imgui.h"
 #include "log.hpp"
-#include "rapidxml_utils.hpp"
 #include "rapidxml_print.hpp"
+#include "rapidxml_utils.hpp"
 #include "relationship.hpp"
 #include "schema/prefab.hpp"
 #include "schema/serialize/asset_extensions.hpp"
@@ -39,6 +39,7 @@ Context& Context::GetInst() {
 Context::~Context() {
     m_input_manager.reset();
     m_gamepad_manager.reset();
+    m_editor.reset();
     m_touchs.reset();
     m_mouse.reset();
     m_keyboard.reset();
@@ -56,11 +57,13 @@ void Context::Update() {
     ////////// this is a test //////////
     static bool executed = false;
 
+    /*
     if (!executed) {
         Entity entity1;
         {
-            auto prefab =
-                LoadEntityInstanceAsset("assets/gpa/waggo.entity.xml");
+            auto result =
+                LoadAsset<EntityInstance>("assets/gpa/waggo.entity.xml");
+            auto& prefab = result.m_payload;
             entity1 = prefab.m_entity;
             if (prefab.m_data.m_transform) {
                 m_transform_manager->RegisterEntity(
@@ -79,8 +82,9 @@ void Context::Update() {
                 ->m_children.push_back(prefab.m_entity);
         }
         {
-            auto prefab =
-                LoadEntityInstanceAsset("assets/gpa/waggo2.entity.xml");
+            auto result =
+                LoadAsset<EntityInstance>("assets/gpa/waggo2.entity.xml");
+            auto& prefab = result.m_payload;
             if (prefab.m_data.m_transform) {
                 m_transform_manager->RegisterEntity(
                     prefab.m_entity, prefab.m_data.m_transform.value());
@@ -100,10 +104,11 @@ void Context::Update() {
 
         executed = true;
     }
+    */
     ////////////////////////////////////
 
     logicUpdate();
-    gameLogicUpdate();
+    // gameLogicUpdate();
     renderUpdate();
     logicPostUpdate();
 }
@@ -144,6 +149,7 @@ Context::Context() {
     m_image_manager = std::make_unique<ImageManager>(*m_renderer);
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
+    m_editor = std::make_unique<Editor>();
 
     m_root_entity = createEntity();
 
@@ -162,8 +168,6 @@ Context::Context() {
                    InputConfig_AssetExtension.data() + ".xml");
 
     // test uuid
-    std::mt19937 generator;
-    uuids::uuid id = uuids::uuid_random_generator{generator}();
 }
 
 void Context::logicUpdate() {
@@ -200,34 +204,9 @@ void Context::renderUpdate() {
     m_inspector->BeginFrame();
     m_renderer->Clear();
 
-    auto& fingers = m_touchs->GetFingers();
-    if (ImGui::Begin("finger test")) {
-        for (int i = 0; i < fingers.size(); ++i) {
-            auto& finger = fingers[i];
-            std::string status;
-            if (finger.IsPressing()) {
-                status = "Pressing";
-            } else if (finger.IsPressed()) {
-                status = "Pressed";
-            } else if (finger.IsReleased()) {
-                status = "Released";
-            } else if (finger.IsReleasing()) {
-                status = "Releasing";
-            } else {
-                status = "Unknown";
-            }
-
-            ImGui::Text("finger index: %d, status: %s, position: (%f, %f), "
-                        "offset: (%f, %f)",
-                        i, status.c_str(), finger.Position().x,
-                        finger.Position().y, finger.Offset().x,
-                        finger.Offset().y);
-        }
-        ImGui::End();
-    }
-
     m_sprite_manager->Update();
     m_inspector->Update();
+    m_editor->Update();
 
     m_inspector->EndFrame();
     m_renderer->Present();

@@ -73,7 +73,8 @@ Action InputManager::InvalidAction;
 Axis InputManager::InvalidAxis;
 
 InputManager::InputManager(Context& context, const Path& config_filename) {
-    InputConfig config = LoadInputConfigAsset(config_filename);
+    /*
+    InputConfig config = LoadAsset<InputConfig>(config_filename).m_payload;
 
     for (auto& axis : config.m_axis) {
         loadAxisConfig(context, axis);
@@ -82,6 +83,7 @@ InputManager::InputManager(Context& context, const Path& config_filename) {
     for (auto& action : config.m_action) {
         loadActionConfig(context, action);
     }
+    */
 }
 
 const Axis& InputManager::GetAxis(const std::string& name) const {

@@ -49,6 +49,7 @@ void InstanceDisplay(const char* name, Degrees& value);
 void InstanceDisplay(const char* name, const Degrees& value);
 void InstanceDisplay(const char* name, Radians& value);
 void InstanceDisplay(const char* name, const Radians& value);
+void InstanceDisplay(const char* name, Handle<Image> value);
 void InstanceDisplay(const char* name, Image* value);
 void InstanceDisplay(const char* name, const Image* value);
 void InstanceDisplay(const char* name, Transform& value);
