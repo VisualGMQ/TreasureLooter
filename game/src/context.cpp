@@ -13,7 +13,7 @@
 #include "sprite.hpp"
 #include "storage.hpp"
 #include "transform.hpp"
-#include "uuid_v4.h"
+#include "uuid.h"
 
 #include <iostream>
 #include <sstream>
@@ -162,8 +162,8 @@ Context::Context() {
                    InputConfig_AssetExtension.data() + ".xml");
 
     // test uuid
-    UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
-    UUIDv4::UUID uuid = uuidGenerator.getUUID();
+    std::mt19937 generator;
+    uuids::uuid id = uuids::uuid_random_generator{generator}();
 }
 
 void Context::logicUpdate() {
