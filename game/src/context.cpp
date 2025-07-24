@@ -13,6 +13,7 @@
 #include "sprite.hpp"
 #include "storage.hpp"
 #include "transform.hpp"
+#include "uuid_v4.h"
 
 #include <iostream>
 #include <sstream>
@@ -159,6 +160,10 @@ Context::Context() {
     m_input_manager = std::make_unique<InputManager>(
         *this, std::string{"assets/gpa/input_config"} +
                    InputConfig_AssetExtension.data() + ".xml");
+
+    // test uuid
+    UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
+    UUIDv4::UUID uuid = uuidGenerator.getUUID();
 }
 
 void Context::logicUpdate() {

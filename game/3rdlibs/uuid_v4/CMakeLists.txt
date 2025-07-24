@@ -1,0 +1,5 @@
+add_library(uuid_v4 INTERFACE)
+target_sources(uuid_v4 INTERFACE endianness.h uuid_v4.h)
+target_include_directories(uuid_v4 INTERFACE .)
+target_compile_features(uuid_v4 INTERFACE cxx_std_17)
+add_library(uuid_v4::uuid_v4 ALIAS uuid_v4)
