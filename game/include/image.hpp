@@ -29,7 +29,7 @@ private:
 
 using ImageHandle = Handle<Image>;
 
-class ImageManager: public AssetManager<Image> {
+class ImageManager: public AssetManagerBase<Image> {
 public:
     explicit ImageManager(Renderer& renderer);
     

@@ -38,9 +38,10 @@ Context& Context::GetInst() {
 
 Context::~Context() {
     m_input_manager.reset();
+    m_generic_assets_manager.reset();
     m_gamepad_manager.reset();
     m_editor.reset();
-    m_touchs.reset();
+    m_touches.reset();
     m_mouse.reset();
     m_keyboard.reset();
     m_sprite_manager.reset();
@@ -124,7 +125,7 @@ void Context::HandleEvents(const SDL_Event& event) {
                event.type == SDL_EVENT_FINGER_DOWN ||
                event.type == SDL_EVENT_FINGER_MOTION ||
                event.type == SDL_EVENT_FINGER_CANCELED) {
-        m_touchs->HandleEvent(event.tfinger);
+        m_touches->HandleEvent(event.tfinger);
     }
     m_gamepad_manager->HandleEvent(event);
     m_mouse->HandleEvent(event);
@@ -160,21 +161,21 @@ Context::Context() {
     m_transform_manager->RegisterEntity(m_root_entity);
     m_keyboard = std::make_unique<Keyboard>();
     m_mouse = std::make_unique<Mouse>();
-    m_touchs = std::make_unique<Touches>();
+    m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
+
+    m_generic_assets_manager = std::make_unique<GenericAssetsManager>();
 
     m_input_manager = std::make_unique<InputManager>(
         *this, std::string{"assets/gpa/input_config"} +
                    InputConfig_AssetExtension.data() + ".xml");
-
-    // test uuid
 }
 
 void Context::logicUpdate() {
     m_gamepad_manager->Update();
     m_keyboard->Update();
     m_mouse->Update();
-    m_touchs->Update();
+    m_touches->Update();
     m_relationship_manager->Update();
 }
 
@@ -197,7 +198,7 @@ void Context::gameLogicUpdate() {
 
 void Context::logicPostUpdate() {
     m_mouse->PostUpdate();
-    m_touchs->PostUpdate();
+    m_touches->PostUpdate();
 }
 
 void Context::renderUpdate() {

@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "editor/editor.hpp"
 #include "entity.hpp"
 #include "image.hpp"
 #include "input/finger_touch.hpp"
@@ -9,7 +10,6 @@
 #include "inspector.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
-#include "editor/editor.hpp"
 
 #include <memory>
 
@@ -43,8 +43,9 @@ public:
     std::unique_ptr<RelationshipManager> m_relationship_manager;
     std::unique_ptr<Keyboard> m_keyboard;
     std::unique_ptr<Mouse> m_mouse;
-    std::unique_ptr<Touches> m_touchs;
+    std::unique_ptr<Touches> m_touches;
     std::unique_ptr<GamepadManager> m_gamepad_manager;
+    std::unique_ptr<GenericAssetsManager> m_generic_assets_manager;
     std::unique_ptr<InputManager> m_input_manager;
 
     Entity GetRootEntity();
