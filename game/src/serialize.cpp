@@ -2,7 +2,6 @@
 
 #include "context.hpp"
 #include "image.hpp"
-
 #include <stdexcept>
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
@@ -316,12 +315,12 @@ void Deserialize(rapidxml::xml_node<>& node, Radians& payload) {
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const Transform& payload,
                                 const std::string& name) {
-     auto node = doc.allocate_node(rapidxml::node_type::node_element,
-                                   doc.allocate_string(name.c_str()));
-     node->append_node(Serialize(doc, payload.m_position, "position"));
-     node->append_node(Serialize(doc, payload.m_scale, "scale"));
-     node->append_node(Serialize(doc, payload.m_rotation, "rotation"));
-     return node;   
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->append_node(Serialize(doc, payload.m_position, "position"));
+    node->append_node(Serialize(doc, payload.m_scale, "scale"));
+    node->append_node(Serialize(doc, payload.m_rotation, "rotation"));
+    return node;
 }
 
 void Deserialize(rapidxml::xml_node<>& node, Transform& payload) {
@@ -350,13 +349,31 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Image*& payload) {
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Handle<Image> payload,
+                                const std::string& name) {
+    return Serialize(doc, &*payload, name);
+}
+
+void Deserialize(rapidxml::xml_node<>& node, Handle<Image>& payload) {
     Path filename = node.value();
     auto& image_manager = Context::GetInst().m_image_manager;
     payload = image_manager->Find(filename);
-
-    if (!payload && !filename.empty()) {
+    if (!payload) {
         payload = image_manager->Load(filename);
+    }
+}
+
+void Deserialize(rapidxml::xml_node<>& node, Image*& payload) {
+    Path filename = node.value();
+    auto& image_manager = Context::GetInst().m_image_manager;
+    ImageHandle handle = image_manager->Load(filename);
+    if (!handle) {
+        handle = image_manager->Load(filename);
+    }
+
+    if (!handle) {
+        payload = handle.Get();
     }
 }
 
@@ -372,4 +389,16 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 void Deserialize(rapidxml::xml_node<>& node, std::string& payload) {
     Path filename = node.value();
     payload = node.value();
+}
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const UUID& payload, const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->value(doc.allocate_string(payload.ToString().c_str()));
+    return node;
+}
+
+void Deserialize(rapidxml::xml_node<>& node, UUID& payload) {
+    payload = UUID::CreateFromString(node.value());
 }

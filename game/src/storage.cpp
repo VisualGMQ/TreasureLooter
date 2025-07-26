@@ -69,6 +69,10 @@ void IOStream::Write(const char* data, size_t size) {
     }
 }
 
+IOStream::operator bool() const noexcept {
+    return m_stream;
+}
+
 IOStream::~IOStream() {
     SDL_CloseIO(m_stream);
 }

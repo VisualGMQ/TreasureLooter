@@ -6,11 +6,17 @@
 #include <string>
 #include <vector>
 
-enum STDLibs {
+enum IncludeHint {
     None = 0,
+
+    // std
     Array = 0x02,
     Option = 0x04,
     UnorderedMap = 0x08,
+
+    // game related
+    Handle = 0x10,
+    Asset = 0x12,
 };
 
 struct PropertyInfo {
@@ -37,7 +43,7 @@ struct EnumInfo {
 };
 
 struct SchemaInfo {
-    int m_stb_lib_flag = None;
+    int m_include_hints = None;
     
     std::vector<std::string> m_includes;
     std::filesystem::path m_filename;
