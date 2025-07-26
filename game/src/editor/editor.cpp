@@ -23,14 +23,6 @@ struct AssetDisplay {
 };
 
 struct AssetSyncHelper {
-    template <typename T>
-    void operator()(AssetLoadResult<T>& payload) {
-        if (!payload.m_uuid) {
-            payload.m_uuid = UUID::CreateV4();
-        }
-        SaveAsset(payload.m_uuid, payload.m_payload, m_filename);
-    }
-
     void operator()(AssetLoadResult<InputConfig>& payload) {
         Context::GetInst().m_input_manager->SetConfig(Context::GetInst(),
                                                       payload.m_payload);
