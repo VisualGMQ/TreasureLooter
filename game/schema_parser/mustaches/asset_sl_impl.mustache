@@ -1,14 +1,19 @@
-{{type}} Load{{type}}Asset(rapidxml::xml_node<>& node) {
-    {{type}} payload;
+template<>
+AssetLoadResult<{{type}}> LoadAsset<{{type}}>(rapidxml::xml_node<>& node) {
+    AssetLoadResult<{{type}}> payload;
     Deserialize(node, payload);
     return payload;
 }
 
-rapidxml::xml_node<>* SaveAsset(rapidxml::xml_document<>& doc, const {{type}}& payload) {
-    return Serialize(doc, payload, "{{type}}");
+rapidxml::xml_node<>* SaveAsset(const UUID& uuid, rapidxml::xml_document<>& doc, const {{type}}& payload) {
+    AssetLoadResult<{{type}}> asset_load_result;
+    asset_load_result.m_uuid = uuid;
+    asset_load_result.m_payload = payload;
+    return Serialize(doc, asset_load_result, "{{type}}");
 }
 
-{{type}} Load{{type}}Asset(const Path& filename) {
+template<>
+AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const Path& filename) {
     auto file = IOStream::CreateFromFile(filename, IOMode::Read, true);
     auto content = file->Read();
     content.push_back('\0');
@@ -22,12 +27,13 @@ rapidxml::xml_node<>* SaveAsset(rapidxml::xml_document<>& doc, const {{type}}& p
     if (!node) {
         LOGE("parse asset {} failed, no node {}", filename, "{{type}}");
     }
-    return Load{{type}}Asset(*node);
+
+    return LoadAsset<{{type}}>(*node);
 }
 
-void SaveAsset(const {{type}}& payload, const Path& filename) {
+void SaveAsset(const UUID& uuid, const {{type}}& payload, const Path& filename) {
     rapidxml::xml_document<> doc;
-    auto node = SaveAsset(doc, payload);    
+    auto node = SaveAsset(uuid, doc, payload);    
     if (!node) {
         LOGE("save asset {} failed", filename);
     }

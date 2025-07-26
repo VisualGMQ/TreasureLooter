@@ -27,3 +27,15 @@ void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload) {
     }
     {{/properties}}
 }
+
+{{#has_handle}}
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const {{type}}Handle& payload,
+                                const std::string& name) {
+    return Serialize(doc, *payload, name);
+}
+
+void Deserialize(rapidxml::xml_node<>& node, {{type}}Handle& payload) {
+    Deserialize(node, *payload);
+}
+{{/has_handle}}

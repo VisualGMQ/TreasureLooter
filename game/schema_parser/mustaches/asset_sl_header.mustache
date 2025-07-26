@@ -1,5 +1,7 @@
-{{type}} Load{{type}}Asset(rapidxml::xml_node<>&);
-rapidxml::xml_node<>* SaveAsset(rapidxml::xml_document<>& doc, const {{type}}& payload);
+template<>
+AssetLoadResult<{{type}}> LoadAsset<{{type}}>(rapidxml::xml_node<>&);
+rapidxml::xml_node<>* SaveAsset(const UUID& uuid, rapidxml::xml_document<>& doc, const {{type}}& payload);
 
-{{type}} Load{{type}}Asset(const Path& filename);
-void SaveAsset(const {{type}}& payload, const Path& filename);
+template<>
+AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const Path& filename);
+void SaveAsset(const UUID& uuid, const {{type}}& payload, const Path& filename);

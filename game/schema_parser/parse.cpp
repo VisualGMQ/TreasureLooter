@@ -84,7 +84,7 @@ std::optional<PropertyInfo> ParseOption(SchemaInfo& schema,
     property.m_name = name->value();
     property.m_type = "std::optional<" + std::string{type->value()} + ">";
     property.m_optional = true;
-    schema.m_stb_lib_flag = schema.m_stb_lib_flag | STDLibs::Option;
+    schema.m_include_hints = schema.m_include_hints | IncludeHint::Option;
     return property;
 }
 
@@ -125,7 +125,49 @@ std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
         property.m_type = "std::array<" + std::string{type->value()} + ", " +
                           std::to_string(count) + ">";
     }
-    schema.m_stb_lib_flag = schema.m_stb_lib_flag | STDLibs::Array;
+    schema.m_include_hints = schema.m_include_hints | IncludeHint::Array;
+    return property;
+}
+
+std::optional<PropertyInfo> ParseHandle(SchemaInfo& schema,
+                                        rapidxml::xml_node<>* node) {
+    auto type = node->first_attribute("type");
+    if (!type) {
+        std::cerr << "Error parsing element, no type" << std::endl;
+        return std::nullopt;
+    }
+
+    auto name = node->first_attribute("name");
+    if (!type) {
+        std::cerr << "Error parsing element, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    PropertyInfo property;
+    property.m_name = name->value();
+    property.m_type = type->value() + std::string{"Handle"};
+    property.m_optional = false;
+    return property;
+}
+
+std::optional<PropertyInfo> ParseFlags(SchemaInfo& schema,
+                                       rapidxml::xml_node<>* node) {
+    auto type = node->first_attribute("type");
+    if (!type) {
+        std::cerr << "Error parsing element, no type" << std::endl;
+        return std::nullopt;
+    }
+
+    auto name = node->first_attribute("name");
+    if (!type) {
+        std::cerr << "Error parsing element, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    PropertyInfo property;
+    property.m_name = name->value();
+    property.m_type = std::string{"Flags<"} + type->value() + ">";
+    property.m_optional = false;
     return property;
 }
 
@@ -153,7 +195,7 @@ std::optional<PropertyInfo> ParseUnorderedMap(SchemaInfo& schema,
     property.m_name = name_node->value();
     property.m_type = std::string{"std::unordered_map<"} + key_node->value() +
                       ", " + value_node->value() + ">";
-    schema.m_stb_lib_flag = schema.m_stb_lib_flag | STDLibs::UnorderedMap;
+    schema.m_include_hints = schema.m_include_hints | IncludeHint::UnorderedMap;
     return property;
 }
 
@@ -181,32 +223,28 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
     auto element = node->first_node();
     while (element) {
         std::string_view name = element->name();
+        std::optional<PropertyInfo> property;
         if (name == "element") {
-            auto property = ParseElement(element);
-            if (property) {
-                class_info.m_properties.push_back(property.value());
-            }
+            property = ParseElement(element);
         } else if (name == "option") {
-            auto property = ParseOption(schema, element);
-            if (property) {
-                class_info.m_properties.push_back(property.value());
-            }
+            property = ParseOption(schema, element);
         } else if (name == "array") {
-            auto property = ParseArray(schema, element);
-            if (property) {
-                class_info.m_properties.push_back(property.value());
-            }
+            property = ParseArray(schema, element);
         } else if (name == "unodered_map") {
-            auto property = ParseUnorderedMap(schema, element);
-            if (property) {
-                class_info.m_properties.push_back(property.value());
-            }
+            property = ParseUnorderedMap(schema, element);
+        } else if (name == "flags") {
+            property = ParseFlags(schema, element);
+        } else if (name == "handle") {
+            property = ParseHandle(schema, element);
         } else {
             std::cerr << "Error parsing class, unknown node " << element->name()
                       << std::endl;
             return std::nullopt;
         }
 
+        if (property) {
+            class_info.m_properties.push_back(property.value());
+        }
         element = element->next_sibling();
     }
 
@@ -245,6 +283,10 @@ std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
             auto class_info = ParseClass(schema_info, child, name == "asset");
             if (class_info) {
                 schema_info.m_classes.push_back(class_info.value());
+            }
+            if (name == "asset") {
+                schema_info.m_include_hints |= IncludeHint::Handle;
+                schema_info.m_include_hints |= IncludeHint::Asset;
             }
         } else if (name == "include") {
             auto include_info = ParseInclude(child);

@@ -3,3 +3,7 @@ struct {{class_name}} {
     {{{property}}}
     {{/properties}}
 };
+
+{{#is_asset}}
+using {{class_name}}Handle = Handle<{{class_name}}>;
+{{/is_asset}}
