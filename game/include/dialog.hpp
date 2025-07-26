@@ -22,7 +22,7 @@ public:
     void SetCancelButtonText(const std::string&);
     void AddFilter(const std::string& name, const std::string& pattern);
     void AllowMultipleSelect(bool);
-    void SetDefaultFolder(const std::string&);
+    void SetDefaultFolder(const Path&);
     void Open();
 
     const std::vector<Path>& GetSelectedFiles() const;
@@ -35,7 +35,7 @@ private:
 
     Type m_type;
     std::vector<Filter> m_filters;
-    std::string m_default_folder;
+    Path m_default_folder;
     bool m_allow_multiple_select = false;
     std::string m_title_label;
     std::string m_accept_label;

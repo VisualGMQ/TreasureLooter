@@ -30,7 +30,7 @@ void FileDialog::AllowMultipleSelect(bool allow) {
     m_allow_multiple_select = allow;
 }
 
-void FileDialog::SetDefaultFolder(const std::string& folder) {
+void FileDialog::SetDefaultFolder(const Path& folder) {
     // TODO: check folder is absolute path
     m_default_folder = folder;
 }
@@ -60,7 +60,7 @@ void FileDialog::Open() {
 
     SDL_CALL(SDL_SetStringProperty(m_properties,
                                    SDL_PROP_FILE_DIALOG_LOCATION_STRING,
-                                   m_default_folder.c_str()));
+                                   m_default_folder.string().c_str()));
     SDL_CALL(SDL_SetStringProperty(m_properties,
                                    SDL_PROP_FILE_DIALOG_TITLE_STRING,
                                    m_title_label.c_str()));

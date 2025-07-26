@@ -37,7 +37,9 @@ public:
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<ImageManager> m_image_manager;
     std::unique_ptr<Inspector> m_inspector;
+#ifdef TL_ENABLE_EDITOR
     std::unique_ptr<Editor> m_editor;
+#endif
     std::unique_ptr<TransformManager> m_transform_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
     std::unique_ptr<RelationshipManager> m_relationship_manager;
@@ -50,12 +52,23 @@ public:
 
     Entity GetRootEntity();
 
+#ifdef TL_ENABLE_EDITOR
+    const Path& GetProjectPath() const;
+#endif
+
+    void RegisterEntity(const EntityInstance&);
+    void RemoveEntity(Entity);
+
 private:
     static std::unique_ptr<Context> instance;
 
     bool m_should_exit = false;
     Entity m_last_entity = 0;
     Entity m_root_entity;
+    
+#ifdef TL_ENABLE_EDITOR
+    Path m_project_path; // only used for editor
+#endif
 
     Context();
 
@@ -64,4 +77,6 @@ private:
     void logicPostUpdate();
     void renderUpdate();
     Entity createEntity();
+
+    void parseProjectPath();
 };

@@ -62,7 +62,9 @@ public:
 
     const Axis& GetAxis(const std::string& name) const;
     const Action& GetAction(const std::string& name) const;
-    
+
+    void SetConfig(Context& context, const InputConfig& config);
+
 private:
     std::unordered_map<std::string, Axis> m_axis_mappings;
     std::unordered_map<std::string, Action> m_action_mappings;

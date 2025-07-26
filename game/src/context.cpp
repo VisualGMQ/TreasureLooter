@@ -40,7 +40,11 @@ Context::~Context() {
     m_input_manager.reset();
     m_generic_assets_manager.reset();
     m_gamepad_manager.reset();
+    
+#ifdef TL_ENABLE_EDITOR
     m_editor.reset();
+#endif
+    
     m_touches.reset();
     m_mouse.reset();
     m_keyboard.reset();
@@ -58,58 +62,19 @@ void Context::Update() {
     ////////// this is a test //////////
     static bool executed = false;
 
-    /*
     if (!executed) {
-        Entity entity1;
-        {
-            auto result =
-                LoadAsset<EntityInstance>("assets/gpa/waggo.entity.xml");
-            auto& prefab = result.m_payload;
-            entity1 = prefab.m_entity;
-            if (prefab.m_data.m_transform) {
-                m_transform_manager->RegisterEntity(
-                    prefab.m_entity, prefab.m_data.m_transform.value());
-            }
-            if (prefab.m_data.m_sprite) {
-                m_sprite_manager->RegisterEntity(
-                    prefab.m_entity, prefab.m_data.m_sprite.value());
-            }
-            if (prefab.m_data.m_relationship) {
-                m_relationship_manager->RegisterEntity(
-                    prefab.m_entity, prefab.m_data.m_relationship.value());
-            }
-
-            m_relationship_manager->Get(m_root_entity)
-                ->m_children.push_back(prefab.m_entity);
-        }
-        {
-            auto result =
-                LoadAsset<EntityInstance>("assets/gpa/waggo2.entity.xml");
-            auto& prefab = result.m_payload;
-            if (prefab.m_data.m_transform) {
-                m_transform_manager->RegisterEntity(
-                    prefab.m_entity, prefab.m_data.m_transform.value());
-            }
-            if (prefab.m_data.m_sprite) {
-                m_sprite_manager->RegisterEntity(
-                    prefab.m_entity, prefab.m_data.m_sprite.value());
-            }
-            if (prefab.m_data.m_relationship) {
-                m_relationship_manager->RegisterEntity(
-                    prefab.m_entity, prefab.m_data.m_relationship.value());
-            }
-
-            m_relationship_manager->RegisterEntity(
-                entity1, Relationship{{prefab.m_entity}});
-        }
-
+        auto result = LoadAsset<EntityInstance>("assets/gpa/waggo.prefab.xml");
+        result.m_payload.m_entity = createEntity();
+        RegisterEntity(result.m_payload);
         executed = true;
+
+        auto root_relationship = m_relationship_manager->Get(GetRootEntity());
+        root_relationship->m_children.push_back(result.m_payload.m_entity);
     }
-    */
     ////////////////////////////////////
 
     logicUpdate();
-    // gameLogicUpdate();
+    gameLogicUpdate();
     renderUpdate();
     logicPostUpdate();
 }
@@ -139,10 +104,21 @@ Entity Context::GetRootEntity() {
     return m_root_entity;
 }
 
+#ifdef TL_ENABLE_EDITOR
+const Path& Context::GetProjectPath() const {
+    return m_project_path;
+}
+#endif
+
 Context::Context() {
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
                       SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+
+#ifdef TL_ENABLE_EDITOR
+    parseProjectPath();
+#endif
+
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
     m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
@@ -150,7 +126,10 @@ Context::Context() {
     m_image_manager = std::make_unique<ImageManager>(*m_renderer);
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
+    
+#ifdef TL_ENABLE_EDITOR
     m_editor = std::make_unique<Editor>();
+#endif
 
     m_root_entity = createEntity();
 
@@ -168,7 +147,7 @@ Context::Context() {
 
     m_input_manager = std::make_unique<InputManager>(
         *this, std::string{"assets/gpa/input_config"} +
-                   InputConfig_AssetExtension.data() + ".xml");
+                   InputConfig_AssetExtension.data());
 }
 
 void Context::logicUpdate() {
@@ -186,9 +165,9 @@ void Context::gameLogicUpdate() {
 
     Transform* transform = m_transform_manager->Get(entity);
 
-    auto& action = m_input_manager->GetAction("Rotate");
-    auto& x_axis = m_input_manager->GetAxis("MoveHorizontal");
-    auto& y_axis = m_input_manager->GetAxis("MoveVertical");
+    auto& action = m_input_manager->GetAction("Attack");
+    auto& x_axis = m_input_manager->GetAxis("MoveX");
+    auto& y_axis = m_input_manager->GetAxis("MoveY");
     transform->m_position.x += 0.1f * x_axis.Value();
     transform->m_position.y += 0.1f * y_axis.Value();
     if (action.IsPressed()) {
@@ -207,7 +186,10 @@ void Context::renderUpdate() {
 
     m_sprite_manager->Update();
     m_inspector->Update();
+    
+#ifdef TL_ENABLE_EDITOR
     m_editor->Update();
+#endif
 
     m_inspector->EndFrame();
     m_renderer->Present();
@@ -215,4 +197,51 @@ void Context::renderUpdate() {
 
 Entity Context::createEntity() {
     return m_last_entity++;
+}
+
+void Context::parseProjectPath() {
+    auto file =
+        IOStream::CreateFromFile("project_path.xml", IOMode::Read, true);
+    if (!file) {
+        return;
+    }
+
+    auto content = file->Read();
+    content.push_back('\0');
+
+    rapidxml::xml_document<> doc;
+    doc.parse<0>(content.data());
+    auto node = doc.first_node("ProjectPath");
+    if (!node) {
+        LOGE("no ProjectPath node in project_path.xml");
+        return;
+    }
+
+    
+#ifdef TL_ENABLE_EDITOR
+    m_project_path = node->value();
+#endif
+}
+
+void Context::RegisterEntity(const EntityInstance& entity_instance) {
+    if (entity_instance.m_data.m_sprite) {
+        m_sprite_manager->ReplaceComponent(
+            entity_instance.m_entity, entity_instance.m_data.m_sprite.value());
+    }
+    if (entity_instance.m_data.m_transform) {
+        m_transform_manager->ReplaceComponent(
+            entity_instance.m_entity,
+            entity_instance.m_data.m_transform.value());
+    }
+    if (entity_instance.m_data.m_relationship) {
+        m_relationship_manager->ReplaceComponent(
+            entity_instance.m_entity,
+            entity_instance.m_data.m_relationship.value());
+    }
+}
+
+void Context::RemoveEntity(Entity entity) {
+    m_sprite_manager->RemoveEntity(entity);
+    m_transform_manager->RemoveEntity(entity);
+    m_relationship_manager->RemoveEntity(entity);
 }

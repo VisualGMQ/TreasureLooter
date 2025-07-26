@@ -1,6 +1,8 @@
 ﻿#include "uuid.hpp"
 #include "uuid.h"
 
+#include "log.hpp"
+
 #include <chrono>
 
 UUID UUID::CreateV4() {
@@ -15,16 +17,18 @@ UUID UUID::CreateV4() {
 
 UUID UUID::CreateFromString(const std::string& str) {
     UUID result;
-    if (auto uuid = uuids::uuid::from_string(str); result) {
+    if (auto uuid = uuids::uuid::from_string(str); uuid) {
         auto bytes = uuid->as_bytes();
         std::copy(bytes.begin(), bytes.end(), result.m_data.begin());
+    } else {
+        LOGE("invalid UUID string: {}", str);
     }
     return result;
 }
 
 UUID::operator bool() const {
-    return m_data[0] == std::byte{0} && m_data[1] == std::byte{0} &&
-           m_data[2] == std::byte{0} && m_data[3] == std::byte{0};
+    return !(m_data[0] == std::byte{0} && m_data[1] == std::byte{0} &&
+             m_data[2] == std::byte{0} && m_data[3] == std::byte{0});
 }
 
 bool UUID::operator==(UUID const& o) const {

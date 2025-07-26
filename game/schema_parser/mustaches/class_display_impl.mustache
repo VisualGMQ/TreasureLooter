@@ -1,15 +1,20 @@
 void InstanceDisplay(const char* name, {{type}}& value) {
     ImGui::Text("%s", name);
     {{#properties}}
-    InstanceDisplay("{{{property}}}", value.m_{{{property}}});
+    if (ImGui::TreeNode("{{property}}")) {
+        InstanceDisplay("{{{property}}}", value.m_{{{property}}});
+        ImGui::TreePop();
+    }
     {{/properties}}
 }
 
 void InstanceDisplay(const char* name, const {{type}}& value) {
     ImGui::BeginDisabled(true);
-    ImGui::Text("%s", name);
     {{#properties}}
-        InstanceDisplay("{{{property}}}", value.m_{{{property}}});
+        if (ImGui::TreeNode("{{property}}")) {
+            InstanceDisplay("{{{property}}}", value.m_{{{property}}});
+            ImGui::TreePop();
+        }
     {{/properties}}
     ImGui::EndDisabled();
 }

@@ -10,6 +10,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
+################ generate project path config file ################
+configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_path.xml)
+
 ################ compile schema parser ################
 set(NEED_SCHEMA_PARSER ON)
 
@@ -62,12 +65,16 @@ file(GLOB_RECURSE SRC ./src/*.cpp ./src/*.c)
 file(GLOB_RECURSE HEADER ./include/*.hpp ./include/*.h)
 file(GLOB_RECURSE ASSETS ./assets/*)
 
+set(TL_ENABLE_EDITOR_MODE ON)
+
 set(GAME_NAME ${PROJECT_NAME})
 if (ANDROID)
+    set(TL_ENABLE_EDITOR_MODE OFF)
     set(GAME_NAME main)
     add_library(${GAME_NAME} SHARED)
 else()
     if (EMSCRIPTEN)
+        set(TL_ENABLE_EDITOR_MODE OFF)
         set(GAME_NAME index)
     endif()
     add_executable(${GAME_NAME})
@@ -93,6 +100,7 @@ target_include_directories(${GAME_NAME} PRIVATE include schema_generate)
 target_compile_features(${GAME_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${GAME_NAME} PRIVATE SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid)
 target_compile_definitions(${GAME_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(${GAME_NAME} PUBLIC $<$<AND:$<CONFIG:Debug>,$<BOOL:${TL_ENABLE_EDITOR_MODE}>>:TL_ENABLE_EDITOR>)
 
 ################ instal #######################
 install(TARGETS ${GAME_NAME} DESTINATION .)

@@ -49,7 +49,7 @@ void InstanceDisplay(const char* name, Degrees& value);
 void InstanceDisplay(const char* name, const Degrees& value);
 void InstanceDisplay(const char* name, Radians& value);
 void InstanceDisplay(const char* name, const Radians& value);
-void InstanceDisplay(const char* name, Handle<Image> value);
+void InstanceDisplay(const char* name, Handle<Image>& value);
 void InstanceDisplay(const char* name, Image* value);
 void InstanceDisplay(const char* name, const Image* value);
 void InstanceDisplay(const char* name, Transform& value);
@@ -60,14 +60,18 @@ void InstanceDisplay(const char* name, std::optional<T>& value) {
     ImGui::Text("%s", name);
     ImGui::SameLine();
     if (!value) {
+        ImGui::PushID(ImGuiIDGenerator::Gen());
         if (ImGui::Button("new")) {
             value = T{};
         }
+        ImGui::PopID();
         ImGui::Text("NULL");
     } else {
+        ImGui::PushID(ImGuiIDGenerator::Gen());
         if (ImGui::Button("del")) {
             value.reset();
         }
+        ImGui::PopID();
     }
 
     if (value) {
