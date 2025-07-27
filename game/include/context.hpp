@@ -19,6 +19,7 @@
 #include "tilemap.hpp"
 #include "timer.hpp"
 #include "window.hpp"
+#include "timer.hpp"
 
 #include <memory>
 
