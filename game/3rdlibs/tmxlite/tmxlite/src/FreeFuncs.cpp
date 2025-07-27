@@ -37,6 +37,10 @@ source distribution.
 #include <cstring>
 #include <fstream>
 
+#ifdef TMXLITE_USE_SDL3_IOSTREAM
+#include "SDL3/SDL.h"
+#endif
+
 bool tmx::decompress(const char* source, std::vector<unsigned char>& dest, std::size_t inSize, std::size_t expectedSize)
 {
     if (!source)
@@ -267,6 +271,24 @@ std::string tmx::resolveFilePath(std::string path, std::string workingDir)
 
 bool tmx::readFileIntoString(const std::string& path, std::string* out)
 {
+#ifdef TMXLITE_USE_SDL3_IOSTREAM
+    SDL_IOStream* io = SDL_IOFromFile(path.c_str(), "r");
+    Sint64 size = SDL_GetIOSize(io);
+    if (size < 0) {
+        SDL_CloseIO(io);
+        return false;
+    }
+
+    out->resize(size);
+    size = 0;
+    size_t read_size;
+    while ((read_size = SDL_ReadIO(io, (char*)out->data() + size, out->size())) > 0) {
+        size += read_size;
+    }
+    SDL_CloseIO(io);
+    out->push_back('\0');
+    return true;
+#else
     std::ifstream stream(path);
     if (!stream.is_open())
     {
@@ -274,4 +296,5 @@ bool tmx::readFileIntoString(const std::string& path, std::string* out)
     }
     out->append((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
     return !stream.bad();
+#endif
 }
