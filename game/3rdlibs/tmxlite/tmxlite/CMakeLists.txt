@@ -15,6 +15,7 @@ SET(USE_RTTI TRUE CACHE BOOL "Use run time type information?")
 
 SET(USE_EXTLIBS FALSE CACHE BOOL "Use external zlib, zstd and pugixml libraries instead of the included source?")
 SET(USE_ZSTD FALSE CACHE BOOL "Enable zstd compression? (Already set to true if USE_EXTLIBS is true)")
+SET(USE_SDL3_IOSTREAM ON CACHE BOOL "Enable SDL3 IOStream?")
 
 if(USE_RTTI)
   if(CMAKE_COMPILER_IS_GNUCXX OR APPLE)
@@ -109,6 +110,11 @@ else()
     if(USE_ZSTD)
     target_link_libraries(${PROJECT_NAME} ${ZSTD_LIBRARY})    
     endif()    
+endif()
+
+if (USE_SDL3_IOSTREAM)
+    target_link_libraries(${PROJECT_NAME} SDL3::SDL3)    
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TMXLITE_USE_SDL3_IOSTREAM)    
 endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
