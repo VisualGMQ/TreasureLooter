@@ -88,12 +88,12 @@ class AnimationTrack<T, AnimationTrackType::Linear>
     : public IAnimationTrack<T> {
 public:
     T GetValue() const override {
-        if (m_cur_frame + 1 >= m_keyframes.size()) {
-            return m_keyframes[m_cur_frame].m_value;
+        if (this->m_cur_frame + 1 >= this->m_keyframes.size()) {
+            return this->m_keyframes[this->m_cur_frame].m_value;
         }
-        auto& cur_frame = m_keyframes[m_cur_frame];
-        auto& next_frame = m_keyframes[m_cur_frame + 1];
-        float t = (m_cur_time - cur_frame.m_time) /
+        auto& cur_frame = this->m_keyframes[this->m_cur_frame];
+        auto& next_frame = this->m_keyframes[this->m_cur_frame + 1];
+        float t = (this->m_cur_time - cur_frame.m_time) /
                   (next_frame.m_time - cur_frame.m_time);
         return Lerp(cur_frame.m_value, next_frame.m_value, t);
     }
@@ -103,7 +103,7 @@ template <typename T>
 class AnimationTrack<T, AnimationTrackType::Discrete>
     : public IAnimationTrack<T> {
 public:
-    T GetValue() const override { return m_keyframes[m_cur_frame].m_value; }
+    T GetValue() const override { return this->m_keyframes[this->m_cur_frame].m_value; }
 };
 
 enum class AnimationBindingPoint {
