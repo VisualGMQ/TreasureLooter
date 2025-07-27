@@ -11,6 +11,7 @@
 #include <string>
 
 class Image;
+class Tilemap;
 class Relationship;
 
 // integral
@@ -100,6 +101,15 @@ void Deserialize(rapidxml::xml_node<>& node, Handle<Image>& payload);
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const Image* payload, const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, Image*& payload);
+
+// Tilemap
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Handle<Tilemap> payload,
+                                const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, Handle<Tilemap>& payload);
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Tilemap* payload, const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, Tilemap*& payload);
 
 // std::string
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,

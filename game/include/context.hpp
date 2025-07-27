@@ -9,6 +9,7 @@
 #include "input/mouse.hpp"
 #include "inspector.hpp"
 #include "renderer.hpp"
+#include "tilemap.hpp"
 #include "window.hpp"
 
 #include <memory>
@@ -41,6 +42,8 @@ public:
     std::unique_ptr<Editor> m_editor;
 #endif
     std::unique_ptr<TransformManager> m_transform_manager;
+    std::unique_ptr<TilemapManager> m_tilemap_manager;
+    std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
     std::unique_ptr<RelationshipManager> m_relationship_manager;
     std::unique_ptr<Keyboard> m_keyboard;

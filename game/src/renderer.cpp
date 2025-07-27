@@ -64,6 +64,23 @@ void Renderer::DrawImage(const Image& image, const Region& src,
                                       static_cast<SDL_FlipMode>(flip.Value())));
 }
 
+void Renderer::DrawTiled(const Image& image, const Region& src,
+                         const Region& dst, float scale) {
+    SDL_FRect src_rect, dst_rect;
+    src_rect.x = src.m_topleft.x;
+    src_rect.y = src.m_topleft.y;
+    src_rect.w = src.m_size.w;
+    src_rect.h = src.m_size.h;
+
+    dst_rect.x = dst.m_topleft.x;
+    dst_rect.y = dst.m_topleft.y;
+    dst_rect.w = dst.m_size.w * (scale + 0.01);
+    dst_rect.h = dst.m_size.h * (scale + 0.01);
+
+    SDL_CALL(SDL_RenderTextureTiled(m_renderer, image.GetTexture(), &src_rect,
+                                    scale, &dst_rect));
+}
+
 void Renderer::Clear() {
     SDL_CALL(SDL_SetRenderDrawColor(m_renderer, m_clear_color.r,
                                     m_clear_color.g, m_clear_color.b,

@@ -54,6 +54,10 @@ void InstanceDisplay(const char* name, Image* value);
 void InstanceDisplay(const char* name, const Image* value);
 void InstanceDisplay(const char* name, Transform& value);
 void InstanceDisplay(const char* name, const Transform& value);
+void InstanceDisplay(const char* name, TilemapHandle& value);
+void InstanceDisplay(const char* name, const TilemapHandle& value);
+void InstanceDisplay(const char* name, Tilemap* value);
+void InstanceDisplay(const char* name, const Tilemap* value);
 
 template <typename T>
 void InstanceDisplay(const char* name, std::optional<T>& value) {

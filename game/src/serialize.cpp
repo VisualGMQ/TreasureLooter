@@ -378,6 +378,46 @@ void Deserialize(rapidxml::xml_node<>& node, Image*& payload) {
 }
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Tilemap* payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    if (payload) {
+        node->value(
+            doc.allocate_string(payload->GetFilename().string().c_str()));
+    }
+    return node;
+}
+
+void Deserialize(rapidxml::xml_node<>& node, Tilemap*& payload) {
+    Path filename = node.value();
+    auto& manager = Context::GetInst().m_tilemap_manager;
+    auto handle = manager->Load(filename);
+    if (!handle) {
+        handle = manager->Load(filename);
+    }
+
+    if (!handle) {
+        payload = handle.Get();
+    }
+}
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Handle<Tilemap> payload,
+                                const std::string& name) {
+    return Serialize(doc, &*payload, name);
+}
+
+void Deserialize(rapidxml::xml_node<>& node, Handle<Tilemap>& payload) {
+    Path filename = node.value();
+    auto& manager = Context::GetInst().m_tilemap_manager;
+    payload = manager->Find(filename);
+    if (!payload) {
+        payload = manager->Load(filename);
+    }
+}
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const std::string& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
