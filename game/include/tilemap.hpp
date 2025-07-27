@@ -85,7 +85,9 @@ public:
 
     const Tile* GetTile(uint32_t gid) const;
 
-    const Vec2& GetTileSize() const { return m_tile_size; }
+    const Vec2& GetTileSize() const;
+
+    const Path& GetFilename() const;
 
 private:
     void parse(const Path& filename);
@@ -93,6 +95,7 @@ private:
     std::vector<std::unique_ptr<TilemapLayer>> m_layers;
     std::vector<Tileset> m_tilesets;
     Vec2 m_tile_size;
+    Path m_filename;
 };
 
 using TilemapHandle = Handle<Tilemap>;

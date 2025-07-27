@@ -65,16 +65,25 @@ void Context::Update() {
     static bool executed = false;
 
     if (!executed) {
-        auto result = LoadAsset<EntityInstance>("assets/gpa/waggo.prefab.xml");
-        result.m_payload.m_entity = createEntity();
-        RegisterEntity(result.m_payload);
+        {
+            auto result = LoadAsset<EntityInstance>("assets/gpa/waggo.prefab.xml");
+            result.m_payload.m_entity = createEntity();
+            RegisterEntity(result.m_payload);
+
+            auto root_relationship = m_relationship_manager->Get(GetRootEntity());
+            root_relationship->m_children.push_back(result.m_payload.m_entity);
+        }
+        {
+            auto result =
+                LoadAsset<EntityInstance>("assets/gpa/tilemap.prefab.xml");
+            result.m_payload.m_entity = createEntity();
+            RegisterEntity(result.m_payload);
+
+            auto root_relationship =
+                m_relationship_manager->Get(GetRootEntity());
+            root_relationship->m_children.push_back(result.m_payload.m_entity);
+        }
         executed = true;
-
-        auto tilemap = m_tilemap_manager->Load("assets/tilemap/test.tmx");
-        m_tilemap_component_manager->RegisterEntity(result.m_payload.m_entity, tilemap);
-
-        auto root_relationship = m_relationship_manager->Get(GetRootEntity());
-        root_relationship->m_children.push_back(result.m_payload.m_entity);
     }
     ////////////////////////////////////
 
@@ -246,6 +255,11 @@ void Context::RegisterEntity(const EntityInstance& entity_instance) {
         m_relationship_manager->ReplaceComponent(
             entity_instance.m_entity,
             entity_instance.m_data.m_relationship.value());
+    }
+    if (entity_instance.m_data.m_tilemap) {
+        m_tilemap_component_manager->ReplaceComponent(
+            entity_instance.m_entity,
+            entity_instance.m_data.m_tilemap);
     }
 }
 

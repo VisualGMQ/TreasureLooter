@@ -91,7 +91,7 @@ bool Tileset::HasTile(uint32_t gid) const {
     return gid >= m_firstgid && gid < m_lastgid;
 }
 
-Tilemap::Tilemap(const Path& filename) {
+Tilemap::Tilemap(const Path& filename): m_filename{filename} {
     parse(filename);
 }
 
@@ -102,6 +102,14 @@ const Tile* Tilemap::GetTile(uint32_t gid) const {
         }
     }
     return nullptr;
+}
+
+const Vec2& Tilemap::GetTileSize() const {
+    return m_tile_size;
+}
+
+const Path& Tilemap::GetFilename() const {
+    return m_filename;
 }
 
 void Tilemap::parse(const Path& filename) {

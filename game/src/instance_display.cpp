@@ -403,13 +403,81 @@ void InstanceDisplay(const char* name, Transform& value) {
 
 void InstanceDisplay(const char* name, const Transform& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
-    
+
     ImGui::BeginDisabled(true);
     ImGui::Text("%s", name);
     InstanceDisplay("position", value.m_position);
     InstanceDisplay("scale", value.m_scale);
     InstanceDisplay("rotation", value.m_rotation);
     ImGui::EndDisabled();
-    
+
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, TilemapHandle& value) {
+    std::string button_text = "no tilemap";
+
+    if (value) {
+        button_text = value->GetFilename().string();
+    }
+
+#ifdef TL_ENABLE_EDITOR
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    if (ImGui::Button(button_text.c_str())) {
+        FileDialog dialog{FileDialog::Type::OpenFile};
+        auto base_path = Context::GetInst().GetProjectPath();
+        dialog.SetTitle("Select Image");
+        dialog.AddFilter("TileMap", "tmx");
+        dialog.SetDefaultFolder(base_path);
+        dialog.Open();
+
+        auto& files = dialog.GetSelectedFiles();
+        if (!files.empty()) {
+            auto& filename = files[0];
+
+            std::error_code err;
+            auto relative_path =
+                std::filesystem::relative(filename, base_path, err);
+            std::string relative_path_str = relative_path.string();
+            std::replace_if(
+                relative_path_str.begin(), relative_path_str.end(),
+                [](char c) { return c == '\\'; }, '/');
+            relative_path = relative_path_str;
+
+            if (err) {
+                LOGE("Can only select file under {} dir", base_path);
+            } else {
+                value =
+                    Context::GetInst().m_tilemap_manager->Load(relative_path);
+            }
+        }
+    }
+
+    ImGui::PopID();
+#else
+    InstanceDisplay(name, value.Get());
+#endif
+}
+
+void InstanceDisplay(const char* name, const TilemapHandle& value) {
+    InstanceDisplay(name, value.Get()); 
+}
+
+void InstanceDisplay(const char* name, Tilemap* value) {
+    InstanceDisplay(name, static_cast<const Tilemap*>(value));
+}
+
+void InstanceDisplay(const char* name, const Tilemap* value) {
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+
+    ImGui::BeginDisabled(true);
+    if (value) {
+        auto filename = value->GetFilename().string();
+        ImGui::InputText(name, (char*)filename.c_str(), filename.length());
+    } else {
+        ImGui::InputText(name, nullptr, 0);
+    }
+    ImGui::EndDisabled();
+
     ImGui::PopID();
 }
