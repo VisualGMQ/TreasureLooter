@@ -16,11 +16,12 @@
 			</sprite>
 			<transform>
 				<value>
-					<position x="0.000000" y="0.000000"/>
-					<scale x="10.000000" y="10.000000"/>
+					<position x="738.000000" y="1182.000000"/>
+					<scale x="4.000000" y="4.000000"/>
 					<rotation>0.000000</rotation>
 				</value>
 			</transform>
+			<tilemap/>
 		</data>
 	</payload>
 </EntityInstance>

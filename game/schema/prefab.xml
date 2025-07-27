@@ -1,6 +1,7 @@
 <schema>
     <include>entity.hpp</include>
     <include>transform.hpp</include>
+    <include>tilemap.hpp</include>
     <import>sprite</import>
     <import>relationship</import>
     
@@ -8,6 +9,7 @@
         <option type="Sprite" name="sprite"/>
         <option type="Transform" name="transform"/>
         <option type="Relationship" name="relationship"/>
+        <handle type="Tilemap" name="tilemap"/>
     </class>
     
     <asset name="EntityInstance" extension=".prefab">

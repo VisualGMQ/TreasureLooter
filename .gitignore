@@ -15,3 +15,5 @@ android/app/src/main/assets/assets
 emcmake-build
 android/app/release
 project_path.xml
+*.tiled-project
+*.tiled-session
