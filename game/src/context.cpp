@@ -12,11 +12,11 @@
 #include "serialize.hpp"
 #include "sprite.hpp"
 #include "storage.hpp"
+#include "tilemap.hpp"
 #include "transform.hpp"
 #include "uuid.h"
 
 #include <iostream>
-#include <sstream>
 
 std::unique_ptr<Context> Context::instance;
 
@@ -48,6 +48,8 @@ Context::~Context() {
     m_touches.reset();
     m_mouse.reset();
     m_keyboard.reset();
+    m_tilemap_component_manager.reset();
+    m_tilemap_manager.reset();
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_inspector.reset();
@@ -67,6 +69,9 @@ void Context::Update() {
         result.m_payload.m_entity = createEntity();
         RegisterEntity(result.m_payload);
         executed = true;
+
+        auto tilemap = m_tilemap_manager->Load("assets/tilemap/test.tmx");
+        m_tilemap_component_manager->RegisterEntity(result.m_payload.m_entity, tilemap);
 
         auto root_relationship = m_relationship_manager->Get(GetRootEntity());
         root_relationship->m_children.push_back(result.m_payload.m_entity);
@@ -124,6 +129,8 @@ Context::Context() {
     m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
 
     m_image_manager = std::make_unique<ImageManager>(*m_renderer);
+    m_tilemap_manager = std::make_unique<TilemapManager>();
+    m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
     
@@ -148,6 +155,7 @@ Context::Context() {
     m_input_manager = std::make_unique<InputManager>(
         *this, std::string{"assets/gpa/input_config"} +
                    InputConfig_AssetExtension.data());
+
 }
 
 void Context::logicUpdate() {
@@ -184,6 +192,7 @@ void Context::renderUpdate() {
     m_inspector->BeginFrame();
     m_renderer->Clear();
 
+    m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
     m_inspector->Update();
     
