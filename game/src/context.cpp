@@ -37,6 +37,7 @@ Context& Context::GetInst() {
 }
 
 Context::~Context() {
+    m_time.reset();
     m_input_manager.reset();
     m_generic_assets_manager.reset();
     m_gamepad_manager.reset();
@@ -53,6 +54,7 @@ Context::~Context() {
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_inspector.reset();
+    m_animation_manager.reset();
     m_image_manager.reset();
     m_renderer.reset();
     m_window.reset();
@@ -61,6 +63,7 @@ Context::~Context() {
 }
 
 void Context::Update() {
+    m_time->Update();
     ////////// this is a test //////////
     static bool executed = false;
 
@@ -84,7 +87,28 @@ void Context::Update() {
             root_relationship->m_children.push_back(result.m_payload.m_entity);
         }
         executed = true;
+        auto root_relationship = m_relationship_manager->Get(GetRootEntity());
+        root_relationship->m_children.push_back(result.m_payload.m_entity);
+        auto children = m_relationship_manager->Get(m_root_entity);
+        Entity entity = children->m_children[0];
+    
+        auto track1 = std::make_unique<AnimationTrack<float, AnimationTrackType::Linear>>();
+        track1->AddKeyframe({100.0f, 0});
+        track1->AddKeyframe({800.0f, 3});
+
+        auto track2 = std::make_unique<AnimationTrack<float, AnimationTrackType::Linear>>();
+        track2->AddKeyframe({100, 0});
+        track2->AddKeyframe({800, 3});
+
+        Animation anim;
+        anim.AddTrack(AnimationBindingPoint::TransformPositionX, std::move(track1));
+        anim.AddTrack(AnimationBindingPoint::TransformPositionY, std::move(track2));
+        anim.Play();
+        anim.SetLoop(Animation::InfLoop);
+
+        m_animation_manager->RegisterEntity(entity, std::move(anim));
     }
+
     ////////////////////////////////////
 
     logicUpdate();
@@ -140,6 +164,7 @@ Context::Context() {
     m_image_manager = std::make_unique<ImageManager>(*m_renderer);
     m_tilemap_manager = std::make_unique<TilemapManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
+    m_animation_manager = std::make_unique<AnimationManager>();
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
     
@@ -165,6 +190,7 @@ Context::Context() {
         *this, std::string{"assets/gpa/input_config"} +
                    InputConfig_AssetExtension.data());
 
+    m_time = std::make_unique<Time>();
 }
 
 void Context::logicUpdate() {
@@ -172,6 +198,8 @@ void Context::logicUpdate() {
     m_keyboard->Update();
     m_mouse->Update();
     m_touches->Update();
+    
+    m_animation_manager->Update(m_time->GetElapseTime());
     m_relationship_manager->Update();
 }
 
