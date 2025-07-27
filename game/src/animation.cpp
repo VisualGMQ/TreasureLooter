@@ -86,9 +86,13 @@ void Animation::Sync(Entity entity) {
     }
 }
 
-void AnimationManager::Update(TimeType delta_time) {
+void AnimationComponentManager::Update(TimeType delta_time) {
     for (auto& [entity, anim] : m_components) {
         anim->Update(delta_time);
         anim->Sync(entity);
     }
+}
+
+AnimationHandle AnimationManager::Create() {
+    return store(nullptr, UUID::CreateV4(), std::make_unique<Animation>());
 }

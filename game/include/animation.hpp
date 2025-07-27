@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "asset_manager.hpp"
 #include "entity.hpp"
 #include "log.hpp"
 #include "manager.hpp"
@@ -153,7 +154,18 @@ private:
         m_tracks;
 };
 
-class AnimationManager: public ComponentManager<Animation> {
+using AnimationHandle = Handle<Animation>;
+
+class AnimationComponentManager: public ComponentManager<Animation> {
 public:
     void Update(TimeType delta_time);
+};
+
+class AnimationManager: public AssetManagerBase<Animation> {
+public:
+    AnimationHandle Load(const Path& filename) override {
+        // TODO: not impl
+        return {};
+    }
+    AnimationHandle Create();
 };

@@ -39,6 +39,7 @@ public:
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<ImageManager> m_image_manager;
+    std::unique_ptr<AnimationComponentManager> m_animation_component_manager;
     std::unique_ptr<AnimationManager> m_animation_manager;
     std::unique_ptr<Inspector> m_inspector;
 #ifdef TL_ENABLE_EDITOR
