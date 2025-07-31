@@ -1,0 +1,18 @@
+<schema>
+    <enum name="AnimationBindingPoint">
+        <item name = "Unknown" value ="0"/>
+        <item name = "TransformPosition"/>
+        <item name = "TransformScale"/>
+        <item name = "TransformRotation"/>
+
+        <item name = "SpriteRegion"/>
+        <item name = "SpriteSize"/>
+        <item name = "SpriteImage"/>
+        <item name = "SpriteFlip"/>
+    </enum>
+
+    <enum name="AnimationTrackType">
+        <item name = "Linear"/>
+        <item name = "Discrete"/>
+    </enum>
+</schema>

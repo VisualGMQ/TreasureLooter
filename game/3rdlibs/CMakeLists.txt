@@ -16,4 +16,5 @@ add_3rdlib(Mustache)
 add_3rdlib(stduuid)
 
 set(TMXLITE_STATIC_LIB ON)
+set(USE_SDL3_IOSTREAM ON)
 add_3rdlib(tmxlite/tmxlite)
