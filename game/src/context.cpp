@@ -81,20 +81,13 @@ void Context::Update() {
             Entity entity = children->m_children[0];
 
             auto track1 = std::make_unique<
-                AnimationTrack<float, AnimationTrackType::Linear>>();
-            track1->AddKeyframe({100.0f, 0});
-            track1->AddKeyframe({800.0f, 3});
-
-            auto track2 = std::make_unique<
-                AnimationTrack<float, AnimationTrackType::Linear>>();
-            track2->AddKeyframe({100, 0});
-            track2->AddKeyframe({800, 3});
+                AnimationTrack<Vec2, AnimationTrackType::Linear>>();
+            track1->AddKeyframe({{100.0f, 100}, 0});
+            track1->AddKeyframe({{800.0f, 800}, 3});
 
             Animation anim;
-            anim.AddTrack(AnimationBindingPoint::TransformPositionX,
+            anim.AddTrack(AnimationBindingPoint::TransformPosition,
                           std::move(track1));
-            anim.AddTrack(AnimationBindingPoint::TransformPositionY,
-                          std::move(track2));
             anim.Play();
             anim.SetLoop(Animation::InfLoop);
 

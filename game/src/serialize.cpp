@@ -2,6 +2,8 @@
 
 #include "context.hpp"
 #include "image.hpp"
+#include "schema/serialize/animation.hpp"
+#include "schema/serialize/flip.hpp"
 #include <stdexcept>
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
@@ -441,4 +443,210 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 
 void Deserialize(rapidxml::xml_node<>& node, UUID& payload) {
     payload = UUID::CreateFromString(node.value());
+}
+
+// x-macros for shorten code
+#define HANDLE_ANIM_SERIALIZE(binding) if (binding_point == binding)
+#define HANDLE_LINEAR_TRACK_SERIALIZE()                                \
+    if (payload.GetType() == AnimationTrackType::Linear) {             \
+        auto& keyframes = static_cast<const AnimationTrack<            \
+            TARGET_TYPE, AnimationTrackType::Linear>&>(payload)        \
+                              .GetKeyframes();                         \
+        for (auto& keyframe : keyframes) {                             \
+            auto keyframe_node = Serialize(doc, keyframe, "keyframe"); \
+            keyframes_node->append_node(keyframe_node);                \
+        }                                                              \
+    }
+#define HANDLE_DISCRETE_TRACK_SERIALIZE()                              \
+    if (payload.GetType() == AnimationTrackType::Discrete) {           \
+        auto& keyframes = static_cast<const AnimationTrack<            \
+            TARGET_TYPE, AnimationTrackType::Discrete>&>(payload)      \
+                              .GetKeyframes();                         \
+        for (auto& keyframe : keyframes) {                             \
+            auto keyframe_node = Serialize(doc, keyframe, "keyframe"); \
+            keyframes_node->append_node(keyframe_node);                \
+        }                                                              \
+    }
+
+rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
+                                         AnimationBindingPoint binding_point,
+                                         const AnimationTrackBase& payload,
+                                         const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->append_node(Serialize(doc, binding_point, "binding_point"));
+    auto keyframes_node =
+        doc.allocate_node(rapidxml::node_type::node_element, "keyframes");
+    node->append_node(Serialize(doc, payload.GetType(), "type"));
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformPosition) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE float
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformRotation) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformScale) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteImage) {
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteFlip) {
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteRegion) {
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteSize) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+    return node;
+}
+
+#undef HANDLE_ANIM_SERIALIZE
+#undef HANDLE_LINEAR_TRACK
+#undef HANDLE_DISCRETE_TRACK
+
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Animation& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+
+    auto tracks_node =
+        doc.allocate_node(rapidxml::node_type::node_element, "tracks");
+
+    auto& tracks = payload.GetTracks();
+    for (auto& track : tracks) {
+        auto track_node =
+            serializeAnimTrack(doc, track.first, *track.second, "track");
+        tracks_node->append_node(track_node);
+    }
+
+    node->append_node(Serialize(doc, payload.GetLoopCount(), "loop"));
+    node->append_node(tracks_node);
+    return node;
+}
+
+#define HANDLE_ANIM_DESERIALIZE(binding) if (binding_point == binding)
+#define HANDLE_CREATE_TRACK()                            \
+    std::vector<KeyFrame<TARGET_TYPE>> keyframes;        \
+    while (keyframes_node) {                             \
+        KeyFrame<TARGET_TYPE> keyframe;                  \
+        Deserialize(*keyframes_node, keyframe);          \
+        keyframes.push_back(keyframe);                   \
+        keyframes_node = keyframes_node->next_sibling(); \
+    }
+#define HANDLE_LINEAR_TRACK_DESERIALIZE()                               \
+    if (type == AnimationTrackType::Linear) {                           \
+        track = std::make_unique<                                       \
+            AnimationTrack<TARGET_TYPE, AnimationTrackType::Linear>>(); \
+    }
+#define HANDLE_DISCRETE_TRACK_DESERIALIZE()                               \
+    if (type == AnimationTrackType::Linear) {                             \
+        track = std::make_unique<                                         \
+            AnimationTrack<TARGET_TYPE, AnimationTrackType::Discrete>>(); \
+    }
+
+std::tuple<AnimationBindingPoint, std::unique_ptr<AnimationTrackBase>>
+deserializeTrack(rapidxml::xml_node<>& node) {
+    AnimationBindingPoint binding_point = AnimationBindingPoint::Unknown;
+    if (auto binding_point_node = node.first_node("binding_point")) {
+        Deserialize(*binding_point_node, binding_point);
+    }
+
+    auto keyframes_node = node.first_node("keyframes");
+    AnimationTrackType type = AnimationTrackType::Discrete;
+    auto type_node = node.first_node("type");
+    Deserialize(*type_node, type);
+
+    std::unique_ptr<AnimationTrackBase> track;
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformPosition){
+        HANDLE_CREATE_TRACK() HANDLE_LINEAR_TRACK_DESERIALIZE()
+            HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformScale){
+        HANDLE_CREATE_TRACK() HANDLE_LINEAR_TRACK_DESERIALIZE()
+            HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+#undef TARGET_TYPE
+
+#define TARGET_TYPE float
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformRotation){
+        HANDLE_CREATE_TRACK() HANDLE_LINEAR_TRACK_DESERIALIZE()
+            HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+#undef TARGET_TYPE
+
+#define TARGET_TYPE ImageHandle
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteImage){
+        HANDLE_CREATE_TRACK() HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Flags<Flip>
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteFlip){
+        HANDLE_CREATE_TRACK() HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Region
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegion){
+        HANDLE_CREATE_TRACK() HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteSize) {
+        HANDLE_CREATE_TRACK()
+        HANDLE_LINEAR_TRACK_DESERIALIZE()
+        HANDLE_DISCRETE_TRACK_DESERIALIZE()
+    }
+#undef TARGET_TYPE
+
+    return {binding_point, std::move(track)};
+}
+
+#undef HANDLE_ANIM_DESERIALIZE
+#undef HANDLE_LINEAR_TRACK_DESERIALIZE
+#undef HANDLE_DISCRETE_TRACK_DESERIALIZE
+
+void Deserialize(rapidxml::xml_node<>& node, Animation& payload) {
+    auto tracks_node = node.first_node("tracks");
+
+    auto n = tracks_node->first_node();
+    while (n) {
+        auto [binding, track] = deserializeTrack(*n);
+        payload.AddTrack(binding, std::move(track));
+        n = n->next_sibling();
+    }
+
+    auto loop_node = node.first_node("loop");
+    int loop;
+    Deserialize(*loop_node, loop);
+    payload.SetLoop(loop);
 }

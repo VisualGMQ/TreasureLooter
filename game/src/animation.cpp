@@ -1,6 +1,8 @@
 ﻿#include "animation.hpp"
 
 #include "context.hpp"
+#include "image.hpp"
+#include "sprite.hpp"
 
 void Animation::Play() {
     m_is_playing = true;
@@ -16,10 +18,8 @@ void Animation::Stop() {
 }
 
 void Animation::Rewind() {
-    for (auto& track : m_tracks) {
-        if (track) {
-            track->Rewind();
-        }
+    for (auto& [_, track] : m_tracks) {
+        track->Rewind();
     }
 }
 
@@ -33,10 +33,8 @@ void Animation::Update(TimeType delta_time) {
     }
 
     m_cur_time += delta_time;
-    for (auto& track : m_tracks) {
-        if (track) {
-            track->Update(delta_time);
-        }
+    for (auto& [_, track] : m_tracks) {
+        track->Update(delta_time);
     }
 
     if (m_cur_time >= m_max_time) {
@@ -54,36 +52,83 @@ void Animation::Update(TimeType delta_time) {
     }
 }
 
+#define BEGIN_BINDING_POINT(binding)                                       \
+    if (auto it = m_tracks.find(AnimationBindingPoint::TransformPosition); \
+        it != m_tracks.end())
+
+#define HANDLE_LINEAR_TRACK()                                               \
+    if (it->second->GetType() == AnimationTrackType::Linear) {              \
+        BINDING_TARGET =                                                    \
+            static_cast<const AnimationTrack<decltype(BINDING_TARGET),      \
+                                             AnimationTrackType::Linear>&>( \
+                *it->second)                                                \
+                .GetValue();                                                \
+    }
+#define HANDLE_DISCRETE_TRACK()                                               \
+    if (it->second->GetType() == AnimationTrackType::Discrete) {              \
+        BINDING_TARGET =                                                      \
+            static_cast<const AnimationTrack<decltype(BINDING_TARGET),        \
+                                             AnimationTrackType::Discrete>&>( \
+                *it->second)                                                  \
+                .GetValue();                                                  \
+    }
+
 void Animation::Sync(Entity entity) {
     auto& ctx = Context::GetInst();
 
-    if (m_tracks[static_cast<size_t>(
-            AnimationBindingPoint::TransformPositionX)] ||
-        m_tracks[static_cast<size_t>(
-            AnimationBindingPoint::TransformPositionY)]) {
-        if (auto transform = ctx.m_transform_manager->Get(entity); transform) {
-            if (m_tracks[static_cast<size_t>(
-                    AnimationBindingPoint::TransformPositionX)]) {
-                transform->m_position.x =
-                    static_cast<
-                        AnimationTrack<float, AnimationTrackType::Linear>*>(
-                        m_tracks[static_cast<size_t>(
-                                     AnimationBindingPoint::TransformPositionX)]
-                            .get())
-                        ->GetValue();
-            }
-            if (m_tracks[static_cast<size_t>(
-                    AnimationBindingPoint::TransformPositionY)]) {
-                transform->m_position.y =
-                    static_cast<
-                        AnimationTrack<float, AnimationTrackType::Linear>*>(
-                        m_tracks[static_cast<size_t>(
-                                     AnimationBindingPoint::TransformPositionY)]
-                            .get())
-                        ->GetValue();
-            }
+    if (auto transform = ctx.m_transform_manager->Get(entity)) {
+#define BINDING_TARGET transform->m_position
+        BEGIN_BINDING_POINT(AnimationBindingPoint::TransformPosition) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
         }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET transform->m_scale
+        BEGIN_BINDING_POINT(AnimationBindingPoint::TransformScale) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET transform->m_rotation
+        BEGIN_BINDING_POINT(AnimationBindingPoint::TransformRotation) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
     }
+
+    if (auto sprite = ctx.m_sprite_manager->Get(entity)) {
+#define BINDING_TARGET sprite->m_image
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteImage) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_region
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteRegion) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_size
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteSize) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_flip
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteFlip) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+    }
+}
+
+int Animation::GetLoopCount() const {
+    return m_loop;
 }
 
 void AnimationComponentManager::Update(TimeType delta_time) {
