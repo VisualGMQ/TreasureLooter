@@ -478,6 +478,7 @@ rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
     auto keyframes_node =
         doc.allocate_node(rapidxml::node_type::node_element, "keyframes");
     node->append_node(Serialize(doc, payload.GetType(), "type"));
+    node->append_node(keyframes_node);
 
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformPosition) {
@@ -486,7 +487,7 @@ rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE Degrees
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformRotation) {
         HANDLE_LINEAR_TRACK_SERIALIZE();
         HANDLE_DISCRETE_TRACK_SERIALIZE();
@@ -500,19 +501,19 @@ rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Vec2
+#define TARGET_TYPE ImageHandle
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteImage) {
         HANDLE_DISCRETE_TRACK_SERIALIZE();
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Vec2
+#define TARGET_TYPE Flags<Flip>
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteFlip) {
         HANDLE_DISCRETE_TRACK_SERIALIZE();
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Vec2
+#define TARGET_TYPE Region
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteRegion) {
         HANDLE_DISCRETE_TRACK_SERIALIZE();
     }
@@ -556,21 +557,25 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 #define HANDLE_ANIM_DESERIALIZE(binding) if (binding_point == binding)
 #define HANDLE_CREATE_TRACK()                            \
     std::vector<KeyFrame<TARGET_TYPE>> keyframes;        \
-    while (keyframes_node) {                             \
+    while (keyframe_node) {                             \
         KeyFrame<TARGET_TYPE> keyframe;                  \
-        Deserialize(*keyframes_node, keyframe);          \
+        Deserialize(*keyframe_node, keyframe);          \
         keyframes.push_back(keyframe);                   \
-        keyframes_node = keyframes_node->next_sibling(); \
+        keyframe_node = keyframe_node->next_sibling(); \
     }
 #define HANDLE_LINEAR_TRACK_DESERIALIZE()                               \
     if (type == AnimationTrackType::Linear) {                           \
-        track = std::make_unique<                                       \
+        auto raw_track = std::make_unique<                              \
             AnimationTrack<TARGET_TYPE, AnimationTrackType::Linear>>(); \
+        raw_track->AddKeyframes(std::move(keyframes));                  \
+        track = std::move(raw_track);                                   \
     }
 #define HANDLE_DISCRETE_TRACK_DESERIALIZE()                               \
-    if (type == AnimationTrackType::Linear) {                             \
-        track = std::make_unique<                                         \
+    if (type == AnimationTrackType::Discrete) {                           \
+        auto raw_track = std::make_unique<                                \
             AnimationTrack<TARGET_TYPE, AnimationTrackType::Discrete>>(); \
+        raw_track->AddKeyframes(std::move(keyframes));                    \
+        track = std::move(raw_track);                                     \
     }
 
 std::tuple<AnimationBindingPoint, std::unique_ptr<AnimationTrackBase>>
@@ -581,6 +586,7 @@ deserializeTrack(rapidxml::xml_node<>& node) {
     }
 
     auto keyframes_node = node.first_node("keyframes");
+    auto keyframe_node = keyframes_node->first_node("keyframe");
     AnimationTrackType type = AnimationTrackType::Discrete;
     auto type_node = node.first_node("type");
     Deserialize(*type_node, type);
@@ -588,43 +594,55 @@ deserializeTrack(rapidxml::xml_node<>& node) {
     std::unique_ptr<AnimationTrackBase> track;
 
 #define TARGET_TYPE Vec2
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformPosition){
-        HANDLE_CREATE_TRACK() HANDLE_LINEAR_TRACK_DESERIALIZE()
-            HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformPosition) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
 #undef TARGET_TYPE
 
 #define TARGET_TYPE Vec2
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformScale){
-        HANDLE_CREATE_TRACK() HANDLE_LINEAR_TRACK_DESERIALIZE()
-            HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformScale) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
 #undef TARGET_TYPE
 
 #define TARGET_TYPE float
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformRotation){
-        HANDLE_CREATE_TRACK() HANDLE_LINEAR_TRACK_DESERIALIZE()
-            HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformRotation) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
 #undef TARGET_TYPE
 
 #define TARGET_TYPE ImageHandle
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteImage){
-        HANDLE_CREATE_TRACK() HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteImage) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
 #undef TARGET_TYPE
 
 #define TARGET_TYPE Flags<Flip>
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteFlip){
-        HANDLE_CREATE_TRACK() HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteFlip) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
 #undef TARGET_TYPE
 
 #define TARGET_TYPE Region
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegion){
-        HANDLE_CREATE_TRACK() HANDLE_DISCRETE_TRACK_DESERIALIZE()}
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegion) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
 #undef TARGET_TYPE
 
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteSize) {
-        HANDLE_CREATE_TRACK()
-        HANDLE_LINEAR_TRACK_DESERIALIZE()
-        HANDLE_DISCRETE_TRACK_DESERIALIZE()
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
     }
 #undef TARGET_TYPE
 

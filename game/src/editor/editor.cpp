@@ -1,5 +1,6 @@
 ﻿#include "editor/editor.hpp"
 
+#include "animation.hpp"
 #include "dialog.hpp"
 #include "imgui.h"
 #include "relationship.hpp"
@@ -32,10 +33,13 @@ struct AssetSyncHelper {
         Context::GetInst().RegisterEntity(payload.m_payload);
     }
 
+    void operator()(AssetLoadResult<Animation>& payload) {}
+
     void operator()(std::monostate) {}
 };
 
-void AddEntityToScene(Entity entity, AssetLoadResult<EntityInstance>& instance) {
+void AddEntityToScene(Entity entity,
+                      AssetLoadResult<EntityInstance>& instance) {
     auto& ctx = Context::GetInst();
     auto root_entity = ctx.GetRootEntity();
     auto relationship = ctx.m_relationship_manager->Get(root_entity);
@@ -48,7 +52,7 @@ void AddEntityToScene(Entity entity, AssetLoadResult<EntityInstance>& instance) 
 template <typename T>
 AssetTypes LoadAssetFromPath(const Path& filename) {
     auto result = LoadAsset<T>(filename);
-    return AssetTypes{result};
+    return AssetTypes{std::move(result)};
 }
 
 template <>
@@ -80,32 +84,36 @@ template <typename T>
 AssetTypes CreateAsset() {
     AssetLoadResult<T> result;
     result.m_uuid = UUID::CreateV4();
-    return AssetTypes{result};
+    return AssetTypes{std::move(result)};
 }
 
 void Editor::Update() {
     if (ImGui::Begin("Editor", &m_open)) {
-        static const std::array<const char*, 2> asset_types = {
+        static const std::array<const char*, 3> asset_types = {
             "InputConfig",
             "EntityInstance",
+            "Animation",
         };
 
-        static const std::array<std::string_view, 2> asset_extensions = {
+        static const std::array<std::string_view, 3> asset_extensions = {
             InputConfig_AssetExtension,
             EntityInstance_AssetExtension,
+            Animation_AssetExtension,
         };
 
         static const std::array<std::function<AssetTypes(const Path& filename)>,
-                                2>
+                                3>
             asset_loader = {
                 LoadAssetFromPath<InputConfig>,
                 LoadAssetFromPath<EntityInstance>,
+                LoadAssetFromPath<Animation>,
             };
 
-        static const std::array<std::function<AssetTypes()>, 2> asset_creator =
+        static const std::array<std::function<AssetTypes()>, 3> asset_creator =
             {
                 CreateAsset<InputConfig>,
                 CreateAsset<EntityInstance>,
+                CreateAsset<Animation>,
             };
 
         if (ImGui::BeginPopupModal("popup")) {
@@ -149,10 +157,16 @@ void Editor::Update() {
                 }
             }
         }
+
+        ImGui::PushID(ImGuiIDGenerator::Gen());
         if (ImGui::Button("Create")) {
+            ImGui::PopID();
             ImGui::OpenPopup("popup");
             m_mode = Mode::Create;
+        } else {
+            ImGui::PopID();
         }
+
         if (!std::holds_alternative<std::monostate>(m_asset)) {
             if (ImGui::Button("Save")) {
                 if (m_filename.empty()) {

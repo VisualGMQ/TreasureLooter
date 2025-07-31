@@ -1,10 +1,13 @@
 ﻿#pragma once
+#include "animation.hpp"
 #include "schema/input.hpp"
 #include "schema/prefab.hpp"
 
 #include <variant>
 
-using AssetTypes = std::variant<std::monostate, AssetLoadResult<EntityInstance>, AssetLoadResult<InputConfig>>;
+using AssetTypes =
+    std::variant<std::monostate, AssetLoadResult<EntityInstance>,
+                 AssetLoadResult<InputConfig>, AssetLoadResult<Animation>>;
 
 class Editor {
 public:
@@ -18,7 +21,7 @@ private:
     };
 
     Mode m_mode = Mode::None;
-    
+
     AssetTypes m_asset;
     Path m_filename;
     std::optional<size_t> m_asset_index;

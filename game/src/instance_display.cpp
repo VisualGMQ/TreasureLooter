@@ -214,7 +214,9 @@ void InstanceDisplay(const char* name, std::string_view value) {
 }
 
 void InstanceDisplay(const char* name, Vec2& value) {
+    ImGui::PushID(ImGuiIDGenerator::Gen());
     ImGui::DragFloat2(name, (float*)&value, 0.1);
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Vec2& value) {
@@ -514,32 +516,32 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE Degrees
     HANDLE_TRACK_DISPLAY(AnimationBindingPoint::TransformRotation) {
         HANDLE_LINEAR_TRACK_DISPLAY();
         HANDLE_DISCRETE_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE ImageHandle
     HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteImage) {
         HANDLE_DISCRETE_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE Region
     HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteRegion) {
         HANDLE_DISCRETE_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE Flags<Flip>
     HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteFlip) {
         HANDLE_DISCRETE_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE Vec2
     HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteSize) {
         HANDLE_DISCRETE_TRACK_DISPLAY();
         HANDLE_LINEAR_TRACK_DISPLAY();
@@ -551,6 +553,18 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
 #undef HANDLE_LINEAR_TRACK_DISPLAY
 #undef HANDLE_DISCRETE_TRACK_DISPLAY
 
+#define HANDLE_ANIM_DISPLAY(binding) if (binding_point == binding)
+#define HANDLE_ANIM_LINEAR_DISPLAY()                                    \
+    if (track_type == AnimationTrackType::Linear) {                     \
+        tracks[binding_point] = std::make_unique<                       \
+            AnimationTrack<TARGET_TYPE, AnimationTrackType::Linear>>(); \
+    }
+#define HANDLE_ANIM_DISCRETE_DISPLAY()                                    \
+    if (track_type == AnimationTrackType::Discrete) {                     \
+        tracks[binding_point] = std::make_unique<                         \
+            AnimationTrack<TARGET_TYPE, AnimationTrackType::Discrete>>(); \
+    }
+
 void InstanceDisplay(const char* name, Animation& anim) {
     ImGui::Text("%s", name);
 
@@ -558,9 +572,163 @@ void InstanceDisplay(const char* name, Animation& anim) {
     InstanceDisplay("loop", loop);
     anim.SetLoop(loop);
 
-    auto& tracks = anim.GetTracks();
-    for (auto& [binding, track] : tracks) {
-        InstanceDisplay("binding point", binding);
-        animTrackDisplay(binding, *track);
+    if (ImGui::Button("play")) {
+        anim.Play();
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Pause")) {
+        anim.Pause();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        anim.Stop();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Rewind")) {
+        anim.Rewind();
+    }
+
+    ImGui::Text("state: %lf/%lf", anim.GetCurTime(), anim.GetMaxTime());
+
+    auto& tracks = anim.GetTracks();
+
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    if (ImGui::Button("Create")) {
+        ImGui::PopID();
+        ImGui::OpenPopup("create new track");
+    } else {
+        ImGui::PopID();
+    }
+
+    for (auto& [binding, track] : tracks) {
+        ImGui::PushID(ImGuiIDGenerator::Gen());
+        if (ImGui::TreeNode("track")) {
+            if (ImGui::Button("delete")) {
+                tracks.erase(binding);
+                ImGui::TreePop();
+                ImGui::PopID();
+                break;
+            }
+            InstanceDisplay("binding point", binding);
+            animTrackDisplay(binding, *track);
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+
+    // popup window
+    static AnimationBindingPoint binding_point = AnimationBindingPoint::Unknown;
+    static AnimationTrackType track_type = AnimationTrackType::Linear;
+
+    if (ImGui::BeginPopup("create new track")) {
+        InstanceDisplay("binding point", binding_point);
+        InstanceDisplay("track type", track_type);
+        if (ImGui::Button("Create")) {
+#define TARGET_TYPE Vec2
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::TransformPosition) {
+                HANDLE_ANIM_LINEAR_DISPLAY();
+                HANDLE_ANIM_DISCRETE_DISPLAY()
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::TransformScale) {
+                HANDLE_ANIM_LINEAR_DISPLAY();
+                HANDLE_ANIM_DISCRETE_DISPLAY()
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Degrees
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::TransformRotation) {
+                HANDLE_ANIM_LINEAR_DISPLAY();
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE ImageHandle
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteImage) {
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Region
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteRegion) {
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteSize) {
+                HANDLE_ANIM_LINEAR_DISPLAY();
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Flags<Flip>
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteFlip) {
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+        }
+        if (ImGui::Button("Close")) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void InstanceDisplay(const char* name, const Animation& animation) {
+    ImGui::BeginDisabled(true);
+    InstanceDisplay("animation", (Animation&)animation);
+    ImGui::EndDisabled();
+}
+
+void InstanceDisplay(const char* name, Handle<Animation>& animation) {
+    std::string button_text = "no animation";
+
+    if (animation) {
+        auto filename = animation->Filename().string();
+        button_text = filename.empty() ? "no filename" : button_text;
+    }
+
+#ifdef TL_ENABLE_EDITOR
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    if (ImGui::Button(button_text.c_str())) {
+        FileDialog dialog{FileDialog::Type::OpenFile};
+        auto base_path = Context::GetInst().GetProjectPath();
+        dialog.SetTitle("Select Animation");
+        dialog.AddFilter("Animation", Animation_AssetExtension.substr(1).data());
+        dialog.SetDefaultFolder(base_path);
+        dialog.Open();
+
+        auto& files = dialog.GetSelectedFiles();
+        if (!files.empty()) {
+            auto& filename = files[0];
+
+            std::error_code err;
+            auto relative_path =
+                std::filesystem::relative(filename, base_path, err);
+            std::string relative_path_str = relative_path.string();
+            std::replace_if(
+                relative_path_str.begin(), relative_path_str.end(),
+                [](char c) { return c == '\\'; }, '/');
+            relative_path = relative_path_str;
+
+            if (err) {
+                LOGE("Can only select file under {} dir", base_path);
+            } else {
+                animation= Context::GetInst().m_animation_manager->Load(relative_path);
+            }
+        }
+    }
+
+    ImGui::PopID();
+    InstanceDisplay(name, *animation);
+#else
+    InstanceDisplay(name, *animation);
+#endif
+}
+
+void InstanceDisplay(const char* name, const Handle<Animation>& anim) {
+    InstanceDisplay(name, *anim);
 }

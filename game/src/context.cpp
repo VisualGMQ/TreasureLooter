@@ -85,13 +85,13 @@ void Context::Update() {
             track1->AddKeyframe({{100.0f, 100}, 0});
             track1->AddKeyframe({{800.0f, 800}, 3});
 
-            Animation anim;
-            anim.AddTrack(AnimationBindingPoint::TransformPosition,
+            auto anim = m_animation_manager->Create();
+            anim->AddTrack(AnimationBindingPoint::TransformPosition,
                           std::move(track1));
-            anim.Play();
-            anim.SetLoop(Animation::InfLoop);
+            anim->Play();
+            anim->SetLoop(Animation::InfLoop);
 
-            m_animation_component_manager->RegisterEntity(entity, std::move(anim));
+            m_animation_component_manager->RegisterEntity(entity, anim);
         }
         {
             auto result =

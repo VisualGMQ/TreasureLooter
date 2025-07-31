@@ -61,6 +61,9 @@ void InstanceDisplay(const char* name, Tilemap* value);
 void InstanceDisplay(const char* name, const Tilemap* value);
 void InstanceDisplay(const char* name, const Flip&);
 void InstanceDisplay(const char* name, Animation&);
+void InstanceDisplay(const char* name, const Animation&);
+void InstanceDisplay(const char* name, Handle<Animation>&);
+void InstanceDisplay(const char* name, const Handle<Animation>&);
 
 template <typename T>
 void InstanceDisplay(const char* name, std::optional<T>& value) {
@@ -186,8 +189,8 @@ void InstanceDisplay(const char* name, const KeyFrame<T>& m) {
 template <typename T>
 void InstanceDisplay(const char* name, KeyFrame<T>& m) {
     ImGui::Text("%s", name);
-    InstanceDisplay(m.m_time);
-    InstanceDisplay(m.m_value);
+    InstanceDisplay("time", m.m_time);
+    InstanceDisplay("value", m.m_value);
 }
 
 template <typename T, AnimationTrackType TrackType>
@@ -197,7 +200,10 @@ void InstanceDisplay(const char* name, const AnimationTrack<T, TrackType>& m) {
     InstanceDisplay("type", m.GetType());
 
     auto& keyframes = m.GetKeyframes();
-    InstanceDisplay("keyframes", keyframes);
+    if (ImGui::TreeNode("keyframes")) {
+        InstanceDisplay("keyframes", keyframes);
+        ImGui::TreePop();
+    }
     ImGui::EndDisabled();
 }
 

@@ -110,6 +110,11 @@ void Inspector::showEntityDetail(Entity entity) {
         auto value = ctx.m_sprite_manager->Get(entity);
         InstanceDisplay("sprite", *value);
     }
+    
+    if (ctx.m_animation_component_manager->Has(entity)) {
+        auto value = ctx.m_animation_component_manager->Get(entity);
+        InstanceDisplay("animation", *value);
+    }
 }
 
 void Inspector::showEntityHierarchy(Entity node) {
