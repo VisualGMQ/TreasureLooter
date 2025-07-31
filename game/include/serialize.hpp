@@ -6,6 +6,7 @@
 #include "log.hpp"
 #include "math.hpp"
 #include "rapidxml.hpp"
+#include "animation.hpp"
 
 #include <optional>
 #include <string>
@@ -13,6 +14,7 @@
 class Image;
 class Tilemap;
 class Relationship;
+class Animation;
 
 // integral
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
@@ -121,6 +123,13 @@ void Deserialize(rapidxml::xml_node<>& node, std::string& payload);
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const UUID& payload, const std::string& name);
 void Deserialize(rapidxml::xml_node<>& node, UUID& payload);
+
+
+// Animation
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Animation& payload,
+                                const std::string& name);
+void Deserialize(rapidxml::xml_node<>& node, Animation& payload);
 
 // optional
 template <typename T>
@@ -292,4 +301,26 @@ void Deserialize(rapidxml::xml_node<>& node, AssetLoadResult<T>& payload) {
 
     auto value_node = node.first_node("payload");
     Deserialize(*value_node, payload.m_payload);
+}
+
+// Keyframe
+template <typename T>
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const KeyFrame<T>& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->append_node(Serialize(doc, payload.m_time, "time"));
+    node->append_node(Serialize(doc, payload.m_value, "value"));
+    return node;
+}
+
+template <typename T>
+void Deserialize(rapidxml::xml_node<>& node, KeyFrame<T>& payload) {
+    if (auto time_node = node.first_node("time")) {
+        Deserialize(*time_node, payload.m_time);
+    }
+    if (auto value_node = node.first_node("value")) {
+        Deserialize(*value_node, payload.m_value);
+    }
 }

@@ -69,6 +69,12 @@ void Inspector::EndFrame() {
 }
 
 void Inspector::Update() {
+    if (ImGui::Begin("elapsed time")) {
+        auto duration = Context::GetInst().m_time->GetElapseTime();
+        ImGui::Text("fps: %d", int(duration > 0 ? 1.0 / duration : 4000));
+    }
+    ImGui::End();
+    
     if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
         showEntityHierarchy(Context::GetInst().GetRootEntity());
     }
