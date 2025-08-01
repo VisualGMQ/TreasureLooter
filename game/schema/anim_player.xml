@@ -1,0 +1,8 @@
+<schema>
+    <include>animation.hpp</include>
+    <class name="AnimationPlayerCreateInfo">
+        <element name = "loop" type="int" default="0"/>
+        <element name = "rate" type="int" default="1.0f"/>
+        <handle name = "animation" type="Animation"/>
+    </class>
+</schema>

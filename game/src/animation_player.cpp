@@ -1,0 +1,297 @@
+#include "animation_player.hpp"
+
+#include "asset_manager.hpp"
+#include "context.hpp"
+#include "sprite.hpp"
+
+AnimationPlayer::AnimationPlayer(const AnimationPlayerCreateInfo& create_info) {
+    ChangeAnimation(create_info.m_animation);
+    SetLoop(create_info.m_loop);
+    SetRate(create_info.m_rate);
+}
+
+void AnimationPlayer::Play() {
+    if (!m_animation) {
+        return;
+    }
+    m_is_playing = true;
+}
+
+void AnimationPlayer::Pause() {
+    if (!m_animation) {
+        return;
+    }
+    m_is_playing = false;
+}
+
+void AnimationPlayer::Stop() {
+    if (!m_animation) {
+        return;
+    }
+    Rewind();
+    Pause();
+}
+
+void AnimationPlayer::Rewind() {
+    if (!m_animation) {
+        return;
+    }
+    for (auto& [_, track] : m_track_players) {
+        track->Rewind();
+    }
+    m_cur_time = 0.0f;
+}
+
+void AnimationPlayer::SetLoop(int loop) {
+    m_loop = loop;
+}
+
+bool AnimationPlayer::IsPlaying() const {
+    return m_is_playing;
+}
+
+int AnimationPlayer::GetLoopCount() const {
+    return m_loop;
+}
+
+TimeType AnimationPlayer::GetCurTime() const {
+    return m_cur_time;
+}
+
+TimeType AnimationPlayer::GetMaxTime() const {
+    TimeType max_time = 0;
+    for (auto& [_, track] : m_animation->GetTracks()) {
+        max_time = std::max(max_time, track->GetFinishTime());
+    }
+    return max_time;
+}
+
+#define HANDLE_TRACK_BINDING_POINT(binding) if (binding_point == binding)
+#define HANDLE_LINEAR_TRACK_CREATION()                                         \
+    if (track->GetType() == AnimationTrackType::Linear) {                      \
+        auto& raw_track = static_cast<                                         \
+            AnimationTrack<TARGET_TYPE, AnimationTrackType::Linear>&>(*track); \
+        m_track_players[binding_point] = std::make_unique<                     \
+            AnimationTrackPlayer<TARGET_TYPE, AnimationTrackType::Linear>>(    \
+            raw_track);                                                        \
+    }
+#define HANDLE_DISCRETE_TRACK_CREATION()                                      \
+    if (track->GetType() == AnimationTrackType::Discrete) {                   \
+        auto& raw_track = static_cast<                                        \
+            AnimationTrack<TARGET_TYPE, AnimationTrackType::Discrete>&>(      \
+            *track);                                                          \
+        m_track_players[binding_point] = std::make_unique<                    \
+            AnimationTrackPlayer<TARGET_TYPE, AnimationTrackType::Discrete>>( \
+            raw_track);                                                       \
+    }
+
+void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
+    m_animation = animation;
+    m_track_players.clear();
+    Stop();
+
+    if (!m_animation) {
+        return;
+    }
+
+    auto& tracks = m_animation->GetTracks();
+    for (auto& [binding_point, track] : tracks) {
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::TransformPosition) {
+            HANDLE_LINEAR_TRACK_CREATION();
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::TransformScale) {
+            HANDLE_LINEAR_TRACK_CREATION();
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Degrees
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::TransformRotation) {
+            HANDLE_LINEAR_TRACK_CREATION();
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Flags<Flip>
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteFlip) {
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE ImageHandle
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteImage) {
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Region
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteRegion) {
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteSize) {
+            HANDLE_LINEAR_TRACK_CREATION()
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+    }
+}
+
+#undef HANDLE_LINEAR_TRACK_CREATION
+#undef HANDLE_DISCRETE_TRACK_CREATION
+#undef HANDLE_TRACK_BINDING_POINT
+
+void AnimationPlayer::ChangeAnimation(const Path& filename) {
+    auto animation =
+        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>().Find(
+            filename);
+    ChangeAnimation(animation);
+}
+
+void AnimationPlayer::ChangeAnimation(UUID uuid) {
+    auto animation =
+        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>().Find(uuid);
+    ChangeAnimation(animation);
+}
+
+void AnimationPlayer::ClearAnimation() {
+    m_animation = nullptr;
+}
+
+bool AnimationPlayer::HasAnimation() const {
+    return m_animation;
+}
+
+void AnimationPlayer::Update(TimeType delta_time) {
+    float elapsed_time = delta_time * m_rate;
+
+    if (!m_is_playing || !m_animation || m_track_players.empty()) {
+        return;
+    }
+
+    m_cur_time += elapsed_time;
+    for (auto& [_, track] : m_track_players) {
+        track->Update(elapsed_time);
+    }
+
+    if (m_cur_time >= GetMaxTime()) {
+        if (m_loop > 0 || m_loop == InfLoop) {
+            TimeType backup_time = m_cur_time;
+            Rewind();
+            m_cur_time = backup_time - GetMaxTime();
+
+            for (auto& [_, track] : m_track_players) {
+                track->Update(m_cur_time);
+            }
+
+            if (m_loop != InfLoop) {
+                m_loop--;
+            }
+        } else {
+            Pause();
+            m_cur_time = GetMaxTime();
+        }
+    }
+}
+
+#define BEGIN_BINDING_POINT(binding) \
+    if (auto it = m_track_players.find(binding); it != m_track_players.end())
+
+#define HANDLE_LINEAR_TRACK()                                        \
+    if (it->second->GetType() == AnimationTrackType::Linear) {       \
+        auto& raw_track = static_cast<const AnimationTrackPlayer<    \
+            decltype(BINDING_TARGET), AnimationTrackType::Linear>&>( \
+            *it->second);                                            \
+        if (raw_track.NeedSync()) {                                  \
+            BINDING_TARGET = raw_track.GetValue();                   \
+        }                                                            \
+    }
+#define HANDLE_DISCRETE_TRACK()                                        \
+    if (it->second->GetType() == AnimationTrackType::Discrete) {       \
+        auto& raw_track = static_cast<const AnimationTrackPlayer<      \
+            decltype(BINDING_TARGET), AnimationTrackType::Discrete>&>( \
+            *it->second);                                              \
+        if (raw_track.NeedSync()) {                                    \
+            BINDING_TARGET = raw_track.GetValue();                     \
+        }                                                              \
+    }
+
+void AnimationPlayer::Sync(Entity entity) {
+    auto& ctx = GAME_CONTEXT;
+
+    if (auto transform = ctx.m_transform_manager->Get(entity)) {
+#define BINDING_TARGET transform->m_position
+        BEGIN_BINDING_POINT(AnimationBindingPoint::TransformPosition) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET transform->m_scale
+        BEGIN_BINDING_POINT(AnimationBindingPoint::TransformScale) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET transform->m_rotation
+        BEGIN_BINDING_POINT(AnimationBindingPoint::TransformRotation) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+    }
+
+    if (auto sprite = ctx.m_sprite_manager->Get(entity)) {
+#define BINDING_TARGET sprite->m_image
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteImage) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_region
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteRegion) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_size
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteSize) {
+            HANDLE_LINEAR_TRACK();
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_flip
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteFlip) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+    }
+}
+
+void AnimationPlayer::SetRate(float rate) {
+    m_rate = std::max(0.0f, rate);
+}
+
+float AnimationPlayer::GetRate() const {
+    return m_rate;
+}
+
+AnimationHandle AnimationPlayer::GetAnimation() const {
+    return m_animation;
+}
+
+void AnimationPlayerManager::Update(TimeType delta_time) {
+    for (auto& [entity, anim] : m_components) {
+        anim->Update(delta_time);
+        anim->Sync(entity);
+    }
+}

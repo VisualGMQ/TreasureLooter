@@ -1,5 +1,6 @@
 ﻿#include "instance_display.hpp"
 
+#include "asset_manager.hpp"
 #include "dialog.hpp"
 #include "image.hpp"
 #include "imgui.h"
@@ -293,22 +294,22 @@ void InstanceDisplay(const char* name, const Radians& value) {
     ImGui::PopID();
 }
 
-void InstanceDisplay(const char* name, Handle<Image>& value) {
-    std::string button_text = "no image";
+template <typename T>
+void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
+    std::string button_text = "none";
 
-    if (value) {
-        button_text = value->Filename().string();
+    if (value && value.GetFilename()) {
+        button_text = value.GetFilename()->string();
     }
 
-#ifdef TL_ENABLE_EDITOR
     ImGui::PushID(ImGuiIDGenerator::Gen());
     if (ImGui::Button(button_text.c_str())) {
         FileDialog dialog{FileDialog::Type::OpenFile};
-        auto base_path = Context::GetInst().GetProjectPath();
+        auto base_path = GAME_CONTEXT.GetProjectPath();
         dialog.SetTitle("Select Image");
-        dialog.AddFilter("Png", "png");
-        dialog.AddFilter("Bitmap", "bmp");
-        dialog.AddFilter("JPEG", "jpg");
+        for (auto& filter : filters) {
+            dialog.AddFilter(filter);
+        }
         dialog.SetDefaultFolder(base_path);
         dialog.Open();
 
@@ -328,39 +329,38 @@ void InstanceDisplay(const char* name, Handle<Image>& value) {
             if (err) {
                 LOGE("Can only select file under {} dir", base_path);
             } else {
-                value = Context::GetInst().m_image_manager->Load(relative_path);
+                value = GAME_CONTEXT
+                            .m_assets_manager->GetManager<Handle<T>>()
+                            .Load(relative_path);
             }
         }
     }
-
-    if (value) {
-        ImVec2 size;
-        size.x = value->GetSize().x;
-        size.y = value->GetSize().y;
-        ImGui::Image(value->GetTexture(), size);
-    }
-
     ImGui::PopID();
-#else
-    InstanceDisplay(name, value.Get());
-#endif
 }
 
-void InstanceDisplay(const char* name, Image* value) {
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+template <typename T>
+void displayAssetName(Handle<T> handle) {
+    std::string text = "none";
 
+    if (handle && handle.GetFilename()) {
+        text = handle.GetFilename()->string();
+    }
     ImGui::BeginDisabled(true);
 
-    if (value) {
-        auto filename = value->Filename().string();
-        ImGui::InputText(name, (char*)filename.c_str(), filename.length());
-    } else {
-        char trivial_buf[1] = {0};
-        ImGui::InputText(name, trivial_buf, 0);
-    }
-
-    ImGui::EndDisabled();
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::InputText("filename", text.data(), text.size());
     ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, Handle<Image>& value) {
+    ImGui::Text("%s", name);
+
+    showAssetSelectFile(
+        value, {
+                   {   "Png", "png"},
+                   {  "JPEG", "jpg"},
+                   {"Bitmap", "bmp"}
+    });
 
     if (value) {
         ImVec2 size;
@@ -370,19 +370,9 @@ void InstanceDisplay(const char* name, Image* value) {
     }
 }
 
-void InstanceDisplay(const char* name, const Image* value) {
-    ImGui::PushID(ImGuiIDGenerator::Gen());
-
-    ImGui::BeginDisabled(true);
-    if (value) {
-        auto filename = value->Filename().string();
-        ImGui::InputText(name, (char*)filename.c_str(), filename.length());
-    } else {
-        ImGui::InputText(name, nullptr, 0);
-    }
-    ImGui::EndDisabled();
-
-    ImGui::PopID();
+void InstanceDisplay(const char* name, const Handle<Image>& value) {
+    ImGui::Text("%s", name);
+    displayAssetName(value);
 
     if (value) {
         ImVec2 size;
@@ -390,6 +380,8 @@ void InstanceDisplay(const char* name, const Image* value) {
         size.y = value->GetSize().y;
         ImGui::Image(value->GetTexture(), size);
     }
+
+    ImGui::EndDisabled();
 }
 
 void InstanceDisplay(const char* name, Transform& value) {
@@ -417,71 +409,15 @@ void InstanceDisplay(const char* name, const Transform& value) {
 }
 
 void InstanceDisplay(const char* name, TilemapHandle& value) {
-    std::string button_text = "no tilemap";
-
-    if (value) {
-        button_text = value->GetFilename().string();
-    }
-
-#ifdef TL_ENABLE_EDITOR
-    ImGui::PushID(ImGuiIDGenerator::Gen());
-    if (ImGui::Button(button_text.c_str())) {
-        FileDialog dialog{FileDialog::Type::OpenFile};
-        auto base_path = Context::GetInst().GetProjectPath();
-        dialog.SetTitle("Select Image");
-        dialog.AddFilter("TileMap", "tmx");
-        dialog.SetDefaultFolder(base_path);
-        dialog.Open();
-
-        auto& files = dialog.GetSelectedFiles();
-        if (!files.empty()) {
-            auto& filename = files[0];
-
-            std::error_code err;
-            auto relative_path =
-                std::filesystem::relative(filename, base_path, err);
-            std::string relative_path_str = relative_path.string();
-            std::replace_if(
-                relative_path_str.begin(), relative_path_str.end(),
-                [](char c) { return c == '\\'; }, '/');
-            relative_path = relative_path_str;
-
-            if (err) {
-                LOGE("Can only select file under {} dir", base_path);
-            } else {
-                value =
-                    Context::GetInst().m_tilemap_manager->Load(relative_path);
-            }
-        }
-    }
-
-    ImGui::PopID();
-#else
-    InstanceDisplay(name, value.Get());
-#endif
+    ImGui::Text("%s", name);
+    showAssetSelectFile(value, {
+                                   {"TileMap", "tmx"}
+    });
 }
 
 void InstanceDisplay(const char* name, const TilemapHandle& value) {
-    InstanceDisplay(name, value.Get());
-}
-
-void InstanceDisplay(const char* name, Tilemap* value) {
-    InstanceDisplay(name, static_cast<const Tilemap*>(value));
-}
-
-void InstanceDisplay(const char* name, const Tilemap* value) {
-    ImGui::PushID(ImGuiIDGenerator::Gen());
-
-    ImGui::BeginDisabled(true);
-    if (value) {
-        auto filename = value->GetFilename().string();
-        ImGui::InputText(name, (char*)filename.c_str(), filename.length());
-    } else {
-        ImGui::InputText(name, nullptr, 0);
-    }
-    ImGui::EndDisabled();
-
-    ImGui::PopID();
+    ImGui::Text("%s", name);
+    displayAssetName(value);
 }
 
 #define HANDLE_TRACK_DISPLAY(binding) if (binding_point == binding)
@@ -565,31 +501,7 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
             AnimationTrack<TARGET_TYPE, AnimationTrackType::Discrete>>(); \
     }
 
-void InstanceDisplay(const char* name, Animation& anim) {
-    ImGui::Text("%s", name);
-
-    int loop = anim.GetLoopCount();
-    InstanceDisplay("loop", loop);
-    anim.SetLoop(loop);
-
-    if (ImGui::Button("play")) {
-        anim.Play();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Pause")) {
-        anim.Pause();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Stop")) {
-        anim.Stop();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Rewind")) {
-        anim.Rewind();
-    }
-
-    ImGui::Text("state: %lf/%lf", anim.GetCurTime(), anim.GetMaxTime());
-
+void displayAnimationContent(Animation& anim) {
     auto& tracks = anim.GetTracks();
 
     ImGui::PushID(ImGuiIDGenerator::Gen());
@@ -677,58 +589,84 @@ void InstanceDisplay(const char* name, Animation& anim) {
     }
 }
 
-void InstanceDisplay(const char* name, const Animation& animation) {
-    ImGui::BeginDisabled(true);
-    InstanceDisplay("animation", (Animation&)animation);
-    ImGui::EndDisabled();
-}
-
 void InstanceDisplay(const char* name, Handle<Animation>& animation) {
-    std::string button_text = "no animation";
+    ImGui::Text("%s", name);
+    showAssetSelectFile(
+        animation,
+        {
+            {"Animation", Animation_AssetExtension.substr(1).data()}
+    });
 
     if (animation) {
-        auto filename = animation->Filename().string();
-        button_text = filename.empty() ? "no filename" : button_text;
+        displayAnimationContent(*animation);
     }
-
-#ifdef TL_ENABLE_EDITOR
-    ImGui::PushID(ImGuiIDGenerator::Gen());
-    if (ImGui::Button(button_text.c_str())) {
-        FileDialog dialog{FileDialog::Type::OpenFile};
-        auto base_path = Context::GetInst().GetProjectPath();
-        dialog.SetTitle("Select Animation");
-        dialog.AddFilter("Animation", Animation_AssetExtension.substr(1).data());
-        dialog.SetDefaultFolder(base_path);
-        dialog.Open();
-
-        auto& files = dialog.GetSelectedFiles();
-        if (!files.empty()) {
-            auto& filename = files[0];
-
-            std::error_code err;
-            auto relative_path =
-                std::filesystem::relative(filename, base_path, err);
-            std::string relative_path_str = relative_path.string();
-            std::replace_if(
-                relative_path_str.begin(), relative_path_str.end(),
-                [](char c) { return c == '\\'; }, '/');
-            relative_path = relative_path_str;
-
-            if (err) {
-                LOGE("Can only select file under {} dir", base_path);
-            } else {
-                animation= Context::GetInst().m_animation_manager->Load(relative_path);
-            }
-        }
-    }
-
-    ImGui::PopID();
-    InstanceDisplay(name, *animation);
-#else
-    InstanceDisplay(name, *animation);
-#endif
 }
 
 void InstanceDisplay(const char* name, const Handle<Animation>& anim) {
-    InstanceDisplay(name, *anim);
+    ImGui::Text("%s", name);
+    displayAssetName(anim);
+
+    if (anim) {
+        // NOTE: dangerous operation!
+        displayAnimationContent((Animation&)*anim);
+    }
+}
+
+void InstanceDisplay(const char* name, Animation& animation) {
+    ImGui::Text("%s", name);
+    displayAnimationContent(animation);
+}
+
+void InstanceDisplay(const char* name, const Animation& anim) {
+    ImGui::Text("%s", name);
+
+    // NOTE: dangerous operation!
+    displayAnimationContent((Animation&)anim);
+}
+
+void InstanceDisplay(const char* name, AnimationPlayer& player) {
+    ImGui::Text("%s", name);
+    auto animation = player.GetAnimation();
+    if (!animation) {
+        ImGui::PushID(ImGuiIDGenerator::Gen());
+        constexpr std::string_view text = "no animation";
+        ImGui::BeginDisabled(true);
+        ImGui::InputText("animation", (char*)text.data(), text.size());
+        ImGui::EndDisabled();
+        ImGui::PopID();
+        return;
+    }
+
+    int loop = player.GetLoopCount();
+    InstanceDisplay("loop", loop);
+
+    float rate = player.GetRate();
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::DragFloat("rate", &rate, 0.1, 0, FLT_MAX);
+    ImGui::PopID();
+    player.SetRate(rate);
+
+    if (ImGui::Button("play")) {
+        player.Play();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Pause")) {
+        player.Pause();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        player.Stop();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Rewind")) {
+        player.Rewind();
+    }
+
+    ImGui::Text("state: %lf/%lf", player.GetCurTime(), player.GetMaxTime());
+
+    AnimationHandle old_handle = animation;
+    InstanceDisplay("animation", animation);
+    if (old_handle != animation) {
+        player.ChangeAnimation(animation);
+    }
 }

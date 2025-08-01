@@ -13,7 +13,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, {{type}}& payload) {
     {{#properties}}
     {
         auto prop_node = node.first_node("{{{property}}}");
@@ -35,7 +35,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return Serialize(doc, *payload, name);
 }
 
-void Deserialize(rapidxml::xml_node<>& node, {{type}}Handle& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, {{type}}Handle& payload) {
     Deserialize(node, *payload);
 }
 {{/has_handle}}

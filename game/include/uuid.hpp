@@ -22,6 +22,8 @@ private:
     std::array<std::byte, 16> m_data;
 };
 
+std::ostream &operator<<(std::ostream &o, const UUID &uuid);
+
 namespace std {
 template <>
 struct hash<UUID> {

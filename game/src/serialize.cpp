@@ -2,7 +2,7 @@
 
 #include "context.hpp"
 #include "image.hpp"
-#include "schema/serialize/animation.hpp"
+#include "schema/serialize/anim.hpp"
 #include "schema/serialize/flip.hpp"
 #include <stdexcept>
 
@@ -15,7 +15,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, long long& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, long long& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -31,7 +31,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, long& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, long& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -47,7 +47,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, int& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, int& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -63,7 +63,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, short& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, short& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -79,7 +79,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, char& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, char& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -96,7 +96,8 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, unsigned long long& payload) {
+void Deserialize(const rapidxml::xml_node<>& node,
+                 unsigned long long& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -113,7 +114,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, unsigned long& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, unsigned long& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -130,7 +131,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, unsigned int& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, unsigned int& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -147,7 +148,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, unsigned short& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, unsigned short& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -164,7 +165,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, unsigned char& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, unsigned char& payload) {
     try {
         payload = std::stoll(node.value());
     } catch (std::exception& e) {
@@ -180,7 +181,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, bool& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, bool& payload) {
     std::string_view value = node.value();
     if (value == "true") {
         payload = true;
@@ -209,7 +210,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, double& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, double& payload) {
     try {
         double value = std::stod(node.value());
         payload = value;
@@ -218,7 +219,7 @@ void Deserialize(rapidxml::xml_node<>& node, double& payload) {
     }
 }
 
-void Deserialize(rapidxml::xml_node<>& node, float& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, float& payload) {
     try {
         float value = std::stof(node.value());
         payload = value;
@@ -240,7 +241,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Vec2& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Vec2& payload) {
     auto x_attr = node.first_attribute("x");
     auto y_attr = node.first_attribute("y");
     if (!x_attr || !y_attr) {
@@ -267,7 +268,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Region& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Region& payload) {
     auto topleft_node = node.first_node("topleft");
     auto size_node = node.first_node("size");
     if (!topleft_node || !size_node) {
@@ -287,7 +288,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Degrees& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Degrees& payload) {
     try {
         payload = std::stof(node.value());
     } catch (std::exception& e) {
@@ -305,7 +306,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Radians& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Radians& payload) {
     try {
         payload = std::stof(node.value());
     } catch (std::exception& e) {
@@ -325,7 +326,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Transform& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Transform& payload) {
     auto position_node = node.first_node("position");
     auto scale_node = node.first_node("scale");
     auto rotation_node = node.first_node("rotation");
@@ -341,41 +342,14 @@ void Deserialize(rapidxml::xml_node<>& node, Transform& payload) {
     Deserialize(*rotation_node, payload.m_rotation);
 }
 
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Image* payload, const std::string& name) {
-    auto node = doc.allocate_node(rapidxml::node_type::node_element,
-                                  doc.allocate_string(name.c_str()));
-    if (payload) {
-        node->value(doc.allocate_string(payload->Filename().string().c_str()));
-    }
-    return node;
-}
-
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Handle<Image> payload,
-                                const std::string& name) {
-    return Serialize(doc, &*payload, name);
-}
-
-void Deserialize(rapidxml::xml_node<>& node, Handle<Image>& payload) {
+template <typename T>
+void Deserialize(const rapidxml::xml_node<>& node, Handle<Image>& payload) {
     Path filename = node.value();
-    auto& image_manager = Context::GetInst().m_image_manager;
-    payload = image_manager->Find(filename);
+    auto& manager =
+        GAME_CONTEXT.m_assets_manager->GetManager<Handle<T>>();
+    payload = manager.Find(filename);
     if (!payload) {
-        payload = image_manager->Load(filename);
-    }
-}
-
-void Deserialize(rapidxml::xml_node<>& node, Image*& payload) {
-    Path filename = node.value();
-    auto& image_manager = Context::GetInst().m_image_manager;
-    ImageHandle handle = image_manager->Load(filename);
-    if (!handle) {
-        handle = image_manager->Load(filename);
-    }
-
-    if (!handle) {
-        payload = handle.Get();
+        payload = manager.Load(filename);
     }
 }
 
@@ -391,12 +365,13 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Tilemap*& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Tilemap*& payload) {
     Path filename = node.value();
-    auto& manager = Context::GetInst().m_tilemap_manager;
-    auto handle = manager->Load(filename);
+    auto& manager =
+        GAME_CONTEXT.m_assets_manager->GetManager<TilemapHandle>();
+    auto handle = manager.Load(filename);
     if (!handle) {
-        handle = manager->Load(filename);
+        handle = manager.Load(filename);
     }
 
     if (!handle) {
@@ -410,12 +385,13 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return Serialize(doc, &*payload, name);
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Handle<Tilemap>& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Handle<Tilemap>& payload) {
     Path filename = node.value();
-    auto& manager = Context::GetInst().m_tilemap_manager;
-    payload = manager->Find(filename);
+    auto& manager =
+        GAME_CONTEXT.m_assets_manager->GetManager<TilemapHandle>();
+    payload = manager.Find(filename);
     if (!payload) {
-        payload = manager->Load(filename);
+        payload = manager.Load(filename);
     }
 }
 
@@ -428,7 +404,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, std::string& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, std::string& payload) {
     Path filename = node.value();
     payload = node.value();
 }
@@ -441,7 +417,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, UUID& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, UUID& payload) {
     payload = UUID::CreateFromString(node.value());
 }
 
@@ -549,18 +525,17 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
         tracks_node->append_node(track_node);
     }
 
-    node->append_node(Serialize(doc, payload.GetLoopCount(), "loop"));
     node->append_node(tracks_node);
     return node;
 }
 
 #define HANDLE_ANIM_DESERIALIZE(binding) if (binding_point == binding)
-#define HANDLE_CREATE_TRACK()                            \
-    std::vector<KeyFrame<TARGET_TYPE>> keyframes;        \
-    while (keyframe_node) {                             \
-        KeyFrame<TARGET_TYPE> keyframe;                  \
-        Deserialize(*keyframe_node, keyframe);          \
-        keyframes.push_back(keyframe);                   \
+#define HANDLE_CREATE_TRACK()                          \
+    std::vector<KeyFrame<TARGET_TYPE>> keyframes;      \
+    while (keyframe_node) {                            \
+        KeyFrame<TARGET_TYPE> keyframe;                \
+        Deserialize(*keyframe_node, keyframe);         \
+        keyframes.push_back(keyframe);                 \
         keyframe_node = keyframe_node->next_sibling(); \
     }
 #define HANDLE_LINEAR_TRACK_DESERIALIZE()                               \
@@ -653,7 +628,7 @@ deserializeTrack(rapidxml::xml_node<>& node) {
 #undef HANDLE_LINEAR_TRACK_DESERIALIZE
 #undef HANDLE_DISCRETE_TRACK_DESERIALIZE
 
-void Deserialize(rapidxml::xml_node<>& node, Animation& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Animation& payload) {
     auto tracks_node = node.first_node("tracks");
 
     auto n = tracks_node->first_node();
@@ -662,9 +637,44 @@ void Deserialize(rapidxml::xml_node<>& node, Animation& payload) {
         payload.AddTrack(binding, std::move(track));
         n = n->next_sibling();
     }
+}
 
-    auto loop_node = node.first_node("loop");
-    int loop;
-    Deserialize(*loop_node, loop);
-    payload.SetLoop(loop);
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const AnimationPlayer& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    auto loop_node = Serialize(doc, payload.GetLoopCount(), "loop");
+    node->append_node(loop_node);
+
+    auto rate_node = Serialize(doc, payload.GetRate(), "rate");
+    node->append_node(rate_node);
+
+    auto anim = payload.GetAnimation();
+    if (anim) {
+        auto anim_node = Serialize(doc, anim, "animation");
+        node->append_node(anim_node);
+    }
+
+    return node;
+}
+
+void Deserialize(const rapidxml::xml_node<>& node, AnimationPlayer& payload) {
+    if (auto loop_node = node.first_node("loop")) {
+        int loop;
+        Deserialize(*loop_node, loop);
+        payload.SetLoop(loop);
+    }
+
+    if (auto anim_node = node.first_node("animation")) {
+        AnimationHandle anim;
+        Deserialize(*anim_node, anim);
+        payload.ChangeAnimation(anim);
+    }
+
+    if (auto rate_node = node.first_node("rate")) {
+        float rate;
+        Deserialize(*rate_node, rate);
+        payload.SetRate(rate);
+    }
 }

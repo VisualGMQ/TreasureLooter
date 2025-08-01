@@ -2,6 +2,7 @@
 
 #include "context.hpp"
 #include "log.hpp"
+#include "asset_manager.hpp"
 
 // Bits on the far end of the 32-bit global tile ID are used for tile flags
 const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x8;
@@ -63,7 +64,9 @@ Tileset::Tileset(const tmx::Tileset& tileset) {
 
 void Tileset::parse(const tmx::Tileset& tileset) {
     auto path = tileset.getImagePath();
-    m_image = Context::GetInst().m_image_manager->Load(path);
+    m_image =
+        GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(
+            path);
     m_margin = tileset.getMargin();
     m_spacing = tileset.getSpacing();
     m_firstgid = tileset.getFirstGID();
@@ -91,7 +94,7 @@ bool Tileset::HasTile(uint32_t gid) const {
     return gid >= m_firstgid && gid < m_lastgid;
 }
 
-Tilemap::Tilemap(const Path& filename): m_filename{filename} {
+Tilemap::Tilemap(const Path& filename) : m_filename{filename} {
     parse(filename);
 }
 
@@ -144,18 +147,18 @@ TilemapHandle TilemapManager::Load(const Path& filename) {
 
 void TilemapComponentManager::Update() {
     for (auto& [entity, tilemap] : m_components) {
-        auto transform = Context::GetInst().m_transform_manager->Get(entity);
+        auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
         if (!transform) {
             continue;
         }
 
-        drawTilemap(*transform, *tilemap);
+        drawTilemap(*transform, tilemap);
     }
 }
 
 void TilemapComponentManager::drawTilemap(const Transform& transform,
                                           const TilemapHandle& tilemap) {
-    auto& renderer = Context::GetInst().m_renderer;
+    auto& renderer = GAME_CONTEXT.m_renderer;
     for (auto& layer : tilemap->GetLayers()) {
         if (layer->GetType() == TilemapLayer::Type::Tiled) {
             auto tiled_layer = layer->CastAsTiledLayer();
@@ -168,12 +171,16 @@ void TilemapComponentManager::drawTilemap(const Transform& transform,
                         continue;
                     }
                     Region dst_region = tile->m_region;
-                    float scale = std::max(transform.m_scale.x, transform.m_scale.y);
+                    float scale =
+                        std::max(transform.m_scale.x, transform.m_scale.y);
                     scale += 0.01;
-                    dst_region.m_topleft = transform.m_position +
-                                           Vec2(x, y) * tilemap->GetTileSize() * scale;
+                    dst_region.m_topleft =
+                        transform.m_position +
+                        Vec2(x, y) * tilemap->GetTileSize() * scale;
                     dst_region.m_size *= scale;
-                    renderer->DrawImage(*tile->m_image, tile->m_region, dst_region, 0, {0, 0}, layer_tile.m_flip);
+                    renderer->DrawImage(*tile->m_image, tile->m_region,
+                                        dst_region, 0, {0, 0},
+                                        layer_tile.m_flip);
                 }
             }
         }

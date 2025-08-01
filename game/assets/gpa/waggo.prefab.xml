@@ -21,6 +21,12 @@
 					<rotation>0.000000</rotation>
 				</value>
 			</transform>
+			<animation>
+				<value>
+					<loop>-1</loop>
+					<animation>assets/gpa/status_walk_down.animation.xml</animation>
+				</value>
+			</animation>
 			<tilemap/>
 		</data>
 	</payload>

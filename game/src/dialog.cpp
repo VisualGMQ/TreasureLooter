@@ -21,6 +21,10 @@ void FileDialog::SetCancelButtonText(const std::string& text) {
     m_cancel_label = text;
 }
 
+void FileDialog::AddFilter(const Filter& filter) {
+    m_filters.push_back(filter);
+}
+
 void FileDialog::AddFilter(const std::string& name,
                            const std::string& pattern) {
     m_filters.push_back({name, pattern});

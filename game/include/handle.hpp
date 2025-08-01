@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include "asset.hpp"
+#include "path.hpp"
 #include "uuid.hpp"
 
 template <typename T>
@@ -8,7 +10,8 @@ public:
 
     Handle(nullptr_t) {}
 
-    Handle(UUID uuid, T* data) : m_data{data}, m_uuid{uuid} {}
+    Handle(UUID uuid, T* data, IAssetManager* manager)
+        : m_data{data}, m_uuid{uuid}, m_manager{manager} {}
 
     operator bool() const { return m_data; }
 
@@ -28,12 +31,32 @@ public:
 
     const UUID& GetUUID() const { return m_uuid; }
 
+    const Path* GetFilename() const {
+        return m_manager ? m_manager->GetFilename(m_uuid) : nullptr;
+    }
+
     T* Get() { return m_data; }
 
     const T* Get() const { return m_data; }
 
 private:
     T* m_data{};
-
+    IAssetManager* m_manager{};
     UUID m_uuid;
 };
+
+namespace internal {
+
+template <typename T>
+struct is_handle {
+    static constexpr bool value = false;
+};
+
+template <typename T>
+struct is_handle<Handle<T>> {
+    static constexpr bool value = true;
+};
+}
+
+template <typename T>
+static constexpr bool is_handle_v = internal::is_handle<T>::value;

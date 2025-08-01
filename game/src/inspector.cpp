@@ -6,6 +6,7 @@
 #include "context.hpp"
 #include "imgui.h"
 #include "imgui_id_generator.hpp"
+#include "level.hpp"
 #include "relationship.hpp"
 #include "renderer.hpp"
 #include "sprite.hpp"
@@ -70,13 +71,16 @@ void Inspector::EndFrame() {
 
 void Inspector::Update() {
     if (ImGui::Begin("elapsed time")) {
-        auto duration = Context::GetInst().m_time->GetElapseTime();
+        auto duration = GAME_CONTEXT.m_time->GetElapseTime();
         ImGui::Text("fps: %d", int(duration > 0 ? 1.0 / duration : 4000));
     }
     ImGui::End();
     
     if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
-        showEntityHierarchy(Context::GetInst().GetRootEntity());
+        auto& level = GAME_CONTEXT.m_level;
+        if (level) {
+            showEntityHierarchy(level->GetRootEntity());
+        }
     }
     ImGui::End();
 
@@ -95,7 +99,7 @@ void Inspector::HandleEvents(const SDL_Event& event) {
 }
 
 void Inspector::showEntityDetail(Entity entity) {
-    auto& ctx = Context::GetInst();
+    auto& ctx = GAME_CONTEXT;
     if (ctx.m_transform_manager->Has(entity)) {
         auto value = ctx.m_transform_manager->Get(entity);
         InstanceDisplay("transform", *value);
@@ -111,14 +115,14 @@ void Inspector::showEntityDetail(Entity entity) {
         InstanceDisplay("sprite", *value);
     }
     
-    if (ctx.m_animation_component_manager->Has(entity)) {
-        auto value = ctx.m_animation_component_manager->Get(entity);
+    if (ctx.m_animation_player_manager->Has(entity)) {
+        auto value = ctx.m_animation_player_manager->Get(entity);
         InstanceDisplay("animation", *value);
     }
 }
 
 void Inspector::showEntityHierarchy(Entity node) {
-    auto& ctx = Context::GetInst();
+    auto& ctx = GAME_CONTEXT;
 
     auto relationship = ctx.m_relationship_manager->Get(node);
 

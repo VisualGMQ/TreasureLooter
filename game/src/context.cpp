@@ -1,5 +1,6 @@
 ﻿#include "context.hpp"
 #include "imgui.h"
+#include "level.hpp"
 #include "log.hpp"
 #include "rapidxml_print.hpp"
 #include "rapidxml_utils.hpp"
@@ -23,6 +24,7 @@ std::unique_ptr<Context> Context::instance;
 void Context::Init() {
     if (!instance) {
         instance = std::unique_ptr<Context>(new Context());
+        instance->Initialize();
     } else {
         LOGW("inited context singleton twice!");
     }
@@ -32,16 +34,21 @@ void Context::Destroy() {
     instance.reset();
 }
 
-Context& Context::GetInst() {
+Context& GAME_CONTEXT {
     return *instance;
 }
 
 Context::~Context() {
+    if (m_level) {
+        m_level->OnQuit();
+    }
+    m_level.reset();
+
     m_time.reset();
     m_input_manager.reset();
-    m_generic_assets_manager.reset();
+    m_assets_manager.reset();
     m_gamepad_manager.reset();
-    
+
 #ifdef TL_ENABLE_EDITOR
     m_editor.reset();
 #endif
@@ -50,67 +57,24 @@ Context::~Context() {
     m_mouse.reset();
     m_keyboard.reset();
     m_tilemap_component_manager.reset();
-    m_tilemap_manager.reset();
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_inspector.reset();
-    m_animation_manager.reset();
-    m_animation_component_manager.reset();
-    m_image_manager.reset();
+    m_animation_player_manager.reset();
+    m_assets_manager.reset();
     m_renderer.reset();
     m_window.reset();
     SDL_Quit();
     LOGI("game exits");
 }
 
+void Context::Initialize() {
+    m_level = std::make_unique<GameLevel>();
+    m_level->OnInit();
+}
+
 void Context::Update() {
-    m_time->Update();
-    ////////// this is a test //////////
-    static bool executed = false;
-
-    if (!executed) {
-        {
-            auto result = LoadAsset<EntityInstance>("assets/gpa/waggo.prefab.xml");
-            result.m_payload.m_entity = createEntity();
-            RegisterEntity(result.m_payload);
-
-            auto root_relationship = m_relationship_manager->Get(GetRootEntity());
-            root_relationship->m_children.push_back(result.m_payload.m_entity);
-
-            auto children = m_relationship_manager->Get(m_root_entity);
-            Entity entity = children->m_children[0];
-
-            auto track1 = std::make_unique<
-                AnimationTrack<Vec2, AnimationTrackType::Linear>>();
-            track1->AddKeyframe({{100.0f, 100}, 0});
-            track1->AddKeyframe({{800.0f, 800}, 3});
-
-            auto anim = m_animation_manager->Create();
-            anim->AddTrack(AnimationBindingPoint::TransformPosition,
-                          std::move(track1));
-            anim->Play();
-            anim->SetLoop(Animation::InfLoop);
-
-            m_animation_component_manager->RegisterEntity(entity, anim);
-        }
-        {
-            auto result =
-                LoadAsset<EntityInstance>("assets/gpa/tilemap.prefab.xml");
-            result.m_payload.m_entity = createEntity();
-            RegisterEntity(result.m_payload);
-
-            auto root_relationship =
-                m_relationship_manager->Get(GetRootEntity());
-            root_relationship->m_children.push_back(result.m_payload.m_entity);
-        }
-        
-        executed = true;
-    }
-
-    ////////////////////////////////////
-
     logicUpdate();
-    gameLogicUpdate();
     renderUpdate();
     logicPostUpdate();
 }
@@ -136,10 +100,6 @@ bool Context::ShouldExit() {
     return m_should_exit;
 }
 
-Entity Context::GetRootEntity() {
-    return m_root_entity;
-}
-
 #ifdef TL_ENABLE_EDITOR
 const Path& Context::GetProjectPath() const {
     return m_project_path;
@@ -159,31 +119,23 @@ Context::Context() {
     m_renderer = std::make_unique<Renderer>(*m_window);
     m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
 
-    m_image_manager = std::make_unique<ImageManager>(*m_renderer);
-    m_tilemap_manager = std::make_unique<TilemapManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
-    m_animation_component_manager = std::make_unique<AnimationComponentManager>();
-    m_animation_manager = std::make_unique<AnimationManager>();
+    m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
+    m_assets_manager = std::make_unique<AssetsManager>();
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
-    
+
 #ifdef TL_ENABLE_EDITOR
     m_editor = std::make_unique<Editor>();
 #endif
 
-    m_root_entity = createEntity();
-
     m_transform_manager = std::make_unique<TransformManager>();
     m_sprite_manager = std::make_unique<SpriteManager>();
-    m_relationship_manager =
-        std::make_unique<RelationshipManager>(m_root_entity);
-    m_transform_manager->RegisterEntity(m_root_entity);
+    m_relationship_manager = std::make_unique<RelationshipManager>();
     m_keyboard = std::make_unique<Keyboard>();
     m_mouse = std::make_unique<Mouse>();
     m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
-
-    m_generic_assets_manager = std::make_unique<GenericAssetsManager>();
 
     m_input_manager = std::make_unique<InputManager>(
         *this, std::string{"assets/gpa/input_config"} +
@@ -193,30 +145,18 @@ Context::Context() {
 }
 
 void Context::logicUpdate() {
+    m_time->Update();
     m_gamepad_manager->Update();
     m_keyboard->Update();
     m_mouse->Update();
     m_touches->Update();
-    
-    m_animation_component_manager->Update(m_time->GetElapseTime());
-    m_relationship_manager->Update();
-}
 
-void Context::gameLogicUpdate() {
-    // TODO: game logic here
-    auto children = m_relationship_manager->Get(m_root_entity);
-    Entity entity = children->m_children[0];
-
-    Transform* transform = m_transform_manager->Get(entity);
-
-    auto& action = m_input_manager->GetAction("Attack");
-    auto& x_axis = m_input_manager->GetAxis("MoveX");
-    auto& y_axis = m_input_manager->GetAxis("MoveY");
-    transform->m_position.x += 0.1f * x_axis.Value();
-    transform->m_position.y += 0.1f * y_axis.Value();
-    if (action.IsPressed()) {
-        transform->m_rotation += 10;
+    if (m_level) {
+        m_level->OnUpdate(m_time->GetElapseTime());
     }
+
+    m_animation_player_manager->Update(m_time->GetElapseTime());
+    m_relationship_manager->Update();
 }
 
 void Context::logicPostUpdate() {
@@ -231,7 +171,7 @@ void Context::renderUpdate() {
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
     m_inspector->Update();
-    
+
 #ifdef TL_ENABLE_EDITOR
     m_editor->Update();
 #endif
@@ -240,7 +180,7 @@ void Context::renderUpdate() {
     m_renderer->Present();
 }
 
-Entity Context::createEntity() {
+Entity Context::CreateEntity() {
     return m_last_entity++;
 }
 
@@ -262,7 +202,6 @@ void Context::parseProjectPath() {
         return;
     }
 
-    
 #ifdef TL_ENABLE_EDITOR
     m_project_path = node->value();
 #endif
@@ -285,8 +224,12 @@ void Context::RegisterEntity(const EntityInstance& entity_instance) {
     }
     if (entity_instance.m_data.m_tilemap) {
         m_tilemap_component_manager->ReplaceComponent(
+            entity_instance.m_entity, entity_instance.m_data.m_tilemap);
+    }
+    if (entity_instance.m_data.m_animation) {
+        m_animation_player_manager->RegisterEntity(
             entity_instance.m_entity,
-            entity_instance.m_data.m_tilemap);
+            entity_instance.m_data.m_animation.value());
     }
 }
 

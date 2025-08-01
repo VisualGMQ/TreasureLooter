@@ -7,8 +7,8 @@
 #include <array>
 
 void SpriteManager::Update() {
-    auto& renderer = Context::GetInst().m_renderer;
-    auto& transform_manager = Context::GetInst().m_transform_manager;
+    auto& renderer = GAME_CONTEXT.m_renderer;
+    auto& transform_manager = GAME_CONTEXT.m_transform_manager;
     for (auto& [entity, sprite] : m_components) {
         const Transform* transform = transform_manager->Get(entity);
         if (!transform) {

@@ -3,6 +3,7 @@
 #include "animation.hpp"
 #include "dialog.hpp"
 #include "imgui.h"
+#include "level.hpp"
 #include "relationship.hpp"
 #include "schema/display/input.hpp"
 #include "schema/display/prefab.hpp"
@@ -25,12 +26,12 @@ struct AssetDisplay {
 
 struct AssetSyncHelper {
     void operator()(AssetLoadResult<InputConfig>& payload) {
-        Context::GetInst().m_input_manager->SetConfig(Context::GetInst(),
+        GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT,
                                                       payload.m_payload);
     }
 
     void operator()(AssetLoadResult<EntityInstance>& payload) {
-        Context::GetInst().RegisterEntity(payload.m_payload);
+        GAME_CONTEXT.RegisterEntity(std::move(payload.m_payload));
     }
 
     void operator()(AssetLoadResult<Animation>& payload) {}
@@ -40,13 +41,15 @@ struct AssetSyncHelper {
 
 void AddEntityToScene(Entity entity,
                       AssetLoadResult<EntityInstance>& instance) {
-    auto& ctx = Context::GetInst();
-    auto root_entity = ctx.GetRootEntity();
-    auto relationship = ctx.m_relationship_manager->Get(root_entity);
-    relationship->m_children.push_back(entity);
+    if (auto& level = GAME_CONTEXT.m_level) {
+        auto root_entity = level->GetRootEntity();
+        auto relationship =
+            GAME_CONTEXT.m_relationship_manager->Get(root_entity);
+        relationship->m_children.push_back(entity);
 
-    AssetSyncHelper helper;
-    helper(instance);
+        AssetSyncHelper helper;
+        helper(instance);
+    }
 }
 
 template <typename T>

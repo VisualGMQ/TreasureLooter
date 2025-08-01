@@ -1,20 +1,25 @@
 ﻿#include "relationship.hpp"
 
 #include "context.hpp"
+#include "level.hpp"
 #include "transform.hpp"
 
-RelationshipManager::RelationshipManager(Entity root) : m_root{root} {
-    RegisterEntity(root);
-}
-
 void RelationshipManager::Update() {
-    auto relationship = Get(m_root);
+    auto& level = GAME_CONTEXT.m_level;
+    Entity root;
+    if (!level) {
+        return;
+    }
+
+    root = level->GetRootEntity();
+
+    auto relationship = Get(root);
     if (!relationship) {
         return;
     }
 
-    auto& transform_manager = Context::GetInst().m_transform_manager;
-    Transform* root_transform = transform_manager->Get(m_root);
+    auto& transform_manager = GAME_CONTEXT.m_transform_manager;
+    Transform* root_transform = transform_manager->Get(root);
     if (!root_transform) {
         LOGE(
             "[Component][RelationshipManager] root entity don't has transform");
@@ -30,7 +35,7 @@ void RelationshipManager::Update() {
 
 void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
                                               Entity child) {
-    auto& transform_manager = Context::GetInst().m_transform_manager;
+    auto& transform_manager = GAME_CONTEXT.m_transform_manager;
     Transform* transform = transform_manager->Get(child);
 
     if (!transform) {

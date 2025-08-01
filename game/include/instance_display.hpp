@@ -2,7 +2,7 @@
 #include "context.hpp"
 #include "imgui.h"
 #include "imgui_id_generator.hpp"
-#include "schema/display/animation.hpp"
+#include "schema/display/anim.hpp"
 
 #include <array>
 #include <optional>
@@ -51,19 +51,18 @@ void InstanceDisplay(const char* name, const Degrees& value);
 void InstanceDisplay(const char* name, Radians& value);
 void InstanceDisplay(const char* name, const Radians& value);
 void InstanceDisplay(const char* name, Handle<Image>& value);
-void InstanceDisplay(const char* name, Image* value);
-void InstanceDisplay(const char* name, const Image* value);
+void InstanceDisplay(const char* name, const Handle<Image>& value);
 void InstanceDisplay(const char* name, Transform& value);
 void InstanceDisplay(const char* name, const Transform& value);
 void InstanceDisplay(const char* name, TilemapHandle& value);
 void InstanceDisplay(const char* name, const TilemapHandle& value);
-void InstanceDisplay(const char* name, Tilemap* value);
-void InstanceDisplay(const char* name, const Tilemap* value);
 void InstanceDisplay(const char* name, const Flip&);
-void InstanceDisplay(const char* name, Animation&);
-void InstanceDisplay(const char* name, const Animation&);
 void InstanceDisplay(const char* name, Handle<Animation>&);
 void InstanceDisplay(const char* name, const Handle<Animation>&);
+void InstanceDisplay(const char* name, Animation&);
+void InstanceDisplay(const char* name, const Animation&);
+void InstanceDisplay(const char* name, AnimationPlayer&);
+void InstanceDisplay(const char* name, const AnimationPlayer&);
 
 template <typename T>
 void InstanceDisplay(const char* name, std::optional<T>& value) {

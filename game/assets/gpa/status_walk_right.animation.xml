@@ -1,5 +1,5 @@
 <Animation>
-	<uuid>9ca27f6a-0000-0000-0000-000000000000</uuid>
+	<uuid>7c798b73-0000-0000-0000-000000000000</uuid>
 	<value>
 		<tracks>
 			<track>
@@ -19,35 +19,35 @@
 					<keyframe>
 						<time>0.000000</time>
 						<value>
-							<topleft x="32.000000" y="16.000000"/>
+							<topleft x="48.000000" y="16.000000"/>
 							<size x="16.000000" y="16.000000"/>
 						</value>
 					</keyframe>
 					<keyframe>
 						<time>0.300000</time>
 						<value>
-							<topleft x="32.000000" y="32.000000"/>
+							<topleft x="48.000000" y="32.000000"/>
 							<size x="16.000000" y="16.000000"/>
 						</value>
 					</keyframe>
 					<keyframe>
 						<time>0.600000</time>
 						<value>
-							<topleft x="32.000000" y="48.000000"/>
+							<topleft x="48.000000" y="48.000000"/>
 							<size x="16.000000" y="16.000000"/>
 						</value>
 					</keyframe>
 					<keyframe>
 						<time>0.900000</time>
 						<value>
-							<topleft x="32.000000" y="0.000000"/>
+							<topleft x="48.000000" y="0.000000"/>
 							<size x="16.000000" y="16.000000"/>
 						</value>
 					</keyframe>
 					<keyframe>
 						<time>1.200000</time>
 						<value>
-							<topleft x="32.000000" y="0.000000"/>
+							<topleft x="48.000000" y="0.000000"/>
 							<size x="16.000000" y="16.000000"/>
 						</value>
 					</keyframe>

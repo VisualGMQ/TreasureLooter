@@ -23,6 +23,7 @@ struct PropertyInfo {
     std::string m_type;
     std::string m_name;
     bool m_optional = false;
+    std::string m_default;
 };
 
 struct ClassInfo {
