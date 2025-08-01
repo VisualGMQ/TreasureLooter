@@ -296,6 +296,7 @@ void InstanceDisplay(const char* name, const Radians& value) {
 
 template <typename T>
 void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
+#ifdef TL_ENABLE_EDITOR
     std::string button_text = "none";
 
     if (value && value.GetFilename()) {
@@ -336,6 +337,7 @@ void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
         }
     }
     ImGui::PopID();
+#endif
 }
 
 template <typename T>
