@@ -13,7 +13,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, {{type}}& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, {{type}}& payload) {
     std::string_view value = node.value();
     if (value.empty()) {
         LOGE("[Deserialize] parse enum {{type}} failed: no value");
@@ -51,7 +51,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
+void Deserialize(const rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
     std::string_view value = node.value();
     if (value.empty()) {
         LOGE("[Deserialize] parse enum {{type}} failed: no value");

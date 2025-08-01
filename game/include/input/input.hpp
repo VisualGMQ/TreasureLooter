@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "button.hpp"
 #include "gamepad.hpp"
+#include "math.hpp"
 #include "path.hpp"
 #include "schema/input.hpp"
 
@@ -56,12 +57,25 @@ private:
     std::optional<MouseMapping> m_vertical;
 };
 
+class Axises {
+public:
+    Axises(const Axis& x_axis, const Axis& y_axis);
+
+    Vec2 Value() const;
+
+private:
+    const Axis& m_x_axis;
+    const Axis& m_y_axis;
+};
+
 class InputManager {
 public:
     explicit InputManager(Context& context, const Path& config_filename);
 
     const Axis& GetAxis(const std::string& name) const;
     const Action& GetAction(const std::string& name) const;
+
+    Axises MakeAxises(const std::string& x_name, const std::string& y_name);
 
     void SetConfig(Context& context, const InputConfig& config);
 

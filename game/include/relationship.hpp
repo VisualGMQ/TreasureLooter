@@ -9,12 +9,8 @@ class Transform;
 
 class RelationshipManager : public ComponentManager<Relationship> {
 public:
-    explicit RelationshipManager(Entity root);
-
     void Update();
 
 private:
-    Entity m_root;
-
     void updatePoseRecursive(const Transform& parent_transform, Entity child);
 };

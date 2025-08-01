@@ -9,6 +9,9 @@ std::string GenerateClassCode(const ClassInfo& info) {
         kainjow::mustache::data prop_data;
         prop_data.set("type", property.m_type);
         prop_data.set("name", property.m_name);
+        if (!property.m_default.empty()) {
+            prop_data.set("default", "= " + property.m_default);
+        }
 
         auto prop_code = prop_mustache.render(prop_data);
         prop_datas << kainjow::mustache::data{"property", prop_code};

@@ -2,6 +2,10 @@
 
 #include <valarray>
 
+Vec2 Vec2::ZERO{};
+Vec2 Vec2::X_UNIT{1, 0};
+Vec2 Vec2::Y_UNIT{0, 1};
+
 Vec2::Vec2() : x{0}, y{0} {}
 
 Vec2::Vec2(float x, float y) : x{x}, y{y} {}
