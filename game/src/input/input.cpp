@@ -72,6 +72,13 @@ float Axis::Value() const {
 Action InputManager::InvalidAction;
 Axis InputManager::InvalidAxis;
 
+Axises::Axises(const Axis& x_axis, const Axis& y_axis)
+    : m_x_axis(x_axis), m_y_axis(y_axis) {}
+
+Vec2 Axises::Value() const {
+    return Vec2{m_x_axis.Value(), m_y_axis.Value()};
+}
+
 InputManager::InputManager(Context& context, const Path& config_filename) {
     InputConfig config = LoadAsset<InputConfig>(config_filename).m_payload;
     SetConfig(context, config);
@@ -99,6 +106,11 @@ const Action& InputManager::GetAction(const std::string& name) const {
         return it->second;
     }
     return InvalidAction;
+}
+
+Axises InputManager::MakeAxises(const std::string& x_name,
+                                const std::string& y_name) {
+    return {GetAxis(x_name), GetAxis(y_name)};
 }
 
 void InputManager::loadAxisConfig(Context& context,

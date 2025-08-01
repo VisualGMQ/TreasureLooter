@@ -48,6 +48,11 @@ std::string UUID::ToString() const {
     return uuids::to_string<char>(uuid);
 }
 
+std::ostream& operator<<(std::ostream& o, const UUID& uuid) {
+    o << uuid.ToString();
+    return o;
+}
+
 UUID::UUID() {
     m_data.fill(std::byte{0});
 }

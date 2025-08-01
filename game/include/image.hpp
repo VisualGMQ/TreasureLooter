@@ -1,6 +1,6 @@
 #pragma once
 #include "SDL3/SDL.h"
-#include "asset_manager.hpp"
+#include "asset_manager_interface.hpp"
 #include "math.hpp"
 #include "path.hpp"
 #include <unordered_map>
@@ -20,11 +20,8 @@ public:
 
     SDL_Texture* GetTexture() const;
 
-    const Path& Filename() const;
-
 private:
     SDL_Texture* m_texture{};
-    Path m_filename;
 };
 
 using ImageHandle = Handle<Image>;

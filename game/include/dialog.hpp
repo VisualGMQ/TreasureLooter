@@ -11,6 +11,12 @@
 #include <memory>
 #include <vector>
 
+
+struct Filter {
+    std::string name;
+    std::string pattern;
+};
+
 class FileDialog {
 public:
     enum class Type { OpenFile, SaveFile, OpenFolder };
@@ -21,6 +27,7 @@ public:
     void SetAcceptButtonText(const std::string&);
     void SetCancelButtonText(const std::string&);
     void AddFilter(const std::string& name, const std::string& pattern);
+    void AddFilter(const Filter&);
     void AllowMultipleSelect(bool);
     void SetDefaultFolder(const Path&);
     void Open();
@@ -28,11 +35,6 @@ public:
     const std::vector<Path>& GetSelectedFiles() const;
 
 private:
-    struct Filter {
-        std::string name;
-        std::string pattern;
-    };
-
     Type m_type;
     std::vector<Filter> m_filters;
     Path m_default_folder;

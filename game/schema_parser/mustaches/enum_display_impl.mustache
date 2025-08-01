@@ -11,7 +11,7 @@ void InstanceDisplay(const char* name, {{type}}& value) {
         {{/idx_to_enum_list}}
     };
 
-    const char* const items[] = {
+    static const char* const items[] = {
         {{#items}}
         "{{item}}",
         {{/items}}
@@ -21,10 +21,9 @@ void InstanceDisplay(const char* name, {{type}}& value) {
 
     int cur_item = enum_to_idx.at(value);
     ImGui::Combo(name, &cur_item, items, sizeof(items)/sizeof(const char* const));
+    ImGui::PopID();
 
     value = idx_to_enum.at(cur_item);
-
-    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const {{type}}& value) {
@@ -44,10 +43,9 @@ void InstanceDisplay(const char* name, const {{type}}& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
 
     int cur_item = enum_to_idx.at(value);
-    ImGui::Combo(name, &cur_item, items, 3);
-    ImGui::EndDisabled();
-
+    ImGui::Combo(name, &cur_item, items, sizeof(items)/sizeof(const char* const));
     ImGui::PopID();
+    ImGui::EndDisabled();
 }
 
 void InstanceDisplay(const char* name, Flags<{{type}}>& value) {

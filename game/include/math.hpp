@@ -12,6 +12,10 @@ struct Vec2 final {
         float y;
     };
 
+    static Vec2 ZERO;
+    static Vec2 X_UNIT;
+    static Vec2 Y_UNIT;
+
     Vec2();
     Vec2(float x, float y);
 
@@ -21,6 +25,14 @@ struct Vec2 final {
     Vec2& operator/=(float);
     Vec2& operator+=(const Vec2&);
     Vec2& operator-=(const Vec2&);
+
+    bool operator==(const Vec2& o) const {
+        return x == o.x && y == o.y;
+    }
+
+    bool operator!=(const Vec2& o) const {
+        return !(*this == o);
+    }
 
     float Dot(const Vec2&) const;
     float Cross(const Vec2&) const;

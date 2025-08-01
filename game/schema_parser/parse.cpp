@@ -55,12 +55,18 @@ std::optional<PropertyInfo> ParseElement(rapidxml::xml_node<>* node) {
     }
 
     auto name = node->first_attribute("name");
-    if (!type) {
+    if (!name) {
         std::cerr << "Error parsing element, no name" << std::endl;
         return std::nullopt;
     }
 
     PropertyInfo property;
+
+    auto default_node = node->first_attribute("default");
+    if (default_node) {
+        property.m_default = default_node->value();
+    }
+
     property.m_name = name->value();
     property.m_type = type->value();
     return property;
