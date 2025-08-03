@@ -1,8 +1,8 @@
 ﻿#include "tilemap.hpp"
 
+#include "asset_manager.hpp"
 #include "context.hpp"
 #include "log.hpp"
-#include "asset_manager.hpp"
 
 // Bits on the far end of the 32-bit global tile ID are used for tile flags
 const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x8;
@@ -65,8 +65,7 @@ Tileset::Tileset(const tmx::Tileset& tileset) {
 void Tileset::parse(const tmx::Tileset& tileset) {
     auto path = tileset.getImagePath();
     m_image =
-        GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(
-            path);
+        GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(path);
     m_margin = tileset.getMargin();
     m_spacing = tileset.getSpacing();
     m_firstgid = tileset.getFirstGID();
@@ -81,6 +80,20 @@ void Tileset::parse(const tmx::Tileset& tileset) {
         tile.m_region.m_topleft.y = tmx_tile->imagePosition.y;
         tile.m_region.m_size.x = tmx_tile->imageSize.x;
         tile.m_region.m_size.y = tmx_tile->imageSize.y;
+
+        auto& objs = tmx_tile->objectGroup.getObjects();
+        if (!objs.empty()) {
+            auto& obj = objs[0];
+            if (obj.getShape() == tmx::Object::Shape::Rectangle) {
+                auto& aabb = obj.getAABB();
+                tile.m_collision_rect.m_half_size.w = aabb.width * 0.5;
+                tile.m_collision_rect.m_half_size.h = aabb.height * 0.5;
+                tile.m_collision_rect.m_center =
+                    Vec2{aabb.left, aabb.top} + tile.m_collision_rect.m_half_size;
+            } else {
+                LOGW("tile collision only support rectangle");
+            }
+        }
         m_tiles.push_back(tile);
     }
 }
@@ -145,6 +158,43 @@ TilemapHandle TilemapManager::Load(const Path& filename) {
                  std::make_unique<Tilemap>(filename));
 }
 
+TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
+    : m_handle{handle} {
+    if (!handle) {
+        return;
+    }
+
+    auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+    auto& physics_scene = GAME_CONTEXT.m_physics_scene;
+    for (auto& layer : m_handle->GetLayers()) {
+        if (layer->GetType() == TilemapLayer::Type::Tiled) {
+            auto tiled_layer = layer->CastAsTiledLayer();
+            auto& size = tiled_layer->GetSize();
+            for (size_t y = 0; y < size.y; y++) {
+                for (size_t x = 0; x < size.x; x++) {
+                    auto& layer_tile = tiled_layer->GetTile(x, y);
+                    auto tile = m_handle->GetTile(layer_tile.m_gid);
+                    if (!tile || tile->m_collision_rect.m_half_size == Vec2::ZERO) {
+                        continue;
+                    }
+                    Rect rect;
+                    rect.m_half_size = tile->m_collision_rect.m_half_size;
+                    float scale =
+                        std::max(transform->m_scale.x, transform->m_scale.y);
+                    scale += 0.01;
+                    rect.m_center =
+                        transform->m_position +
+                        Vec2(x, y) * m_handle->GetTileSize() * scale;
+                    rect.m_center += tile->m_collision_rect.m_center * scale;
+                    rect.m_half_size *= scale;
+
+                    physics_scene->AddRect(rect);
+                }
+            }
+        }
+    }
+}
+
 void TilemapComponentManager::Update() {
     for (auto& [entity, tilemap] : m_components) {
         auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
@@ -152,7 +202,7 @@ void TilemapComponentManager::Update() {
             continue;
         }
 
-        drawTilemap(*transform, tilemap);
+        drawTilemap(*transform, tilemap->GetHandle());
     }
 }
 

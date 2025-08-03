@@ -7,9 +7,10 @@ class Level {
 public:
     Level();
     virtual ~Level() = default;
-    virtual void OnInit() = 0;
-    virtual void OnUpdate(TimeType) = 0;
-    virtual void OnQuit() = 0;
+    virtual void OnInit() {}
+    virtual void OnLogicUpdate(TimeType) = 0;
+    virtual void OnRenderUpdate(TimeType) = 0;
+    virtual void OnQuit() {}
 
     Entity GetRootEntity() const;
 
@@ -23,7 +24,8 @@ private:
 class GameLevel: public Level {
 public:
     void OnInit() override;
-    void OnUpdate(TimeType) override;
+    void OnLogicUpdate(TimeType) override;
+    void OnRenderUpdate(TimeType) override {}
     void OnQuit() override;
 
 private:
