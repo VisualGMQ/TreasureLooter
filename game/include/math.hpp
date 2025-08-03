@@ -26,18 +26,15 @@ struct Vec2 final {
     Vec2& operator+=(const Vec2&);
     Vec2& operator-=(const Vec2&);
 
-    bool operator==(const Vec2& o) const {
-        return x == o.x && y == o.y;
-    }
+    bool operator==(const Vec2& o) const { return x == o.x && y == o.y; }
 
-    bool operator!=(const Vec2& o) const {
-        return !(*this == o);
-    }
+    bool operator!=(const Vec2& o) const { return !(*this == o); }
 
     float Dot(const Vec2&) const;
     float Cross(const Vec2&) const;
     float LengthSquared() const;
     float Length() const;
+    Vec2 Normalize() const;
 };
 
 Vec2 operator*(float, const Vec2&);
@@ -52,17 +49,13 @@ float Cross(const Vec2&, const Vec2&);
 Vec2 operator-(const Vec2&);
 
 struct Color {
+    static const Color Red;
+    static const Color Green;
+    static const Color Blue;
+    static const Color Yellow;
+    static const Color Purple;
+
     float r{}, g{}, b{}, a = 1;
-};
-
-struct Rect {
-    Vec2 m_center;
-    Vec2 m_half_size;
-};
-
-struct Circle {
-    float m_radius = 0;
-    Vec2 m_position;
 };
 
 constexpr float PI = 3.14159265358979323846f;
@@ -131,7 +124,7 @@ struct Region {
 
 struct Transform {
     friend class RelationshipManager;
-    
+
     Vec2 m_position;
     Degrees m_rotation;
     Vec2 m_scale{1.0, 1.0};
@@ -149,3 +142,14 @@ template <typename T>
 T Lerp(T a, T b, float t) {
     return a + (b - a) * t;
 }
+
+struct DecompositionResult {
+    Vec2 m_tangent;
+    Vec2 m_normal;
+};
+
+/**
+ * @param v  the vector be decomposed
+ * @param normal normalized vector
+ */
+DecompositionResult DecomposeVector(const Vec2& v, const Vec2& normal);

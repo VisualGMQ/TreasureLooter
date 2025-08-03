@@ -36,7 +36,9 @@ public:
     void PostUpdate();
 
     const MouseButton& Get(MouseButtonType) const;
-    
+    const Vec2& GetPosition() const;
+    const Vec2& GetOffset() const;
+
 private:
     std::array<MouseButton, 5> m_buttons;
     Vec2 m_cur_position;
