@@ -24,10 +24,18 @@
 			<animation>
 				<value>
 					<loop>-1</loop>
+					<rate>1.000000</rate>
 					<animation>assets/gpa/status_walk_down.animation.xml</animation>
 				</value>
 			</animation>
 			<tilemap/>
+			<cct>
+				<value>
+					<skin>0.001000</skin>
+					<radius>24.000000</radius>
+					<min_disp>0.000100</min_disp>
+				</value>
+			</cct>
 		</data>
 	</payload>
 </EntityInstance>

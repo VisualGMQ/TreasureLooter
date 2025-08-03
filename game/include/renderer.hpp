@@ -4,6 +4,7 @@
 #include "math.hpp"
 #include "window.hpp"
 #include "schema/flip.hpp"
+#include "schema/common.hpp"
 
 class Image;
 
@@ -20,6 +21,7 @@ public:
 
     void DrawLine(const Vec2& p1, const Vec2& p2, const Color& color);
     void DrawRect(const Rect&, const Color&);
+    void DrawCircle(const Circle&, const Color&, uint32_t fragment = 20);
     void FillRect(const Rect&, const Color&);
     void DrawImage(const Image&, const Region& src, const Region& dst,
                    Degrees rotation, const Vec2& center, Flags<Flip>);

@@ -7,6 +7,7 @@
     <import>relationship</import>
     <import>anim</import>
     <import>anim_player</import>
+    <import>physics</import>
 
     <class name="Prefab">
         <option type="Sprite" name="sprite"/>
@@ -14,6 +15,7 @@
         <option type="Relationship" name="relationship"/>
         <option type="AnimationPlayerCreateInfo" name="animation"/>
         <handle type="Tilemap" name="tilemap"/>
+        <option type="CCT" name="cct"/>
     </class>
     
     <asset name="EntityInstance" extension=".prefab">

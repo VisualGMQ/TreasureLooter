@@ -2,6 +2,7 @@
 
 #include "asset_manager.hpp"
 #include "context.hpp"
+#include "physics.hpp"
 #include "relationship.hpp"
 #include "sprite.hpp"
 
@@ -31,7 +32,9 @@ void GameLevel::OnInit() {
         animation_manager.Load("assets/gpa/status_walk_up.animation.xml");
     m_walk_down =
         animation_manager.Load("assets/gpa/status_walk_down.animation.xml");
-    m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load("assets/Characters/Statue/SpriteSheet.png");
+    m_image_sheet =
+        GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(
+            "assets/Characters/Statue/SpriteSheet.png");
 
     {
         auto result = LoadAsset<EntityInstance>("assets/gpa/waggo.prefab.xml");
@@ -42,6 +45,10 @@ void GameLevel::OnInit() {
             GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
         root_relationship->m_children.push_back(result.m_payload.m_entity);
         m_player_entity = result.m_payload.m_entity;
+
+        auto cct = GAME_CONTEXT.m_cct_manager->Get(result.m_payload.m_entity);
+        auto transform = GAME_CONTEXT.m_transform_manager->Get(result.m_payload.m_entity);
+        cct->Teleport(transform->m_position);
     }
     {
         auto result =
@@ -55,7 +62,7 @@ void GameLevel::OnInit() {
     }
 }
 
-void GameLevel::OnUpdate(TimeType elapse_time) {
+void GameLevel::OnLogicUpdate(TimeType elapse_time) {
     auto children = GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
     Entity entity = children->m_children[0];
 
@@ -65,7 +72,14 @@ void GameLevel::OnUpdate(TimeType elapse_time) {
 
     Vec2 axises =
         GAME_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY").Value();
-    transform->m_position += 0.1f * axises;
+
+    constexpr float speed = 500;
+    auto cct = GAME_CONTEXT.m_cct_manager->Get(entity);
+    if (cct) {
+        cct->MoveAndSlide(speed * elapse_time * axises);
+        transform->m_position = cct->GetPosition();
+    }
+
     AnimationPlayer* player =
         GAME_CONTEXT.m_animation_player_manager->Get(entity);
 
@@ -85,7 +99,8 @@ void GameLevel::OnUpdate(TimeType elapse_time) {
         m_walk_direction = WalkDirection::Right;
     }
 
-    if ((!player->IsPlaying() && axises != Vec2::ZERO) || old_direction != m_walk_direction) {
+    if ((!player->IsPlaying() && axises != Vec2::ZERO) ||
+        old_direction != m_walk_direction) {
         switch (m_walk_direction) {
             case WalkDirection::Up:
                 player->ChangeAnimation(m_walk_up);

@@ -70,9 +70,19 @@ void Inspector::EndFrame() {
 }
 
 void Inspector::Update() {
-    if (ImGui::Begin("elapsed time")) {
+    if (ImGui::Begin("Debug Panel")) {
         auto duration = GAME_CONTEXT.m_time->GetElapseTime();
         ImGui::Text("fps: %d", int(duration > 0 ? 1.0 / duration : 4000));
+
+        bool physics_debug_draw = GAME_CONTEXT.m_physics_scene->IsEnableDebugDraw();
+        if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
+            GAME_CONTEXT.m_physics_scene->ToggleDebugDraw();
+        }
+
+        bool cct_debug_draw = GAME_CONTEXT.m_cct_manager->IsEnableDebugDraw();
+        if (ImGui::Checkbox("cct debug draw", &cct_debug_draw)) {
+            GAME_CONTEXT.m_cct_manager->ToggleDebugDraw();
+        }
     }
     ImGui::End();
     

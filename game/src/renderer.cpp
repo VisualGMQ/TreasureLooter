@@ -35,6 +35,20 @@ void Renderer::DrawRect(const Rect& r, const Color& c) {
     SDL_CALL(SDL_RenderRect(m_renderer, &rect));
 }
 
+void Renderer::DrawCircle(const Circle& c, const Color& color, uint32_t fragment) {
+    float angle_step = 2 * PI / fragment;
+    Vec2 p = c.m_center + Vec2::X_UNIT * c.m_radius;
+    setRenderColor(color);
+    for (int i = 1; i <= fragment; i++) {
+        Vec2 new_p = c.m_center;
+        float angle = angle_step * i;
+        new_p.x += c.m_radius * std::cos(angle);
+        new_p.y += c.m_radius * std::sin(angle);
+        SDL_RenderLine(m_renderer, p.x, p.y, new_p.x, new_p.y);
+        p = new_p;
+    }
+}
+
 void Renderer::FillRect(const Rect& r, const Color& c) {
     setRenderColor(c);
     Vec2 tl = r.m_center - r.m_half_size;

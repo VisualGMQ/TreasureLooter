@@ -45,6 +45,14 @@ const MouseButton& Mouse::Get(MouseButtonType type) const {
     return m_buttons[static_cast<uint8_t>(type) - 1];
 }
 
+const Vec2& Mouse::GetPosition() const {
+    return m_cur_position;
+}
+
+const Vec2& Mouse::GetOffset() const {
+    return m_cur_offset;
+}
+
 Mouse::Mouse()
     : m_buttons{MouseButton{MouseButtonType::Left},
                 MouseButton{MouseButtonType::Middle},

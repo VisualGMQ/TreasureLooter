@@ -44,6 +44,8 @@ Context::~Context() {
     }
     m_level.reset();
 
+    m_cct_manager.reset();
+    m_physics_scene.reset();
     m_time.reset();
     m_input_manager.reset();
     m_assets_manager.reset();
@@ -142,6 +144,8 @@ Context::Context() {
                    InputConfig_AssetExtension.data());
 
     m_time = std::make_unique<Time>();
+    m_physics_scene = std::make_unique<PhysicsScene>();
+    m_cct_manager = std::make_unique<CCTManager>();
 }
 
 void Context::logicUpdate() {
@@ -152,7 +156,7 @@ void Context::logicUpdate() {
     m_touches->Update();
 
     if (m_level) {
-        m_level->OnUpdate(m_time->GetElapseTime());
+        m_level->OnLogicUpdate(m_time->GetElapseTime());
     }
 
     m_animation_player_manager->Update(m_time->GetElapseTime());
@@ -170,6 +174,14 @@ void Context::renderUpdate() {
 
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
+
+    if (m_level) {
+        m_level->OnRenderUpdate(m_time->GetElapseTime());
+    }
+
+    m_physics_scene->RenderDebug();
+    m_cct_manager->RenderDebug();
+
     m_inspector->Update();
 
 #ifdef TL_ENABLE_EDITOR
@@ -224,12 +236,18 @@ void Context::RegisterEntity(const EntityInstance& entity_instance) {
     }
     if (entity_instance.m_data.m_tilemap) {
         m_tilemap_component_manager->ReplaceComponent(
-            entity_instance.m_entity, entity_instance.m_data.m_tilemap);
+            entity_instance.m_entity,
+            {entity_instance.m_entity, entity_instance.m_data.m_tilemap});
     }
     if (entity_instance.m_data.m_animation) {
         m_animation_player_manager->RegisterEntity(
             entity_instance.m_entity,
             entity_instance.m_data.m_animation.value());
+    }
+    if (entity_instance.m_data.m_cct) {
+        m_cct_manager->RegisterEntity(
+            entity_instance.m_entity,
+            entity_instance.m_data.m_cct.value());
     }
 }
 
@@ -237,4 +255,7 @@ void Context::RemoveEntity(Entity entity) {
     m_sprite_manager->RemoveEntity(entity);
     m_transform_manager->RemoveEntity(entity);
     m_relationship_manager->RemoveEntity(entity);
+    m_tilemap_component_manager->RemoveEntity(entity);
+    m_animation_player_manager->RemoveEntity(entity);
+    m_cct_manager->RemoveEntity(entity);
 }

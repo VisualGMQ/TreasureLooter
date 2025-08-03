@@ -62,6 +62,14 @@ float Vec2::Length() const {
     return std::sqrt(LengthSquared());
 }
 
+Vec2 Vec2::Normalize() const {
+    float len = Length();
+    if (len <= std::numeric_limits<float>::epsilon()) {
+        return {};
+    }
+    return *this / len;
+}
+
 Vec2 operator*(float x, const Vec2& v) {
     Vec2 o = v;
     return o *= x;
@@ -267,3 +275,16 @@ void Transform::UpdateMat(const Transform* parent) {
         m_global_mat = m_mat;
     }
 }
+
+DecompositionResult DecomposeVector(const Vec2& v, const Vec2& normal) {
+    DecompositionResult  result;
+    result.m_normal = v.Dot(normal) * normal;
+    result.m_tangent = v - result.m_normal;
+    return result;
+}
+
+const Color Color::Red{1, 0, 0};
+const Color Color::Green{ 0, 1, 0};
+const Color Color::Blue{0, 0, 1};
+const Color Color::Yellow{1, 1, 0};
+const Color Color::Purple{1, 0, 1};

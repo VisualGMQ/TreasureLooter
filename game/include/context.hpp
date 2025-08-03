@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "animation.hpp"
 #include "animation_player.hpp"
+#include "cct.hpp"
 #include "editor/editor.hpp"
 #include "entity.hpp"
 #include "input/finger_touch.hpp"
@@ -9,6 +10,7 @@
 #include "input/keyboard.hpp"
 #include "input/mouse.hpp"
 #include "inspector.hpp"
+#include "physics.hpp"
 #include "renderer.hpp"
 #include "tilemap.hpp"
 #include "timer.hpp"
@@ -58,6 +60,8 @@ public:
     std::unique_ptr<GamepadManager> m_gamepad_manager;
     std::unique_ptr<InputManager> m_input_manager;
     std::unique_ptr<Time> m_time;
+    std::unique_ptr<PhysicsScene> m_physics_scene;
+    std::unique_ptr<CCTManager> m_cct_manager;
 
     std::unique_ptr<Level> m_level;
 

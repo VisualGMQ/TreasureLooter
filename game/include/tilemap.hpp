@@ -3,6 +3,7 @@
 #include "image.hpp"
 #include "manager.hpp"
 #include "path.hpp"
+#include "schema/common.hpp"
 #include "schema/flip.hpp"
 #include "tmxlite/Layer.hpp"
 #include "tmxlite/Map.hpp"
@@ -54,6 +55,7 @@ struct Tile {
     ImageHandle m_image;
     Region m_region;
     uint32_t m_id;
+    Rect m_collision_rect;
 };
 
 class Tileset {
@@ -105,7 +107,17 @@ public:
     TilemapHandle Load(const Path& filename) override;
 };
 
-class TilemapComponentManager: public ComponentManager<TilemapHandle> {
+
+class TilemapComponent {
+public:
+    TilemapComponent(Entity, TilemapHandle);
+    TilemapHandle GetHandle() const { return m_handle; }
+
+private:
+    TilemapHandle m_handle;
+};
+
+class TilemapComponentManager: public ComponentManager<TilemapComponent> {
 public:
     void Update();
     
