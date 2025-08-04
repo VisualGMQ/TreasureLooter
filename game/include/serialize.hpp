@@ -55,6 +55,12 @@ void Deserialize(const rapidxml::xml_node<>& node, unsigned int& payload);
 void Deserialize(const rapidxml::xml_node<>& node, unsigned short& payload);
 void Deserialize(const rapidxml::xml_node<>& node, unsigned char& payload);
 
+// Entity
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                Entity payload,
+                                const std::string& name);
+void Deserialize(const rapidxml::xml_node<>& node, Entity& payload);
+
 // bool
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const bool& payload, const std::string& name);

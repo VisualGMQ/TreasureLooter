@@ -173,6 +173,22 @@ void Deserialize(const rapidxml::xml_node<>& node, unsigned char& payload) {
     }
 }
 
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc, Entity payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->value(doc.allocate_string(
+        std::to_string(static_cast<std::underlying_type_t<Entity>>(payload))
+            .c_str()));
+    return node;
+}
+
+void Deserialize(const rapidxml::xml_node<>& node, Entity& payload) {
+    std::underlying_type_t<Entity> numeric;
+    Deserialize(node, numeric);
+    payload = static_cast<Entity>(numeric);
+}
+
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const bool& payload, const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
@@ -345,8 +361,7 @@ void Deserialize(const rapidxml::xml_node<>& node, Transform& payload) {
 template <typename T>
 void Deserialize(const rapidxml::xml_node<>& node, Handle<Image>& payload) {
     Path filename = node.value();
-    auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<Handle<T>>();
+    auto& manager = GAME_CONTEXT.m_assets_manager->GetManager<Handle<T>>();
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);
@@ -367,8 +382,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 
 void Deserialize(const rapidxml::xml_node<>& node, Tilemap*& payload) {
     Path filename = node.value();
-    auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<TilemapHandle>();
+    auto& manager = GAME_CONTEXT.m_assets_manager->GetManager<TilemapHandle>();
     auto handle = manager.Load(filename);
     if (!handle) {
         handle = manager.Load(filename);
@@ -387,8 +401,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 
 void Deserialize(const rapidxml::xml_node<>& node, Handle<Tilemap>& payload) {
     Path filename = node.value();
-    auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<TilemapHandle>();
+    auto& manager = GAME_CONTEXT.m_assets_manager->GetManager<TilemapHandle>();
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);

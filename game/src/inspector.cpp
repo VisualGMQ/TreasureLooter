@@ -142,7 +142,9 @@ void Inspector::showEntityHierarchy(Entity node) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    if (ImGui::TreeNodeEx(("Entity " + std::to_string(node)).c_str(), flags)) {
+    if (ImGui::TreeNodeEx(
+            ("Entity " + std::to_string(static_cast<uint32_t>(node))).c_str(),
+            flags)) {
         if (ImGui::IsItemClicked()) {
             m_selected_entity = node;
         }

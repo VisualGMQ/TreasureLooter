@@ -672,3 +672,13 @@ void InstanceDisplay(const char* name, AnimationPlayer& player) {
         player.ChangeAnimation(animation);
     }
 }
+
+void InstanceDisplay(const char* name, Entity e) {
+    ImGui::Text("%s", name);
+    ImGui::Text("entity: %uld", static_cast<uint32_t>(e));
+}
+
+void InstanceDisplay(const char* name, NullEntity) {
+    ImGui::Text("%s", name);
+    ImGui::Text("entity: null_entity");
+}

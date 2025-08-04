@@ -44,6 +44,7 @@ Context::~Context() {
     }
     m_level.reset();
 
+    m_event_system.reset();
     m_cct_manager.reset();
     m_physics_scene.reset();
     m_time.reset();
@@ -96,6 +97,8 @@ void Context::HandleEvents(const SDL_Event& event) {
     }
     m_gamepad_manager->HandleEvent(event);
     m_mouse->HandleEvent(event);
+
+    m_event_system->HandleEvent(event);
 }
 
 bool Context::ShouldExit() {
@@ -146,6 +149,7 @@ Context::Context() {
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();
     m_cct_manager = std::make_unique<CCTManager>();
+    m_event_system = std::make_unique<EventSystem>();
 }
 
 void Context::logicUpdate() {
@@ -161,6 +165,7 @@ void Context::logicUpdate() {
 
     m_animation_player_manager->Update(m_time->GetElapseTime());
     m_relationship_manager->Update();
+    m_event_system->Update();
 }
 
 void Context::logicPostUpdate() {
@@ -193,7 +198,7 @@ void Context::renderUpdate() {
 }
 
 Entity Context::CreateEntity() {
-    return m_last_entity++;
+    return static_cast<Entity>(m_last_entity++);
 }
 
 void Context::parseProjectPath() {
