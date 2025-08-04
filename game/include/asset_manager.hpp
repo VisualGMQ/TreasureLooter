@@ -2,20 +2,20 @@
 
 #include "animation.hpp"
 #include "asset_manager_interface.hpp"
+#include "context.hpp"
 #include "image.hpp"
 #include "tilemap.hpp"
-#include "context.hpp"
 
 class AssetsManager {
 public:
     template <typename T>
     auto& GetManager() {
         TypeIndex index = TypeIndexGenerator::Get<T>();
-        if constexpr (std::is_same_v<T, ImageHandle>) {
+        if constexpr (std::is_same_v<T, Image>) {
             return ensureManager<ImageManager>(index, *GAME_CONTEXT.m_renderer);
-        } else if constexpr (std::is_same_v<T, TilemapHandle>) {
+        } else if constexpr (std::is_same_v<T, Tilemap>) {
             return ensureManager<TilemapManager>(index);
-        } else if constexpr (std::is_same_v<T, AnimationHandle>) {
+        } else if constexpr (std::is_same_v<T, Animation>) {
             return ensureManager<AnimationManager>(index);
         } else {
             return ensureManager<GenericAssetManager<T>>(index);

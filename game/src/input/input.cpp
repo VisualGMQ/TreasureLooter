@@ -79,8 +79,8 @@ Vec2 Axises::Value() const {
     return Vec2{m_x_axis.Value(), m_y_axis.Value()};
 }
 
-InputManager::InputManager(Context& context, InputConfigHandle config) {
-    SetConfig(context, config);
+void InputManager::Initialize(InputConfigHandle config) {
+    SetConfig(GAME_CONTEXT, config);
 }
 
 void InputManager::SetConfig(Context& context, InputConfigHandle config) {

@@ -8,9 +8,13 @@
 #include "relationship.hpp"
 #include "schema/display/input.hpp"
 #include "schema/display/prefab.hpp"
+#include "schema/display/level.hpp"
+#include "schema/display/config.hpp"
 #include "schema/serialize/asset_extensions.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
+#include "schema/serialize/level.hpp"
+#include "schema/serialize/config.hpp"
 #include "sdl_call.hpp"
 #include "sprite.hpp"
 
@@ -26,6 +30,9 @@ struct AssetDisplay {
 };
 
 struct AssetSyncHelper {
+    template <typename T>
+    void operator()(AssetLoadResult<T>&) {}
+
     void operator()(AssetLoadResult<InputConfig>& payload) {
         /* NOTE: dangerous operate due to handle is temporary variable.
          * but InputManager don't obtain handle's lifetime so currently this is
@@ -96,31 +103,39 @@ AssetTypes CreateAsset() {
 
 void Editor::Update() {
     if (ImGui::Begin("Editor", &m_open)) {
-        static const std::array<const char*, 3> asset_types = {
+        static const std::array<const char*, 5> asset_types = {
             "InputConfig",
             "EntityInstance",
             "Animation",
+            "GameConfig",
+            "Level",
         };
 
-        static const std::array<std::string_view, 3> asset_extensions = {
+        static const std::array<std::string_view, 5> asset_extensions = {
             InputConfig_AssetExtension,
             Prefab_AssetExtension,
             Animation_AssetExtension,
+            GameConfig_AssetExtension,
+            LevelContent_AssetExtension,
         };
 
         static const std::array<std::function<AssetTypes(const Path& filename)>,
-                                3>
+                                5>
             asset_loader = {
                 LoadAssetFromPath<InputConfig>,
                 LoadAssetFromPath<Prefab>,
                 LoadAssetFromPath<Animation>,
+                LoadAssetFromPath<GameConfig>,
+                LoadAssetFromPath<LevelContent>,
             };
 
-        static const std::array<std::function<AssetTypes()>, 3> asset_creator =
+        static const std::array<std::function<AssetTypes()>, 5> asset_creator =
             {
                 CreateAsset<InputConfig>,
                 CreateAsset<Prefab>,
                 CreateAsset<Animation>,
+                CreateAsset<GameConfig>,
+                CreateAsset<LevelContent>,
             };
 
         if (ImGui::BeginPopupModal("popup")) {

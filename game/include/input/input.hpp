@@ -70,7 +70,7 @@ private:
 
 class InputManager {
 public:
-    explicit InputManager(Context& context, InputConfigHandle);
+    void Initialize(InputConfigHandle config);
 
     const Axis& GetAxis(const std::string& name) const;
     const Action& GetAction(const std::string& name) const;

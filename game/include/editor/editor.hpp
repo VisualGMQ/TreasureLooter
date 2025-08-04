@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "animation.hpp"
+#include "schema/config.hpp"
 #include "schema/input.hpp"
 #include "schema/prefab.hpp"
 
@@ -7,7 +8,8 @@
 
 using AssetTypes =
     std::variant<std::monostate, AssetLoadResult<Prefab>,
-                 AssetLoadResult<InputConfig>, AssetLoadResult<Animation>>;
+                 AssetLoadResult<InputConfig>, AssetLoadResult<Animation>,
+                 AssetLoadResult<GameConfig>, AssetLoadResult<LevelContent>>;
 
 class Editor {
 public:

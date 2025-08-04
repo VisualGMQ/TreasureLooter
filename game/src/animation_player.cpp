@@ -150,14 +150,14 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
 
 void AnimationPlayer::ChangeAnimation(const Path& filename) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>().Find(
+        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(
             filename);
     ChangeAnimation(animation);
 }
 
 void AnimationPlayer::ChangeAnimation(UUID uuid) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>().Find(uuid);
+        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(uuid);
     ChangeAnimation(animation);
 }
 

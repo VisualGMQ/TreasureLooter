@@ -122,13 +122,13 @@ void Level::createEntityByPrefab(Entity entity, const Prefab& prefab) {
         GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(prefab.m_transform->m_position);
     }
     if (prefab.m_type == EntityType::Player) {
-        GAME_CONTEXT.m_entity_logic_manager->RegisterEntity(entity, PlayerLogic{entity});
+        GAME_CONTEXT.m_entity_logic_manager->RegisterEntityByDerive<PlayerLogic>(entity, entity);
     }
 }
 
 void PlayerLogic::OnInit() {
     auto& animation_manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>();
+        GAME_CONTEXT.m_assets_manager->GetManager<Animation>();
 
     m_walk_left =
         animation_manager.Load("assets/gpa/status_walk_left.animation.xml");
@@ -139,7 +139,7 @@ void PlayerLogic::OnInit() {
     m_walk_down =
         animation_manager.Load("assets/gpa/status_walk_down.animation.xml");
     m_image_sheet =
-        GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(
+        GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
             "assets/Characters/Statue/SpriteSheet.png");
 }
 

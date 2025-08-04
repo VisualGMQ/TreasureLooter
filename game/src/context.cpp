@@ -33,6 +33,7 @@ void Context::Init() {
 }
 
 void Context::Destroy() {
+    instance->Shutdown();
     instance.reset();
 }
 
@@ -40,11 +41,14 @@ Context& GAME_CONTEXT {
     return *instance;
 }
 
-Context::~Context() {
+void Context::Shutdown() {
     if (m_level) {
         m_level->OnQuit();
     }
     m_level.reset();
+}
+
+Context::~Context() {
 
     m_event_system.reset();
     m_entity_logic_manager.reset();
@@ -75,15 +79,18 @@ Context::~Context() {
 }
 
 void Context::Initialize() {
-    auto game_config =
-        LoadAsset<GameConfig>(std::string{"assets/gpa/game_config"} +
-                              GameConfig_AssetExtension.data());
-    if (!game_config) {
+    m_game_config = m_assets_manager->GetManager<GameConfig>().Load(
+        std::string{"assets/gpa/game_config"} +
+        GameConfig_AssetExtension.data());
+    if (!m_game_config) {
         LOGC("game config not found!");
+        SDL_Quit();
         return;
     }
-    LOGI("loading game level: {}", *game_config.m_payload.m_basic_level.GetFilename());
-    m_level = std::make_unique<Level>(game_config.m_payload.m_basic_level);
+    LOGI("loading game level: {}", *m_game_config->m_basic_level.GetFilename());
+    m_input_manager->Initialize(m_game_config->m_input_config);
+
+    m_level = std::make_unique<Level>(m_game_config->m_basic_level);
     m_level->OnInit();
 }
 
@@ -131,14 +138,6 @@ Context::Context() {
     parseProjectPath();
 #endif
     m_assets_manager = std::make_unique<AssetsManager>();
-    m_game_config = m_assets_manager->GetManager<GameConfig>().Load(
-        std::string{"assets/gpa/game_config"} +
-        GameConfig_AssetExtension.data());
-    if (!m_game_config) {
-        LOGC("game config not found!");
-        SDL_Quit();
-        return;
-    }
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
@@ -162,7 +161,7 @@ Context::Context() {
     m_gamepad_manager = std::make_unique<GamepadManager>();
 
     m_input_manager =
-        std::make_unique<InputManager>(*this, m_game_config->m_input_config);
+        std::make_unique<InputManager>();
 
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();

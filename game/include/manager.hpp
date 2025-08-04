@@ -25,6 +25,21 @@ public:
         }
     }
 
+    template <typename U, typename... Args>
+    void RegisterEntityByDerive(Entity entity, Args&&... args) {
+        if (auto it = m_components.find(entity); it != m_components.end()) {
+            LOGW("[Component]: entity {} already registered", entity);
+            return;
+        }
+
+        if constexpr (is_handle) {
+            m_components.emplace(entity, std::forward<Args>(args)...);
+        } else {
+            m_components.emplace(
+                entity, std::make_unique<U>(std::forward<Args>(args)...));
+        }
+    }
+
     void RemoveEntity(Entity entity) { m_components.erase(entity); }
 
     void ReplaceComponent(Entity entity, const T& component) {

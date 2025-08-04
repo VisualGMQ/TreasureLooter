@@ -10,6 +10,10 @@
 #include <sstream>
 
 AnimationHandle AnimationManager::Load(const Path& filename) {
+    if (auto handle = Find(filename)) {
+        return handle;
+    }
+
     auto result = LoadAsset<Animation>(filename);
     if (!result.m_uuid) {
         LOGE("load animation {} failed! uuid is null", filename);

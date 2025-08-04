@@ -28,10 +28,12 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
             return;
         }
 
-        m_circle.m_center +=
-            (hit.m_t < m_skin ? -m_skin : hit.m_t - m_skin) * disp_normalized;
+        float actual_move_dist = hit.m_t < m_skin ? -(m_skin - hit.m_t) : hit.m_t - m_skin;
 
-        disp_length -= hit.m_t;
+        m_circle.m_center +=
+            actual_move_dist * disp_normalized;
+
+        disp_length -= actual_move_dist;
 
         if (disp_length <= m_min_disp) {
             return;

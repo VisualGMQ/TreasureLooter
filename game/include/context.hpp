@@ -40,6 +40,7 @@ public:
     ~Context();
 
     void Initialize();
+    void Shutdown();
 
     void Update();
     void HandleEvents(const SDL_Event&);

@@ -58,7 +58,7 @@ protected:
                      std::unique_ptr<T>&& payload) {
         auto result = m_payloads.emplace(uuid, std::move(payload));
         if (!result.second) {
-            LOGE("load asset {} failed",
+            LOGE("asset {} already loaded",
                  filename ? *filename : "<no filename>");
             return nullptr;
         }
@@ -88,7 +88,7 @@ public:
 
     HandleType Load(const Path& filename) override {
         auto result = LoadAsset<T>(filename);
-        return store(&filename, result.m_uuid,
-                     std::make_unique<T>(std::move(result.m_payload)));
+        return this->store(&filename, result.m_uuid,
+                           std::make_unique<T>(std::move(result.m_payload)));
     }
 };

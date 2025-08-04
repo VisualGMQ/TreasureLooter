@@ -6,6 +6,8 @@
 template <typename T>
 class Handle {
 public:
+    using underlying_type = T;
+
     Handle() = default;
 
     Handle(nullptr_t) {}

@@ -2,10 +2,3 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const {{type}}& payload,
                                 const std::string& name);
 void Deserialize(const rapidxml::xml_node<>& node, {{type}}& payload);
-
-{{#has_handle}}
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const {{type}}Handle& payload,
-                                const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, {{type}}Handle& payload);
-{{/has_handle}}
