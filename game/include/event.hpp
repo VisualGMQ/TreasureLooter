@@ -3,6 +3,7 @@
 #include "log.hpp"
 #include "type_index.hpp"
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 
@@ -18,7 +19,7 @@ struct NullEventListenerID {
 constexpr NullEventListenerID null_event_listener_id;
 
 template <typename T>
-using EventListener = std::function<void(const T&)>;
+using EventListener = std::function<void(EventListenerID, const T&)>;
 
 class EventSinkBase {
 public:
@@ -31,50 +32,63 @@ public:
 template <typename T>
 class EventSink : public EventSinkBase {
 public:
-    using EventListener = EventListener<T>;
+    using EventListenerType = EventListener<T>;
 
-    void AddListener(EventListenerID id, const EventListener& listener) {
-        m_listener.emplace_back({id, listener});
+    void AddListener(EventListenerID id, const EventListenerType& listener) {
+        m_pending_add_listeners.emplace_back(EventListenerInfo{id, listener});
     }
 
     void RemoveListener(EventListenerID id) {
-        m_listener.erase(
-            std::remove_if(
-                std::begin(m_listener), std::end(m_listener),
-                [id](const EventListenerInfo<T>& e) { return e.m_id == id; }),
-            std::end(m_listener));
+        m_pending_delete_listeners.push_back(id);
     }
 
-    void ClearEvents() { m_enqueued_events.clear(); }
+    void ClearEvents() override { m_enqueued_events.clear(); }
 
-    void ClearListener() { m_listener.clear(); }
+    void ClearListener() override { m_listener.clear(); }
 
     void EnqueueEvent(const T& event) { m_enqueued_events.push_back(event); }
 
     void TriggerEvent(const T& event) {
         for (auto& listener : m_listener) {
-            listener.m_listener(event);
+            listener.m_listener(listener.m_id, event);
         }
     }
 
     void Update() override {
+        m_listener.insert(
+            m_listener.end(),
+            std::make_move_iterator(m_pending_add_listeners.begin()),
+            std::make_move_iterator(m_pending_add_listeners.end()));
+        m_pending_add_listeners.clear();
+
+        for (auto id : m_pending_delete_listeners) {
+            m_listener.erase(
+                std::remove_if(
+                    std::begin(m_listener), std::end(m_listener),
+                    [id](const EventListenerInfo& e) { return e.m_id == id; }),
+                m_listener.end());
+        }
+        m_pending_delete_listeners.clear();
+
         for (auto& event : m_enqueued_events) {
             for (auto& listener : m_listener) {
-                listener.m_listener(event);
+                listener.m_listener(listener.m_id, event);
             }
         }
         ClearEvents();
     }
 
 private:
-    template <typename T>
     struct EventListenerInfo {
         EventListenerID m_id;
-        std::function<void(const T&)> m_listener;
+        EventListenerType m_listener;
     };
 
     std::vector<T> m_enqueued_events;
-    std::vector<EventListenerInfo<T>> m_listener;
+    std::vector<EventListenerInfo> m_listener;
+
+    std::vector<EventListenerID> m_pending_delete_listeners;
+    std::vector<EventListenerInfo> m_pending_add_listeners;
 };
 
 class EventSystem {
