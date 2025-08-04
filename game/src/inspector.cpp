@@ -87,10 +87,8 @@ void Inspector::Update() {
     ImGui::End();
     
     if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
-        auto& level = GAME_CONTEXT.m_level;
-        if (level) {
-            showEntityHierarchy(level->GetRootEntity());
-        }
+        auto& level = GAME_CONTEXT.GetCurrentLevel();
+        showEntityHierarchy(level.GetRootEntity());
     }
     ImGui::End();
 

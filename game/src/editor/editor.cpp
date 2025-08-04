@@ -30,8 +30,8 @@ struct AssetSyncHelper {
                                                       payload.m_payload);
     }
 
-    void operator()(AssetLoadResult<EntityInstance>& payload) {
-        GAME_CONTEXT.RegisterEntity(std::move(payload.m_payload));
+    void operator()(AssetLoadResult<Prefab>& payload) {
+        GAME_CONTEXT.GetCurrentLevel().Instantiate(payload.m_payload);
     }
 
     void operator()(AssetLoadResult<Animation>& payload) {}
@@ -40,16 +40,14 @@ struct AssetSyncHelper {
 };
 
 void AddEntityToScene(Entity entity,
-                      AssetLoadResult<EntityInstance>& instance) {
-    if (auto& level = GAME_CONTEXT.m_level) {
-        auto root_entity = level->GetRootEntity();
-        auto relationship =
-            GAME_CONTEXT.m_relationship_manager->Get(root_entity);
-        relationship->m_children.push_back(entity);
+                      AssetLoadResult<Prefab>& instance) {
+    auto& level = GAME_CONTEXT.GetCurrentLevel();
+    auto root_entity = level.GetRootEntity();
+    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(root_entity);
+    relationship->m_children.push_back(entity);
 
-        AssetSyncHelper helper;
-        helper(instance);
-    }
+    AssetSyncHelper helper;
+    helper(instance);
 }
 
 template <typename T>
@@ -59,10 +57,10 @@ AssetTypes LoadAssetFromPath(const Path& filename) {
 }
 
 template <>
-AssetTypes LoadAssetFromPath<EntityInstance>(const Path& filename) {
-    auto result = LoadAsset<EntityInstance>(filename);
+AssetTypes LoadAssetFromPath<Prefab>(const Path& filename) {
+    auto result = LoadAsset<Prefab>(filename);
 
-    AddEntityToScene(result.m_payload.m_entity, result);
+    AddEntityToScene(GAME_CONTEXT.CreateEntity(), result);
     return AssetTypes{result};
 }
 
@@ -100,7 +98,7 @@ void Editor::Update() {
 
         static const std::array<std::string_view, 3> asset_extensions = {
             InputConfig_AssetExtension,
-            EntityInstance_AssetExtension,
+            Prefab_AssetExtension,
             Animation_AssetExtension,
         };
 
@@ -108,14 +106,14 @@ void Editor::Update() {
                                 3>
             asset_loader = {
                 LoadAssetFromPath<InputConfig>,
-                LoadAssetFromPath<EntityInstance>,
+                LoadAssetFromPath<Prefab>,
                 LoadAssetFromPath<Animation>,
             };
 
         static const std::array<std::function<AssetTypes()>, 3> asset_creator =
             {
                 CreateAsset<InputConfig>,
-                CreateAsset<EntityInstance>,
+                CreateAsset<Prefab>,
                 CreateAsset<Animation>,
             };
 

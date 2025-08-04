@@ -1,42 +1,39 @@
-<EntityInstance>
+<Prefab>
 	<uuid>f9b3232c-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<entity>1</entity>
-		<data>
-			<sprite>
-				<value>
-					<image>assets/Characters/Statue/SpriteSheet.png</image>
-					<region>
-						<topleft x="0.000000" y="0.000000"/>
-						<size x="16.000000" y="16.000000"/>
-					</region>
+		<sprite>
+			<value>
+				<image>assets/Characters/Statue/SpriteSheet.png</image>
+				<region>
+					<topleft x="0.000000" y="0.000000"/>
 					<size x="16.000000" y="16.000000"/>
-					<flip>None</flip>
-				</value>
-			</sprite>
-			<transform>
-				<value>
-					<position x="738.000000" y="1182.000000"/>
-					<scale x="4.000000" y="4.000000"/>
-					<rotation>0.000000</rotation>
-				</value>
-			</transform>
-			<animation>
-				<value>
-					<loop>-1</loop>
-					<rate>1.000000</rate>
-					<animation>assets/gpa/status_walk_down.animation.xml</animation>
-				</value>
-			</animation>
-			<tilemap/>
-			<cct>
-				<value>
-					<skin>0.001000</skin>
-					<radius>24.000000</radius>
-					<min_disp>0.000100</min_disp>
-				</value>
-			</cct>
-		</data>
+				</region>
+				<size x="16.000000" y="16.000000"/>
+				<flip>None</flip>
+			</value>
+		</sprite>
+		<transform>
+			<value>
+				<position x="738.000000" y="1182.000000"/>
+				<scale x="4.000000" y="4.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<animation>
+			<value>
+				<loop>-1</loop>
+				<rate>1.000000</rate>
+				<animation>assets/gpa/status_walk_down.animation.xml</animation>
+			</value>
+		</animation>
+		<tilemap/>
+		<cct>
+			<value>
+				<skin>0.001000</skin>
+				<radius>24.000000</radius>
+				<min_disp>0.000100</min_disp>
+			</value>
+		</cct>
 	</payload>
-</EntityInstance>
+</Prefab>
 

@@ -6,7 +6,7 @@
 #include <variant>
 
 using AssetTypes =
-    std::variant<std::monostate, AssetLoadResult<EntityInstance>,
+    std::variant<std::monostate, AssetLoadResult<Prefab>,
                  AssetLoadResult<InputConfig>, AssetLoadResult<Animation>>;
 
 class Editor {

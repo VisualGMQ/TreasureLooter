@@ -1,0 +1,13 @@
+<schema>
+    <include>entity.hpp</include>
+    <import>prefab</import>
+    
+    <class name="EntityInstance">
+        <element type="Entity" name="entity"/>
+        <element type="Prefab" name="data"/>
+    </class>
+
+    <asset name="LevelContent" extension=".level">
+        <array type="EntityInstance" name="entities"/>
+    </asset>
+</schema>

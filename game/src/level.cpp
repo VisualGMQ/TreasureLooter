@@ -3,12 +3,82 @@
 #include "SDL3/SDL.h"
 #include "asset_manager.hpp"
 #include "context.hpp"
-#include "physics.hpp"
 #include "relationship.hpp"
 #include "sprite.hpp"
 
-Level::Level() {
+Level::Level(LevelContentHandle level_content) {
     initRootEntity();
+
+    std::unordered_map<Entity, bool> is_entity_root_map;
+    for (auto& instance : level_content->m_entities) {
+        is_entity_root_map.emplace(instance.m_entity, true);
+    }
+
+    for (auto& instance : level_content->m_entities) {
+        registerEntity(instance);
+        if (instance.m_data.m_relationship &&
+            !instance.m_data.m_relationship->m_children.empty()) {
+            for (auto& child : instance.m_data.m_relationship->m_children) {
+                is_entity_root_map[child] = false;
+            }
+        }
+        m_entities.insert(instance.m_entity);
+    }
+
+    auto relationship =
+        GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
+    for (auto& [entity, is_root] : is_entity_root_map) {
+        relationship->m_children.emplace_back(entity);
+    }
+}
+
+Level::~Level() {
+    for (auto entity : m_entities) {
+        GAME_CONTEXT.RemoveEntity(entity);
+    }
+}
+
+void Level::OnInit() {
+    for (auto entity : m_entities) {
+        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
+        if (logic) {
+            logic->OnInit();
+        }
+    }
+}
+
+void Level::OnLogicUpdate(TimeType time) {
+    for (auto entity : m_entities) {
+        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
+        if (logic) {
+            logic->OnLogicUpdate(time);
+        }
+    }
+}
+
+void Level::OnRenderUpdate(TimeType time) {
+    for (auto entity : m_entities) {
+        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
+        if (logic) {
+            logic->OnRenderUpdate(time);
+        }
+    }
+}
+
+void Level::OnQuit() {
+    for (auto entity : m_entities) {
+        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
+        if (logic) {
+            logic->OnQuit();
+        }
+    }
+}
+
+Entity Level::Instantiate(const Prefab& prefab) {
+    Entity entity = GAME_CONTEXT.CreateEntity();
+    registerEntity({entity, prefab});
+    m_entities.insert(entity);
+    return entity;
 }
 
 Entity Level::GetRootEntity() const {
@@ -21,7 +91,39 @@ void Level::initRootEntity() {
     GAME_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
 }
 
-void GameLevel::OnInit() {
+void Level::registerEntity(const EntityInstance& instance) {
+    createEntityByPrefab(instance.m_entity, instance.m_data);
+}
+
+void Level::createEntityByPrefab(Entity entity, const Prefab& prefab) {
+    if (prefab.m_sprite) {
+        GAME_CONTEXT.m_sprite_manager->ReplaceComponent(
+            entity, prefab.m_sprite.value());
+    }
+    if (prefab.m_transform) {
+        GAME_CONTEXT.m_transform_manager->ReplaceComponent(
+            entity, prefab.m_transform.value());
+    }
+    if (prefab.m_relationship) {
+        GAME_CONTEXT.m_relationship_manager->ReplaceComponent(
+            entity, prefab.m_relationship.value());
+    }
+    if (prefab.m_tilemap) {
+        GAME_CONTEXT.m_tilemap_component_manager->ReplaceComponent(
+            entity, {entity, prefab.m_tilemap});
+    }
+    if (prefab.m_animation) {
+        GAME_CONTEXT.m_animation_player_manager->RegisterEntity(
+            entity, prefab.m_animation.value());
+    }
+    if (prefab.m_cct) {
+        GAME_CONTEXT.m_cct_manager->RegisterEntity(entity,
+                                                   prefab.m_cct.value());
+        GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(prefab.m_transform->m_position);
+    }
+}
+
+void PlayerLogic::OnInit() {
     auto& animation_manager =
         GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>();
 
@@ -36,37 +138,10 @@ void GameLevel::OnInit() {
     m_image_sheet =
         GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(
             "assets/Characters/Statue/SpriteSheet.png");
-
-    {
-        auto result = LoadAsset<EntityInstance>("assets/gpa/waggo.prefab.xml");
-        result.m_payload.m_entity = GAME_CONTEXT.CreateEntity();
-        GAME_CONTEXT.RegisterEntity(result.m_payload);
-
-        auto root_relationship =
-            GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
-        root_relationship->m_children.push_back(result.m_payload.m_entity);
-        m_player_entity = result.m_payload.m_entity;
-
-        auto cct = GAME_CONTEXT.m_cct_manager->Get(result.m_payload.m_entity);
-        auto transform =
-            GAME_CONTEXT.m_transform_manager->Get(result.m_payload.m_entity);
-        cct->Teleport(transform->m_position);
-    }
-    {
-        auto result =
-            LoadAsset<EntityInstance>("assets/gpa/tilemap.prefab.xml");
-        result.m_payload.m_entity = GAME_CONTEXT.CreateEntity();
-        GAME_CONTEXT.RegisterEntity(result.m_payload);
-
-        auto root_relationship =
-            GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
-        root_relationship->m_children.push_back(result.m_payload.m_entity);
-    }
 }
 
-void GameLevel::OnLogicUpdate(TimeType elapse_time) {
-    auto children = GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
-    Entity entity = children->m_children[0];
+void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
+    Entity entity = GetEntity();
 
     Transform* transform = GAME_CONTEXT.m_transform_manager->Get(entity);
 
@@ -138,5 +213,3 @@ void GameLevel::OnLogicUpdate(TimeType elapse_time) {
         }
     }
 }
-
-void GameLevel::OnQuit() {}
