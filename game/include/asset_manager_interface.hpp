@@ -89,6 +89,6 @@ public:
     HandleType Load(const Path& filename) override {
         auto result = LoadAsset<T>(filename);
         return store(&filename, result.m_uuid,
-                     std::make_unique<T>(std::move(result.m_value)));
+                     std::make_unique<T>(std::move(result.m_payload)));
     }
 };

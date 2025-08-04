@@ -130,6 +130,15 @@ Context::Context() {
 #ifdef TL_ENABLE_EDITOR
     parseProjectPath();
 #endif
+    m_assets_manager = std::make_unique<AssetsManager>();
+    m_game_config = m_assets_manager->GetManager<GameConfig>().Load(
+        std::string{"assets/gpa/game_config"} +
+        GameConfig_AssetExtension.data());
+    if (!m_game_config) {
+        LOGC("game config not found!");
+        SDL_Quit();
+        return;
+    }
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
@@ -137,7 +146,6 @@ Context::Context() {
 
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
-    m_assets_manager = std::make_unique<AssetsManager>();
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
 
@@ -153,9 +161,8 @@ Context::Context() {
     m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
 
-    m_input_manager = std::make_unique<InputManager>(
-        *this, std::string{"assets/gpa/input_config"} +
-                   InputConfig_AssetExtension.data());
+    m_input_manager =
+        std::make_unique<InputManager>(*this, m_game_config->m_input_config);
 
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();

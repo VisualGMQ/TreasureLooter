@@ -13,6 +13,7 @@
 #include "inspector.hpp"
 #include "physics.hpp"
 #include "renderer.hpp"
+#include "schema/config.hpp"
 #include "tilemap.hpp"
 #include "timer.hpp"
 #include "window.hpp"
@@ -79,10 +80,10 @@ public:
 private:
     static std::unique_ptr<Context> instance;
 
-
     bool m_should_exit = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
     std::unique_ptr<Level> m_level;
+    GameConfigHandle m_game_config;
 
 #ifdef TL_ENABLE_EDITOR
     Path m_project_path;  // only used for editor

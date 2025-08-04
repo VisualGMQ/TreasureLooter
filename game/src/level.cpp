@@ -121,6 +121,9 @@ void Level::createEntityByPrefab(Entity entity, const Prefab& prefab) {
                                                    prefab.m_cct.value());
         GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(prefab.m_transform->m_position);
     }
+    if (prefab.m_type == EntityType::Player) {
+        GAME_CONTEXT.m_entity_logic_manager->RegisterEntity(entity, PlayerLogic{entity});
+    }
 }
 
 void PlayerLogic::OnInit() {

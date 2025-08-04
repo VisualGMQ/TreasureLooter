@@ -7,6 +7,7 @@
     <import>anim</import>
     <import>anim_player</import>
     <import>physics</import>
+    <import>common</import>
 
     <asset name="Prefab" extension=".prefab">
         <option type="Sprite" name="sprite"/>
@@ -15,5 +16,6 @@
         <option type="AnimationPlayerCreateInfo" name="animation"/>
         <handle type="Tilemap" name="tilemap"/>
         <option type="CCT" name="cct"/>
+        <element type="EntityType" name="type" default="EntityType::Normal"/>
     </asset>
 </schema>

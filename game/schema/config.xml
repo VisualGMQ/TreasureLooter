@@ -1,7 +1,9 @@
 <schema>
     <import>level</import>
+    <import>input</import>
     
     <asset name="GameConfig" extension=".game_config">
         <handle name="basic_level" type="LevelContent"/>
+        <handle name="input_config" type="InputConfig"/>
     </asset>
 </schema>

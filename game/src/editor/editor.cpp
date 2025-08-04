@@ -1,6 +1,7 @@
 ﻿#include "editor/editor.hpp"
 
 #include "animation.hpp"
+#include "asset_manager.hpp"
 #include "dialog.hpp"
 #include "imgui.h"
 #include "level.hpp"
@@ -26,8 +27,14 @@ struct AssetDisplay {
 
 struct AssetSyncHelper {
     void operator()(AssetLoadResult<InputConfig>& payload) {
-        GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT,
-                                                      payload.m_payload);
+        /* NOTE: dangerous operate due to handle is temporary variable.
+         * but InputManager don't obtain handle's lifetime so currently this is
+         * safe
+         */
+        InputConfigHandle handle{
+            UUID::CreateV4(), &payload.m_payload,
+            &GAME_CONTEXT.m_assets_manager->GetManager<InputConfig>()};
+        GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT, handle);
     }
 
     void operator()(AssetLoadResult<Prefab>& payload) {
@@ -39,8 +46,7 @@ struct AssetSyncHelper {
     void operator()(std::monostate) {}
 };
 
-void AddEntityToScene(Entity entity,
-                      AssetLoadResult<Prefab>& instance) {
+void AddEntityToScene(Entity entity, AssetLoadResult<Prefab>& instance) {
     auto& level = GAME_CONTEXT.GetCurrentLevel();
     auto root_entity = level.GetRootEntity();
     auto relationship = GAME_CONTEXT.m_relationship_manager->Get(root_entity);
