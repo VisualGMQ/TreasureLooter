@@ -1,5 +1,6 @@
 #include "level.hpp"
 
+#include "SDL3/SDL.h"
 #include "asset_manager.hpp"
 #include "context.hpp"
 #include "physics.hpp"
@@ -47,7 +48,8 @@ void GameLevel::OnInit() {
         m_player_entity = result.m_payload.m_entity;
 
         auto cct = GAME_CONTEXT.m_cct_manager->Get(result.m_payload.m_entity);
-        auto transform = GAME_CONTEXT.m_transform_manager->Get(result.m_payload.m_entity);
+        auto transform =
+            GAME_CONTEXT.m_transform_manager->Get(result.m_payload.m_entity);
         cct->Teleport(transform->m_position);
     }
     {

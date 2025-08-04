@@ -4,6 +4,7 @@
 #include "cct.hpp"
 #include "editor/editor.hpp"
 #include "entity.hpp"
+#include "event.hpp"
 #include "input/finger_touch.hpp"
 #include "input/gamepad.hpp"
 #include "input/input.hpp"
@@ -62,6 +63,7 @@ public:
     std::unique_ptr<Time> m_time;
     std::unique_ptr<PhysicsScene> m_physics_scene;
     std::unique_ptr<CCTManager> m_cct_manager;
+    std::unique_ptr<EventSystem> m_event_system;
 
     std::unique_ptr<Level> m_level;
 
@@ -78,7 +80,7 @@ private:
     static std::unique_ptr<Context> instance;
 
     bool m_should_exit = false;
-    Entity m_last_entity = 0;
+    std::underlying_type_t<Entity> m_last_entity = 1;
 
 #ifdef TL_ENABLE_EDITOR
     Path m_project_path; // only used for editor
