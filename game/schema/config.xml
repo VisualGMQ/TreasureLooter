@@ -1,0 +1,10 @@
+<schema>
+    <import>level_content</import>
+    <import>input</import>
+    <include>level.hpp</include>
+    
+    <asset name="GameConfig" extension=".game_config">
+        <handle name="basic_level" type="Level"/>
+        <handle name="input_config" type="InputConfig"/>
+    </asset>
+</schema>

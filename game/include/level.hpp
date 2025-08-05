@@ -1,32 +1,80 @@
 #pragma once
 #include "animation.hpp"
+#include "entity_logic.hpp"
 #include "image.hpp"
+#include "schema/level_content.hpp"
 #include "timer.hpp"
+
+#include <unordered_set>
 
 class Level {
 public:
-    Level();
-    virtual ~Level() = default;
-    virtual void OnInit() {}
-    virtual void OnLogicUpdate(TimeType) = 0;
-    virtual void OnRenderUpdate(TimeType) = 0;
-    virtual void OnQuit() {}
+    friend class LevelManager;
+
+    Level() = default;
+    explicit Level(LevelContentHandle);
+    explicit Level(const Path& filename);
+    ~Level();
+
+    void OnEnter();
+    void OnInit();
+    void OnLogicUpdate(TimeType);
+    void OnRenderUpdate(TimeType);
+    void OnQuit();
+
+    void PoseUpdate();
+
+    bool IsInited() const;
+
+    Entity Instantiate(PrefabHandle);
+
+    void RemoveEntity(Entity);
 
     Entity GetRootEntity() const;
 
 private:
+    bool m_visible = false;
+    bool m_inited = false;
+
     Entity m_root_entity{};
+    std::unordered_set<Entity> m_entities;
+
+    std::vector<Entity> m_pending_delete_entities;
 
     void initRootEntity();
+    void registerEntity(const EntityInstance&);
+
+    void createEntityByPrefab(Entity entity, const Transform*,
+                              const Prefab& prefab);
+    void initByLevelContent(LevelContentHandle);
+
+    void doRemoveEntities();
 };
 
-// some game related logic
-class GameLevel: public Level {
+using LevelHandle = Handle<Level>;
+
+class LevelManager final : public AssetManagerBase<Level> {
 public:
+    HandleType Load(const Path& filename) override;
+
+    void Switch(LevelHandle);
+
+    void UpdateLogic(TimeType t);
+    void UpdateRender(TimeType t);
+    void PoseUpdate();
+
+    LevelHandle GetCurrentLevel() const;
+
+private:
+    LevelHandle m_level;
+};
+
+class PlayerLogic : public EntityLogic {
+public:
+    using EntityLogic::EntityLogic;
+
     void OnInit() override;
     void OnLogicUpdate(TimeType) override;
-    void OnRenderUpdate(TimeType) override {}
-    void OnQuit() override;
 
 private:
     enum class WalkDirection {
@@ -41,7 +89,6 @@ private:
     AnimationHandle m_walk_up;
     AnimationHandle m_walk_down;
     ImageHandle m_image_sheet;
-    Entity m_player_entity;
 
     WalkDirection m_walk_direction = WalkDirection::Down;
 };

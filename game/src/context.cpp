@@ -5,8 +5,9 @@
 #include "rapidxml_print.hpp"
 #include "rapidxml_utils.hpp"
 #include "relationship.hpp"
-#include "schema/prefab.hpp"
+#include "schema/config.hpp"
 #include "schema/serialize/asset_extensions.hpp"
+#include "schema/serialize/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
@@ -16,6 +17,7 @@
 #include "tilemap.hpp"
 #include "transform.hpp"
 #include "uuid.h"
+#include "path.hpp"
 
 #include <iostream>
 
@@ -31,6 +33,7 @@ void Context::Init() {
 }
 
 void Context::Destroy() {
+    instance->Shutdown();
     instance.reset();
 }
 
@@ -38,13 +41,14 @@ Context& GAME_CONTEXT {
     return *instance;
 }
 
-Context::~Context() {
-    if (m_level) {
-        m_level->OnQuit();
-    }
-    m_level.reset();
+void Context::Shutdown() {
+    m_level_manager->Switch({});
+    m_level_manager.reset();
+}
 
+Context::~Context() {
     m_event_system.reset();
+    m_entity_logic_manager.reset();
     m_cct_manager.reset();
     m_physics_scene.reset();
     m_time.reset();
@@ -72,14 +76,26 @@ Context::~Context() {
 }
 
 void Context::Initialize() {
-    m_level = std::make_unique<GameLevel>();
-    m_level->OnInit();
+    m_game_config = m_assets_manager->GetManager<GameConfig>().Load(
+        std::string{"assets/gpa/game_config"} +
+        GameConfig_AssetExtension.data());
+    if (!m_game_config) {
+        LOGC("game config not found!");
+        SDL_Quit();
+        return;
+    }
+    LOGI("loading game level: {}", *m_game_config->m_basic_level.GetFilename());
+    m_input_manager->Initialize(m_game_config->m_input_config);
+
+    m_level_manager->Switch(m_game_config->m_basic_level);
 }
 
 void Context::Update() {
     logicUpdate();
     renderUpdate();
     logicPostUpdate();
+
+    m_level_manager->PoseUpdate();
 }
 
 void Context::HandleEvents(const SDL_Event& event) {
@@ -119,6 +135,7 @@ Context::Context() {
 #ifdef TL_ENABLE_EDITOR
     parseProjectPath();
 #endif
+    m_assets_manager = std::make_unique<AssetsManager>();
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
@@ -126,7 +143,6 @@ Context::Context() {
 
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
-    m_assets_manager = std::make_unique<AssetsManager>();
 
     m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
 
@@ -142,14 +158,15 @@ Context::Context() {
     m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
 
-    m_input_manager = std::make_unique<InputManager>(
-        *this, std::string{"assets/gpa/input_config"} +
-                   InputConfig_AssetExtension.data());
+    m_input_manager =
+        std::make_unique<InputManager>();
 
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();
     m_cct_manager = std::make_unique<CCTManager>();
     m_event_system = std::make_unique<EventSystem>();
+    m_entity_logic_manager = std::make_unique<EntityLogicManager>();
+    m_level_manager = std::make_unique<LevelManager>();
 }
 
 void Context::logicUpdate() {
@@ -159,9 +176,7 @@ void Context::logicUpdate() {
     m_mouse->Update();
     m_touches->Update();
 
-    if (m_level) {
-        m_level->OnLogicUpdate(m_time->GetElapseTime());
-    }
+    m_level_manager->UpdateLogic(m_time->GetElapseTime());
 
     m_animation_player_manager->Update(m_time->GetElapseTime());
     m_relationship_manager->Update();
@@ -180,9 +195,7 @@ void Context::renderUpdate() {
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
 
-    if (m_level) {
-        m_level->OnRenderUpdate(m_time->GetElapseTime());
-    }
+    m_level_manager->UpdateRender(m_time->GetElapseTime());
 
     m_physics_scene->RenderDebug();
     m_cct_manager->RenderDebug();
@@ -222,45 +235,4 @@ void Context::parseProjectPath() {
 #ifdef TL_ENABLE_EDITOR
     m_project_path = node->value();
 #endif
-}
-
-void Context::RegisterEntity(const EntityInstance& entity_instance) {
-    if (entity_instance.m_data.m_sprite) {
-        m_sprite_manager->ReplaceComponent(
-            entity_instance.m_entity, entity_instance.m_data.m_sprite.value());
-    }
-    if (entity_instance.m_data.m_transform) {
-        m_transform_manager->ReplaceComponent(
-            entity_instance.m_entity,
-            entity_instance.m_data.m_transform.value());
-    }
-    if (entity_instance.m_data.m_relationship) {
-        m_relationship_manager->ReplaceComponent(
-            entity_instance.m_entity,
-            entity_instance.m_data.m_relationship.value());
-    }
-    if (entity_instance.m_data.m_tilemap) {
-        m_tilemap_component_manager->ReplaceComponent(
-            entity_instance.m_entity,
-            {entity_instance.m_entity, entity_instance.m_data.m_tilemap});
-    }
-    if (entity_instance.m_data.m_animation) {
-        m_animation_player_manager->RegisterEntity(
-            entity_instance.m_entity,
-            entity_instance.m_data.m_animation.value());
-    }
-    if (entity_instance.m_data.m_cct) {
-        m_cct_manager->RegisterEntity(
-            entity_instance.m_entity,
-            entity_instance.m_data.m_cct.value());
-    }
-}
-
-void Context::RemoveEntity(Entity entity) {
-    m_sprite_manager->RemoveEntity(entity);
-    m_transform_manager->RemoveEntity(entity);
-    m_relationship_manager->RemoveEntity(entity);
-    m_tilemap_component_manager->RemoveEntity(entity);
-    m_animation_player_manager->RemoveEntity(entity);
-    m_cct_manager->RemoveEntity(entity);
 }

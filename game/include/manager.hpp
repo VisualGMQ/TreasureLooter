@@ -18,10 +18,25 @@ public:
         }
 
         if constexpr (is_handle) {
-            m_components.emplace(entity, std::forward<Args>(args)...);
+            m_components.emplace(entity, Component{component_type{std::forward<Args>(args)...}, true});
         } else {
             m_components.emplace(
-                entity, std::make_unique<T>(std::forward<Args>(args)...));
+                entity, Component{std::make_unique<T>(std::forward<Args>(args)...), true});
+        }
+    }
+
+    template <typename U, typename... Args>
+    void RegisterEntityByDerive(Entity entity, Args&&... args) {
+        if (auto it = m_components.find(entity); it != m_components.end()) {
+            LOGW("[Component]: entity {} already registered", entity);
+            return;
+        }
+
+        if constexpr (is_handle) {
+            m_components.emplace(entity, Component{component_type{std::forward<Args>(args)...}, true});
+        } else {
+            m_components.emplace(
+                entity, Component{std::make_unique<U>(std::forward<Args>(args)...), true});
         }
     }
 
@@ -30,17 +45,20 @@ public:
     void ReplaceComponent(Entity entity, const T& component) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             if constexpr (is_handle) {
-                it->second = component;
+                it->second.m_component = component;
+                it->second.m_enable = true;
             } else {
-                *it->second = component;
+                *it->second.m_component = component;
+                it->second.m_enable = true;
             }
             return;
         }
 
         if constexpr (is_handle) {
-            m_components.emplace(entity, component);
+            m_components.emplace(entity, Component{component, true});
         } else {
-            m_components.emplace(entity, std::make_unique<T>(component));
+            m_components.emplace(
+                entity, Component{std::make_unique<T>(component), true});
         }
     }
 
@@ -48,12 +66,34 @@ public:
         return m_components.find(entity) != m_components.end();
     }
 
+    bool IsEnable(Entity entity) const {
+        if (auto it = m_components.find(entity); it != m_components.end()) {
+            return it->second.m_enable;
+        }
+        return false;
+    }
+    
+    void Enable(Entity entity) const {
+        if (auto it = m_components.find(entity); it != m_components.end()) {
+            it->second.m_enable = true;
+        }
+    }
+ 
+    void Disable(Entity entity) const {
+        if (auto it = m_components.find(entity); it != m_components.end()) {
+            it->second.m_enable = false;
+        }
+    }
+
     const expose_type Get(Entity entity) const {
         if (auto it = m_components.find(entity); it != m_components.end()) {
+            if (!it->second.m_enable) {
+                return nullptr;
+            }
             if constexpr (is_handle) {
-                return it->second;
+                return it->second.m_component;
             } else {
-                return it->second.get();
+                return it->second.m_component.get();
             }
         }
         return nullptr;
@@ -70,5 +110,9 @@ public:
 protected:
     static constexpr bool is_handle = is_handle_v<T>;
 
-    std::unordered_map<Entity, component_type> m_components;
+    struct Component {
+        component_type m_component;
+        bool m_enable = true;
+    };
+    std::unordered_map<Entity, Component> m_components;
 };

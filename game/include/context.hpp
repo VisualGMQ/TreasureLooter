@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "animation.hpp"
 #include "animation_player.hpp"
 #include "cct.hpp"
 #include "editor/editor.hpp"
 #include "entity.hpp"
+#include "entity_logic.hpp"
 #include "event.hpp"
 #include "input/finger_touch.hpp"
 #include "input/gamepad.hpp"
@@ -11,14 +11,17 @@
 #include "input/keyboard.hpp"
 #include "input/mouse.hpp"
 #include "inspector.hpp"
+#include "level.hpp"
 #include "physics.hpp"
 #include "renderer.hpp"
+#include "schema/config.hpp"
 #include "tilemap.hpp"
 #include "timer.hpp"
 #include "window.hpp"
 
 #include <memory>
 
+struct EntityInstance;
 class RelationshipManager;
 class TransformManager;
 class SpriteManager;
@@ -38,6 +41,7 @@ public:
     ~Context();
 
     void Initialize();
+    void Shutdown();
 
     void Update();
     void HandleEvents(const SDL_Event&);
@@ -64,8 +68,8 @@ public:
     std::unique_ptr<PhysicsScene> m_physics_scene;
     std::unique_ptr<CCTManager> m_cct_manager;
     std::unique_ptr<EventSystem> m_event_system;
-
-    std::unique_ptr<Level> m_level;
+    std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
+    std::unique_ptr<LevelManager> m_level_manager;
 
     Entity CreateEntity();
 
@@ -73,17 +77,15 @@ public:
     const Path& GetProjectPath() const;
 #endif
 
-    void RegisterEntity(const EntityInstance&);
-    void RemoveEntity(Entity);
-
 private:
     static std::unique_ptr<Context> instance;
 
     bool m_should_exit = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
+    GameConfigHandle m_game_config;
 
 #ifdef TL_ENABLE_EDITOR
-    Path m_project_path; // only used for editor
+    Path m_project_path;  // only used for editor
 #endif
 
     Context();

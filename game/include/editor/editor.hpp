@@ -1,13 +1,15 @@
 ﻿#pragma once
 #include "animation.hpp"
+#include "schema/config.hpp"
 #include "schema/input.hpp"
 #include "schema/prefab.hpp"
 
 #include <variant>
 
 using AssetTypes =
-    std::variant<std::monostate, AssetLoadResult<EntityInstance>,
-                 AssetLoadResult<InputConfig>, AssetLoadResult<Animation>>;
+    std::variant<std::monostate, AssetLoadResult<Prefab>,
+                 AssetLoadResult<InputConfig>, AssetLoadResult<Animation>,
+                 AssetLoadResult<GameConfig>, AssetLoadResult<LevelContent>>;
 
 class Editor {
 public:

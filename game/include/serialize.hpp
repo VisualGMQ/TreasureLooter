@@ -340,7 +340,7 @@ template <typename T>
 void Deserialize(const rapidxml::xml_node<>& node, Handle<T>& payload) {
     Path filename = node.value();
     auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<Handle<T>>();
+        GAME_CONTEXT.m_assets_manager->GetManager<T>();
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);

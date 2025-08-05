@@ -65,7 +65,7 @@ Tileset::Tileset(const tmx::Tileset& tileset) {
 void Tileset::parse(const tmx::Tileset& tileset) {
     auto path = tileset.getImagePath();
     m_image =
-        GAME_CONTEXT.m_assets_manager->GetManager<ImageHandle>().Load(path);
+        GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(path);
     m_margin = tileset.getMargin();
     m_spacing = tileset.getSpacing();
     m_firstgid = tileset.getFirstGID();
@@ -197,12 +197,16 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
 
 void TilemapComponentManager::Update() {
     for (auto& [entity, tilemap] : m_components) {
+        if (!tilemap.m_enable) {
+            continue;
+        }
+
         auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
         if (!transform) {
             continue;
         }
 
-        drawTilemap(*transform, tilemap->GetHandle());
+        drawTilemap(*transform, tilemap.m_component->GetHandle());
     }
 }
 
