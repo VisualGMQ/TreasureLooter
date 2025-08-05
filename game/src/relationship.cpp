@@ -5,10 +5,12 @@
 #include "transform.hpp"
 
 void RelationshipManager::Update() {
-    auto& level = GAME_CONTEXT.GetCurrentLevel();
-    Entity root;
+    auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    if (!level) {
+        return;
+    }
 
-    root = level.GetRootEntity();
+    Entity root = level->GetRootEntity();
 
     auto relationship = Get(root);
     if (!relationship) {

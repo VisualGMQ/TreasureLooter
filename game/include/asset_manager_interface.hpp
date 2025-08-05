@@ -23,6 +23,16 @@ public:
 
     virtual HandleType Load(const Path& filename) = 0;
 
+    virtual void Unload(HandleType handle) {
+        auto uuid = handle.GetUUID();
+        if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
+            m_paths_uuid_map.erase(it->second);
+            m_uuid_path_map.erase(it);
+        }
+
+        m_payloads.erase(uuid);
+    }
+
     HandleType Find(const Path& filename) {
         if (auto it = m_paths_uuid_map.find(filename);
             it != m_paths_uuid_map.end()) {

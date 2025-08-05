@@ -44,7 +44,9 @@ struct AssetSyncHelper {
         auto handle =
             GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Create(
                 payload.m_payload);
-        GAME_CONTEXT.GetCurrentLevel().Instantiate(handle);
+        auto level =
+            GAME_CONTEXT.m_level_manager->GetCurrentLevel()->Instantiate(
+                handle);
     }
 
     void operator()(AssetLoadResult<Animation>& payload) {}
@@ -53,8 +55,8 @@ struct AssetSyncHelper {
 };
 
 void AddEntityToScene(Entity entity, AssetLoadResult<Prefab>& instance) {
-    auto& level = GAME_CONTEXT.GetCurrentLevel();
-    auto root_entity = level.GetRootEntity();
+    auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto root_entity = level->GetRootEntity();
     auto relationship = GAME_CONTEXT.m_relationship_manager->Get(root_entity);
     relationship->m_children.push_back(entity);
 

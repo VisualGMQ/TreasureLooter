@@ -42,10 +42,7 @@ Context& GAME_CONTEXT {
 }
 
 void Context::Shutdown() {
-    if (m_level) {
-        m_level->OnQuit();
-    }
-    
+    m_level_manager->Switch({});
     m_level_manager.reset();
 }
 
@@ -90,14 +87,15 @@ void Context::Initialize() {
     LOGI("loading game level: {}", *m_game_config->m_basic_level.GetFilename());
     m_input_manager->Initialize(m_game_config->m_input_config);
 
-    m_level = m_game_config->m_basic_level;
-    m_level->OnInit();
+    m_level_manager->Switch(m_game_config->m_basic_level);
 }
 
 void Context::Update() {
     logicUpdate();
     renderUpdate();
     logicPostUpdate();
+
+    m_level_manager->PoseUpdate();
 }
 
 void Context::HandleEvents(const SDL_Event& event) {
@@ -178,9 +176,7 @@ void Context::logicUpdate() {
     m_mouse->Update();
     m_touches->Update();
 
-    if (m_level) {
-        m_level->OnLogicUpdate(m_time->GetElapseTime());
-    }
+    m_level_manager->UpdateLogic(m_time->GetElapseTime());
 
     m_animation_player_manager->Update(m_time->GetElapseTime());
     m_relationship_manager->Update();
@@ -199,9 +195,7 @@ void Context::renderUpdate() {
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
 
-    if (m_level) {
-        m_level->OnRenderUpdate(m_time->GetElapseTime());
-    }
+    m_level_manager->UpdateRender(m_time->GetElapseTime());
 
     m_physics_scene->RenderDebug();
     m_cct_manager->RenderDebug();
@@ -214,10 +208,6 @@ void Context::renderUpdate() {
 
     m_inspector->EndFrame();
     m_renderer->Present();
-}
-
-Level& Context::GetCurrentLevel() {
-    return *m_level;
 }
 
 Entity Context::CreateEntity() {

@@ -10,7 +10,7 @@
 
     <class name="EntityInstance">
         <element type="Entity" name="entity"/>
-        <element type="Transform" name="transform"/>
+        <option type="Transform" name="transform"/>
         <handle type="Prefab" name="prefab"/>
     </class>
 

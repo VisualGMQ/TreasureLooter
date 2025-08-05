@@ -21,6 +21,14 @@ Level::~Level() {
     for (auto entity : m_entities) {
         RemoveEntity(entity);
     }
+    doRemoveEntities();
+}
+
+void Level::OnEnter() {
+    if (!m_inited) {
+        OnInit();
+        m_inited = false;
+    }
 }
 
 void Level::OnInit() {
@@ -59,6 +67,14 @@ void Level::OnQuit() {
     }
 }
 
+void Level::PoseUpdate() {
+    doRemoveEntities();
+}
+
+bool Level::IsInited() const {
+    return m_inited;
+}
+
 Entity Level::Instantiate(PrefabHandle prefab) {
     Entity entity = GAME_CONTEXT.CreateEntity();
     registerEntity({entity, prefab->m_transform.value_or(Transform{}), prefab});
@@ -67,14 +83,7 @@ Entity Level::Instantiate(PrefabHandle prefab) {
 }
 
 void Level::RemoveEntity(Entity entity) {
-    GAME_CONTEXT.m_sprite_manager->RemoveEntity(entity);
-    GAME_CONTEXT.m_transform_manager->RemoveEntity(entity);
-    GAME_CONTEXT.m_relationship_manager->RemoveEntity(entity);
-    GAME_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
-    GAME_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
-    GAME_CONTEXT.m_cct_manager->RemoveEntity(entity);
-
-    m_entities.erase(entity);
+    m_pending_delete_entities.push_back(entity);
 }
 
 Entity Level::GetRootEntity() const {
@@ -88,38 +97,41 @@ void Level::initRootEntity() {
 }
 
 void Level::registerEntity(const EntityInstance& instance) {
-    createEntityByPrefab(instance.m_entity, instance.m_transform,
-                         instance.m_prefab);
+    createEntityByPrefab(
+        instance.m_entity,
+        instance.m_transform ? &instance.m_transform.value() : nullptr,
+        *instance.m_prefab);
 }
 
-void Level::createEntityByPrefab(Entity entity, const Transform& transform,
-                                 PrefabHandle prefab) {
-    if (prefab->m_sprite) {
+void Level::createEntityByPrefab(Entity entity, const Transform* transform,
+                                 const Prefab& prefab) {
+    if (prefab.m_sprite) {
         GAME_CONTEXT.m_sprite_manager->ReplaceComponent(
-            entity, prefab->m_sprite.value());
+            entity, prefab.m_sprite.value());
     }
-    if (prefab->m_transform) {
-        GAME_CONTEXT.m_transform_manager->ReplaceComponent(entity, transform);
+    if (transform || prefab.m_transform) {
+        GAME_CONTEXT.m_transform_manager->ReplaceComponent(
+            entity, transform ? *transform : prefab.m_transform.value());
     }
-    if (prefab->m_relationship) {
+    if (prefab.m_relationship) {
         GAME_CONTEXT.m_relationship_manager->ReplaceComponent(
-            entity, prefab->m_relationship.value());
+            entity, prefab.m_relationship.value());
     }
-    if (prefab->m_tilemap) {
+    if (prefab.m_tilemap) {
         GAME_CONTEXT.m_tilemap_component_manager->ReplaceComponent(
-            entity, {entity, prefab->m_tilemap});
+            entity, {entity, prefab.m_tilemap});
     }
-    if (prefab->m_animation) {
+    if (prefab.m_animation) {
         GAME_CONTEXT.m_animation_player_manager->RegisterEntity(
-            entity, prefab->m_animation.value());
+            entity, prefab.m_animation.value());
     }
-    if (prefab->m_cct) {
+    if (prefab.m_cct) {
         GAME_CONTEXT.m_cct_manager->RegisterEntity(entity,
-                                                   prefab->m_cct.value());
+                                                   prefab.m_cct.value());
         GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(
-            prefab->m_transform->m_position);
+            prefab.m_transform->m_position);
     }
-    if (prefab->m_type == EntityType::Player) {
+    if (prefab.m_type == EntityType::Player) {
         GAME_CONTEXT.m_entity_logic_manager
             ->RegisterEntityByDerive<PlayerLogic>(entity, entity);
     }
@@ -155,9 +167,57 @@ void Level::initByLevelContent(LevelContentHandle level_content) {
     }
 }
 
+void Level::doRemoveEntities() {
+    for (auto entity : m_pending_delete_entities) {
+        GAME_CONTEXT.m_sprite_manager->RemoveEntity(entity);
+        GAME_CONTEXT.m_transform_manager->RemoveEntity(entity);
+        GAME_CONTEXT.m_relationship_manager->RemoveEntity(entity);
+        GAME_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
+        GAME_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
+        GAME_CONTEXT.m_cct_manager->RemoveEntity(entity);
+
+        m_entities.erase(entity);
+    }
+
+    m_pending_delete_entities.clear();
+}
+
 AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename) {
     return store(&filename, UUID::CreateV4(),
                  std::make_unique<Level>(filename));
+}
+
+void LevelManager::Switch(LevelHandle level) {
+    if (m_level) {
+        m_level->OnQuit();
+    }
+    if (level) {
+        level->OnEnter();
+    }
+    m_level = level;
+}
+
+void LevelManager::UpdateLogic(TimeType t) {
+    if (m_level) {
+        m_level->OnLogicUpdate(t);
+    }
+}
+
+void LevelManager::UpdateRender(TimeType t) {
+    if (m_level) {
+        m_level->OnRenderUpdate(t);
+    }
+}
+
+void LevelManager::PoseUpdate() {
+    if (!m_level) {
+        return;
+    }
+    m_level->PoseUpdate();
+}
+
+LevelHandle LevelManager::GetCurrentLevel() const {
+    return m_level;
 }
 
 void PlayerLogic::OnInit() {

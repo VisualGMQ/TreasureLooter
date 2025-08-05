@@ -8,14 +8,14 @@
 					<topleft x="0.000000" y="0.000000"/>
 					<size x="16.000000" y="16.000000"/>
 				</region>
-				<size x="16.000000" y="16.000000"/>
+				<size x="64.000000" y="64.000000"/>
 				<flip>None</flip>
 			</value>
 		</sprite>
 		<transform>
 			<value>
 				<position x="738.000000" y="1182.000000"/>
-				<scale x="4.000000" y="4.000000"/>
+				<scale x="1.000000" y="1.000000"/>
 				<rotation>0.000000</rotation>
 			</value>
 		</transform>
@@ -34,6 +34,7 @@
 				<min_disp>0.000100</min_disp>
 			</value>
 		</cct>
+		<type>Player</type>
 	</payload>
 </Prefab>
 

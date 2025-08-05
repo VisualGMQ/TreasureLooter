@@ -3,27 +3,14 @@
 	<payload>
 		<entities>
 			<elem>
-				<entity>1</entity>
-				<transform>
-					<value>
-						<position x="740.000000" y="1200.000000" />
-						<scale x="1.000000" y="1.000000" />
-						<rotation>0.000000</rotation>
-					</value>
-				</transform>
+				<entity>2</entity>
 				<prefab>assets/gpa/waggo.prefab.xml</prefab>
 			</elem>
 			<elem>
-				<entity>2</entity>
-				<transform>
-					<value>
-						<position x="0.000000" y="0.000000" />
-						<scale x="4.000000" y="4.000000" />
-						<rotation>0.000000</rotation>
-					</value>
-				</transform>
+				<entity>3</entity>
 				<prefab>assets/gpa/tilemap.prefab.xml</prefab>
 			</elem>
 		</entities>
 	</payload>
 </LevelContent>
+

@@ -71,8 +71,6 @@ public:
     std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
     std::unique_ptr<LevelManager> m_level_manager;
 
-    Level& GetCurrentLevel();
-
     Entity CreateEntity();
 
 #ifdef TL_ENABLE_EDITOR
@@ -84,7 +82,6 @@ private:
 
     bool m_should_exit = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
-    LevelHandle m_level;
     GameConfigHandle m_game_config;
 
 #ifdef TL_ENABLE_EDITOR

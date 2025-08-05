@@ -19,7 +19,7 @@ public:
         } else if constexpr (std::is_same_v<T, Animation>) {
             return ensureManager<AnimationManager>(index);
         } else if constexpr (std::is_same_v<T, Level>) {
-            return ensureManager<LevelManager>(index);
+            return *GAME_CONTEXT.m_level_manager;
         } else {
             return ensureManager<GenericAssetManager<T>>(index);
         }

@@ -9,15 +9,22 @@
 
 class Level {
 public:
+    friend class LevelManager;
+
     Level() = default;
     explicit Level(LevelContentHandle);
     explicit Level(const Path& filename);
     ~Level();
-    
+
+    void OnEnter();
     void OnInit();
     void OnLogicUpdate(TimeType);
     void OnRenderUpdate(TimeType);
     void OnQuit();
+
+    void PoseUpdate();
+
+    bool IsInited() const;
 
     Entity Instantiate(PrefabHandle);
 
@@ -26,24 +33,43 @@ public:
     Entity GetRootEntity() const;
 
 private:
+    bool m_visible = false;
+    bool m_inited = false;
+
     Entity m_root_entity{};
     std::unordered_set<Entity> m_entities;
+
+    std::vector<Entity> m_pending_delete_entities;
 
     void initRootEntity();
     void registerEntity(const EntityInstance&);
 
-    void createEntityByPrefab(Entity entity, const Transform&, PrefabHandle prefab);
+    void createEntityByPrefab(Entity entity, const Transform*,
+                              const Prefab& prefab);
     void initByLevelContent(LevelContentHandle);
+
+    void doRemoveEntities();
 };
 
 using LevelHandle = Handle<Level>;
 
-class LevelManager: public AssetManagerBase<Level> {
+class LevelManager final : public AssetManagerBase<Level> {
 public:
     HandleType Load(const Path& filename) override;
+
+    void Switch(LevelHandle);
+
+    void UpdateLogic(TimeType t);
+    void UpdateRender(TimeType t);
+    void PoseUpdate();
+
+    LevelHandle GetCurrentLevel() const;
+
+private:
+    LevelHandle m_level;
 };
 
-class PlayerLogic: public EntityLogic {
+class PlayerLogic : public EntityLogic {
 public:
     using EntityLogic::EntityLogic;
 
