@@ -7,6 +7,10 @@ template <typename T>
 struct AssetLoadResult {
     UUID m_uuid;
     T m_payload;
+
+    operator bool() const {
+        return m_uuid;
+    }
 };
 
 template <typename T>

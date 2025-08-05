@@ -1,5 +1,4 @@
 <schema>
-    <include>entity.hpp</include>
     <include>transform.hpp</include>
     <include>tilemap.hpp</include>
     <include>animation_player.hpp</include>
@@ -8,18 +7,15 @@
     <import>anim</import>
     <import>anim_player</import>
     <import>physics</import>
+    <import>common</import>
 
-    <class name="Prefab">
+    <asset name="Prefab" extension=".prefab">
         <option type="Sprite" name="sprite"/>
         <option type="Transform" name="transform"/>
         <option type="Relationship" name="relationship"/>
         <option type="AnimationPlayerCreateInfo" name="animation"/>
         <handle type="Tilemap" name="tilemap"/>
         <option type="CCT" name="cct"/>
-    </class>
-    
-    <asset name="EntityInstance" extension=".prefab">
-        <element type="Entity" name="entity"/>
-        <element type="Prefab" name="data"/>
+        <element type="EntityType" name="type" default="EntityType::Normal"/>
     </asset>
 </schema>

@@ -331,7 +331,7 @@ void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
                 LOGE("Can only select file under {} dir", base_path);
             } else {
                 value = GAME_CONTEXT
-                            .m_assets_manager->GetManager<Handle<T>>()
+                            .m_assets_manager->GetManager<T>()
                             .Load(relative_path);
             }
         }

@@ -23,6 +23,16 @@ public:
 
     virtual HandleType Load(const Path& filename) = 0;
 
+    virtual void Unload(HandleType handle) {
+        auto uuid = handle.GetUUID();
+        if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
+            m_paths_uuid_map.erase(it->second);
+            m_uuid_path_map.erase(it);
+        }
+
+        m_payloads.erase(uuid);
+    }
+
     HandleType Find(const Path& filename) {
         if (auto it = m_paths_uuid_map.find(filename);
             it != m_paths_uuid_map.end()) {
@@ -58,7 +68,7 @@ protected:
                      std::unique_ptr<T>&& payload) {
         auto result = m_payloads.emplace(uuid, std::move(payload));
         if (!result.second) {
-            LOGE("load asset {} failed",
+            LOGE("asset {} already loaded",
                  filename ? *filename : "<no filename>");
             return nullptr;
         }
@@ -88,7 +98,16 @@ public:
 
     HandleType Load(const Path& filename) override {
         auto result = LoadAsset<T>(filename);
-        return store(&filename, result.m_uuid,
-                     std::make_unique<T>(std::move(result.m_value)));
+        return this->store(&filename, result.m_uuid,
+                           std::make_unique<T>(std::move(result.m_payload)));
+    }
+
+    HandleType Create() {
+        return this->store(nullptr, UUID::CreateV4(), std::make_unique<T>());
+    }
+
+    HandleType Create(const T& value) {
+        return this->store(nullptr, UUID::CreateV4(),
+                           std::make_unique<T>(value));
     }
 };

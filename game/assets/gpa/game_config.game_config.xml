@@ -1,0 +1,7 @@
+<GameConfig>
+	<uuid>18855be3-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<basic_level>assets/gpa/game.level.xml</basic_level>
+		<input_config>assets/gpa/input_config.input_config.xml</input_config>
+	</payload>
+</GameConfig>

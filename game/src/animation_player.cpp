@@ -150,14 +150,14 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
 
 void AnimationPlayer::ChangeAnimation(const Path& filename) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>().Find(
+        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(
             filename);
     ChangeAnimation(animation);
 }
 
 void AnimationPlayer::ChangeAnimation(UUID uuid) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<AnimationHandle>().Find(uuid);
+        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(uuid);
     ChangeAnimation(animation);
 }
 
@@ -291,7 +291,10 @@ AnimationHandle AnimationPlayer::GetAnimation() const {
 
 void AnimationPlayerManager::Update(TimeType delta_time) {
     for (auto& [entity, anim] : m_components) {
-        anim->Update(delta_time);
-        anim->Sync(entity);
+        if (!anim.m_enable) {
+            continue;
+        }
+        anim.m_component->Update(delta_time);
+        anim.m_component->Sync(entity);
     }
 }

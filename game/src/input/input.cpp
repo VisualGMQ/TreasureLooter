@@ -79,17 +79,16 @@ Vec2 Axises::Value() const {
     return Vec2{m_x_axis.Value(), m_y_axis.Value()};
 }
 
-InputManager::InputManager(Context& context, const Path& config_filename) {
-    InputConfig config = LoadAsset<InputConfig>(config_filename).m_payload;
-    SetConfig(context, config);
+void InputManager::Initialize(InputConfigHandle config) {
+    SetConfig(GAME_CONTEXT, config);
 }
 
-void InputManager::SetConfig(Context& context, const InputConfig& config) {
-    for (auto& axis : config.m_axis) {
+void InputManager::SetConfig(Context& context, InputConfigHandle config) {
+    for (auto& axis : config->m_axis) {
         loadAxisConfig(context, axis);
     }
 
-    for (auto& action : config.m_action) {
+    for (auto& action : config->m_action) {
         loadActionConfig(context, action);
     }
 }

@@ -70,14 +70,14 @@ private:
 
 class InputManager {
 public:
-    explicit InputManager(Context& context, const Path& config_filename);
+    void Initialize(InputConfigHandle config);
 
     const Axis& GetAxis(const std::string& name) const;
     const Action& GetAction(const std::string& name) const;
 
     Axises MakeAxises(const std::string& x_name, const std::string& y_name);
 
-    void SetConfig(Context& context, const InputConfig& config);
+    void SetConfig(Context& context, InputConfigHandle config);
 
 private:
     std::unordered_map<std::string, Axis> m_axis_mappings;

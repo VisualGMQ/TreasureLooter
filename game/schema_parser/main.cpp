@@ -56,18 +56,14 @@ int main(int argc, char** argv) {
         }
     }
 
-    // code generate
-    if (!std::filesystem::exists(output_dir)) {
-        std::filesystem::create_directories(output_dir);
+    if (std::filesystem::exists(output_dir)) {
+        std::filesystem::remove_all(output_dir);
     }
 
-    if (!std::filesystem::exists(serd_output_dir)) {
-        std::filesystem::create_directories(serd_output_dir);
-    }
-    
-    if (!std::filesystem::exists(display_output_dir)) {
-        std::filesystem::create_directories(display_output_dir);
-    }
+    // code generate
+    std::filesystem::create_directories(output_dir);
+    std::filesystem::create_directories(serd_output_dir);
+    std::filesystem::create_directories(display_output_dir);
 
     for (auto& info : manager.m_infos) {
         // generate class declare codes

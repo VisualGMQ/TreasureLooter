@@ -1,14 +1,19 @@
 ﻿#include "editor/editor.hpp"
 
 #include "animation.hpp"
+#include "asset_manager.hpp"
 #include "dialog.hpp"
 #include "imgui.h"
 #include "level.hpp"
 #include "relationship.hpp"
+#include "schema/display/config.hpp"
 #include "schema/display/input.hpp"
+#include "schema/display/level_content.hpp"
 #include "schema/display/prefab.hpp"
 #include "schema/serialize/asset_extensions.hpp"
+#include "schema/serialize/config.hpp"
 #include "schema/serialize/input.hpp"
+#include "schema/serialize/level_content.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
 #include "sprite.hpp"
@@ -25,13 +30,23 @@ struct AssetDisplay {
 };
 
 struct AssetSyncHelper {
+    template <typename T>
+    void operator()(AssetLoadResult<T>&) {}
+
     void operator()(AssetLoadResult<InputConfig>& payload) {
-        GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT,
-                                                      payload.m_payload);
+        auto handle =
+            GAME_CONTEXT.m_assets_manager->GetManager<InputConfig>().Create(
+                payload.m_payload);
+        GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT, handle);
     }
 
-    void operator()(AssetLoadResult<EntityInstance>& payload) {
-        GAME_CONTEXT.RegisterEntity(std::move(payload.m_payload));
+    void operator()(AssetLoadResult<Prefab>& payload) {
+        auto handle =
+            GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Create(
+                payload.m_payload);
+        auto level =
+            GAME_CONTEXT.m_level_manager->GetCurrentLevel()->Instantiate(
+                handle);
     }
 
     void operator()(AssetLoadResult<Animation>& payload) {}
@@ -39,17 +54,14 @@ struct AssetSyncHelper {
     void operator()(std::monostate) {}
 };
 
-void AddEntityToScene(Entity entity,
-                      AssetLoadResult<EntityInstance>& instance) {
-    if (auto& level = GAME_CONTEXT.m_level) {
-        auto root_entity = level->GetRootEntity();
-        auto relationship =
-            GAME_CONTEXT.m_relationship_manager->Get(root_entity);
-        relationship->m_children.push_back(entity);
+void AddEntityToScene(Entity entity, AssetLoadResult<Prefab>& instance) {
+    auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto root_entity = level->GetRootEntity();
+    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(root_entity);
+    relationship->m_children.push_back(entity);
 
-        AssetSyncHelper helper;
-        helper(instance);
-    }
+    AssetSyncHelper helper;
+    helper(instance);
 }
 
 template <typename T>
@@ -59,10 +71,10 @@ AssetTypes LoadAssetFromPath(const Path& filename) {
 }
 
 template <>
-AssetTypes LoadAssetFromPath<EntityInstance>(const Path& filename) {
-    auto result = LoadAsset<EntityInstance>(filename);
+AssetTypes LoadAssetFromPath<Prefab>(const Path& filename) {
+    auto result = LoadAsset<Prefab>(filename);
 
-    AddEntityToScene(result.m_payload.m_entity, result);
+    AddEntityToScene(GAME_CONTEXT.CreateEntity(), result);
     return AssetTypes{result};
 }
 
@@ -92,31 +104,29 @@ AssetTypes CreateAsset() {
 
 void Editor::Update() {
     if (ImGui::Begin("Editor", &m_open)) {
-        static const std::array<const char*, 3> asset_types = {
-            "InputConfig",
-            "EntityInstance",
-            "Animation",
+        static const std::array<const char*, 5> asset_types = {
+            "InputConfig", "EntityInstance", "Animation", "GameConfig", "Level",
         };
 
-        static const std::array<std::string_view, 3> asset_extensions = {
-            InputConfig_AssetExtension,
-            EntityInstance_AssetExtension,
-            Animation_AssetExtension,
+        static const std::array<std::string_view, 5> asset_extensions = {
+            InputConfig_AssetExtension,  Prefab_AssetExtension,
+            Animation_AssetExtension,    GameConfig_AssetExtension,
+            LevelContent_AssetExtension,
         };
 
         static const std::array<std::function<AssetTypes(const Path& filename)>,
-                                3>
+                                5>
             asset_loader = {
-                LoadAssetFromPath<InputConfig>,
-                LoadAssetFromPath<EntityInstance>,
-                LoadAssetFromPath<Animation>,
+                LoadAssetFromPath<InputConfig>,  LoadAssetFromPath<Prefab>,
+                LoadAssetFromPath<Animation>,    LoadAssetFromPath<GameConfig>,
+                LoadAssetFromPath<LevelContent>,
             };
 
-        static const std::array<std::function<AssetTypes()>, 3> asset_creator =
+        static const std::array<std::function<AssetTypes()>, 5> asset_creator =
             {
-                CreateAsset<InputConfig>,
-                CreateAsset<EntityInstance>,
-                CreateAsset<Animation>,
+                CreateAsset<InputConfig>,  CreateAsset<Prefab>,
+                CreateAsset<Animation>,    CreateAsset<GameConfig>,
+                CreateAsset<LevelContent>,
             };
 
         if (ImGui::BeginPopupModal("popup")) {

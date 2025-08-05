@@ -22,10 +22,12 @@ AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const Path& filename) {
         doc.parse<rapidxml::parse_default>(content.data());
     } catch (std::exception &e) {
         LOGE("parse asset {} failed: {}", filename, e.what());
+        return {};
     }
     auto node = doc.first_node("{{type}}");
     if (!node) {
         LOGE("parse asset {} failed, no node {}", filename, "{{type}}");
+        return {};
     }
 
     return LoadAsset<{{type}}>(*node);
