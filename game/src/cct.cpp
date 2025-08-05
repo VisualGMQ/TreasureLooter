@@ -79,9 +79,14 @@ void CCTManager::ToggleDebugDraw() {
 }
 
 void CCTManager::RenderDebug() {
-    if (IsEnableDebugDraw()) {
-        for (auto& [_, cct] : m_components) {
-            GAME_CONTEXT.m_renderer->DrawCircle(cct->GetCircle(), Color::Green);
+    if (!IsEnableDebugDraw()) {
+        return;
+    }
+    for (auto& [_, cct] : m_components) {
+        if (!cct.m_enable) {
+            continue;
         }
+        GAME_CONTEXT.m_renderer->DrawCircle(cct.m_component->GetCircle(),
+                                            Color::Green);
     }
 }

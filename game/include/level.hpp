@@ -2,7 +2,7 @@
 #include "animation.hpp"
 #include "entity_logic.hpp"
 #include "image.hpp"
-#include "schema/level.hpp"
+#include "schema/level_content.hpp"
 #include "timer.hpp"
 
 #include <unordered_set>
@@ -11,6 +11,7 @@ class Level {
 public:
     Level() = default;
     explicit Level(LevelContentHandle);
+    explicit Level(const Path& filename);
     ~Level();
     
     void OnInit();
@@ -18,7 +19,9 @@ public:
     void OnRenderUpdate(TimeType);
     void OnQuit();
 
-    Entity Instantiate(const Prefab&);
+    Entity Instantiate(PrefabHandle);
+
+    void RemoveEntity(Entity);
 
     Entity GetRootEntity() const;
 
@@ -29,7 +32,15 @@ private:
     void initRootEntity();
     void registerEntity(const EntityInstance&);
 
-    void createEntityByPrefab(Entity entity, const Prefab& prefab);
+    void createEntityByPrefab(Entity entity, const Transform&, PrefabHandle prefab);
+    void initByLevelContent(LevelContentHandle);
+};
+
+using LevelHandle = Handle<Level>;
+
+class LevelManager: public AssetManagerBase<Level> {
+public:
+    HandleType Load(const Path& filename) override;
 };
 
 class PlayerLogic: public EntityLogic {

@@ -7,34 +7,19 @@
 #include "sprite.hpp"
 
 Level::Level(LevelContentHandle level_content) {
-    initRootEntity();
+    initByLevelContent(level_content);
+}
 
-    std::unordered_map<Entity, bool> is_entity_root_map;
-    for (auto& instance : level_content->m_entities) {
-        is_entity_root_map.emplace(instance.m_entity, true);
-    }
-
-    for (auto& instance : level_content->m_entities) {
-        registerEntity(instance);
-        if (instance.m_data.m_relationship &&
-            !instance.m_data.m_relationship->m_children.empty()) {
-            for (auto& child : instance.m_data.m_relationship->m_children) {
-                is_entity_root_map[child] = false;
-            }
-        }
-        m_entities.insert(instance.m_entity);
-    }
-
-    auto relationship =
-        GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
-    for (auto& [entity, is_root] : is_entity_root_map) {
-        relationship->m_children.emplace_back(entity);
-    }
+Level::Level(const Path& filename) {
+    auto handle =
+        GAME_CONTEXT.m_assets_manager->GetManager<LevelContent>().Load(
+            filename);
+    initByLevelContent(handle);
 }
 
 Level::~Level() {
     for (auto entity : m_entities) {
-        GAME_CONTEXT.RemoveEntity(entity);
+        RemoveEntity(entity);
     }
 }
 
@@ -74,11 +59,22 @@ void Level::OnQuit() {
     }
 }
 
-Entity Level::Instantiate(const Prefab& prefab) {
+Entity Level::Instantiate(PrefabHandle prefab) {
     Entity entity = GAME_CONTEXT.CreateEntity();
-    registerEntity({entity, prefab});
+    registerEntity({entity, prefab->m_transform.value_or(Transform{}), prefab});
     m_entities.insert(entity);
     return entity;
+}
+
+void Level::RemoveEntity(Entity entity) {
+    GAME_CONTEXT.m_sprite_manager->RemoveEntity(entity);
+    GAME_CONTEXT.m_transform_manager->RemoveEntity(entity);
+    GAME_CONTEXT.m_relationship_manager->RemoveEntity(entity);
+    GAME_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
+    GAME_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
+    GAME_CONTEXT.m_cct_manager->RemoveEntity(entity);
+
+    m_entities.erase(entity);
 }
 
 Entity Level::GetRootEntity() const {
@@ -92,38 +88,76 @@ void Level::initRootEntity() {
 }
 
 void Level::registerEntity(const EntityInstance& instance) {
-    createEntityByPrefab(instance.m_entity, instance.m_data);
+    createEntityByPrefab(instance.m_entity, instance.m_transform,
+                         instance.m_prefab);
 }
 
-void Level::createEntityByPrefab(Entity entity, const Prefab& prefab) {
-    if (prefab.m_sprite) {
+void Level::createEntityByPrefab(Entity entity, const Transform& transform,
+                                 PrefabHandle prefab) {
+    if (prefab->m_sprite) {
         GAME_CONTEXT.m_sprite_manager->ReplaceComponent(
-            entity, prefab.m_sprite.value());
+            entity, prefab->m_sprite.value());
     }
-    if (prefab.m_transform) {
-        GAME_CONTEXT.m_transform_manager->ReplaceComponent(
-            entity, prefab.m_transform.value());
+    if (prefab->m_transform) {
+        GAME_CONTEXT.m_transform_manager->ReplaceComponent(entity, transform);
     }
-    if (prefab.m_relationship) {
+    if (prefab->m_relationship) {
         GAME_CONTEXT.m_relationship_manager->ReplaceComponent(
-            entity, prefab.m_relationship.value());
+            entity, prefab->m_relationship.value());
     }
-    if (prefab.m_tilemap) {
+    if (prefab->m_tilemap) {
         GAME_CONTEXT.m_tilemap_component_manager->ReplaceComponent(
-            entity, {entity, prefab.m_tilemap});
+            entity, {entity, prefab->m_tilemap});
     }
-    if (prefab.m_animation) {
+    if (prefab->m_animation) {
         GAME_CONTEXT.m_animation_player_manager->RegisterEntity(
-            entity, prefab.m_animation.value());
+            entity, prefab->m_animation.value());
     }
-    if (prefab.m_cct) {
+    if (prefab->m_cct) {
         GAME_CONTEXT.m_cct_manager->RegisterEntity(entity,
-                                                   prefab.m_cct.value());
-        GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(prefab.m_transform->m_position);
+                                                   prefab->m_cct.value());
+        GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(
+            prefab->m_transform->m_position);
     }
-    if (prefab.m_type == EntityType::Player) {
-        GAME_CONTEXT.m_entity_logic_manager->RegisterEntityByDerive<PlayerLogic>(entity, entity);
+    if (prefab->m_type == EntityType::Player) {
+        GAME_CONTEXT.m_entity_logic_manager
+            ->RegisterEntityByDerive<PlayerLogic>(entity, entity);
     }
+}
+
+void Level::initByLevelContent(LevelContentHandle level_content) {
+    initRootEntity();
+
+    std::unordered_map<Entity, bool> is_entity_root_map;
+    for (auto& instance : level_content->m_entities) {
+        is_entity_root_map.emplace(instance.m_entity, true);
+    }
+
+    for (auto& instance : level_content->m_entities) {
+        if (!instance.m_prefab) {
+            LOGW("prefab {} invalid", *instance.m_prefab.GetFilename());
+            continue;
+        }
+        registerEntity(instance);
+        if (instance.m_prefab->m_relationship &&
+            !instance.m_prefab->m_relationship->m_children.empty()) {
+            for (auto& child : instance.m_prefab->m_relationship->m_children) {
+                is_entity_root_map[child] = false;
+            }
+        }
+        m_entities.insert(instance.m_entity);
+    }
+
+    auto relationship =
+        GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
+    for (auto& [entity, is_root] : is_entity_root_map) {
+        relationship->m_children.emplace_back(entity);
+    }
+}
+
+AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename) {
+    return store(&filename, UUID::CreateV4(),
+                 std::make_unique<Level>(filename));
 }
 
 void PlayerLogic::OnInit() {
@@ -138,9 +172,8 @@ void PlayerLogic::OnInit() {
         animation_manager.Load("assets/gpa/status_walk_up.animation.xml");
     m_walk_down =
         animation_manager.Load("assets/gpa/status_walk_down.animation.xml");
-    m_image_sheet =
-        GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
-            "assets/Characters/Statue/SpriteSheet.png");
+    m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
+        "assets/Characters/Statue/SpriteSheet.png");
 }
 
 void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {

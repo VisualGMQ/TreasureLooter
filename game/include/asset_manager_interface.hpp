@@ -91,4 +91,13 @@ public:
         return this->store(&filename, result.m_uuid,
                            std::make_unique<T>(std::move(result.m_payload)));
     }
+
+    HandleType Create() {
+        return this->store(nullptr, UUID::CreateV4(), std::make_unique<T>());
+    }
+
+    HandleType Create(const T& value) {
+        return this->store(nullptr, UUID::CreateV4(),
+                           std::make_unique<T>(value));
+    }
 };

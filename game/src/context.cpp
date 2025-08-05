@@ -45,11 +45,11 @@ void Context::Shutdown() {
     if (m_level) {
         m_level->OnQuit();
     }
-    m_level.reset();
+    
+    m_level_manager.reset();
 }
 
 Context::~Context() {
-
     m_event_system.reset();
     m_entity_logic_manager.reset();
     m_cct_manager.reset();
@@ -90,7 +90,7 @@ void Context::Initialize() {
     LOGI("loading game level: {}", *m_game_config->m_basic_level.GetFilename());
     m_input_manager->Initialize(m_game_config->m_input_config);
 
-    m_level = std::make_unique<Level>(m_game_config->m_basic_level);
+    m_level = m_game_config->m_basic_level;
     m_level->OnInit();
 }
 
@@ -168,6 +168,7 @@ Context::Context() {
     m_cct_manager = std::make_unique<CCTManager>();
     m_event_system = std::make_unique<EventSystem>();
     m_entity_logic_manager = std::make_unique<EntityLogicManager>();
+    m_level_manager = std::make_unique<LevelManager>();
 }
 
 void Context::logicUpdate() {
@@ -244,13 +245,4 @@ void Context::parseProjectPath() {
 #ifdef TL_ENABLE_EDITOR
     m_project_path = node->value();
 #endif
-}
-
-void Context::RemoveEntity(Entity entity) {
-    m_sprite_manager->RemoveEntity(entity);
-    m_transform_manager->RemoveEntity(entity);
-    m_relationship_manager->RemoveEntity(entity);
-    m_tilemap_component_manager->RemoveEntity(entity);
-    m_animation_player_manager->RemoveEntity(entity);
-    m_cct_manager->RemoveEntity(entity);
 }

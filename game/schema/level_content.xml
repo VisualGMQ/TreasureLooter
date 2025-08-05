@@ -1,10 +1,17 @@
 <schema>
     <include>entity.hpp</include>
     <import>prefab</import>
-    
+    <include>math.hpp</include>
+
+    <enum name="EntityInstanceType">
+        <item name="Instance"/>
+        <item name="Prefab"/>
+    </enum>
+
     <class name="EntityInstance">
         <element type="Entity" name="entity"/>
-        <element type="Prefab" name="data"/>
+        <element type="Transform" name="transform"/>
+        <handle type="Prefab" name="prefab"/>
     </class>
 
     <asset name="LevelContent" extension=".level">

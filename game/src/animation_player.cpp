@@ -291,7 +291,10 @@ AnimationHandle AnimationPlayer::GetAnimation() const {
 
 void AnimationPlayerManager::Update(TimeType delta_time) {
     for (auto& [entity, anim] : m_components) {
-        anim->Update(delta_time);
-        anim->Sync(entity);
+        if (!anim.m_enable) {
+            continue;
+        }
+        anim.m_component->Update(delta_time);
+        anim.m_component->Sync(entity);
     }
 }

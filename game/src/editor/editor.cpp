@@ -6,15 +6,15 @@
 #include "imgui.h"
 #include "level.hpp"
 #include "relationship.hpp"
-#include "schema/display/input.hpp"
-#include "schema/display/prefab.hpp"
-#include "schema/display/level.hpp"
 #include "schema/display/config.hpp"
+#include "schema/display/input.hpp"
+#include "schema/display/level_content.hpp"
+#include "schema/display/prefab.hpp"
 #include "schema/serialize/asset_extensions.hpp"
-#include "schema/serialize/input.hpp"
-#include "schema/serialize/prefab.hpp"
-#include "schema/serialize/level.hpp"
 #include "schema/serialize/config.hpp"
+#include "schema/serialize/input.hpp"
+#include "schema/serialize/level_content.hpp"
+#include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
 #include "sprite.hpp"
 
@@ -34,18 +34,17 @@ struct AssetSyncHelper {
     void operator()(AssetLoadResult<T>&) {}
 
     void operator()(AssetLoadResult<InputConfig>& payload) {
-        /* NOTE: dangerous operate due to handle is temporary variable.
-         * but InputManager don't obtain handle's lifetime so currently this is
-         * safe
-         */
-        InputConfigHandle handle{
-            UUID::CreateV4(), &payload.m_payload,
-            &GAME_CONTEXT.m_assets_manager->GetManager<InputConfig>()};
+        auto handle =
+            GAME_CONTEXT.m_assets_manager->GetManager<InputConfig>().Create(
+                payload.m_payload);
         GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT, handle);
     }
 
     void operator()(AssetLoadResult<Prefab>& payload) {
-        GAME_CONTEXT.GetCurrentLevel().Instantiate(payload.m_payload);
+        auto handle =
+            GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Create(
+                payload.m_payload);
+        GAME_CONTEXT.GetCurrentLevel().Instantiate(handle);
     }
 
     void operator()(AssetLoadResult<Animation>& payload) {}
@@ -104,37 +103,27 @@ AssetTypes CreateAsset() {
 void Editor::Update() {
     if (ImGui::Begin("Editor", &m_open)) {
         static const std::array<const char*, 5> asset_types = {
-            "InputConfig",
-            "EntityInstance",
-            "Animation",
-            "GameConfig",
-            "Level",
+            "InputConfig", "EntityInstance", "Animation", "GameConfig", "Level",
         };
 
         static const std::array<std::string_view, 5> asset_extensions = {
-            InputConfig_AssetExtension,
-            Prefab_AssetExtension,
-            Animation_AssetExtension,
-            GameConfig_AssetExtension,
+            InputConfig_AssetExtension,  Prefab_AssetExtension,
+            Animation_AssetExtension,    GameConfig_AssetExtension,
             LevelContent_AssetExtension,
         };
 
         static const std::array<std::function<AssetTypes(const Path& filename)>,
                                 5>
             asset_loader = {
-                LoadAssetFromPath<InputConfig>,
-                LoadAssetFromPath<Prefab>,
-                LoadAssetFromPath<Animation>,
-                LoadAssetFromPath<GameConfig>,
+                LoadAssetFromPath<InputConfig>,  LoadAssetFromPath<Prefab>,
+                LoadAssetFromPath<Animation>,    LoadAssetFromPath<GameConfig>,
                 LoadAssetFromPath<LevelContent>,
             };
 
         static const std::array<std::function<AssetTypes()>, 5> asset_creator =
             {
-                CreateAsset<InputConfig>,
-                CreateAsset<Prefab>,
-                CreateAsset<Animation>,
-                CreateAsset<GameConfig>,
+                CreateAsset<InputConfig>,  CreateAsset<Prefab>,
+                CreateAsset<Animation>,    CreateAsset<GameConfig>,
                 CreateAsset<LevelContent>,
             };
 

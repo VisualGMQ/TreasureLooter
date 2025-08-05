@@ -3,14 +3,15 @@
 #include "cct.hpp"
 #include "editor/editor.hpp"
 #include "entity.hpp"
-#include "event.hpp"
 #include "entity_logic.hpp"
+#include "event.hpp"
 #include "input/finger_touch.hpp"
 #include "input/gamepad.hpp"
 #include "input/input.hpp"
 #include "input/keyboard.hpp"
 #include "input/mouse.hpp"
 #include "inspector.hpp"
+#include "level.hpp"
 #include "physics.hpp"
 #include "renderer.hpp"
 #include "schema/config.hpp"
@@ -68,11 +69,11 @@ public:
     std::unique_ptr<CCTManager> m_cct_manager;
     std::unique_ptr<EventSystem> m_event_system;
     std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
+    std::unique_ptr<LevelManager> m_level_manager;
 
     Level& GetCurrentLevel();
 
     Entity CreateEntity();
-    void RemoveEntity(Entity);
 
 #ifdef TL_ENABLE_EDITOR
     const Path& GetProjectPath() const;
@@ -83,7 +84,7 @@ private:
 
     bool m_should_exit = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
-    std::unique_ptr<Level> m_level;
+    LevelHandle m_level;
     GameConfigHandle m_game_config;
 
 #ifdef TL_ENABLE_EDITOR

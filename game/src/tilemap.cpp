@@ -197,12 +197,16 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
 
 void TilemapComponentManager::Update() {
     for (auto& [entity, tilemap] : m_components) {
+        if (!tilemap.m_enable) {
+            continue;
+        }
+
         auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
         if (!transform) {
             continue;
         }
 
-        drawTilemap(*transform, tilemap->GetHandle());
+        drawTilemap(*transform, tilemap.m_component->GetHandle());
     }
 }
 

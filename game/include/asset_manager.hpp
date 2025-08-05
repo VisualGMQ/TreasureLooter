@@ -5,6 +5,7 @@
 #include "context.hpp"
 #include "image.hpp"
 #include "tilemap.hpp"
+#include "level.hpp"
 
 class AssetsManager {
 public:
@@ -17,6 +18,8 @@ public:
             return ensureManager<TilemapManager>(index);
         } else if constexpr (std::is_same_v<T, Animation>) {
             return ensureManager<AnimationManager>(index);
+        } else if constexpr (std::is_same_v<T, Level>) {
+            return ensureManager<LevelManager>(index);
         } else {
             return ensureManager<GenericAssetManager<T>>(index);
         }
