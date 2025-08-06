@@ -77,18 +77,24 @@ Context::~Context() {
 }
 
 void Context::Initialize() {
-    m_game_config = m_assets_manager->GetManager<GameConfig>().Load(
+    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
         std::string{"assets/gpa/game_config"} +
         GameConfig_AssetExtension.data());
-    if (!m_game_config) {
+    if (!handle) {
         LOGC("game config not found!");
         SDL_Quit();
         return;
     }
-    LOGI("loading game level: {}", *m_game_config->m_basic_level.GetFilename());
-    m_input_manager->Initialize(m_game_config->m_input_config);
 
-    m_level_manager->Switch(m_game_config->m_basic_level);
+    m_game_config = *handle;
+    m_assets_manager->GetManager<GameConfig>().Unload(handle);
+
+    m_input_manager->Initialize(
+        m_assets_manager->GetManager<InputConfig>().Load(
+            m_game_config.m_input_config_asset));
+
+    m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
+        m_game_config.m_basic_level_asset));
 }
 
 void Context::Update() {
@@ -120,8 +126,12 @@ void Context::HandleEvents(const SDL_Event& event) {
     m_event_system->HandleEvent(event);
 }
 
-bool Context::ShouldExit() {
+bool Context::ShouldExit() const {
     return m_should_exit;
+}
+
+const GameConfig& Context::GetGameConfig() const {
+    return m_game_config;
 }
 
 #ifdef TL_ENABLE_EDITOR
@@ -199,7 +209,9 @@ void Context::logicPostUpdate(TimeType elapse) {
 void Context::renderUpdate(TimeType elapse) {
     m_inspector->BeginFrame();
     m_renderer->Clear();
+}
 
+void Context::renderPostUpdate() {
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
 
