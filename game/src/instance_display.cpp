@@ -330,9 +330,8 @@ void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
             if (err) {
                 LOGE("Can only select file under {} dir", base_path);
             } else {
-                value = GAME_CONTEXT
-                            .m_assets_manager->GetManager<T>()
-                            .Load(relative_path);
+                value = GAME_CONTEXT.m_assets_manager->GetManager<T>().Load(
+                    relative_path);
             }
         }
     }
@@ -681,4 +680,27 @@ void InstanceDisplay(const char* name, Entity e) {
 void InstanceDisplay(const char* name, NullEntity) {
     ImGui::Text("%s", name);
     ImGui::Text("entity: null_entity");
+}
+
+void InstanceDisplay(const char* name, const Path& path) {
+    auto string = path.string();
+    ImGui::BeginDisabled(true);
+    ImGui::InputText(name, string.data(), string.size());
+    ImGui::EndDisabled();
+}
+
+void InstanceDisplay(const char* name, Path& path) {
+    ImGui::BeginDisabled(true);
+    auto string = path.string();
+    ImGui::InputText(name, string.data(), string.size());
+    if (ImGui::IsItemClicked()) {
+        FileDialog file_dialog{FileDialog::Type::OpenFile};
+        file_dialog.SetDefaultFolder(std::filesystem::current_path());
+        file_dialog.Open();
+        auto& files = file_dialog.GetSelectedFiles();
+        if (!files.empty()) {
+            path = files.front();
+        }
+    }
+    ImGui::EndDisabled();
 }

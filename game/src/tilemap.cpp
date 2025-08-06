@@ -188,7 +188,7 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
                     rect.m_center += tile->m_collision_rect.m_center * scale;
                     rect.m_half_size *= scale;
 
-                    physics_scene->AddRect(rect);
+                    physics_scene->CreateActorInChunk(rect.m_center, rect);
                 }
             }
         }

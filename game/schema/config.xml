@@ -2,9 +2,15 @@
     <import>level_content</import>
     <import>input</import>
     <include>level.hpp</include>
+    <include>path.hpp</include>
     
     <asset name="GameConfig" extension=".game_config">
-        <handle name="basic_level" type="Level"/>
-        <handle name="input_config" type="InputConfig"/>
+        <!-- don't use handle, due to asset rely on GameConfig itself! -->
+        <element name="basic_level_asset" type="Path"/>
+        <element name="input_config_asset" type="Path"/>
+        <element name="tile_in_chunk_size_w" type = "size_t"/>
+        <element name="tile_in_chunk_size_h" type = "size_t"/>
+        <element name="tile_size_w" type = "size_t"/>
+        <element name="tile_size_h" type = "size_t"/>
     </asset>
 </schema>

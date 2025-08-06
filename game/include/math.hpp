@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <cstddef>
+#include <vector>
 
 struct Vec2 final {
     union {
@@ -103,6 +104,50 @@ private:
 
 Mat33 operator*(const Mat33&, const Mat33&);
 
+template <typename T>
+class MatStorage {
+public:
+    MatStorage() = default;
+
+    MatStorage(size_t w, size_t h) : m_w{w}, m_h{h} {
+        m_data.resize(m_w * m_h);
+    }
+
+    bool InRange(int x, int y) const { return x < m_w && y < m_h; }
+
+    void Resize(size_t w, size_t h) {
+        m_w = w;
+        m_h = h;
+        m_data.resize(w * h);
+    }
+
+    const T& Get(size_t x, size_t y) const { return m_data[x + y * m_w]; }
+
+    T& Get(size_t x, size_t y) { return m_data[x + y * m_w]; }
+
+    void Set(const T& value, size_t x, size_t y) {
+        m_data[x + y * m_w] = value;
+    }
+
+    void Set(T&& value, size_t x, size_t y) {
+        m_data[x + y * m_w] = std::move(value);
+    }
+
+    void Clear() {
+        m_w = 0;
+        m_h = 0;
+        m_data.clear();
+    }
+
+    size_t GetWidth() const { return m_w; }
+
+    size_t GetHeight() const { return m_h; }
+
+private:
+    std::vector<T> m_data;
+    size_t m_w{}, m_h{};
+};
+
 struct Radians {
     Radians() = default;
     Radians(float value);
@@ -141,6 +186,11 @@ private:
 template <typename T>
 T Lerp(T a, T b, float t) {
     return a + (b - a) * t;
+}
+
+template <typename T>
+T Clamp(T v, T a, T b) {
+    return v < a ? a : v > b ? b : v;
 }
 
 struct DecompositionResult {

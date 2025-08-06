@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "level.hpp"
 #include "log.hpp"
+#include "path.hpp"
 #include "rapidxml_print.hpp"
 #include "rapidxml_utils.hpp"
 #include "relationship.hpp"
@@ -17,7 +18,6 @@
 #include "tilemap.hpp"
 #include "transform.hpp"
 #include "uuid.h"
-#include "path.hpp"
 
 #include <iostream>
 
@@ -76,24 +76,31 @@ Context::~Context() {
 }
 
 void Context::Initialize() {
-    m_game_config = m_assets_manager->GetManager<GameConfig>().Load(
+    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
         std::string{"assets/gpa/game_config"} +
         GameConfig_AssetExtension.data());
-    if (!m_game_config) {
+    if (!handle) {
         LOGC("game config not found!");
         SDL_Quit();
         return;
     }
-    LOGI("loading game level: {}", *m_game_config->m_basic_level.GetFilename());
-    m_input_manager->Initialize(m_game_config->m_input_config);
 
-    m_level_manager->Switch(m_game_config->m_basic_level);
+    m_game_config = *handle;
+    m_assets_manager->GetManager<GameConfig>().Unload(handle);
+
+    m_input_manager->Initialize(
+        m_assets_manager->GetManager<InputConfig>().Load(
+            m_game_config.m_input_config_asset));
+
+    m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
+        m_game_config.m_basic_level_asset));
 }
 
 void Context::Update() {
+    renderPreUpdate();
     logicUpdate();
-    renderUpdate();
     logicPostUpdate();
+    renderPostUpdate();
 
     m_level_manager->PoseUpdate();
 }
@@ -117,8 +124,12 @@ void Context::HandleEvents(const SDL_Event& event) {
     m_event_system->HandleEvent(event);
 }
 
-bool Context::ShouldExit() {
+bool Context::ShouldExit() const {
     return m_should_exit;
+}
+
+const GameConfig& Context::GetGameConfig() const {
+    return m_game_config;
 }
 
 #ifdef TL_ENABLE_EDITOR
@@ -158,8 +169,7 @@ Context::Context() {
     m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
 
-    m_input_manager =
-        std::make_unique<InputManager>();
+    m_input_manager = std::make_unique<InputManager>();
 
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();
@@ -188,10 +198,12 @@ void Context::logicPostUpdate() {
     m_touches->PostUpdate();
 }
 
-void Context::renderUpdate() {
+void Context::renderPreUpdate() {
     m_inspector->BeginFrame();
     m_renderer->Clear();
+}
 
+void Context::renderPostUpdate() {
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
 

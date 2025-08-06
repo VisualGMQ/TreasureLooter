@@ -3,7 +3,7 @@
 #include "context.hpp"
 
 CharacterController::CharacterController(const CCT& create_info)
-    : m_circle{create_info.m_radius},
+    : m_circle{{}, create_info.m_radius},
       m_skin{create_info.m_skin},
       m_min_disp{create_info.m_min_disp} {}
 
@@ -20,7 +20,8 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     uint32_t max_iter = MaxIter;
     HitResult hit;
     while (max_iter--) {
-        bool hitted = physics_scene->SweepByCircle(m_circle, disp_normalized,
+        PhysicsActor actor{m_circle, PhysicsActor::StorageType::Normal};
+        bool hitted = physics_scene->Sweep(actor, disp_normalized,
                                                    disp_length, &hit, 1);
 
         if (!hitted) {
