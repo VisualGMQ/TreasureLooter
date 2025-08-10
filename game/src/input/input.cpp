@@ -153,6 +153,8 @@ float Axis::Value(SDL_JoystickID gamepad_id) const {
 
     value += m_finger_axis_value;
 
+    value += m_finger_axis_value;
+
     return value;
 }
 
