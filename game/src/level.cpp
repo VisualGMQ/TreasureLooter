@@ -234,17 +234,48 @@ void PlayerLogic::OnInit() {
         animation_manager.Load("assets/gpa/status_walk_down.animation.xml");
     m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
         "assets/Characters/Statue/SpriteSheet.png");
+
+    m_gamepad_event_listener =
+        GAME_CONTEXT.m_event_system->AddListener<SDL_GamepadDeviceEvent>(
+            [&](EventListenerID id, const SDL_GamepadDeviceEvent& event) {
+                if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
+                    if (m_gamepad_id == 0) {
+                        m_gamepad_id = event.which;
+                    }
+                } else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
+                    if (m_gamepad_id == event.which) {
+                        m_gamepad_id = 0;
+                    }
+                }
+            });
+
+    auto window_size = GAME_CONTEXT.m_window->GetWindowSize();
+
+    m_touch_joystick.m_circle.m_radius = 100;
+    m_touch_joystick.m_circle.m_center.x = 300;
+    m_touch_joystick.m_circle.m_center.y = window_size.h - 300;
+
+    m_finger_attack_button.m_radius = 50;
+    m_finger_attack_button.m_center.x = window_size.w - 200;
+    m_finger_attack_button.m_center.y = window_size.h - 200;
 }
 
 void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
+    handleFingerTouchJoystick();
+
     Entity entity = GetEntity();
 
     Transform* transform = GAME_CONTEXT.m_transform_manager->Get(entity);
 
     WalkDirection old_direction = m_walk_direction;
 
-    Vec2 axises =
-        GAME_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY").Value();
+    Vec2 axises = GAME_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY")
+                      .Value(m_gamepad_id);
+
+    auto& action = GAME_CONTEXT.m_input_manager->GetAction("Attack");
+    if (action.IsPressed()) {
+        transform->m_rotation += 10;
+    }
 
     constexpr float speed = 500;
     auto cct = GAME_CONTEXT.m_cct_manager->Get(entity);
@@ -306,6 +337,79 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
             case WalkDirection::Down:
                 sprite->m_region.m_topleft = {0, 0};
                 break;
+        }
+    }
+
+    // draw touch joystick
+#ifdef SDL_PLATFORM_ANDROID
+    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_touch_joystick.m_circle, Color::Green, elapse_time);
+    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_finger_attack_button, Color::Purple, elapse_time);
+
+    if (m_move_finger_idx) {
+        auto& finger = GAME_CONTEXT.m_touches->GetFingers()[m_move_finger_idx.value()];
+        GAME_CONTEXT.m_debug_drawer->DrawCircle({finger.Position(), 5}, Color::Red, elapse_time);
+    }
+#endif
+}
+
+void PlayerLogic::OnQuit() {
+    GAME_CONTEXT.m_event_system->RemoveListener<SDL_GamepadDeviceEvent>(
+        m_gamepad_event_listener);
+}
+
+void PlayerLogic::handleFingerTouchJoystick() {
+    auto& fingers = GAME_CONTEXT.m_touches->GetFingers();
+    for (size_t i = 0; i < fingers.size(); i++) {
+        auto& finger = fingers[i];
+
+        Vec2 position = finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
+
+        if (finger.IsPressed()) {
+            if (IsPointInCircle(position, m_touch_joystick.m_circle)) {
+                m_move_finger_idx = i;
+            }
+        } else if (m_move_finger_idx && m_move_finger_idx.value() == i &&
+                   finger.IsReleased()) {
+            m_move_finger_idx = std::nullopt;
+        }
+
+        if (finger.IsPressed()) {
+            if (IsPointInCircle(position, m_finger_attack_button)) {
+                m_attack_finger_idx = i;
+            }
+        } else if (m_attack_finger_idx && m_attack_finger_idx.value() == i &&
+                   finger.IsReleased()) {
+            m_attack_finger_idx = std::nullopt;
+        }
+    }
+
+    if (!m_move_finger_idx) {
+        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", 0);
+        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", 0);
+
+    } else {
+        auto& finger = fingers[m_move_finger_idx.value()];
+        Vec2 position = finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
+        Vec2 dir = position - m_touch_joystick.m_circle.m_center;
+        float len = Clamp(dir.Length(), 0.0f, m_touch_joystick.m_circle.m_radius) /
+                    m_touch_joystick.m_circle.m_radius;
+        dir = dir.Normalize() * len;
+        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", dir.x);
+        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", dir.y);
+    }
+
+    if (!m_attack_finger_idx) {
+        GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Releasing);
+    } else {
+        auto& finger = fingers[m_attack_finger_idx.value()];
+        if (finger.IsPressed()) {
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Pressed);
+        } else if (finger.IsPressing()) {
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Pressing);
+        }else if (finger.IsReleased()) {
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Released);
+        }else if (finger.IsReleasing()) {
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Releasing);
         }
     }
 }

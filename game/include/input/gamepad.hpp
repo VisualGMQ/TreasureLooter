@@ -76,6 +76,7 @@ public:
     void Update();
 
     const auto& GetGamepads() const { return m_gamepads; }
+    const Gamepad* Find(SDL_JoystickID) const;
 
 private:
     std::unordered_map<SDL_JoystickID, Gamepad> m_gamepads;
