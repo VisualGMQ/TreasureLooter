@@ -13,6 +13,7 @@
     </class>
     <class name="GamepadAxisInput">
         <element type="float" name="scale"/>
+        <element type="float" name="dead_zone" default="0.01"/> <!-- must in [0, 1] -->
         <element type="GamepadAxisType" name="axis"/>
     </class>
     <class name="MouseButtonInput">

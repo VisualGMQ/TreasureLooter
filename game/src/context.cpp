@@ -180,11 +180,11 @@ Context::Context() {
     m_entity_logic_manager = std::make_unique<EntityLogicManager>();
     m_level_manager = std::make_unique<LevelManager>();
 
-#ifdef TL_DEBUG
+// #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
-#else
-    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
-#endif
+// #else
+//     m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
+// #endif
 }
 
 void Context::logicUpdate(TimeType elapse) {

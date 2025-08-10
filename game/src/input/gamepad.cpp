@@ -123,3 +123,10 @@ void GamepadManager::Update() {
         gamepad.update();
     }
 }
+
+const Gamepad* GamepadManager::Find(SDL_JoystickID id) const {
+    if (auto it = m_gamepads.find(id); it != m_gamepads.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}

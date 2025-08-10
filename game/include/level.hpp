@@ -1,6 +1,7 @@
 #pragma once
 #include "animation.hpp"
 #include "entity_logic.hpp"
+#include "event.hpp"
 #include "image.hpp"
 #include "schema/level_content.hpp"
 #include "timer.hpp"
@@ -75,6 +76,7 @@ public:
 
     void OnInit() override;
     void OnLogicUpdate(TimeType) override;
+    void OnQuit() override;
 
 private:
     enum class WalkDirection {
@@ -84,11 +86,25 @@ private:
         Down,
     };
 
+    struct TouchJoystick {
+        Circle m_circle;
+    };
+
     AnimationHandle m_walk_left;
     AnimationHandle m_walk_right;
     AnimationHandle m_walk_up;
     AnimationHandle m_walk_down;
     ImageHandle m_image_sheet;
+    EventListenerID m_gamepad_event_listener;
+    SDL_JoystickID m_gamepad_id = 0;
+
+    TouchJoystick m_touch_joystick;
+    Circle m_finger_attack_button;
+
+    std::optional<size_t> m_move_finger_idx;
+    std::optional<size_t> m_attack_finger_idx;
 
     WalkDirection m_walk_direction = WalkDirection::Down;
+
+    void handleFingerTouchJoystick();
 };

@@ -67,7 +67,7 @@ void DebugDrawer::Update(TimeType elapse) {
     }
 
     i = 0;
-    while (i < m_circles.size()) {
+    while (i < m_segments.size()) {
         auto& elem = m_segments[i];
         renderer->DrawLine(elem.m_value.first, elem.m_value.second,
                            elem.m_color);
