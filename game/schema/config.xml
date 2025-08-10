@@ -8,9 +8,9 @@
         <!-- don't use handle, due to asset rely on GameConfig itself! -->
         <element name="basic_level_asset" type="Path"/>
         <element name="input_config_asset" type="Path"/>
-        <element name="tile_in_chunk_size_w" type = "size_t"/>
-        <element name="tile_in_chunk_size_h" type = "size_t"/>
-        <element name="tile_size_w" type = "size_t"/>
-        <element name="tile_size_h" type = "size_t"/>
+        <element name="tile_in_chunk_size_w" type = "uint32_t"/>
+        <element name="tile_in_chunk_size_h" type = "uint32_t"/>
+        <element name="tile_size_w" type = "uint32_t"/>
+        <element name="tile_size_h" type = "uint32_t"/>
     </asset>
 </schema>
