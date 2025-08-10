@@ -209,9 +209,7 @@ void Context::logicPostUpdate(TimeType elapse) {
 void Context::renderUpdate(TimeType elapse) {
     m_inspector->BeginFrame();
     m_renderer->Clear();
-}
 
-void Context::renderPostUpdate() {
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
 
