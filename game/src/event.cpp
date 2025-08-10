@@ -31,6 +31,12 @@ void EventSystem::HandleEvent(const SDL_Event& event) {
         event.type == SDL_EVENT_GAMEPAD_REMOVED) {
         EnqueueEvent(event.gdevice);
     }
+    if (event.type == SDL_EVENT_WINDOW_RESIZED ||
+        event.type == SDL_EVENT_WINDOW_ENTER_FULLSCREEN ||
+        event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED ||
+        event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+        EnqueueEvent(event.window);
+    }
 
     // TODO: more events
 }

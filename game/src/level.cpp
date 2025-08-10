@@ -249,15 +249,21 @@ void PlayerLogic::OnInit() {
                 }
             });
 
-    auto window_size = GAME_CONTEXT.m_window->GetWindowSize();
+    // NOTE: when under android, device will change window size after few frames and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event after rotate screen. So we must listen this event and change our button position
+    m_window_resize_event_listener = GAME_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>([&](EventListenerID id, const SDL_WindowEvent& event){
+       if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+           int w = event.data1;
+           int h = event.data2;
+           m_touch_joystick.m_circle.m_radius = 100;
+           m_touch_joystick.m_circle.m_center.x = 300;
+           m_touch_joystick.m_circle.m_center.y = h - 300;
 
-    m_touch_joystick.m_circle.m_radius = 100;
-    m_touch_joystick.m_circle.m_center.x = 300;
-    m_touch_joystick.m_circle.m_center.y = window_size.h - 300;
+           m_finger_attack_button.m_radius = 50;
+           m_finger_attack_button.m_center.x = w - 200;
+           m_finger_attack_button.m_center.y = h - 200;
+       }
+    });
 
-    m_finger_attack_button.m_radius = 50;
-    m_finger_attack_button.m_center.x = window_size.w - 200;
-    m_finger_attack_button.m_center.y = window_size.h - 200;
 }
 
 void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
@@ -347,7 +353,8 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
 
     if (m_move_finger_idx) {
         auto& finger = GAME_CONTEXT.m_touches->GetFingers()[m_move_finger_idx.value()];
-        GAME_CONTEXT.m_debug_drawer->DrawCircle({finger.Position(), 5}, Color::Red, elapse_time);
+        auto position = finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
+        GAME_CONTEXT.m_debug_drawer->DrawCircle({position, 5}, Color::Red, elapse_time);
     }
 #endif
 }
@@ -355,6 +362,8 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
 void PlayerLogic::OnQuit() {
     GAME_CONTEXT.m_event_system->RemoveListener<SDL_GamepadDeviceEvent>(
         m_gamepad_event_listener);
+    GAME_CONTEXT.m_event_system->RemoveListener<SDL_WindowEvent>(
+            m_window_resize_event_listener);
 }
 
 void PlayerLogic::handleFingerTouchJoystick() {

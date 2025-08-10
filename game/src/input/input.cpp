@@ -135,22 +135,20 @@ float Axis::Value(SDL_JoystickID gamepad_id) const {
         }
     }
 
-    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(gamepad_id);
-    if (!gamepad) {
-        return value;
-    }
 
-    for (auto& mapping : m_axis_mappings) {
-        auto& axis = gamepad->GetAxis(mapping.m_axis);
-        float axis_value = axis.Value();
-        if (std::abs(axis_value) > mapping.m_dead_zone) {
-            value += axis_value * mapping.m_scale;
+    if (auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(gamepad_id)) {
+        for (auto& mapping : m_axis_mappings) {
+            auto& axis = gamepad->GetAxis(mapping.m_axis);
+            float axis_value = axis.Value();
+            if (std::abs(axis_value) > mapping.m_dead_zone) {
+                value += axis_value * mapping.m_scale;
+            }
         }
-    }
 
-    for (auto& mapping : m_gamepad_button_mappings) {
-        auto& axis = gamepad->GetButton(mapping.m_type);
-        value += axis.IsPress() * mapping.m_scale;
+        for (auto& mapping : m_gamepad_button_mappings) {
+            auto& axis = gamepad->GetButton(mapping.m_type);
+            value += axis.IsPress() * mapping.m_scale;
+        }
     }
 
     value += m_finger_axis_value;
