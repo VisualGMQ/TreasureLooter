@@ -20,15 +20,15 @@ bool Action::IsPressed(SDL_JoystickID id) const {
     }
 
     auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
-    if (!gamepad) {
-        return false;
+    if (gamepad) {
+        for (auto button : m_gamepad_button_types) {
+            if (gamepad->GetButton(button).IsPressed()) {
+                return true;
+            }
+        }
     }
 
-    for (auto button : m_gamepad_button_types) {
-        return gamepad->GetButton(button).IsPressed();
-    }
-
-    return false;
+    return m_touch_state == State::Pressed;
 }
 
 bool Action::IsPressing(SDL_JoystickID id) const {
@@ -40,15 +40,15 @@ bool Action::IsPressing(SDL_JoystickID id) const {
     }
 
     auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
-    if (!gamepad) {
-        return false;
+    if (gamepad) {
+        for (auto button : m_gamepad_button_types) {
+            if (gamepad->GetButton(button).IsPressing()) {
+                return true;
+            }
+        }
     }
 
-    for (auto button : m_gamepad_button_types) {
-        return gamepad->GetButton(button).IsPressing();
-    }
-
-    return false;
+    return m_touch_state == State::Pressing;
 }
 
 bool Action::IsReleased(SDL_JoystickID id) const {
@@ -61,36 +61,34 @@ bool Action::IsReleased(SDL_JoystickID id) const {
     }
 
     auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
-    if (!gamepad) {
-        return false;
+    if (gamepad) {
+        for (auto button : m_gamepad_button_types) {
+            if (gamepad->GetButton(button).IsReleased()) {
+                return true;
+            }
+        }
     }
 
-    for (auto button : m_gamepad_button_types) {
-        return gamepad->GetButton(button).IsReleased();
-    }
-
-    return false;
+    return m_touch_state == State::Released;
 }
 
 bool Action::IsReleasing(SDL_JoystickID id) const {
-    bool has_releasing = std::any_of(
+    bool has_key_releasing = std::any_of(
         m_buttons.begin(), m_buttons.end(),
         [](const Button* const button) { return button->IsReleasing(); });
 
-    if (has_releasing) {
-        return true;
-    }
-
     auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
-    if (!gamepad) {
-        return false;
+    bool is_gamepad_button_releasing = false;
+    if (gamepad) {
+        for (auto button : m_gamepad_button_types) {
+            if (gamepad->GetButton(button).IsReleasing()) {
+                is_gamepad_button_releasing = true;
+                break;
+            }
+        }
     }
 
-    for (auto button : m_gamepad_button_types) {
-        return gamepad->GetButton(button).IsReleasing();
-    }
-
-    return false;
+    return m_touch_state == State::Releasing && has_key_releasing && is_gamepad_button_releasing;
 }
 
 bool Action::IsRelease(SDL_JoystickID id) const {
@@ -99,6 +97,10 @@ bool Action::IsRelease(SDL_JoystickID id) const {
 
 bool Action::IsPress(SDL_JoystickID id) const {
     return IsPressed(id) || IsReleasing(id);
+}
+
+void Action::AcceptFingerButton(State state) {
+    m_touch_state = state;
 }
 
 void Axis::AddMapping(const Button& button, float scale) {
@@ -119,6 +121,10 @@ void Axis::AddMouseHorizontalMapping(float scale) {
 
 void Axis::AddMouseVerticalMapping(float scale) {
     m_vertical = MouseMapping{scale};
+}
+
+void Axis::AcceptFingerAxis(float value) {
+    m_finger_axis_value = value;
 }
 
 float Axis::Value(SDL_JoystickID gamepad_id) const {
@@ -147,6 +153,8 @@ float Axis::Value(SDL_JoystickID gamepad_id) const {
         value += axis.IsPress() * mapping.m_scale;
     }
 
+    value += m_finger_axis_value;
+
     return value;
 }
 
@@ -171,6 +179,18 @@ void InputManager::SetConfig(Context& context, InputConfigHandle config) {
 
     for (auto& action : config->m_action) {
         loadActionConfig(context, action);
+    }
+}
+
+void InputManager::AcceptFingerAxisEvent(const std::string& name, float value) {
+    if (auto it = m_axis_mappings.find(name); it != m_axis_mappings.end()) {
+        it->second.AcceptFingerAxis(value);
+    }
+}
+
+void InputManager::AcceptFingerButton(const std::string& name, Action::State state) {
+    if (auto it = m_action_mappings.find(name); it != m_action_mappings.end()) {
+        it->second.AcceptFingerButton(state);
     }
 }
 

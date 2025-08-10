@@ -86,6 +86,10 @@ private:
         Down,
     };
 
+    struct TouchJoystick {
+        Circle m_circle;
+    };
+
     AnimationHandle m_walk_left;
     AnimationHandle m_walk_right;
     AnimationHandle m_walk_up;
@@ -94,5 +98,13 @@ private:
     EventListenerID m_gamepad_event_listener;
     SDL_JoystickID m_gamepad_id = 0;
 
+    TouchJoystick m_touch_joystick;
+    Circle m_finger_attack_button;
+
+    std::optional<size_t> m_move_finger_idx;
+    std::optional<size_t> m_attack_finger_idx;
+
     WalkDirection m_walk_direction = WalkDirection::Down;
+
+    void handleFingerTouchJoystick();
 };

@@ -15,6 +15,13 @@ class Context;
 
 class Action {
 public:
+    enum class State {
+        Pressed,
+        Pressing,
+        Released,
+        Releasing,
+    };
+
     Action() = default;
     Action(const Action&) = delete;
     Action& operator=(const Action&) = delete;
@@ -31,9 +38,12 @@ public:
     bool IsRelease(SDL_JoystickID id = 0) const;
     bool IsPress(SDL_JoystickID id = 0) const;
 
+    void AcceptFingerButton(State state);
+
 private:
     std::vector<const Button*> m_buttons;
     std::vector<GamepadButtonType> m_gamepad_button_types;
+    State m_touch_state = State::Releasing;
 };
 
 class Axis {
@@ -49,6 +59,8 @@ public:
     void AddMapping(GamepadAxisType, float scale, float dead_zone = 0.01);
     void AddMouseHorizontalMapping(float scale);
     void AddMouseVerticalMapping(float scale);
+
+    void AcceptFingerAxis(float value);
 
     float Value(SDL_JoystickID = 0) const;
 
@@ -78,6 +90,7 @@ private:
     std::vector<AxisMapping> m_axis_mappings;
     std::optional<MouseMapping> m_horizontal;
     std::optional<MouseMapping> m_vertical;
+    float m_finger_axis_value = 0.0f;
 };
 
 class Axises {
@@ -101,6 +114,9 @@ public:
     Axises MakeAxises(const std::string& x_name, const std::string& y_name);
 
     void SetConfig(Context& context, InputConfigHandle config);
+
+    void AcceptFingerAxisEvent(const std::string& name, float value);
+    void AcceptFingerButton(const std::string& name, Action::State state);
 
 private:
     std::unordered_map<std::string, Axis> m_axis_mappings;
