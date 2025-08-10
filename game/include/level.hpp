@@ -96,6 +96,7 @@ private:
     AnimationHandle m_walk_down;
     ImageHandle m_image_sheet;
     EventListenerID m_gamepad_event_listener;
+    EventListenerID m_window_resize_event_listener;
     SDL_JoystickID m_gamepad_id = 0;
 
     TouchJoystick m_touch_joystick;
