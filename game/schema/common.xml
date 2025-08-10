@@ -7,8 +7,8 @@
     </class>
 
     <class name="Circle">
-        <element name="radius" type="float" default="0"/>
         <element name="center" type="Vec2"/>
+        <element name="radius" type="float" default="0"/>
     </class>
     
     <enum name="EntityType">

@@ -173,6 +173,18 @@ void Deserialize(const rapidxml::xml_node<>& node, unsigned char& payload) {
     }
 }
 
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const Path& payload, const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->value(doc.allocate_string(payload.string().c_str()));
+    return node;
+}
+
+void Deserialize(const rapidxml::xml_node<>& node, Path& payload) {
+    payload = node.value();
+}
+
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc, Entity payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
@@ -382,8 +394,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 
 void Deserialize(const rapidxml::xml_node<>& node, Tilemap*& payload) {
     Path filename = node.value();
-    auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<Tilemap>();
+    auto& manager = GAME_CONTEXT.m_assets_manager->GetManager<Tilemap>();
     auto handle = manager.Load(filename);
     if (!handle) {
         handle = manager.Load(filename);
@@ -402,8 +413,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 
 void Deserialize(const rapidxml::xml_node<>& node, Handle<Tilemap>& payload) {
     Path filename = node.value();
-    auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<Tilemap>();
+    auto& manager = GAME_CONTEXT.m_assets_manager->GetManager<Tilemap>();
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);

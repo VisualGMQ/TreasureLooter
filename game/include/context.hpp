@@ -46,7 +46,10 @@ public:
 
     void Update();
     void HandleEvents(const SDL_Event&);
-    bool ShouldExit();
+    bool ShouldExit() const;
+    const GameConfig& GetGameConfig() const;
+
+    Entity CreateEntity();
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
@@ -73,8 +76,6 @@ public:
     std::unique_ptr<LevelManager> m_level_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
 
-    Entity CreateEntity();
-
 #ifdef TL_ENABLE_EDITOR
     const Path& GetProjectPath() const;
 #endif
@@ -84,7 +85,7 @@ private:
 
     bool m_should_exit = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
-    GameConfigHandle m_game_config;
+    GameConfig m_game_config;
 
 #ifdef TL_ENABLE_EDITOR
     Path m_project_path;  // only used for editor
