@@ -234,6 +234,20 @@ void PlayerLogic::OnInit() {
         animation_manager.Load("assets/gpa/status_walk_down.animation.xml");
     m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
         "assets/Characters/Statue/SpriteSheet.png");
+
+    m_gamepad_event_listener =
+        GAME_CONTEXT.m_event_system->AddListener<SDL_GamepadDeviceEvent>(
+            [&](EventListenerID id, const SDL_GamepadDeviceEvent& event) {
+                if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
+                    if (m_gamepad_id == 0) {
+                        m_gamepad_id = event.which;
+                    }
+                } else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
+                    if (m_gamepad_id == event.which) {
+                        m_gamepad_id = 0;
+                    }
+                }
+            });
 }
 
 void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
@@ -244,7 +258,7 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
     WalkDirection old_direction = m_walk_direction;
 
     Vec2 axises =
-        GAME_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY").Value();
+        GAME_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY").Value(m_gamepad_id);
 
     constexpr float speed = 500;
     auto cct = GAME_CONTEXT.m_cct_manager->Get(entity);
@@ -308,4 +322,9 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
                 break;
         }
     }
+}
+
+void PlayerLogic::OnQuit() {
+    GAME_CONTEXT.m_event_system->RemoveListener<SDL_GamepadDeviceEvent>(
+        m_gamepad_event_listener);
 }

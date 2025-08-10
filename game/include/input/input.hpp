@@ -12,29 +12,45 @@
 
 class Context;
 
+
 class Action {
 public:
-    void AddButton(const Button& button);
+    Action() = default;
+    Action(const Action&) = delete;
+    Action& operator=(const Action&) = delete;
+    Action(Action&&) = default;
+    Action& operator=(Action&&) = default;
 
-    bool IsPressed() const;
-    bool IsPressing() const;
-    bool IsReleased() const;
-    bool IsReleasing() const;
-    bool IsRelease() const;
-    bool IsPress() const;
+    void AddButton(const Button& button);
+    void AddButton(GamepadButtonType);
+
+    bool IsPressed(SDL_JoystickID id = 0) const;
+    bool IsPressing(SDL_JoystickID id = 0) const;
+    bool IsReleased(SDL_JoystickID id = 0) const;
+    bool IsReleasing(SDL_JoystickID id = 0) const;
+    bool IsRelease(SDL_JoystickID id = 0) const;
+    bool IsPress(SDL_JoystickID id = 0) const;
 
 private:
     std::vector<const Button*> m_buttons;
+    std::vector<GamepadButtonType> m_gamepad_button_types;
 };
 
 class Axis {
 public:
+    Axis() = default;
+    Axis(const Axis&) = delete;
+    Axis& operator=(const Axis&) = delete;
+    Axis(Axis&&) = default;
+    Axis& operator=(Axis&&) = default;
+
     void AddMapping(const Button&, float scale);
-    void AddMapping(const GamepadAxis&, float scale);
+    void AddMapping(GamepadButtonType, float scale);
+    void AddMapping(GamepadAxisType, float scale, float dead_zone = 0.01);
     void AddMouseHorizontalMapping(float scale);
     void AddMouseVerticalMapping(float scale);
 
-    float Value() const;
+    float Value(SDL_JoystickID = 0) const;
 
 private:
     struct ButtonMapping {
@@ -42,9 +58,15 @@ private:
         float m_scale = 1.0;
     };
 
-    struct AxisMapping {
-        const GamepadAxis* m_axis{};
+    struct GamepadButtonMapping {
+        GamepadButtonType m_type;
         float m_scale = 1.0;
+    };
+
+    struct AxisMapping {
+        GamepadAxisType m_axis;
+        float m_scale = 1.0;
+        float m_dead_zone = 0.01;
     };
 
     struct MouseMapping {
@@ -52,6 +74,7 @@ private:
     };
 
     std::vector<ButtonMapping> m_button_mappings;
+    std::vector<GamepadButtonMapping> m_gamepad_button_mappings;
     std::vector<AxisMapping> m_axis_mappings;
     std::optional<MouseMapping> m_horizontal;
     std::optional<MouseMapping> m_vertical;
@@ -61,7 +84,7 @@ class Axises {
 public:
     Axises(const Axis& x_axis, const Axis& y_axis);
 
-    Vec2 Value() const;
+    Vec2 Value(SDL_JoystickID id = 0) const;
 
 private:
     const Axis& m_x_axis;

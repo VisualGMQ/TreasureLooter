@@ -22,6 +22,23 @@
 						<key>S</key>
 					</elem>
 				</keyboard>
+				<gamepad_button>
+					<elem>
+						<scale>1.000000</scale>
+						<button>DpadDown</button>
+					</elem>
+					<elem>
+						<scale>-1.000000</scale>
+						<button>DpadUp</button>
+					</elem>
+				</gamepad_button>
+				<gamepad_axis>
+					<elem>
+						<scale>1.000000</scale>
+						<dead_zone>0.010000</dead_zone>
+						<axis>LeftY</axis>
+					</elem>
+				</gamepad_axis>
 			</elem>
 			<elem>
 				<name>MoveX</name>
@@ -35,6 +52,23 @@
 						<key>A</key>
 					</elem>
 				</keyboard>
+				<gamepad_button>
+					<elem>
+						<scale>1.000000</scale>
+						<button>DpadRight</button>
+					</elem>
+					<elem>
+						<scale>-1.000000</scale>
+						<button>DpadLeft</button>
+					</elem>
+				</gamepad_button>
+				<gamepad_axis>
+					<elem>
+						<scale>1.000000</scale>
+						<dead_zone>0.010000</dead_zone>
+						<axis>LeftX</axis>
+					</elem>
+				</gamepad_axis>
 			</elem>
 		</axis>
 	</payload>

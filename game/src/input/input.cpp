@@ -7,44 +7,110 @@ void Action::AddButton(const Button& button) {
     m_buttons.push_back(&button);
 }
 
-bool Action::IsPressed() const {
-    return std::any_of(
+void Action::AddButton(GamepadButtonType button_type) {
+    m_gamepad_button_types.push_back(button_type);
+}
+
+bool Action::IsPressed(SDL_JoystickID id) const {
+    bool has_pressed = std::any_of(
         m_buttons.begin(), m_buttons.end(),
         [](const Button* const button) { return button->IsPressed(); });
+    if (has_pressed) {
+        return true;
+    }
+
+    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    if (!gamepad) {
+        return false;
+    }
+
+    for (auto button : m_gamepad_button_types) {
+        return gamepad->GetButton(button).IsPressed();
+    }
+
+    return false;
 }
 
-bool Action::IsPressing() const {
-    return std::any_of(
+bool Action::IsPressing(SDL_JoystickID id) const {
+    bool has_pressing = std::any_of(
         m_buttons.begin(), m_buttons.end(),
         [](const Button* const button) { return button->IsPressing(); });
+    if (has_pressing) {
+        return true;
+    }
+
+    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    if (!gamepad) {
+        return false;
+    }
+
+    for (auto button : m_gamepad_button_types) {
+        return gamepad->GetButton(button).IsPressing();
+    }
+
+    return false;
 }
 
-bool Action::IsReleased() const {
-    return std::any_of(
+bool Action::IsReleased(SDL_JoystickID id) const {
+    bool has_released = std::any_of(
         m_buttons.begin(), m_buttons.end(),
         [](const Button* const button) { return button->IsReleased(); });
+
+    if (has_released) {
+        return true;
+    }
+
+    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    if (!gamepad) {
+        return false;
+    }
+
+    for (auto button : m_gamepad_button_types) {
+        return gamepad->GetButton(button).IsReleased();
+    }
+
+    return false;
 }
 
-bool Action::IsReleasing() const {
-    return std::any_of(
+bool Action::IsReleasing(SDL_JoystickID id) const {
+    bool has_releasing = std::any_of(
         m_buttons.begin(), m_buttons.end(),
         [](const Button* const button) { return button->IsReleasing(); });
+
+    if (has_releasing) {
+        return true;
+    }
+
+    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    if (!gamepad) {
+        return false;
+    }
+
+    for (auto button : m_gamepad_button_types) {
+        return gamepad->GetButton(button).IsReleasing();
+    }
+
+    return false;
 }
 
-bool Action::IsRelease() const {
-    return IsReleased() || IsReleasing();
+bool Action::IsRelease(SDL_JoystickID id) const {
+    return IsReleased(id) || IsReleasing(id);
 }
 
-bool Action::IsPress() const {
-    return IsPressed() || IsReleasing();
+bool Action::IsPress(SDL_JoystickID id) const {
+    return IsPressed(id) || IsReleasing(id);
 }
 
 void Axis::AddMapping(const Button& button, float scale) {
-    m_button_mappings.push_back({&button, scale});
+    m_button_mappings.emplace_back(ButtonMapping{&button, scale});
 }
 
-void Axis::AddMapping(const GamepadAxis& axis, float scale) {
-    m_axis_mappings.push_back({&axis, scale});
+void Axis::AddMapping(GamepadButtonType type, float scale) {
+    m_gamepad_button_mappings.emplace_back(GamepadButtonMapping{type, scale});
+}
+
+void Axis::AddMapping(GamepadAxisType axis, float scale, float dead_zone) {
+    m_axis_mappings.emplace_back(AxisMapping{axis, scale, dead_zone});
 }
 
 void Axis::AddMouseHorizontalMapping(float scale) {
@@ -55,15 +121,30 @@ void Axis::AddMouseVerticalMapping(float scale) {
     m_vertical = MouseMapping{scale};
 }
 
-float Axis::Value() const {
+float Axis::Value(SDL_JoystickID gamepad_id) const {
     float value = 0;
     for (auto& mapping : m_button_mappings) {
         if (mapping.m_button->IsPress()) {
             value += mapping.m_scale;
         }
     }
+
+    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(gamepad_id);
+    if (!gamepad) {
+        return value;
+    }
+
     for (auto& mapping : m_axis_mappings) {
-        value += mapping.m_axis->Value() * mapping.m_scale;
+        auto& axis = gamepad->GetAxis(mapping.m_axis);
+        float axis_value = axis.Value();
+        if (std::abs(axis_value) > mapping.m_dead_zone) {
+            value += axis_value * mapping.m_scale;
+        }
+    }
+
+    for (auto& mapping : m_gamepad_button_mappings) {
+        auto& axis = gamepad->GetButton(mapping.m_type);
+        value += axis.IsPress() * mapping.m_scale;
     }
 
     return value;
@@ -75,8 +156,8 @@ Axis InputManager::InvalidAxis;
 Axises::Axises(const Axis& x_axis, const Axis& y_axis)
     : m_x_axis(x_axis), m_y_axis(y_axis) {}
 
-Vec2 Axises::Value() const {
-    return Vec2{m_x_axis.Value(), m_y_axis.Value()};
+Vec2 Axises::Value(SDL_JoystickID id) const {
+    return Vec2{m_x_axis.Value(id), m_y_axis.Value(id)};
 }
 
 void InputManager::Initialize(InputConfigHandle config) {
@@ -127,20 +208,14 @@ void InputManager::loadAxisConfig(Context& context,
         axis.AddMouseHorizontalMapping(config.m_mouse_vertical.value());
     }
 
-    // FIXME: will not register when gamepad not found
-    auto& gamepad_manager = context.m_gamepad_manager;
-    if (!gamepad_manager->GetGamepads().empty()) {
-        auto& gamepad = gamepad_manager->GetGamepads().begin()->second;
-        for (auto& button : config.m_gamepad_button) {
-            axis.AddMapping(gamepad.GetButton(button.m_button), button.m_scale);
-        }
-        for (auto& gamepad_axis : config.m_gamepad_axis) {
-            axis.AddMapping(gamepad.GetAxis(gamepad_axis.m_axis),
-                            gamepad_axis.m_scale);
-        }
+    for (auto& button : config.m_gamepad_button) {
+        axis.AddMapping(button.m_button, button.m_scale);
+    }
+    for (auto& gamepad_axis : config.m_gamepad_axis) {
+        axis.AddMapping(gamepad_axis.m_axis, gamepad_axis.m_scale);
     }
 
-    m_axis_mappings.emplace(config.m_name, axis);
+    m_axis_mappings.emplace(config.m_name, std::move(axis));
 }
 
 void InputManager::loadActionConfig(Context& context,
@@ -152,14 +227,9 @@ void InputManager::loadActionConfig(Context& context,
         action.AddButton(keyboard->Get(key));
     }
 
-    // FIXME: will not register when gamepad not found
-    auto& gamepad_manager = context.m_gamepad_manager;
-    if (!gamepad_manager->GetGamepads().empty()) {
-        auto& gamepad = gamepad_manager->GetGamepads().begin()->second;
-        for (auto& key : config.m_gamepad) {
-            action.AddButton(gamepad.GetButton(key));
-        }
+    for (auto& key : config.m_gamepad) {
+        action.AddButton(key);
     }
 
-    m_action_mappings.emplace(config.m_name, action);
+    m_action_mappings.emplace(config.m_name, std::move(action));
 }
