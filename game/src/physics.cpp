@@ -408,18 +408,18 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
     auto top_left = sweep_rect.m_center - sweep_rect.m_half_size;
     auto bottom_right = sweep_rect.m_center + sweep_rect.m_half_size;
     int min_x = std::floor(top_left.x / (float)game_config.m_tile_size_w);
-    int max_x = std::ceil(bottom_right.x / (float)game_config.m_tile_size_h);
+    int max_x = std::round(bottom_right.x / (float)game_config.m_tile_size_h + 0.5);
     int min_y = std::floor(top_left.y / (float)game_config.m_tile_size_w);
-    int max_y = std::ceil(bottom_right.y / (float)game_config.m_tile_size_h);
+    int max_y = std::round(bottom_right.y / (float)game_config.m_tile_size_h + 0.5);
 
     int min_chunk_x =
         std::floor(min_x / (float)game_config.m_tile_in_chunk_size_w);
     int max_chunk_x =
-        std::ceil(max_x / (float)game_config.m_tile_in_chunk_size_w);
+        std::round(max_x / (float)game_config.m_tile_in_chunk_size_w + 0.5);
     int min_chunk_y =
         std::floor(min_y / (float)game_config.m_tile_in_chunk_size_h);
     int max_chunk_y =
-        std::ceil(max_y / (float)game_config.m_tile_in_chunk_size_h);
+        std::round(max_y / (float)game_config.m_tile_in_chunk_size_h + 0.5);
 
     int min_tile_x = std::floor(min_x % game_config.m_tile_in_chunk_size_w);
     int min_tile_y = std::floor(min_y % game_config.m_tile_in_chunk_size_h);
@@ -497,15 +497,15 @@ void PhysicsScene::RenderDebug() const {
         }
     }
 
-    for (int y = 0; y < m_chunks.GetHeight(); y++) {
-        for (int x = 0; x < m_chunks.GetWidth(); x++) {
+    for (int x = 0; x < m_chunks.GetWidth(); x++) {
+        for (int y = 0; y < m_chunks.GetHeight(); y++) {
             auto& chunk = m_chunks.Get(x, y);
             if (!chunk) {
                 continue;
             }
 
-            for (int sy = 0; sy < chunk->GetHeight(); sy++) {
-                for (int sx = 0; sx < chunk->GetWidth(); sx++) {
+            for (int sx = 0; sx < chunk->GetWidth(); sx++) {
+                for (int sy = 0; sy < chunk->GetHeight(); sy++) {
                     for (auto& actor : chunk->Get(sx, sy)) {
                         if (!actor) {
                             continue;
@@ -524,6 +524,20 @@ void PhysicsScene::RenderDebug() const {
                     }
                 }
             }
+        }
+    }
+
+    auto& game_config = GAME_CONTEXT.GetGameConfig();
+    for (size_t x = 0; x < m_chunks.GetWidth(); x++) {
+        for (size_t y = 0; y < m_chunks.GetHeight(); y++) {
+            Rect rect;
+            rect.m_half_size.x = game_config.m_tile_in_chunk_size_w *
+                                 game_config.m_tile_size_w * 0.5;
+            rect.m_half_size.y = game_config.m_tile_in_chunk_size_h *
+                                 game_config.m_tile_size_h * 0.5;
+            rect.m_center = Vec2(x, y) * rect.m_half_size * 2.0 + rect.m_half_size;
+
+            renderer->DrawRect(rect, Color::Green);
         }
     }
 }
@@ -594,7 +608,7 @@ std::vector<std::unique_ptr<PhysicsActor>>* PhysicsScene::getActorStoreInChunk(
     int x = std::floor(actor_center.x / game_config.m_tile_size_w);
     int y = std::floor(actor_center.y / game_config.m_tile_size_h);
     int chunk_x = x / game_config.m_tile_in_chunk_size_w;
-    int chunk_y = y / game_config.m_tile_in_chunk_size_w;
+    int chunk_y = y / game_config.m_tile_in_chunk_size_h;
     int tile_x = x % game_config.m_tile_in_chunk_size_w;
     int tile_y = y % game_config.m_tile_in_chunk_size_h;
 
@@ -602,7 +616,7 @@ std::vector<std::unique_ptr<PhysicsActor>>* PhysicsScene::getActorStoreInChunk(
         if (!ensure) {
             return nullptr;
         }
-        m_chunks.Resize(chunk_x + 1, chunk_y + 1);
+        m_chunks.ExpandTo(chunk_x + 1, chunk_y + 1);
     }
 
     auto& chunk = m_chunks.Get(chunk_x, chunk_y);
@@ -611,8 +625,8 @@ std::vector<std::unique_ptr<PhysicsActor>>* PhysicsScene::getActorStoreInChunk(
             return nullptr;
         }
         chunk = std::make_unique<Chunk>();
-        chunk->Resize(game_config.m_tile_in_chunk_size_w,
-                      game_config.m_tile_in_chunk_size_h);
+        chunk->ExpandTo(game_config.m_tile_in_chunk_size_w,
+                        game_config.m_tile_in_chunk_size_h);
     }
     if (!chunk->InRange(tile_x, tile_y)) {
         return nullptr;

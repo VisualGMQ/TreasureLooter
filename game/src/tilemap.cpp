@@ -182,8 +182,7 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
 
                     Rect rect;
                     rect.m_half_size = tile->m_collision_rect.m_half_size;
-                    float scale =
-                        std::max(transform->m_scale.x, transform->m_scale.y);
+                    Vec2 scale = Vec2(game_config.m_tile_size_w, game_config.m_tile_size_h) / m_handle->GetTileSize();
                     rect.m_center = tile->m_collision_rect.m_center * scale;
 
                     auto flip = layer_tile.m_flip;

@@ -109,8 +109,8 @@ class MatStorage {
 public:
     MatStorage() = default;
 
-    MatStorage(size_t w, size_t h) : m_w{w}, m_h{h} {
-        m_data.resize(m_w * m_h);
+    MatStorage(size_t w, size_t h) {
+        Resize(w, h);
     }
 
     bool InRange(int x, int y) const { return x < m_w && y < m_h; }
@@ -118,19 +118,42 @@ public:
     void Resize(size_t w, size_t h) {
         m_w = w;
         m_h = h;
-        m_data.resize(w * h);
+
+        size_t old_size = m_data.size();
+        m_data.resize(w);
+        if (old_size < m_data.size()) {
+            for (size_t i = old_size; i < m_data.size(); i++) {
+                m_data[i].resize(h);
+            }
+        }
     }
 
-    const T& Get(size_t x, size_t y) const { return m_data[x + y * m_w]; }
 
-    T& Get(size_t x, size_t y) { return m_data[x + y * m_w]; }
+    void ExpandTo(size_t w, size_t h) {
+        if (w > m_w) {
+            m_w = w;
+            m_data.resize(w);
+        }
+
+        if (h > m_h) {
+            m_h = h;
+        }
+        for (size_t i = 0; i < m_data.size(); i++) {
+            if (m_data[i].size() < m_h) {
+                m_data[i].resize(m_h);
+            }
+        }
+    }
+    const T& Get(size_t x, size_t y) const { return m_data[x][y]; }
+
+    T& Get(size_t x, size_t y) { return m_data[x][y]; }
 
     void Set(const T& value, size_t x, size_t y) {
-        m_data[x + y * m_w] = value;
+        m_data[x][y] = value;
     }
 
     void Set(T&& value, size_t x, size_t y) {
-        m_data[x + y * m_w] = std::move(value);
+        m_data[x][y] = std::move(value);
     }
 
     void Clear() {
@@ -144,7 +167,7 @@ public:
     size_t GetHeight() const { return m_h; }
 
 private:
-    std::vector<T> m_data;
+    std::vector<std::vector<T>> m_data;
     size_t m_w{}, m_h{};
 };
 
