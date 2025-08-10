@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "level.hpp"
 #include "log.hpp"
+#include "path.hpp"
 #include "rapidxml_print.hpp"
 #include "rapidxml_utils.hpp"
 #include "relationship.hpp"
@@ -17,7 +18,6 @@
 #include "tilemap.hpp"
 #include "transform.hpp"
 #include "uuid.h"
-#include "path.hpp"
 
 #include <iostream>
 
@@ -47,6 +47,7 @@ void Context::Shutdown() {
 }
 
 Context::~Context() {
+    m_debug_drawer.reset();
     m_event_system.reset();
     m_entity_logic_manager.reset();
     m_cct_manager.reset();
@@ -91,9 +92,11 @@ void Context::Initialize() {
 }
 
 void Context::Update() {
-    logicUpdate();
-    renderUpdate();
-    logicPostUpdate();
+    auto elapse_time = m_time->GetElapseTime();
+
+    logicUpdate(elapse_time);
+    renderUpdate(elapse_time);
+    logicPostUpdate(elapse_time);
 
     m_level_manager->PoseUpdate();
 }
@@ -158,8 +161,7 @@ Context::Context() {
     m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
 
-    m_input_manager =
-        std::make_unique<InputManager>();
+    m_input_manager = std::make_unique<InputManager>();
 
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();
@@ -167,35 +169,41 @@ Context::Context() {
     m_event_system = std::make_unique<EventSystem>();
     m_entity_logic_manager = std::make_unique<EntityLogicManager>();
     m_level_manager = std::make_unique<LevelManager>();
+
+#ifdef TL_DEBUG
+    m_debug_drawer = std::make_unique<DebugDrawer>();
+#else
+    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
+#endif
 }
 
-void Context::logicUpdate() {
+void Context::logicUpdate(TimeType elapse) {
     m_time->Update();
     m_gamepad_manager->Update();
     m_keyboard->Update();
     m_mouse->Update();
     m_touches->Update();
 
-    m_level_manager->UpdateLogic(m_time->GetElapseTime());
+    m_level_manager->UpdateLogic(elapse);
 
-    m_animation_player_manager->Update(m_time->GetElapseTime());
+    m_animation_player_manager->Update(elapse);
     m_relationship_manager->Update();
     m_event_system->Update();
 }
 
-void Context::logicPostUpdate() {
+void Context::logicPostUpdate(TimeType elapse) {
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
 }
 
-void Context::renderUpdate() {
+void Context::renderUpdate(TimeType elapse) {
     m_inspector->BeginFrame();
     m_renderer->Clear();
 
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
 
-    m_level_manager->UpdateRender(m_time->GetElapseTime());
+    m_level_manager->UpdateRender(elapse);
 
     m_physics_scene->RenderDebug();
     m_cct_manager->RenderDebug();
@@ -205,6 +213,8 @@ void Context::renderUpdate() {
 #ifdef TL_ENABLE_EDITOR
     m_editor->Update();
 #endif
+
+    m_debug_drawer->Update(m_time->GetElapseTime());
 
     m_inspector->EndFrame();
     m_renderer->Present();

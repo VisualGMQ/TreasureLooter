@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "animation_player.hpp"
 #include "cct.hpp"
+#include "debug_drawer.hpp"
 #include "editor/editor.hpp"
 #include "entity.hpp"
 #include "entity_logic.hpp"
@@ -70,6 +71,7 @@ public:
     std::unique_ptr<EventSystem> m_event_system;
     std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
     std::unique_ptr<LevelManager> m_level_manager;
+    std::unique_ptr<IDebugDrawer> m_debug_drawer;
 
     Entity CreateEntity();
 
@@ -90,9 +92,9 @@ private:
 
     Context();
 
-    void logicUpdate();
-    void logicPostUpdate();
-    void renderUpdate();
+    void logicUpdate(TimeType elapse);
+    void logicPostUpdate(TimeType elapse);
+    void renderUpdate(TimeType elapse);
 
     void parseProjectPath();
 };
