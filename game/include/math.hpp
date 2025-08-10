@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <cstddef>
+#include <vector>
 
 struct Vec2 final {
     union {
@@ -103,6 +104,73 @@ private:
 
 Mat33 operator*(const Mat33&, const Mat33&);
 
+template <typename T>
+class MatStorage {
+public:
+    MatStorage() = default;
+
+    MatStorage(size_t w, size_t h) {
+        Resize(w, h);
+    }
+
+    bool InRange(int x, int y) const { return x < m_w && y < m_h; }
+
+    void Resize(size_t w, size_t h) {
+        m_w = w;
+        m_h = h;
+
+        size_t old_size = m_data.size();
+        m_data.resize(w);
+        if (old_size < m_data.size()) {
+            for (size_t i = old_size; i < m_data.size(); i++) {
+                m_data[i].resize(h);
+            }
+        }
+    }
+
+
+    void ExpandTo(size_t w, size_t h) {
+        if (w > m_w) {
+            m_w = w;
+            m_data.resize(w);
+        }
+
+        if (h > m_h) {
+            m_h = h;
+        }
+        for (size_t i = 0; i < m_data.size(); i++) {
+            if (m_data[i].size() < m_h) {
+                m_data[i].resize(m_h);
+            }
+        }
+    }
+    const T& Get(size_t x, size_t y) const { return m_data[x][y]; }
+
+    T& Get(size_t x, size_t y) { return m_data[x][y]; }
+
+    void Set(const T& value, size_t x, size_t y) {
+        m_data[x][y] = value;
+    }
+
+    void Set(T&& value, size_t x, size_t y) {
+        m_data[x][y] = std::move(value);
+    }
+
+    void Clear() {
+        m_w = 0;
+        m_h = 0;
+        m_data.clear();
+    }
+
+    size_t GetWidth() const { return m_w; }
+
+    size_t GetHeight() const { return m_h; }
+
+private:
+    std::vector<std::vector<T>> m_data;
+    size_t m_w{}, m_h{};
+};
+
 struct Radians {
     Radians() = default;
     Radians(float value);
@@ -141,6 +209,11 @@ private:
 template <typename T>
 T Lerp(T a, T b, float t) {
     return a + (b - a) * t;
+}
+
+template <typename T>
+T Clamp(T v, T a, T b) {
+    return v < a ? a : v > b ? b : v;
 }
 
 struct DecompositionResult {

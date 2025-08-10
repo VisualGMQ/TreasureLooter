@@ -64,8 +64,7 @@ Tileset::Tileset(const tmx::Tileset& tileset) {
 
 void Tileset::parse(const tmx::Tileset& tileset) {
     auto path = tileset.getImagePath();
-    m_image =
-        GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(path);
+    m_image = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(path);
     m_margin = tileset.getMargin();
     m_spacing = tileset.getSpacing();
     m_firstgid = tileset.getFirstGID();
@@ -89,7 +88,8 @@ void Tileset::parse(const tmx::Tileset& tileset) {
                 tile.m_collision_rect.m_half_size.w = aabb.width * 0.5;
                 tile.m_collision_rect.m_half_size.h = aabb.height * 0.5;
                 tile.m_collision_rect.m_center =
-                    Vec2{aabb.left, aabb.top} + tile.m_collision_rect.m_half_size;
+                    Vec2{aabb.left, aabb.top} +
+                    tile.m_collision_rect.m_half_size;
             } else {
                 LOGW("tile collision only support rectangle");
             }
@@ -165,6 +165,7 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
     }
 
     auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+    auto& game_config = GAME_CONTEXT.GetGameConfig();
     auto& physics_scene = GAME_CONTEXT.m_physics_scene;
     for (auto& layer : m_handle->GetLayers()) {
         if (layer->GetType() == TilemapLayer::Type::Tiled) {
@@ -174,21 +175,32 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
                 for (size_t x = 0; x < size.x; x++) {
                     auto& layer_tile = tiled_layer->GetTile(x, y);
                     auto tile = m_handle->GetTile(layer_tile.m_gid);
-                    if (!tile || tile->m_collision_rect.m_half_size == Vec2::ZERO) {
+                    if (!tile ||
+                        tile->m_collision_rect.m_half_size == Vec2::ZERO) {
                         continue;
                     }
+
                     Rect rect;
                     rect.m_half_size = tile->m_collision_rect.m_half_size;
-                    float scale =
-                        std::max(transform->m_scale.x, transform->m_scale.y);
-                    scale += 0.01;
-                    rect.m_center =
+                    Vec2 scale = Vec2(game_config.m_tile_size_w, game_config.m_tile_size_h) / m_handle->GetTileSize();
+                    rect.m_center = tile->m_collision_rect.m_center * scale;
+
+                    auto flip = layer_tile.m_flip;
+                    if (flip & Flip::Vertical) {
+                        float offset_y =  game_config.m_tile_size_h * 0.5 - rect.m_center.y;
+                        rect.m_center.y += offset_y * 2.0;
+                    }
+                    if (flip & Flip::Horizontal) {
+                        float offset_x = game_config.m_tile_size_w * 0.5 - rect.m_center.x;
+                        rect.m_center.x += offset_x * 2.0;
+                    }
+
+                    rect.m_center +=
                         transform->m_position +
                         Vec2(x, y) * m_handle->GetTileSize() * scale;
-                    rect.m_center += tile->m_collision_rect.m_center * scale;
                     rect.m_half_size *= scale;
 
-                    physics_scene->AddRect(rect);
+                    physics_scene->CreateActorInChunk(rect.m_center, rect);
                 }
             }
         }
@@ -224,14 +236,26 @@ void TilemapComponentManager::drawTilemap(const Transform& transform,
                     if (!tile) {
                         continue;
                     }
-                    Region dst_region = tile->m_region;
+                    Rect dst_rect;
+                    dst_rect.m_half_size = tile->m_region.m_size * 0.5;
+
                     float scale =
                         std::max(transform.m_scale.x, transform.m_scale.y);
-                    scale += 0.01;
+
+                    Vec2 scaled_tile_size = tilemap->GetTileSize() * scale;
+
+                    dst_rect.m_center = transform.m_position +
+                                        Vec2(x, y) * scaled_tile_size + scaled_tile_size * 0.5;
+
+                    constexpr float scale_expand = 0.01;
+                    scale += scale_expand;
+                    dst_rect.m_half_size *= scale;
+
+                    Region dst_region;
                     dst_region.m_topleft =
-                        transform.m_position +
-                        Vec2(x, y) * tilemap->GetTileSize() * scale;
-                    dst_region.m_size *= scale;
+                        dst_rect.m_center - dst_rect.m_half_size;
+                    dst_region.m_size = dst_rect.m_half_size * 2.0;
+
                     renderer->DrawImage(*tile->m_image, tile->m_region,
                                         dst_region, 0, {0, 0},
                                         layer_tile.m_flip);
