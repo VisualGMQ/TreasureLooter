@@ -16,9 +16,10 @@
 #include "schema/serialize/level_content.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
-#include "sprite.hpp"
 
 #include <array>
+
+#ifdef TL_ENABLE_EDITOR
 
 struct AssetDisplay {
     template <typename T>
@@ -213,3 +214,5 @@ void Editor::Update() {
 
     ImGui::End();
 }
+
+#endif

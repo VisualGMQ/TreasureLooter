@@ -2,7 +2,6 @@
 #include "asset.hpp"
 #include "asset_manager_interface.hpp"
 #include "entity.hpp"
-#include "log.hpp"
 #include "manager.hpp"
 #include "math.hpp"
 
@@ -23,6 +22,7 @@ public:
     virtual ~AnimationTrackBase() = default;
     virtual TimeType GetFinishTime() const = 0;
     virtual AnimationTrackType GetType() const = 0;
+    virtual bool IsEmpty() const = 0;
 };
 
 template <typename T>
@@ -52,6 +52,8 @@ public:
     auto& GetKeyframes() const { return m_keyframes; }
 
     auto& GetKeyframes() { return m_keyframes; }
+
+    bool IsEmpty() const override { return m_keyframes.empty(); }
 
 protected:
     std::vector<keyframe_type> m_keyframes;

@@ -511,13 +511,11 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
 void displayAnimationContent(Animation& anim) {
     auto& tracks = anim.GetTracks();
 
-    ImGui::PushID(ImGuiIDGenerator::Gen());
     if (ImGui::Button("create ordinary animation")) {
         ImGui::OpenPopup("create new track");
     } else if (ImGui::Button("create sprite animation row column animation")) {
         ImGui::OpenPopup("create sprite region row column animation");
     }
-    ImGui::PopID();
 
     for (auto& [binding, track] : tracks) {
         ImGui::PushID(ImGuiIDGenerator::Gen());
@@ -595,6 +593,7 @@ void displayAnimationContent(Animation& anim) {
                 HANDLE_ANIM_DISCRETE_DISPLAY();
             }
 #undef TARGET_TYPE
+            ImGui::CloseCurrentPopup();
         }
         if (ImGui::Button("Close")) {
             ImGui::CloseCurrentPopup();
@@ -608,6 +607,7 @@ void displayAnimationContent(Animation& anim) {
 
         if (ImGui::Button("Create")) {
             anim.AddTracks(info);
+            ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         if (ImGui::Button("Close")) {

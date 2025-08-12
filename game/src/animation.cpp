@@ -30,7 +30,9 @@ AnimationHandle AnimationManager::Create() {
 
 void Animation::AddTrack(AnimationBindingPoint binding,
                          std::unique_ptr<AnimationTrackBase>&& track) {
-    m_tracks[binding] = std::move(track);
+    if (track && !track->IsEmpty()) {
+        m_tracks[binding] = std::move(track);
+    }
 }
 
 void Animation::AddTracks(const SpriteRowColumnAnimationInfo& info) {
@@ -55,7 +57,8 @@ void Animation::AddTracks(const SpriteRowColumnAnimationInfo& info) {
         region_position_track->AddKeyframe(KeyFrame<Vec2>{topleft, time});
     }
 
-    auto& last_keyframe = region_position_track->GetKeyframes().back();
+    auto last_keyframe = region_position_track->GetKeyframes().back();
+    last_keyframe.m_time += info.m_duration;
     region_position_track->AddKeyframe(last_keyframe);
     m_tracks[AnimationBindingPoint::SpriteRegionPosition] =
         std::move(region_position_track);

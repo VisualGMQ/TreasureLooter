@@ -1,14 +1,14 @@
 ﻿#include "context.hpp"
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_sdlrenderer3.h"
 #include "imgui.h"
 #include "level.hpp"
 #include "log.hpp"
-#include "path.hpp"
 #include "rapidxml_print.hpp"
 #include "rapidxml_utils.hpp"
 #include "relationship.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/asset_extensions.hpp"
-#include "schema/serialize/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "sdl_call.hpp"
@@ -70,6 +70,7 @@ Context::~Context() {
     m_assets_manager.reset();
     m_renderer.reset();
     m_window.reset();
+    shutdownImGui();
     SDL_Quit();
     LOGI("game exits");
 }
@@ -106,7 +107,7 @@ void Context::Update() {
 }
 
 void Context::HandleEvents(const SDL_Event& event) {
-    m_inspector->HandleEvents(event);
+    ImGui_ImplSDL3_ProcessEvent(&event);
     if (event.type == SDL_EVENT_QUIT) {
         m_should_exit = true;
     } else if (event.type == SDL_EVENT_KEY_UP ||
@@ -155,10 +156,12 @@ Context::Context() {
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
 
-    m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
-
 #ifdef TL_ENABLE_EDITOR
+    m_inspector = std::make_unique<Inspector>(*m_window, *m_renderer);
     m_editor = std::make_unique<Editor>();
+#else
+    m_inspector = std::make_unique<TrivialInspector>();
+    m_editor = std::make_unique<TrivialEditor>();
 #endif
 
     m_transform_manager = std::make_unique<TransformManager>();
@@ -178,11 +181,12 @@ Context::Context() {
     m_entity_logic_manager = std::make_unique<EntityLogicManager>();
     m_level_manager = std::make_unique<LevelManager>();
 
-// #ifdef TL_DEBUG
+#ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
-// #else
-//     m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
-// #endif
+#else
+    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
+#endif
+    initImGui();
 }
 
 void Context::logicUpdate(TimeType elapse) {
@@ -205,8 +209,8 @@ void Context::logicPostUpdate(TimeType elapse) {
 }
 
 void Context::renderUpdate(TimeType elapse) {
-    m_inspector->BeginFrame();
     m_renderer->Clear();
+    beginImGui();
 
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
@@ -218,14 +222,20 @@ void Context::renderUpdate(TimeType elapse) {
 
     m_inspector->Update();
 
+    renderFPS(elapse);
+
 #ifdef TL_ENABLE_EDITOR
     m_editor->Update();
 #endif
 
     m_debug_drawer->Update(m_time->GetElapseTime());
 
-    m_inspector->EndFrame();
+    endImGui();
     m_renderer->Present();
+}
+
+void Context::renderFPS(TimeType elapse) {
+    ImGui::Text("fps: %d", int(elapse > 0 ? 1.0 / elapse : 4000));
 }
 
 Entity Context::CreateEntity() {
@@ -253,4 +263,53 @@ void Context::parseProjectPath() {
 #ifdef TL_ENABLE_EDITOR
     m_project_path = node->value();
 #endif
+}
+
+void Context::initImGui() {
+    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |=
+        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(
+        main_scale);  // Bake a fixed style scale. (until we have a solution for
+    // dynamic style scaling, changing this requires resetting
+    // Style + calling this again)
+    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
+    // io.ConfigDpiScaleFonts=true makes this unnecessary. We
+    // leave both here for documentation purpose)
+
+    ImGui_ImplSDL3_InitForSDLRenderer(m_window->GetWindow(),
+                                      m_renderer->GetRenderer());
+    ImGui_ImplSDLRenderer3_Init(m_renderer->GetRenderer());
+}
+
+void Context::shutdownImGui() {
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void Context::beginImGui() {
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+}
+
+void Context::endImGui() {
+    ImGui::Render();
+    auto& io = ImGui::GetIO();
+    SDL_SetRenderScale(m_renderer->GetRenderer(), io.DisplayFramebufferScale.x,
+                       io.DisplayFramebufferScale.y);
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(),
+                                          m_renderer->GetRenderer());
 }
