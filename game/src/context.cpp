@@ -19,8 +19,6 @@
 #include "transform.hpp"
 #include "uuid.h"
 
-#include <iostream>
-
 std::unique_ptr<Context> Context::instance;
 
 void Context::Init() {

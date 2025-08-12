@@ -31,25 +31,23 @@ struct AssetDisplay {
 
 struct AssetSyncHelper {
     template <typename T>
-    void operator()(AssetLoadResult<T>&) {}
+    void operator()(AssetLoadResult<T>& payload) {
+        GAME_CONTEXT.m_assets_manager->GetManager<T>().Reload(payload.m_uuid);
+    }
 
     void operator()(AssetLoadResult<InputConfig>& payload) {
         auto handle =
-            GAME_CONTEXT.m_assets_manager->GetManager<InputConfig>().Create(
-                payload.m_payload);
+            GAME_CONTEXT.m_assets_manager->GetManager<InputConfig>().Replace(
+                payload.m_uuid, payload.m_payload);
         GAME_CONTEXT.m_input_manager->SetConfig(GAME_CONTEXT, handle);
     }
 
     void operator()(AssetLoadResult<Prefab>& payload) {
-        auto handle =
-            GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Create(
-                payload.m_payload);
-        auto level =
-            GAME_CONTEXT.m_level_manager->GetCurrentLevel()->Instantiate(
-                handle);
+        GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Replace(
+            payload.m_uuid, payload.m_payload);
+        GAME_CONTEXT.m_level_manager->GetCurrentLevel()
+            ->ReloadEntitiesFromPrefab(payload.m_uuid);
     }
-
-    void operator()(AssetLoadResult<Animation>& payload) {}
 
     void operator()(std::monostate) {}
 };

@@ -13,7 +13,7 @@
 #include "transform.hpp"
 #include "window.hpp"
 
-#include "schema/display/flip.hpp"
+#include "schema/display/physics.hpp"
 #include "schema/display/prefab.hpp"
 #include "schema/display/relationship.hpp"
 #include "schema/display/sprite.hpp"
@@ -74,7 +74,8 @@ void Inspector::Update() {
         auto duration = GAME_CONTEXT.m_time->GetElapseTime();
         ImGui::Text("fps: %d", int(duration > 0 ? 1.0 / duration : 4000));
 
-        bool physics_debug_draw = GAME_CONTEXT.m_physics_scene->IsEnableDebugDraw();
+        bool physics_debug_draw =
+            GAME_CONTEXT.m_physics_scene->IsEnableDebugDraw();
         if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
             GAME_CONTEXT.m_physics_scene->ToggleDebugDraw();
         }
@@ -85,7 +86,7 @@ void Inspector::Update() {
         }
     }
     ImGui::End();
-    
+
     if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
         auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
         if (level) {
@@ -124,10 +125,15 @@ void Inspector::showEntityDetail(Entity entity) {
         auto value = ctx.m_sprite_manager->Get(entity);
         InstanceDisplay("sprite", *value);
     }
-    
+
     if (ctx.m_animation_player_manager->Has(entity)) {
         auto value = ctx.m_animation_player_manager->Get(entity);
         InstanceDisplay("animation", *value);
+    }
+
+    if (ctx.m_cct_manager->Has(entity)) {
+        auto value = ctx.m_cct_manager->Get(entity);
+        InstanceDisplay("cct", *value);
     }
 }
 

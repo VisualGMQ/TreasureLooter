@@ -62,3 +62,16 @@ struct is_handle<Handle<T>> {
 
 template <typename T>
 static constexpr bool is_handle_v = internal::is_handle<T>::value;
+
+namespace std {
+template <typename T>
+struct hash<Handle<T>> {
+    using argument_type = Handle<T>;
+    using result_type = std::size_t;
+
+    [[nodiscard]] result_type operator()(
+        argument_type const& handle) const noexcept {
+        return hash<UUID>()(handle.GetUUID());
+    }
+};
+}  // namespace std

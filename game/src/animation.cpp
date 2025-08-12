@@ -28,6 +28,50 @@ AnimationHandle AnimationManager::Create() {
     return store(nullptr, UUID::CreateV4(), std::make_unique<Animation>());
 }
 
+void Animation::AddTrack(AnimationBindingPoint binding,
+                         std::unique_ptr<AnimationTrackBase>&& track) {
+    m_tracks[binding] = std::move(track);
+}
+
+void Animation::AddTracks(const SpriteRowColumnAnimationInfo& info) {
+    if (info.m_begin == info.m_end) {
+        return;
+    }
+
+    auto region_position_track =
+        std::make_unique<AnimationTrack<Vec2, AnimationTrackType::Discrete>>();
+    for (auto i = info.m_begin; i != info.m_end; ++i) {
+        Vec2 topleft;
+        if (info.m_is_row) {
+            topleft.x = info.m_other_dim * info.m_region_size.w;
+            topleft.y = i * info.m_region_size.h;
+        } else {
+            topleft.x = i * info.m_region_size.w;
+            topleft.y = info.m_other_dim * info.m_region_size.h;
+        }
+
+        TimeType time = info.m_duration * (i - info.m_begin);
+
+        region_position_track->AddKeyframe(KeyFrame<Vec2>{topleft, time});
+    }
+
+    auto& last_keyframe = region_position_track->GetKeyframes().back();
+    region_position_track->AddKeyframe(last_keyframe);
+    m_tracks[AnimationBindingPoint::SpriteRegionPosition] =
+        std::move(region_position_track);
+
+    auto sprite_track = std::make_unique<
+        AnimationTrack<ImageHandle, AnimationTrackType::Discrete>>();
+    sprite_track->AddKeyframe({info.m_image, 0});
+    m_tracks[AnimationBindingPoint::SpriteImage] = std::move(sprite_track);
+
+    auto region_size_track =
+        std::make_unique<AnimationTrack<Vec2, AnimationTrackType::Discrete>>();
+    region_size_track->AddKeyframe({info.m_region_size, 0});
+    m_tracks[AnimationBindingPoint::SpriteRegionSize] =
+        std::move(region_size_track);
+}
+
 template <>
 AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
     auto file = IOStream::CreateFromFile(filename, IOMode::Read, true);

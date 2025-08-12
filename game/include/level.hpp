@@ -32,6 +32,11 @@ public:
     void RemoveEntity(Entity);
 
     Entity GetRootEntity() const;
+    
+#ifdef TL_ENABLE_EDITOR
+    void ReloadEntitiesFromPrefab(PrefabHandle);
+    void ReloadEntitiesFromPrefab(UUID);
+#endif
 
 private:
     bool m_visible = false;
@@ -41,6 +46,10 @@ private:
     std::unordered_set<Entity> m_entities;
 
     std::vector<Entity> m_pending_delete_entities;
+
+#ifdef TL_ENABLE_EDITOR
+    std::unordered_map<PrefabHandle, std::vector<Entity>> m_prefab_entity_map;
+#endif
 
     void initRootEntity();
     void registerEntity(const EntityInstance&);

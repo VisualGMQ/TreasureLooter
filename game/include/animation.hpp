@@ -81,9 +81,9 @@ public:
 class Animation {
 public:
     void AddTrack(AnimationBindingPoint binding,
-                  std::unique_ptr<AnimationTrackBase>&& track) {
-        m_tracks[binding] = std::move(track);
-    }
+                  std::unique_ptr<AnimationTrackBase>&& track);
+
+    void AddTracks(const SpriteRowColumnAnimationInfo& info);
 
     auto& GetTracks() const { return m_tracks; }
 
