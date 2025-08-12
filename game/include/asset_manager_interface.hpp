@@ -48,6 +48,32 @@ public:
         return nullptr;
     }
 
+    void Replace(UUID uuid, T&& payload) {
+        if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
+            *it->second = std::move(payload);
+        }
+    }
+    
+    void Reload(UUID uuid) {
+        if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
+            Load(it->second);
+        }
+    }
+
+    void Reload(HandleType handle) {
+        if (auto it = m_uuid_path_map.find(handle.GetUUID()); it != m_uuid_path_map.end()) {
+            Load(it->second);
+        }
+    }
+
+    HandleType Replace(UUID uuid, const T& payload) {
+        if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
+            *it->second = payload;
+            return HandleType{it->first, it->second.get(), this};
+        }
+        return {};
+    }
+
     bool IsExists(const Path& filename) const override {
         return m_paths_uuid_map.find(filename) != m_paths_uuid_map.end();
     }
@@ -76,7 +102,7 @@ protected:
         if (filename) {
             auto r = m_paths_uuid_map.emplace(*filename, uuid);
             if (!r.second) {
-                LOGE("emplace filename failed: {}", *filename);
+                LOGE("{} already loaded", *filename);
                 return nullptr;
             }
 

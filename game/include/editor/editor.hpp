@@ -6,14 +6,26 @@
 
 #include <variant>
 
+class IEditor {
+public:
+    virtual ~IEditor() = default;
+    virtual void Update() = 0;
+};
+
+class TrivialEditor : public IEditor {
+    void Update() override {};
+};
+
+#ifdef TL_ENABLE_EDITOR
+
 using AssetTypes =
     std::variant<std::monostate, AssetLoadResult<Prefab>,
                  AssetLoadResult<InputConfig>, AssetLoadResult<Animation>,
                  AssetLoadResult<GameConfig>, AssetLoadResult<LevelContent>>;
 
-class Editor {
+class Editor : public IEditor {
 public:
-    void Update();
+    void Update() override;
 
 private:
     enum class Mode {
@@ -30,3 +42,5 @@ private:
 
     bool m_open = true;
 };
+
+#endif

@@ -514,8 +514,14 @@ rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Region
-    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteRegion) {
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteRegionPosition) {
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+    
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteRegionSize) {
         HANDLE_DISCRETE_TRACK_SERIALIZE();
     }
 #undef TARGET_TYPE
@@ -631,8 +637,15 @@ deserializeTrack(rapidxml::xml_node<>& node) {
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Region
-    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegion) {
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegionPosition) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
+#undef TARGET_TYPE
+    
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegionSize) {
         HANDLE_CREATE_TRACK();
         HANDLE_DISCRETE_TRACK_DESERIALIZE();
     }

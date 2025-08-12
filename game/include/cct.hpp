@@ -36,3 +36,5 @@ public:
 private:
     bool m_enable_debug_draw = false;
 };
+
+void InstanceDisplay(const char*, CharacterController&);

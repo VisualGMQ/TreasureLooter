@@ -466,8 +466,14 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Region
-    HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteRegion) {
+#define TARGET_TYPE Vec2
+    HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteRegionPosition) {
+        HANDLE_DISCRETE_TRACK_DISPLAY();
+    }
+#undef TARGET_TYPE
+    
+#define TARGET_TYPE Vec2
+    HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteRegionSize) {
         HANDLE_DISCRETE_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
@@ -505,12 +511,10 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
 void displayAnimationContent(Animation& anim) {
     auto& tracks = anim.GetTracks();
 
-    ImGui::PushID(ImGuiIDGenerator::Gen());
-    if (ImGui::Button("Create")) {
-        ImGui::PopID();
+    if (ImGui::Button("create ordinary animation")) {
         ImGui::OpenPopup("create new track");
-    } else {
-        ImGui::PopID();
+    } else if (ImGui::Button("create sprite animation row column animation")) {
+        ImGui::OpenPopup("create sprite region row column animation");
     }
 
     for (auto& [binding, track] : tracks) {
@@ -564,11 +568,18 @@ void displayAnimationContent(Animation& anim) {
             }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Region
-            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteRegion) {
+#define TARGET_TYPE Vec2
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteRegionPosition) {
                 HANDLE_ANIM_DISCRETE_DISPLAY();
             }
 #undef TARGET_TYPE
+            
+#define TARGET_TYPE Vec2
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteRegionSize) {
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+
 
 #define TARGET_TYPE Vec2
             HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteSize) {
@@ -582,7 +593,23 @@ void displayAnimationContent(Animation& anim) {
                 HANDLE_ANIM_DISCRETE_DISPLAY();
             }
 #undef TARGET_TYPE
+            ImGui::CloseCurrentPopup();
         }
+        if (ImGui::Button("Close")) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopup("create sprite region row column animation")) {
+        static SpriteRowColumnAnimationInfo info;
+        InstanceDisplay("info", info);
+
+        if (ImGui::Button("Create")) {
+            anim.AddTracks(info);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
         if (ImGui::Button("Close")) {
             ImGui::CloseCurrentPopup();
         }
@@ -608,7 +635,7 @@ void InstanceDisplay(const char* name, const Handle<Animation>& anim) {
     displayAssetName(anim);
 
     if (anim) {
-        // NOTE: dangerous operation!
+        // NOTE: cast const to non-const is dangerous operation!
         displayAnimationContent((Animation&)*anim);
     }
 }
@@ -621,7 +648,7 @@ void InstanceDisplay(const char* name, Animation& animation) {
 void InstanceDisplay(const char* name, const Animation& anim) {
     ImGui::Text("%s", name);
 
-    // NOTE: dangerous operation!
+    // NOTE: cast const to non-const is dangerous operation!
     displayAnimationContent((Animation&)anim);
 }
 

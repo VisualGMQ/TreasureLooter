@@ -1,22 +1,32 @@
 ﻿#pragma once
 #include "entity.hpp"
 
-#include <SDL3/SDL_events.h>
+#include "SDL3/SDL.h"
 #include <optional>
 
 class Window;
 class Renderer;
 
-class Inspector {
+class IInspector {
+public:
+    virtual ~IInspector() = default;
+    virtual void Update() = 0;
+};
+
+class TrivialInspector : public IInspector {
+public:
+    ~TrivialInspector() override {}
+
+    void Update() override {}
+};
+
+#ifdef TL_ENABLE_EDITOR
+
+class Inspector : public IInspector {
 public:
     Inspector(Window& window, Renderer& renderer);
-    ~Inspector();
 
-    void BeginFrame();
-    void EndFrame();
-    void Update();
-
-    void HandleEvents(const SDL_Event& event);
+    void Update() override;
 
 private:
     Window& m_window;
@@ -29,3 +39,5 @@ private:
     void showEntityHierarchy(Entity node);
     void showEntityDetail(Entity entity);
 };
+
+#endif

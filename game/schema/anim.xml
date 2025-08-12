@@ -1,11 +1,16 @@
 <schema>
+    <include>math.hpp</include>
+    <include>timer.hpp</include>
+    <include>image.hpp</include>
+    
     <enum name="AnimationBindingPoint">
         <item name = "Unknown" value ="0"/>
         <item name = "TransformPosition"/>
         <item name = "TransformScale"/>
         <item name = "TransformRotation"/>
 
-        <item name = "SpriteRegion"/>
+        <item name = "SpriteRegionPosition"/>
+        <item name = "SpriteRegionSize"/>
         <item name = "SpriteSize"/>
         <item name = "SpriteImage"/>
         <item name = "SpriteFlip"/>
@@ -15,4 +20,14 @@
         <item name = "Linear"/>
         <item name = "Discrete"/>
     </enum>
+    
+    <class name="SpriteRowColumnAnimationInfo">
+        <handle name="image" type="Image"/>
+        <element name="region_size" type="Vec2"/>
+        <element name="is_row" type="bool" default="false"/>
+        <element name="begin" type="uint32_t" default="0"/>
+        <element name="end" type="uint32_t" default="0"/>
+        <element name="other_dim" type="uint32_t" default="0"/>
+        <element name="duration" type="TimeType" default="0"/>
+    </class>
 </schema>
