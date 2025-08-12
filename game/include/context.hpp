@@ -55,10 +55,8 @@ public:
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<AssetsManager> m_assets_manager;
-    std::unique_ptr<Inspector> m_inspector;
-#ifdef TL_ENABLE_EDITOR
-    std::unique_ptr<Editor> m_editor;
-#endif
+    std::unique_ptr<IInspector> m_inspector;
+    std::unique_ptr<IEditor> m_editor;
     std::unique_ptr<TransformManager> m_transform_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
@@ -96,8 +94,14 @@ private:
     void logicUpdate(TimeType elapse);
     void logicPostUpdate(TimeType elapse);
     void renderUpdate(TimeType elapse);
+    void renderFPS(TimeType elapse);
 
     void parseProjectPath();
+
+    void initImGui();
+    void shutdownImGui();
+    void beginImGui();
+    void endImGui();
 };
 
 #define GAME_CONTEXT Context::GetInst()

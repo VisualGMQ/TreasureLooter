@@ -129,8 +129,14 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
         }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE Region
-        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteRegion) {
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteRegionPosition) {
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+        
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteRegionSize) {
             HANDLE_DISCRETE_TRACK_CREATION();
         }
 #undef TARGET_TYPE
@@ -256,8 +262,14 @@ void AnimationPlayer::Sync(Entity entity) {
         }
 #undef BINDING_TARGET
 
-#define BINDING_TARGET sprite->m_region
-        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteRegion) {
+#define BINDING_TARGET sprite->m_region.m_topleft
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteRegionPosition) {
+            HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+        
+#define BINDING_TARGET sprite->m_region.m_size
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteRegionSize) {
             HANDLE_DISCRETE_TRACK();
         }
 #undef BINDING_TARGET

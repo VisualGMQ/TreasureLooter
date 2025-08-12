@@ -13,68 +13,20 @@
 #include "transform.hpp"
 #include "window.hpp"
 
-#include "schema/display/flip.hpp"
+#include "schema/display/physics.hpp"
 #include "schema/display/prefab.hpp"
 #include "schema/display/relationship.hpp"
 #include "schema/display/sprite.hpp"
 
+#ifdef TL_ENABLE_EDITOR
+
 Inspector::Inspector(Window& window, Renderer& renderer)
-    : m_window{window}, m_renderer{renderer} {
-    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(
-        main_scale);  // Bake a fixed style scale. (until we have a solution for
-                      // dynamic style scaling, changing this requires resetting
-                      // Style + calling this again)
-    style.FontScaleDpi =
-        main_scale;  // Set initial font scale. (using
-                     // io.ConfigDpiScaleFonts=true makes this unnecessary. We
-                     // leave both here for documentation purpose)
-
-    ImGui_ImplSDL3_InitForSDLRenderer(window.GetWindow(),
-                                      renderer.GetRenderer());
-    ImGui_ImplSDLRenderer3_Init(renderer.GetRenderer());
-}
-
-Inspector::~Inspector() {
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-}
-
-void Inspector::BeginFrame() {
-    ImGui_ImplSDLRenderer3_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
-}
-
-void Inspector::EndFrame() {
-    ImGui::Render();
-    auto& io = ImGui::GetIO();
-    SDL_SetRenderScale(m_renderer.GetRenderer(), io.DisplayFramebufferScale.x,
-                       io.DisplayFramebufferScale.y);
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(),
-                                          m_renderer.GetRenderer());
-}
+    : m_window{window}, m_renderer{renderer} {}
 
 void Inspector::Update() {
     if (ImGui::Begin("Debug Panel")) {
-        auto duration = GAME_CONTEXT.m_time->GetElapseTime();
-        ImGui::Text("fps: %d", int(duration > 0 ? 1.0 / duration : 4000));
-
-        bool physics_debug_draw = GAME_CONTEXT.m_physics_scene->IsEnableDebugDraw();
+        bool physics_debug_draw =
+            GAME_CONTEXT.m_physics_scene->IsEnableDebugDraw();
         if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
             GAME_CONTEXT.m_physics_scene->ToggleDebugDraw();
         }
@@ -85,7 +37,7 @@ void Inspector::Update() {
         }
     }
     ImGui::End();
-    
+
     if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
         auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
         if (level) {
@@ -104,10 +56,6 @@ void Inspector::Update() {
     ImGuiIDGenerator::Reset();
 }
 
-void Inspector::HandleEvents(const SDL_Event& event) {
-    ImGui_ImplSDL3_ProcessEvent(&event);
-}
-
 void Inspector::showEntityDetail(Entity entity) {
     auto& ctx = GAME_CONTEXT;
     if (ctx.m_transform_manager->Has(entity)) {
@@ -124,10 +72,15 @@ void Inspector::showEntityDetail(Entity entity) {
         auto value = ctx.m_sprite_manager->Get(entity);
         InstanceDisplay("sprite", *value);
     }
-    
+
     if (ctx.m_animation_player_manager->Has(entity)) {
         auto value = ctx.m_animation_player_manager->Get(entity);
         InstanceDisplay("animation", *value);
+    }
+
+    if (ctx.m_cct_manager->Has(entity)) {
+        auto value = ctx.m_cct_manager->Get(entity);
+        InstanceDisplay("cct", *value);
     }
 }
 
@@ -157,3 +110,5 @@ void Inspector::showEntityHierarchy(Entity node) {
         ImGui::TreePop();
     }
 }
+
+#endif

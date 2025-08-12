@@ -2,7 +2,6 @@
 #include "asset.hpp"
 #include "asset_manager_interface.hpp"
 #include "entity.hpp"
-#include "log.hpp"
 #include "manager.hpp"
 #include "math.hpp"
 
@@ -23,6 +22,7 @@ public:
     virtual ~AnimationTrackBase() = default;
     virtual TimeType GetFinishTime() const = 0;
     virtual AnimationTrackType GetType() const = 0;
+    virtual bool IsEmpty() const = 0;
 };
 
 template <typename T>
@@ -53,6 +53,8 @@ public:
 
     auto& GetKeyframes() { return m_keyframes; }
 
+    bool IsEmpty() const override { return m_keyframes.empty(); }
+
 protected:
     std::vector<keyframe_type> m_keyframes;
 };
@@ -81,9 +83,9 @@ public:
 class Animation {
 public:
     void AddTrack(AnimationBindingPoint binding,
-                  std::unique_ptr<AnimationTrackBase>&& track) {
-        m_tracks[binding] = std::move(track);
-    }
+                  std::unique_ptr<AnimationTrackBase>&& track);
+
+    void AddTracks(const SpriteRowColumnAnimationInfo& info);
 
     auto& GetTracks() const { return m_tracks; }
 

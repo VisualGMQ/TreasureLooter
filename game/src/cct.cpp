@@ -1,6 +1,10 @@
 #include "cct.hpp"
 
 #include "context.hpp"
+#include "imgui.h"
+#include "imgui_id_generator.hpp"
+#include "instance_display.hpp"
+#include "schema/display/common.hpp"
 
 CharacterController::CharacterController(const CCT& create_info)
     : m_circle{{}, create_info.m_radius},
@@ -90,4 +94,14 @@ void CCTManager::RenderDebug() {
         GAME_CONTEXT.m_renderer->DrawCircle(cct.m_component->GetCircle(),
                                             Color::Green);
     }
+}
+
+void InstanceDisplay(const char* name, CharacterController& cct) {
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    if(ImGui::TreeNode(name)) {
+        auto circle = cct.GetCircle();
+        InstanceDisplay("circle", circle);
+        ImGui::TreePop();
+    }
+    ImGui::PopID();
 }

@@ -90,6 +90,37 @@ Entity Level::GetRootEntity() const {
     return m_root_entity;
 }
 
+#ifdef TL_ENABLE_EDITOR
+void Level::ReloadEntitiesFromPrefab(PrefabHandle prefab) {
+    auto it = m_prefab_entity_map.find(prefab);
+    if (it == m_prefab_entity_map.end()) {
+        return;
+    }
+
+    for (auto entity : it->second) {
+        auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+
+        EntityInstance instance;
+        instance.m_entity = entity;
+        if (transform) {
+            instance.m_transform = *transform;   
+        }
+        instance.m_prefab = prefab;
+        RemoveEntity(entity);
+        registerEntity(instance);
+    }
+}
+
+void Level::ReloadEntitiesFromPrefab(UUID uuid) {
+    auto prefab =
+        GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Find(uuid);
+    if (!prefab) {
+        return;
+    }
+    ReloadEntitiesFromPrefab(prefab);
+}
+#endif
+
 void Level::initRootEntity() {
     m_root_entity = GAME_CONTEXT.CreateEntity();
     GAME_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
@@ -101,6 +132,10 @@ void Level::registerEntity(const EntityInstance& instance) {
         instance.m_entity,
         instance.m_transform ? &instance.m_transform.value() : nullptr,
         *instance.m_prefab);
+
+#ifdef TL_ENABLE_EDITOR
+    m_prefab_entity_map[instance.m_prefab].push_back(instance.m_entity);
+#endif
 }
 
 void Level::createEntityByPrefab(Entity entity, const Transform* transform,
@@ -168,6 +203,8 @@ void Level::initByLevelContent(LevelContentHandle level_content) {
 }
 
 void Level::doRemoveEntities() {
+    std::vector<PrefabHandle> remove_prefabs;
+
     for (auto entity : m_pending_delete_entities) {
         GAME_CONTEXT.m_sprite_manager->RemoveEntity(entity);
         GAME_CONTEXT.m_transform_manager->RemoveEntity(entity);
@@ -177,7 +214,24 @@ void Level::doRemoveEntities() {
         GAME_CONTEXT.m_cct_manager->RemoveEntity(entity);
 
         m_entities.erase(entity);
+
+#ifdef TL_ENABLE_EDITOR
+        for (auto& [prefab, entities] : m_prefab_entity_map) {
+            entities.erase(
+                std::remove(entities.begin(), entities.end(), entity),
+                entities.end());
+            if (entities.empty()) {
+                remove_prefabs.push_back(prefab);
+            }
+        }
+#endif
     }
+
+#ifdef TL_ENABLE_EDITOR
+    for (auto prefab : remove_prefabs) {
+        m_prefab_entity_map.erase(prefab);
+    }
+#endif
 
     m_pending_delete_entities.clear();
 }
@@ -249,21 +303,24 @@ void PlayerLogic::OnInit() {
                 }
             });
 
-    // NOTE: when under android, device will change window size after few frames and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event after rotate screen. So we must listen this event and change our button position
-    m_window_resize_event_listener = GAME_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>([&](EventListenerID id, const SDL_WindowEvent& event){
-       if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-           int w = event.data1;
-           int h = event.data2;
-           m_touch_joystick.m_circle.m_radius = 100;
-           m_touch_joystick.m_circle.m_center.x = 300;
-           m_touch_joystick.m_circle.m_center.y = h - 300;
+    // NOTE: when under android, device will change window size after few frames
+    // and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event after rotate
+    // screen. So we must listen this event and change our button position
+    m_window_resize_event_listener =
+        GAME_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
+            [&](EventListenerID id, const SDL_WindowEvent& event) {
+                if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                    int w = event.data1;
+                    int h = event.data2;
+                    m_touch_joystick.m_circle.m_radius = 100;
+                    m_touch_joystick.m_circle.m_center.x = 300;
+                    m_touch_joystick.m_circle.m_center.y = h - 300;
 
-           m_finger_attack_button.m_radius = 50;
-           m_finger_attack_button.m_center.x = w - 200;
-           m_finger_attack_button.m_center.y = h - 200;
-       }
-    });
-
+                    m_finger_attack_button.m_radius = 50;
+                    m_finger_attack_button.m_center.x = w - 200;
+                    m_finger_attack_button.m_center.y = h - 200;
+                }
+            });
 }
 
 void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
@@ -348,13 +405,18 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
 
     // draw touch joystick
 #ifdef SDL_PLATFORM_ANDROID
-    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_touch_joystick.m_circle, Color::Green, elapse_time);
-    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_finger_attack_button, Color::Purple, elapse_time);
+    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_touch_joystick.m_circle,
+                                            Color::Green, elapse_time);
+    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_finger_attack_button,
+                                            Color::Purple, elapse_time);
 
     if (m_move_finger_idx) {
-        auto& finger = GAME_CONTEXT.m_touches->GetFingers()[m_move_finger_idx.value()];
-        auto position = finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
-        GAME_CONTEXT.m_debug_drawer->DrawCircle({position, 5}, Color::Red, elapse_time);
+        auto& finger =
+            GAME_CONTEXT.m_touches->GetFingers()[m_move_finger_idx.value()];
+        auto position =
+            finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
+        GAME_CONTEXT.m_debug_drawer->DrawCircle({position, 5}, Color::Red,
+                                                elapse_time);
     }
 #endif
 }
@@ -363,7 +425,7 @@ void PlayerLogic::OnQuit() {
     GAME_CONTEXT.m_event_system->RemoveListener<SDL_GamepadDeviceEvent>(
         m_gamepad_event_listener);
     GAME_CONTEXT.m_event_system->RemoveListener<SDL_WindowEvent>(
-            m_window_resize_event_listener);
+        m_window_resize_event_listener);
 }
 
 void PlayerLogic::handleFingerTouchJoystick() {
@@ -371,7 +433,8 @@ void PlayerLogic::handleFingerTouchJoystick() {
     for (size_t i = 0; i < fingers.size(); i++) {
         auto& finger = fingers[i];
 
-        Vec2 position = finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
+        Vec2 position =
+            finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
 
         if (finger.IsPressed()) {
             if (IsPointInCircle(position, m_touch_joystick.m_circle)) {
@@ -398,27 +461,34 @@ void PlayerLogic::handleFingerTouchJoystick() {
 
     } else {
         auto& finger = fingers[m_move_finger_idx.value()];
-        Vec2 position = finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
+        Vec2 position =
+            finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
         Vec2 dir = position - m_touch_joystick.m_circle.m_center;
-        float len = Clamp(dir.Length(), 0.0f, m_touch_joystick.m_circle.m_radius) /
-                    m_touch_joystick.m_circle.m_radius;
+        float len =
+            Clamp(dir.Length(), 0.0f, m_touch_joystick.m_circle.m_radius) /
+            m_touch_joystick.m_circle.m_radius;
         dir = dir.Normalize() * len;
         GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", dir.x);
         GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", dir.y);
     }
 
     if (!m_attack_finger_idx) {
-        GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Releasing);
+        GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+            "Attack", Action::State::Releasing);
     } else {
         auto& finger = fingers[m_attack_finger_idx.value()];
         if (finger.IsPressed()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Pressed);
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+                "Attack", Action::State::Pressed);
         } else if (finger.IsPressing()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Pressing);
-        }else if (finger.IsReleased()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Released);
-        }else if (finger.IsReleasing()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton("Attack", Action::State::Releasing);
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+                "Attack", Action::State::Pressing);
+        } else if (finger.IsReleased()) {
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+                "Attack", Action::State::Released);
+        } else if (finger.IsReleasing()) {
+            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+                "Attack", Action::State::Releasing);
         }
     }
 }
