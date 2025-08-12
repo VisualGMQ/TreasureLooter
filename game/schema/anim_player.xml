@@ -3,6 +3,7 @@
     <class name="AnimationPlayerCreateInfo">
         <element name = "loop" type="int" default="0"/>
         <element name = "rate" type="float" default="1.0f"/>
+        <element name = "auto_play" type = "bool" default="false"/>
         <handle name = "animation" type="Animation"/>
     </class>
 </schema>

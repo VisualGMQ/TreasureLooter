@@ -111,7 +111,7 @@ void SaveAsset(const UUID& uuid, const Animation& payload,
 
 class AnimationManager : public AssetManagerBase<Animation> {
 public:
-    AnimationHandle Load(const Path& filename) override;
+    AnimationHandle Load(const Path& filename, bool force = false) override;
 
     AnimationHandle Create();
 };

@@ -103,7 +103,7 @@ void Level::ReloadEntitiesFromPrefab(PrefabHandle prefab) {
         EntityInstance instance;
         instance.m_entity = entity;
         if (transform) {
-            instance.m_transform = *transform;   
+            instance.m_transform = *transform;
         }
         instance.m_prefab = prefab;
         RemoveEntity(entity);
@@ -236,7 +236,10 @@ void Level::doRemoveEntities() {
     m_pending_delete_entities.clear();
 }
 
-AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename) {
+AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename, bool force) {
+    if (auto handle = Find(filename); handle && !force) {
+        return handle;
+    }
     return store(&filename, UUID::CreateV4(),
                  std::make_unique<Level>(filename));
 }
@@ -278,14 +281,14 @@ void PlayerLogic::OnInit() {
     auto& animation_manager =
         GAME_CONTEXT.m_assets_manager->GetManager<Animation>();
 
-    m_walk_left =
-        animation_manager.Load("assets/gpa/status_walk_left.animation.xml");
-    m_walk_right =
-        animation_manager.Load("assets/gpa/status_walk_right.animation.xml");
-    m_walk_up =
-        animation_manager.Load("assets/gpa/status_walk_up.animation.xml");
-    m_walk_down =
-        animation_manager.Load("assets/gpa/status_walk_down.animation.xml");
+    m_walk_left = animation_manager.Load(
+        "assets/gpa/anim/character/waggo/status_walk_left.animation.xml");
+    m_walk_right = animation_manager.Load(
+        "assets/gpa/anim/character/waggo/status_walk_right.animation.xml");
+    m_walk_up = animation_manager.Load(
+        "assets/gpa/anim/character/waggo/status_walk_up.animation.xml");
+    m_walk_down = animation_manager.Load(
+        "assets/gpa/anim/character/waggo/status_walk_down.animation.xml");
     m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
         "assets/Characters/Statue/SpriteSheet.png");
 

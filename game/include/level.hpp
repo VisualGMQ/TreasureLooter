@@ -65,7 +65,7 @@ using LevelHandle = Handle<Level>;
 
 class LevelManager final : public AssetManagerBase<Level> {
 public:
-    HandleType Load(const Path& filename) override;
+    HandleType Load(const Path& filename, bool force = false) override;
 
     void Switch(LevelHandle);
 

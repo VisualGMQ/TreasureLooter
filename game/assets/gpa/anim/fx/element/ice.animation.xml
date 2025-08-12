@@ -1,0 +1,78 @@
+<Animation>
+	<uuid>10f5c528-0000-0000-0000-000000000000</uuid>
+	<value>
+		<tracks>
+			<track>
+				<binding_point>SpriteRegionPosition</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value x="0.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.100000</time>
+						<value x="32.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.200000</time>
+						<value x="64.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.300000</time>
+						<value x="96.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.400000</time>
+						<value x="128.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.500000</time>
+						<value x="160.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.600000</time>
+						<value x="192.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.700000</time>
+						<value x="224.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.800000</time>
+						<value x="256.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.900000</time>
+						<value x="288.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>1.000000</time>
+						<value x="288.000000" y="0.000000"/>
+					</keyframe>
+				</keyframes>
+			</track>
+			<track>
+				<binding_point>SpriteImage</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value>assets/FX/Elemental/Ice/SpriteSheet.png</value>
+					</keyframe>
+				</keyframes>
+			</track>
+			<track>
+				<binding_point>SpriteRegionSize</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value x="32.000000" y="32.000000"/>
+					</keyframe>
+				</keyframes>
+			</track>
+		</tracks>
+	</value>
+</Animation>
+

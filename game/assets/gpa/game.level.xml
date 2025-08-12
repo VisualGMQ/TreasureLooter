@@ -10,6 +10,17 @@
 				<entity>3</entity>
 				<prefab>assets/gpa/tilemap.prefab.xml</prefab>
 			</elem>
+			<elem>
+				<entity>4</entity>
+				<transform>
+					<value>
+						<position x="930.000000" y="600.000000"/>
+						<scale x="1.000000" y="1.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>assets/gpa/icon.prefab.xml</prefab>
+			</elem>
 		</entities>
 	</payload>
 </LevelContent>
