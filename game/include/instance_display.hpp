@@ -62,7 +62,6 @@ void InstanceDisplay(const char* name, const Handle<Animation>&);
 void InstanceDisplay(const char* name, Animation&);
 void InstanceDisplay(const char* name, const Animation&);
 void InstanceDisplay(const char* name, AnimationPlayer&);
-void InstanceDisplay(const char* name, const AnimationPlayer&);
 void InstanceDisplay(const char* name, Entity);
 void InstanceDisplay(const char* name, NullEntity);
 void InstanceDisplay(const char* name, const Path&);

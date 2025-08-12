@@ -4,13 +4,12 @@
 #include "image.hpp"
 #include "rapidxml_print.hpp"
 #include "serialize.hpp"
-#include "sprite.hpp"
 #include "storage.hpp"
 
 #include <sstream>
 
-AnimationHandle AnimationManager::Load(const Path& filename) {
-    if (auto handle = Find(filename)) {
+AnimationHandle AnimationManager::Load(const Path& filename, bool force) {
+    if (auto handle = Find(filename); handle && !force) {
         return handle;
     }
 
@@ -45,11 +44,11 @@ void Animation::AddTracks(const SpriteRowColumnAnimationInfo& info) {
     for (auto i = info.m_begin; i != info.m_end; ++i) {
         Vec2 topleft;
         if (info.m_is_row) {
-            topleft.x = info.m_other_dim * info.m_region_size.w;
-            topleft.y = i * info.m_region_size.h;
-        } else {
             topleft.x = i * info.m_region_size.w;
             topleft.y = info.m_other_dim * info.m_region_size.h;
+        } else {
+            topleft.x = info.m_other_dim * info.m_region_size.w;
+            topleft.y = i * info.m_region_size.h;
         }
 
         TimeType time = info.m_duration * (i - info.m_begin);

@@ -5,9 +5,10 @@
 #include "sprite.hpp"
 
 AnimationPlayer::AnimationPlayer(const AnimationPlayerCreateInfo& create_info) {
-    ChangeAnimation(create_info.m_animation);
+    EnableAutoPlay(create_info.m_auto_play);
     SetLoop(create_info.m_loop);
     SetRate(create_info.m_rate);
+    ChangeAnimation(create_info.m_animation);
 }
 
 void AnimationPlayer::Play() {
@@ -59,6 +60,9 @@ TimeType AnimationPlayer::GetCurTime() const {
 }
 
 TimeType AnimationPlayer::GetMaxTime() const {
+    if (!m_animation) {
+        return 0;
+    }
     TimeType max_time = 0;
     for (auto& [_, track] : m_animation->GetTracks()) {
         max_time = std::max(max_time, track->GetFinishTime());
@@ -88,10 +92,15 @@ TimeType AnimationPlayer::GetMaxTime() const {
 void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
     m_animation = animation;
     m_track_players.clear();
+
     Stop();
 
     if (!m_animation) {
         return;
+    }
+
+    if (m_auto_play) {
+        Play();
     }
 
     auto& tracks = m_animation->GetTracks();
@@ -299,6 +308,14 @@ float AnimationPlayer::GetRate() const {
 
 AnimationHandle AnimationPlayer::GetAnimation() const {
     return m_animation;
+}
+
+void AnimationPlayer::EnableAutoPlay(bool enable) {
+    m_auto_play = enable;
+}
+
+bool AnimationPlayer::IsAutoPlayEnabled() const {
+    return m_auto_play;
 }
 
 void AnimationPlayerManager::Update(TimeType delta_time) {

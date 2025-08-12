@@ -4,6 +4,7 @@
 #include "image.hpp"
 #include "schema/serialize/anim.hpp"
 #include "schema/serialize/flip.hpp"
+#include "schema/serialize/anim_player.hpp"
 #include <stdexcept>
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
@@ -680,39 +681,21 @@ void Deserialize(const rapidxml::xml_node<>& node, Animation& payload) {
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const AnimationPlayer& payload,
                                 const std::string& name) {
-    auto node = doc.allocate_node(rapidxml::node_type::node_element,
-                                  doc.allocate_string(name.c_str()));
-    auto loop_node = Serialize(doc, payload.GetLoopCount(), "loop");
-    node->append_node(loop_node);
+    AnimationPlayerCreateInfo create_info;
+    create_info.m_auto_play = payload.IsAutoPlayEnabled();
+    create_info.m_animation = payload.GetAnimation();
+    create_info.m_loop = payload.GetLoopCount();
+    create_info.m_rate = payload.GetRate();
 
-    auto rate_node = Serialize(doc, payload.GetRate(), "rate");
-    node->append_node(rate_node);
-
-    auto anim = payload.GetAnimation();
-    if (anim) {
-        auto anim_node = Serialize(doc, anim, "animation");
-        node->append_node(anim_node);
-    }
-
-    return node;
+    return Serialize(doc, create_info, name);
 }
 
 void Deserialize(const rapidxml::xml_node<>& node, AnimationPlayer& payload) {
-    if (auto loop_node = node.first_node("loop")) {
-        int loop;
-        Deserialize(*loop_node, loop);
-        payload.SetLoop(loop);
-    }
+    AnimationPlayerCreateInfo create_info;
+    Deserialize(node, create_info);
 
-    if (auto anim_node = node.first_node("animation")) {
-        AnimationHandle anim;
-        Deserialize(*anim_node, anim);
-        payload.ChangeAnimation(anim);
-    }
-
-    if (auto rate_node = node.first_node("rate")) {
-        float rate;
-        Deserialize(*rate_node, rate);
-        payload.SetRate(rate);
-    }
+    payload.SetLoop(create_info.m_loop);
+    payload.SetRate(create_info.m_rate);
+    payload.EnableAutoPlay(create_info.m_auto_play);
+    payload.ChangeAnimation(create_info.m_animation);
 }

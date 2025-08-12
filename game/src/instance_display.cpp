@@ -654,17 +654,8 @@ void InstanceDisplay(const char* name, const Animation& anim) {
 
 void InstanceDisplay(const char* name, AnimationPlayer& player) {
     ImGui::Text("%s", name);
-    auto animation = player.GetAnimation();
-    if (!animation) {
-        ImGui::PushID(ImGuiIDGenerator::Gen());
-        constexpr std::string_view text = "no animation";
-        ImGui::BeginDisabled(true);
-        ImGui::InputText("animation", (char*)text.data(), text.size());
-        ImGui::EndDisabled();
-        ImGui::PopID();
-        return;
-    }
 
+    auto animation = player.GetAnimation();
     int loop = player.GetLoopCount();
     InstanceDisplay("loop", loop);
 
@@ -691,6 +682,10 @@ void InstanceDisplay(const char* name, AnimationPlayer& player) {
     }
 
     ImGui::Text("state: %lf/%lf", player.GetCurTime(), player.GetMaxTime());
+
+    bool auto_play = player.IsAutoPlayEnabled();
+    ImGui::Checkbox("auto play", &auto_play);
+    player.EnableAutoPlay(auto_play);
 
     AnimationHandle old_handle = animation;
     InstanceDisplay("animation", animation);

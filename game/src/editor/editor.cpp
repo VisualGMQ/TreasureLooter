@@ -73,7 +73,11 @@ template <>
 AssetTypes LoadAssetFromPath<Prefab>(const Path& filename) {
     auto result = LoadAsset<Prefab>(filename);
 
-    AddEntityToScene(GAME_CONTEXT.CreateEntity(), result);
+    if (auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel()) {
+        level->Instantiate(
+            GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Find(
+                result.m_uuid));
+    }
     return AssetTypes{result};
 }
 
@@ -135,6 +139,7 @@ void Editor::Update() {
                     m_asset_index = i;
                     if (m_mode == Mode::Create) {
                         m_asset = asset_creator[i]();
+                        m_filename.clear();
                     }
                     m_mode = Mode::None;
                 }

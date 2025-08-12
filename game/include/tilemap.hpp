@@ -104,7 +104,7 @@ using TilemapHandle = Handle<Tilemap>;
 
 class TilemapManager: public AssetManagerBase<Tilemap> {
 public: 
-    TilemapHandle Load(const Path& filename) override;
+    TilemapHandle Load(const Path& filename, bool force = false) override;
 };
 
 

@@ -143,6 +143,9 @@ public:
 
     AnimationHandle GetAnimation() const;
 
+    void EnableAutoPlay(bool enable);
+    bool IsAutoPlayEnabled() const;
+
 private:
     AnimationHandle m_animation;
 
@@ -150,6 +153,7 @@ private:
                        std::unique_ptr<AnimationTrackPlayerBase>>
         m_track_players;
 
+    bool m_auto_play = false;
     bool m_is_playing = false;
     int m_loop{0};
     TimeType m_cur_time{};

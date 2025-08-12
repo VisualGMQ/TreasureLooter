@@ -42,6 +42,18 @@ Image::Image(Renderer& renderer, const Path& filename) {
     SDL_SetTextureScaleMode(m_texture, SDL_SCALEMODE_NEAREST);
 }
 
+Image::Image(Image&& o) noexcept : m_texture{o.m_texture} {
+    o.m_texture = nullptr;
+}
+
+Image& Image::operator=(Image&& o) noexcept {
+    if (&o != this) {
+        m_texture = o.m_texture;
+        o.m_texture = nullptr;
+    }
+    return *this;
+}
+
 Image::~Image() {
     SDL_DestroyTexture(m_texture);
 }
@@ -58,8 +70,8 @@ SDL_Texture* Image::GetTexture() const {
 
 ImageManager::ImageManager(Renderer& renderer) : m_renderer{renderer} {}
 
-ImageHandle ImageManager::Load(const Path& filename) {
-    if (auto it = Find(filename); it) {
+ImageHandle ImageManager::Load(const Path& filename, bool force) {
+    if (auto it = Find(filename); it && !force) {
         LOGW("image {} already loaded", filename);
         return it;
     }

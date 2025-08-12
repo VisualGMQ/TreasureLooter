@@ -1,0 +1,54 @@
+<Animation>
+	<uuid>f4208d74-0000-0000-0000-000000000000</uuid>
+	<value>
+		<tracks>
+			<track>
+				<binding_point>SpriteRegionPosition</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value x="0.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.100000</time>
+						<value x="32.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.200000</time>
+						<value x="64.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.300000</time>
+						<value x="96.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.400000</time>
+						<value x="96.000000" y="0.000000"/>
+					</keyframe>
+				</keyframes>
+			</track>
+			<track>
+				<binding_point>SpriteImage</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value>assets/FX/SlashFx/ClawDouble/SpriteSheet.png</value>
+					</keyframe>
+				</keyframes>
+			</track>
+			<track>
+				<binding_point>SpriteRegionSize</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value x="32.000000" y="32.000000"/>
+					</keyframe>
+				</keyframes>
+			</track>
+		</tracks>
+	</value>
+</Animation>
+

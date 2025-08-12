@@ -1,0 +1,33 @@
+<Prefab>
+	<uuid>e1220743-f276-4f2f-b815-c1207acb036f</uuid>
+	<payload>
+		<sprite>
+			<value>
+				<image>assets/FX/Elemental/Ice/SpriteSheetB.png</image>
+				<region>
+					<topleft x="0.000000" y="0.000000"/>
+					<size x="32.000000" y="32.000000"/>
+				</region>
+				<size x="64.000000" y="64.000000"/>
+				<flip>None</flip>
+			</value>
+		</sprite>
+		<transform>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<scale x="1.000000" y="1.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<animation>
+			<value>
+				<loop>-1</loop>
+				<rate>1.000000</rate>
+				<auto_play>false</auto_play>
+			</value>
+		</animation>
+		<tilemap/>
+		<type>Normal</type>
+	</payload>
+</Prefab>
+

@@ -23,7 +23,8 @@
 			<value>
 				<loop>-1</loop>
 				<rate>1.000000</rate>
-				<animation>assets/gpa/status_walk_down.animation.xml</animation>
+				<auto_play>false</auto_play>
+				<animation>assets/gpa/anim/character/waggo/status_walk_down.animation.xml</animation>
 			</value>
 		</animation>
 		<tilemap/>

@@ -21,7 +21,7 @@ public:
 
     virtual ~AssetManagerBase() = default;
 
-    virtual HandleType Load(const Path& filename) = 0;
+    virtual HandleType Load(const Path& filename, bool force = false) = 0;
 
     virtual void Unload(HandleType handle) {
         auto uuid = handle.GetUUID();
@@ -53,10 +53,10 @@ public:
             *it->second = std::move(payload);
         }
     }
-    
+
     void Reload(UUID uuid) {
         if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
-            Load(it->second);
+            Load(it->second, true);
         }
     }
 
@@ -92,23 +92,19 @@ public:
 protected:
     HandleType store(const Path* filename, UUID uuid,
                      std::unique_ptr<T>&& payload) {
-        auto result = m_payloads.emplace(uuid, std::move(payload));
-        if (!result.second) {
-            LOGE("asset {} already loaded",
-                 filename ? *filename : "<no filename>");
-            return nullptr;
+        if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
+            it->second.reset();
+            it->second.swap(payload);
+            payload.reset();
+        } else {
+            m_payloads.emplace(uuid, std::move(payload));
         }
 
         if (filename) {
-            auto r = m_paths_uuid_map.emplace(*filename, uuid);
-            if (!r.second) {
-                LOGE("{} already loaded", *filename);
-                return nullptr;
-            }
-
-            m_uuid_path_map.emplace(uuid, *filename);
+            m_paths_uuid_map[*filename] = uuid;
+            m_uuid_path_map[uuid] = *filename;
         }
-        return HandleType{uuid, result.first->second.get(), this};
+        return HandleType{uuid, Find(uuid).Get(), this};
     }
 
 private:
@@ -122,7 +118,11 @@ class GenericAssetManager : public AssetManagerBase<T> {
 public:
     using HandleType = typename AssetManagerBase<T>::HandleType;
 
-    HandleType Load(const Path& filename) override {
+    HandleType Load(const Path& filename, bool force = false) override {
+        if (auto handle = AssetManagerBase<T>::Find(filename); handle && !force) {
+            return handle;
+        }
+
         auto result = LoadAsset<T>(filename);
         return this->store(&filename, result.m_uuid,
                            std::make_unique<T>(std::move(result.m_payload)));
