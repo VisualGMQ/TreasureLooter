@@ -25,9 +25,9 @@
         <handle name="image" type="Image"/>
         <element name="region_size" type="Vec2"/>
         <element name="is_row" type="bool" default="false"/>
-        <element name="begin" type="size_t" default="0"/>
-        <element name="end" type="size_t" default="0"/>
-        <element name="other_dim" type="size_t" default="0"/>
+        <element name="begin" type="uint32_t" default="0"/>
+        <element name="end" type="uint32_t" default="0"/>
+        <element name="other_dim" type="uint32_t" default="0"/>
         <element name="duration" type="TimeType" default="0"/>
     </class>
 </schema>
