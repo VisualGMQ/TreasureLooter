@@ -17,10 +17,14 @@ public:
 
     const Circle& GetCircle() const;
 
+    [[nodiscard]] CollisionGroup GetCollisionGroup() const;
+    void SetCollisionGroup(CollisionGroup collision_group);
+
 private:
     Circle m_circle;
     float m_skin = 0.1;
     float m_min_disp = 1;
+    CollisionGroup m_collision_group;
 
     static constexpr uint32_t MaxIter = 10;
 };

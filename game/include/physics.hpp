@@ -1,11 +1,29 @@
 #pragma once
 #include "flag.hpp"
 #include "math.hpp"
+#include "schema/collision_group.hpp"
 #include "schema/common.hpp"
 
 #include <memory>
 #include <optional>
 #include <vector>
+
+class CollisionGroup {
+public:
+    CollisionGroup() = default;
+    CollisionGroup(std::initializer_list<CollisionGroupType>);
+
+    void Add(CollisionGroupType);
+    void Remove(CollisionGroupType);
+    void Clear();
+
+    [[nodiscard]] bool CanCollision(CollisionGroup) const;
+
+private:
+    using underlying_type = std::underlying_type_t<CollisionGroupType>;
+
+    underlying_type m_collision_group{};
+};
 
 enum class HitType {
     None = 0,
@@ -83,6 +101,10 @@ public:
 
     const Vec2& GetPosition() const;
 
+    void SetCollisionGroup(CollisionGroup collision_group);
+
+    auto GetCollisionGroup() const { return m_collision_group; }
+
 private:
     union {
         Rect m_rect{};
@@ -91,6 +113,7 @@ private:
 
     ShapeType m_type;
     StorageType m_storage_type;
+    CollisionGroup m_collision_group;
 };
 
 class PhysicsScene {
@@ -113,7 +136,8 @@ public:
      * @param dir normalized vector
      */
     bool Sweep(const PhysicsActor&, const Vec2& dir, float dist,
-                     HitResult* out_result, size_t out_size);
+               CollisionGroup collision_group, HitResult* out_result,
+               size_t out_size);
 
     bool IsEnableDebugDraw() const { return m_should_debug_draw; }
 
@@ -137,7 +161,8 @@ private:
                                                float dist) const;
     [[nodiscard]] Rect computeSweepBoundingBox(const Circle&, const Vec2& dir,
                                                float dist) const;
-    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsActor&, const Vec2& dir,
+    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsActor&,
+                                               const Vec2& dir,
                                                float dist) const;
 
     std::vector<std::unique_ptr<PhysicsActor>>* getActorStoreInChunk(
@@ -145,5 +170,6 @@ private:
     [[nodiscard]] Rect computeActorBoundingBox(const PhysicsActor&) const;
 
     std::optional<HitResult> sweepActor(const PhysicsActor&,
-                                        const PhysicsActor&, const Vec2& dir) const;
+                                        const PhysicsActor&,
+                                        const Vec2& dir) const;
 };

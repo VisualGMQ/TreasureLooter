@@ -7,6 +7,28 @@
 #include <cmath>
 #include <limits>
 
+CollisionGroup::CollisionGroup(std::initializer_list<CollisionGroupType> list) {
+    for (CollisionGroupType type : list) {
+        Add(type);
+    }
+}
+
+void CollisionGroup::Add(CollisionGroupType group) {
+    m_collision_group |= 1 << static_cast<underlying_type>(group);
+}
+
+void CollisionGroup::Remove(CollisionGroupType group) {
+    m_collision_group &= ~(1 << static_cast<underlying_type>(group));
+}
+
+void CollisionGroup::Clear() {
+    m_collision_group = 0;
+}
+
+bool CollisionGroup::CanCollision(CollisionGroup o) const {
+    return m_collision_group & o.m_collision_group;
+}
+
 Vec2 NearestRectPoint(const Rect& r, const Vec2& v) {
     Vec2 top_left = r.m_center - r.m_half_size;
     Vec2 bottom_right = r.m_center + r.m_half_size;
@@ -276,6 +298,10 @@ const Vec2& PhysicsActor::GetPosition() const {
     return m_rect.m_center;
 }
 
+void PhysicsActor::SetCollisionGroup(CollisionGroup collision_group) {
+    m_collision_group = collision_group;
+}
+
 PhysicsScene::PhysicsScene() {
     m_cached_hits.reserve(100);
 }
@@ -380,7 +406,8 @@ void PhysicsScene::RemoveActor(PhysicsActor* actor) {
 }
 
 bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
-                         HitResult* out_result, size_t out_size) {
+                         CollisionGroup collision_group, HitResult* out_result,
+                         size_t out_size) {
     if (!out_result) {
         return false;
     }
@@ -393,6 +420,9 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
     sweep_rect.m_half_size += {1, 1};
 
     for (auto& act : m_actors) {
+        if (!collision_group.CanCollision(act->GetCollisionGroup())) {
+            continue;
+        }
         Rect bounding_rect = computeActorBoundingBox(*act);
         if (IsRectsIntersect(bounding_rect, sweep_rect)) {
             auto result = sweepActor(actor, *act, dir);
@@ -408,9 +438,11 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
     auto top_left = sweep_rect.m_center - sweep_rect.m_half_size;
     auto bottom_right = sweep_rect.m_center + sweep_rect.m_half_size;
     int min_x = std::floor(top_left.x / (float)game_config.m_tile_size_w);
-    int max_x = std::round(bottom_right.x / (float)game_config.m_tile_size_h + 0.5);
+    int max_x =
+        std::round(bottom_right.x / (float)game_config.m_tile_size_h + 0.5);
     int min_y = std::floor(top_left.y / (float)game_config.m_tile_size_w);
-    int max_y = std::round(bottom_right.y / (float)game_config.m_tile_size_h + 0.5);
+    int max_y =
+        std::round(bottom_right.y / (float)game_config.m_tile_size_h + 0.5);
 
     int min_chunk_x =
         std::floor(min_x / (float)game_config.m_tile_in_chunk_size_w);
@@ -451,6 +483,10 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
 
                     auto& actors = chunk->Get(sx, sy);
                     for (auto& act : actors) {
+                        if (!collision_group.CanCollision(
+                                act->GetCollisionGroup())) {
+                            continue;
+                        }
                         std::optional<HitResult> result =
                             sweepActor(actor, *act, dir);
                         if (!result || result->m_t > dist) {
@@ -535,7 +571,8 @@ void PhysicsScene::RenderDebug() const {
                                  game_config.m_tile_size_w * 0.5;
             rect.m_half_size.y = game_config.m_tile_in_chunk_size_h *
                                  game_config.m_tile_size_h * 0.5;
-            rect.m_center = Vec2(x, y) * rect.m_half_size * 2.0 + rect.m_half_size;
+            rect.m_center =
+                Vec2(x, y) * rect.m_half_size * 2.0 + rect.m_half_size;
 
             renderer->DrawRect(rect, Color::Green);
         }

@@ -9,7 +9,11 @@
 CharacterController::CharacterController(const CCT& create_info)
     : m_circle{{}, create_info.m_radius},
       m_skin{create_info.m_skin},
-      m_min_disp{create_info.m_min_disp} {}
+      m_min_disp{create_info.m_min_disp} {
+    for (auto type : create_info.m_collision_group_types) {
+        m_collision_group.Add(type);
+    }
+}
 
 void CharacterController::MoveAndSlide(const Vec2& dir) {
     auto& physics_scene = GAME_CONTEXT.m_physics_scene;
@@ -25,18 +29,18 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     HitResult hit;
     while (max_iter--) {
         PhysicsActor actor{m_circle, PhysicsActor::StorageType::Normal};
-        bool hitted = physics_scene->Sweep(actor, disp_normalized,
-                                                   disp_length, &hit, 1);
+        bool hitted = physics_scene->Sweep(actor, disp_normalized, disp_length,
+                                           m_collision_group, &hit, 1);
 
         if (!hitted) {
             m_circle.m_center += disp;
             return;
         }
 
-        float actual_move_dist = hit.m_t < m_skin ? -(m_skin - hit.m_t) : hit.m_t - m_skin;
+        float actual_move_dist =
+            hit.m_t < m_skin ? -(m_skin - hit.m_t) : hit.m_t - m_skin;
 
-        m_circle.m_center +=
-            actual_move_dist * disp_normalized;
+        m_circle.m_center += actual_move_dist * disp_normalized;
 
         disp_length -= actual_move_dist;
 
@@ -75,6 +79,14 @@ const Circle& CharacterController::GetCircle() const {
     return m_circle;
 }
 
+CollisionGroup CharacterController::GetCollisionGroup() const {
+    return m_collision_group;
+}
+
+void CharacterController::SetCollisionGroup(CollisionGroup collision_group) {
+    m_collision_group = collision_group;
+}
+
 bool CCTManager::IsEnableDebugDraw() const {
     return m_enable_debug_draw;
 }
@@ -98,7 +110,7 @@ void CCTManager::RenderDebug() {
 
 void InstanceDisplay(const char* name, CharacterController& cct) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
-    if(ImGui::TreeNode(name)) {
+    if (ImGui::TreeNode(name)) {
         auto circle = cct.GetCircle();
         InstanceDisplay("circle", circle);
         ImGui::TreePop();

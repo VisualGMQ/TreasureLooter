@@ -203,7 +203,10 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
                         Vec2(x, y) * m_handle->GetTileSize() * scale;
                     rect.m_half_size *= scale;
 
-                    physics_scene->CreateActorInChunk(rect.m_center, rect);
+                    auto actor = physics_scene->CreateActorInChunk(rect.m_center, rect);
+                    auto collision_group = actor->GetCollisionGroup();
+                    collision_group.Add(CollisionGroupType::Obstacle);
+                    actor->SetCollisionGroup(collision_group);
                 }
             }
         }

@@ -1,0 +1,6 @@
+<schema>
+    <enum name="CollisionGroupType">
+        <item name="CCT"/>
+        <item name="Obstacle"/>
+    </enum>
+</schema>
