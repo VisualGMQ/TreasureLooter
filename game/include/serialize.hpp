@@ -9,6 +9,7 @@
 #include "math.hpp"
 #include "rapidxml.hpp"
 #include "asset_manager.hpp"
+#include "schema/serialize/collision_group_schema.hpp"
 
 #include <optional>
 #include <string>
@@ -16,6 +17,7 @@
 class Image;
 class Tilemap;
 class Relationship;
+class CollisionGroup;
 
 // integral
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
@@ -130,6 +132,13 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const AnimationPlayer& payload,
                                 const std::string& name);
 void Deserialize(const rapidxml::xml_node<>& node, AnimationPlayer& payload);
+
+// collision group
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const CollisionGroup& payload,
+                                const std::string& name);
+void Deserialize(const rapidxml::xml_node<>& node, CollisionGroup& payload);
+
 
 // optional
 template <typename T>

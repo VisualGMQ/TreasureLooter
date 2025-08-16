@@ -14,7 +14,7 @@
 		</sprite>
 		<transform>
 			<value>
-				<position x="738.000000" y="500.000000"/>
+				<position x="707.000000" y="588.000000"/>
 				<scale x="1.000000" y="1.000000"/>
 				<rotation>0.000000</rotation>
 			</value>
@@ -31,8 +31,8 @@
 		<cct>
 			<value>
 				<skin>0.001000</skin>
-				<radius>24.000000</radius>
-				<min_disp>0.000100</min_disp>
+				<min_disp>0.00100</min_disp>
+				<physics_actor>assets/gpa/waggo.physics_actor.xml</physics_actor>
 			</value>
 		</cct>
 		<type>Player</type>

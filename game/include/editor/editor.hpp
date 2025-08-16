@@ -18,10 +18,10 @@ class TrivialEditor : public IEditor {
 
 #ifdef TL_ENABLE_EDITOR
 
-using AssetTypes =
-    std::variant<std::monostate, AssetLoadResult<Prefab>,
-                 AssetLoadResult<InputConfig>, AssetLoadResult<Animation>,
-                 AssetLoadResult<GameConfig>, AssetLoadResult<LevelContent>>;
+using AssetTypes = std::variant < std::monostate, AssetLoadResult<Prefab>,
+      AssetLoadResult<InputConfig>, AssetLoadResult<Animation>,
+      AssetLoadResult<GameConfig>, AssetLoadResult<LevelContent>,
+      AssetLoadResult<PhysicsActorInfo>>;
 
 class Editor : public IEditor {
 public:

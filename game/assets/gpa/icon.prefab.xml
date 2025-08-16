@@ -28,6 +28,13 @@
 			</value>
 		</animation>
 		<tilemap/>
+		<trigger>
+			<value>
+				<event_type>Coin</event_type>
+				<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
+				<physics_actor>assets/gpa/icon.physics_actor.xml</physics_actor>
+			</value>
+		</trigger>
 		<type>Normal</type>
 	</payload>
 </Prefab>

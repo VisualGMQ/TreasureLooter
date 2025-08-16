@@ -6,7 +6,7 @@
     <import>relationship</import>
     <import>anim</import>
     <import>anim_player</import>
-    <import>physics</import>
+    <import>physics_schema</import>
     <import>common</import>
 
     <asset name="Prefab" extension=".prefab">
@@ -16,6 +16,7 @@
         <option type="AnimationPlayerCreateInfo" name="animation"/>
         <handle type="Tilemap" name="tilemap"/>
         <option type="CCT" name="cct"/>
+        <option type="TriggerInfo" name="trigger"/>
         <element type="EntityType" name="type" default="EntityType::Normal"/>
     </asset>
 </schema>

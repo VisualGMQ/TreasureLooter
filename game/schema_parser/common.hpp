@@ -10,13 +10,14 @@ enum IncludeHint {
     None = 0,
 
     // std
-    Array = 0x02,
-    Option = 0x04,
-    UnorderedMap = 0x08,
+    Array = 0x01,
+    Option = 0x02,
+    UnorderedMap = 0x04,
+    Stdint = 0x08,
 
     // game related
     Handle = 0x10,
-    Asset = 0x12,
+    Asset = 0x20,
 };
 
 struct PropertyInfo {
@@ -40,6 +41,7 @@ struct EnumInfo {
     };
 
     std::string m_name;
+    std::string m_type;
     std::vector<Item> m_items;
 };
 

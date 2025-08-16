@@ -185,16 +185,20 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
 
                     Rect rect;
                     rect.m_half_size = tile->m_collision_rect.m_half_size;
-                    Vec2 scale = Vec2(game_config.m_tile_size_w, game_config.m_tile_size_h) / m_handle->GetTileSize();
+                    Vec2 scale = Vec2(game_config.m_tile_size_w,
+                                      game_config.m_tile_size_h) /
+                                 m_handle->GetTileSize();
                     rect.m_center = tile->m_collision_rect.m_center * scale;
 
                     auto flip = layer_tile.m_flip;
                     if (flip & Flip::Vertical) {
-                        float offset_y =  game_config.m_tile_size_h * 0.5 - rect.m_center.y;
+                        float offset_y =
+                            game_config.m_tile_size_h * 0.5 - rect.m_center.y;
                         rect.m_center.y += offset_y * 2.0;
                     }
                     if (flip & Flip::Horizontal) {
-                        float offset_x = game_config.m_tile_size_w * 0.5 - rect.m_center.x;
+                        float offset_x =
+                            game_config.m_tile_size_w * 0.5 - rect.m_center.x;
                         rect.m_center.x += offset_x * 2.0;
                     }
 
@@ -203,7 +207,15 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
                         Vec2(x, y) * m_handle->GetTileSize() * scale;
                     rect.m_half_size *= scale;
 
-                    physics_scene->CreateActorInChunk(rect.m_center, rect);
+                    auto actor = physics_scene->CreateActorInChunk(
+                        entity, rect.m_center, rect);
+
+                    CollisionGroup collision_layer;
+                    collision_layer.Add(CollisionGroupType::Obstacle);
+                    actor->SetCollisionLayer(collision_layer);
+                    CollisionGroup collision_mask;
+                    collision_mask.Add(CollisionGroupType::CCT);
+                    actor->SetCollisionMask(collision_mask);
                 }
             }
         }
@@ -248,7 +260,8 @@ void TilemapComponentManager::drawTilemap(const Transform& transform,
                     Vec2 scaled_tile_size = tilemap->GetTileSize() * scale;
 
                     dst_rect.m_center = transform.m_position +
-                                        Vec2(x, y) * scaled_tile_size + scaled_tile_size * 0.5;
+                                        Vec2(x, y) * scaled_tile_size +
+                                        scaled_tile_size * 0.5;
 
                     constexpr float scale_expand = 0.01;
                     scale += scale_expand;
