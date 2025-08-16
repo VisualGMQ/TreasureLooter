@@ -6,6 +6,8 @@
 #include "imgui.h"
 #include "imgui_id_generator.hpp"
 #include "math.hpp"
+#include "schema/display/collision_group_schema.hpp"
+#include "schema/display/common.hpp"
 
 void InstanceDisplay(const char* name, int& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
@@ -471,7 +473,7 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
         HANDLE_DISCRETE_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
-    
+
 #define TARGET_TYPE Vec2
     HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteRegionSize) {
         HANDLE_DISCRETE_TRACK_DISPLAY();
@@ -573,13 +575,12 @@ void displayAnimationContent(Animation& anim) {
                 HANDLE_ANIM_DISCRETE_DISPLAY();
             }
 #undef TARGET_TYPE
-            
+
 #define TARGET_TYPE Vec2
             HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteRegionSize) {
                 HANDLE_ANIM_DISCRETE_DISPLAY();
             }
 #undef TARGET_TYPE
-
 
 #define TARGET_TYPE Vec2
             HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteSize) {
@@ -725,4 +726,66 @@ void InstanceDisplay(const char* name, Path& path) {
         }
     }
     ImGui::EndDisabled();
+}
+
+void InstanceDisplay(const char* name, CharacterController& cct) {
+    ImGui::Text("%s", name);
+
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    if (ImGui::TreeNode(name)) {
+        InstanceDisplay("actor", *cct.GetActor());
+        ImGui::TreePop();
+    }
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, CollisionGroup& group) {
+    ImGui::Text("%s", name);
+
+    std::vector<CollisionGroupType> collision_groups;
+    for (int i = 0; i < sizeof(CollisionGroupType); i++) {
+        auto type = static_cast<CollisionGroupType>(1 << i);
+        if (group.Has(type)) {
+            collision_groups.push_back(type);
+        }
+    }
+
+    InstanceDisplay("groups", collision_groups);
+
+    group.Clear();
+    for (auto type : collision_groups) {
+        group.Add(type);
+    }
+}
+
+void InstanceDisplay(const char* name, const CollisionGroup& group) {
+    ImGui::Text("%s", name);
+    const Flags<CollisionGroupType> flags = group.GetUnderlying();
+    InstanceDisplay("groups", flags);
+}
+
+void InstanceDisplay(const char* name, const Trigger& trigger) {
+    ImGui::Text("%s", name);
+    // TODO:
+}
+
+void InstanceDisplay(const char* name, const PhysicsActor& actor) {
+    ImGui::Text("%s", name);
+
+    switch (actor.GetShapeType()) {
+        case PhysicsActor::ShapeType::Unknown:
+            ImGui::Text("Unknown type");
+            break;
+        case PhysicsActor::ShapeType::Rect: {
+            auto underlying = actor.AsRect();
+            InstanceDisplay("rect", *underlying);
+        } break;
+        case PhysicsActor::ShapeType::Circle: {
+            auto underlying = actor.AsCircle();
+            InstanceDisplay("rect", *underlying);
+        } break;
+    }
+
+    InstanceDisplay("collision mask", actor.GetCollisionMask());
+    InstanceDisplay("collision layer", actor.GetCollisionLayer());
 }

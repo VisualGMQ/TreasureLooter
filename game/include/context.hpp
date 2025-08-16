@@ -18,6 +18,7 @@
 #include "schema/config.hpp"
 #include "tilemap.hpp"
 #include "timer.hpp"
+#include "trigger.hpp"
 #include "window.hpp"
 
 #include <memory>
@@ -59,6 +60,7 @@ public:
     std::unique_ptr<IEditor> m_editor;
     std::unique_ptr<TransformManager> m_transform_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
+    std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
     std::unique_ptr<RelationshipManager> m_relationship_manager;
     std::unique_ptr<Keyboard> m_keyboard;

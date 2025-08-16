@@ -1,0 +1,7 @@
+<schema>
+    <enum name="CollisionGroupType" type="uint32_t">
+        <item name="CCT"/>
+        <item name="Obstacle"/>
+        <item name="Coin"/>
+    </enum>
+</schema>

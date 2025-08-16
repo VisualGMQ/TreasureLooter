@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <cstddef>
 #include <vector>
+#include "spdlog/fmt/ostr.h"
+#include "spdlog/spdlog.h"
 
 struct Vec2 final {
     union {
@@ -48,6 +50,7 @@ Vec2 operator-(const Vec2&, const Vec2&);
 float Dot(const Vec2&, const Vec2&);
 float Cross(const Vec2&, const Vec2&);
 Vec2 operator-(const Vec2&);
+std::ostream& operator<<(std::ostream& os, const Vec2&);
 
 struct Color {
     static const Color Red;
@@ -190,6 +193,20 @@ struct Region {
     Vec2 m_topleft, m_size;
 };
 
+/**
+ * present a range, value in [m_a, m_b)
+ */
+template <typename T>
+struct Range {
+    T m_begin{}, m_end{};
+};
+
+template <typename T>
+struct Range2D {
+    Range<T> m_x;
+    Range<T> m_y;
+};
+
 struct Transform {
     friend class RelationshipManager;
 
@@ -226,3 +243,7 @@ struct DecompositionResult {
  * @param normal normalized vector
  */
 DecompositionResult DecomposeVector(const Vec2& v, const Vec2& normal);
+
+// for spdlog output
+template <>
+struct fmt::formatter<Vec2> : fmt::ostream_formatter {};

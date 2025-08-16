@@ -1,7 +1,10 @@
 #pragma once
+#include "collision_group.hpp"
+#include "entity.hpp"
 #include "flag.hpp"
 #include "math.hpp"
 #include "schema/common.hpp"
+#include "schema/physics_schema.hpp"
 
 #include <memory>
 #include <optional>
@@ -25,6 +28,15 @@ struct HitResult {
     float m_t{};
     Flags<HitType> m_flags = HitType::None;
     Vec2 m_normal;
+};
+
+class PhysicsActor;
+
+struct OverlapResult {
+    Entity m_src_entity = null_entity;
+    Entity m_dst_entity = null_entity;
+    const PhysicsActor* m_src_actor = nullptr;
+    PhysicsActor* m_dst_actor = nullptr;
 };
 
 // nearest point
@@ -69,9 +81,9 @@ public:
         Circle,
     };
 
-    explicit PhysicsActor(const Rect& r, StorageType storage);
+    explicit PhysicsActor(Entity entity, const Rect& r, StorageType storage);
 
-    explicit PhysicsActor(const Circle& c, StorageType storage);
+    explicit PhysicsActor(Entity entity, const Circle& c, StorageType storage);
 
     const Rect* AsRect() const;
 
@@ -83,14 +95,29 @@ public:
 
     const Vec2& GetPosition() const;
 
+    void SetCollisionLayer(CollisionGroup collision_group);
+
+    auto GetCollisionLayer() const { return m_collision_layer; }
+
+    void SetCollisionMask(CollisionGroup collision_group);
+
+    auto GetCollisionMask() const { return m_collision_mask; }
+
+    Entity GetEntity() const { return m_owner; }
+
+    void MoveTo(const Vec2& position);
+
 private:
     union {
         Rect m_rect{};
         Circle m_circle;
     };
 
+    Entity m_owner = null_entity;
     ShapeType m_type;
     StorageType m_storage_type;
+    CollisionGroup m_collision_layer;
+    CollisionGroup m_collision_mask;
 };
 
 class PhysicsScene {
@@ -99,23 +126,28 @@ public:
 
     PhysicsScene();
 
-    PhysicsActor* CreateActorInChunk(size_t chunk_x, size_t chunk_y, size_t x,
-                                     size_t y, const Rect&);
-    PhysicsActor* CreateActorInChunk(size_t chunk_x, size_t chunk_y, size_t x,
-                                     size_t y, const Circle&);
-    PhysicsActor* CreateActorInChunk(const Vec2& center, const Rect&);
-    PhysicsActor* CreateActorInChunk(const Vec2& center, const Circle&);
-    PhysicsActor* CreateActor(const Circle&);
-    PhysicsActor* CreateActor(const Rect&);
+    PhysicsActor* CreateActorInChunk(Entity, size_t chunk_x, size_t chunk_y,
+                                     size_t x, size_t y, const Rect&);
+    PhysicsActor* CreateActorInChunk(Entity, size_t chunk_x, size_t chunk_y,
+                                     size_t x, size_t y, const Circle&);
+    PhysicsActor* CreateActorInChunk(Entity, const Vec2& center, const Rect&);
+    PhysicsActor* CreateActorInChunk(Entity, const Vec2& center, const Circle&);
+    PhysicsActor* CreateActor(Entity, PhysicsActorInfoHandle info);
+    PhysicsActor* CreateActor(Entity, const Circle&);
+    PhysicsActor* CreateActor(Entity, const Rect&);
     void RemoveActor(PhysicsActor*);
 
     /*
-     * @param dir normalized vector
+     * @param dir is normalized vector
      */
     bool Sweep(const PhysicsActor&, const Vec2& dir, float dist,
-                     HitResult* out_result, size_t out_size);
+               HitResult* out_result, size_t out_size);
 
-    bool IsEnableDebugDraw() const { return m_should_debug_draw; }
+    uint32_t Overlap(const PhysicsActor&, OverlapResult* out_result,
+                     size_t out_size);
+    [[nodiscard]] bool Overlap(const PhysicsActor&, const PhysicsActor&) const;
+
+    [[nodiscard]] bool IsEnableDebugDraw() const;
 
     void ToggleDebugDraw() { m_should_debug_draw = !m_should_debug_draw; }
 
@@ -127,6 +159,7 @@ private:
     Chunks m_chunks;
     std::vector<std::unique_ptr<PhysicsActor>> m_actors;  // actors not in chunk
     std::vector<HitResult> m_cached_hits;
+    std::vector<OverlapResult> m_cached_overlaps;
     bool m_should_debug_draw = false;
 
     Chunk& ensureChunk(size_t x, size_t y);
@@ -137,13 +170,25 @@ private:
                                                float dist) const;
     [[nodiscard]] Rect computeSweepBoundingBox(const Circle&, const Vec2& dir,
                                                float dist) const;
-    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsActor&, const Vec2& dir,
+    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsActor&,
+                                               const Vec2& dir,
                                                float dist) const;
 
     std::vector<std::unique_ptr<PhysicsActor>>* getActorStoreInChunk(
         const Vec2& actor_center, bool ensure);
     [[nodiscard]] Rect computeActorBoundingBox(const PhysicsActor&) const;
 
-    std::optional<HitResult> sweepActor(const PhysicsActor&,
-                                        const PhysicsActor&, const Vec2& dir) const;
+    [[nodiscard]] std::optional<HitResult> sweepActor(const PhysicsActor&,
+                                                      const PhysicsActor&,
+                                                      const Vec2& dir) const;
+
+    [[nodiscard]] bool checkNeedQuery(const PhysicsActor&,
+                                      const PhysicsActor&) const;
+
+    void getOverlapChunkRange(const Rect& bounding_box,
+                              Range2D<int>& out_chunk_range,
+                              Range2D<int>& out_tile_range);
+    void getTileRangeInCurrentChunk(Range2D<int>& chunk_range,
+                                    Range2D<int>& tile_range, int x, int y,
+                                    Range2D<int>& out_tile_range);
 };

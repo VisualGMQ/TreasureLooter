@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-std::optional<EnumInfo> ParseEnum(rapidxml::xml_node<>* node) {
+std::optional<EnumInfo> ParseEnum(SchemaInfo& schema, rapidxml::xml_node<>* node) {
     EnumInfo info;
     auto name_node = node->first_attribute("name");
     if (!name_node) {
@@ -12,6 +12,12 @@ std::optional<EnumInfo> ParseEnum(rapidxml::xml_node<>* node) {
     }
 
     info.m_name = name_node->value();
+
+    auto type_node = node->first_attribute("type");
+    if (type_node) {
+        info.m_type = type_node->value();
+        schema.m_include_hints |= Stdint;
+    }
 
     auto item_node = node->first_node("item");
     while (item_node) {
@@ -305,7 +311,7 @@ std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
                 schema_info.m_imports.push_back(import_info.value());
             }
         } else if (name == "enum") {
-            auto info = ParseEnum(child);
+            auto info = ParseEnum(schema_info, child);
             if (info) {
                 schema_info.m_enums.push_back(info.value());
             }

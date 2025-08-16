@@ -1,0 +1,16 @@
+<LevelContent>
+	<uuid>99725f59-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<entities>
+			<elem>
+				<entity>2</entity>
+				<prefab>assets/gpa/waggo.prefab.xml</prefab>
+			</elem>
+			<elem>
+				<entity>3</entity>
+				<prefab>assets/gpa/test_tilemap.prefab.xml</prefab>
+			</elem>
+		</entities>
+	</payload>
+</LevelContent>
+

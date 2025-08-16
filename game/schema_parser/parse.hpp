@@ -5,7 +5,7 @@
 #include <optional>
 #include <rapidxml.hpp>
 
-std::optional<EnumInfo> ParseEnum(rapidxml::xml_node<>* node);
+std::optional<EnumInfo> ParseEnum(SchemaInfo&, rapidxml::xml_node<>* node);
 std::optional<std::string> ParseInclude(rapidxml::xml_node<>* node);
 std::optional<std::string> ParseImport(rapidxml::xml_node<>* node);
 std::optional<PropertyInfo> ParseElement(rapidxml::xml_node<>* node);

@@ -42,6 +42,8 @@ Context& GAME_CONTEXT {
 void Context::Shutdown() {
     m_level_manager->Switch({});
     m_level_manager.reset();
+
+    m_trigger_component_manager.reset();
 }
 
 Context::~Context() {
@@ -180,6 +182,7 @@ Context::Context() {
     m_event_system = std::make_unique<EventSystem>();
     m_entity_logic_manager = std::make_unique<EntityLogicManager>();
     m_level_manager = std::make_unique<LevelManager>();
+    m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -200,6 +203,7 @@ void Context::logicUpdate(TimeType elapse) {
 
     m_animation_player_manager->Update(elapse);
     m_relationship_manager->Update();
+    m_trigger_component_manager->Update();
     m_event_system->Update();
 }
 
@@ -218,7 +222,6 @@ void Context::renderUpdate(TimeType elapse) {
     m_level_manager->UpdateRender(elapse);
 
     m_physics_scene->RenderDebug();
-    m_cct_manager->RenderDebug();
 
     m_inspector->Update();
 

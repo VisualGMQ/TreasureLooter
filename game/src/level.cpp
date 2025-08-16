@@ -161,10 +161,14 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
             entity, prefab.m_animation.value());
     }
     if (prefab.m_cct) {
-        GAME_CONTEXT.m_cct_manager->RegisterEntity(entity,
+        GAME_CONTEXT.m_cct_manager->RegisterEntity(entity, entity,
                                                    prefab.m_cct.value());
         GAME_CONTEXT.m_cct_manager->Get(entity)->Teleport(
             prefab.m_transform->m_position);
+    }
+    if (prefab.m_trigger) {
+        GAME_CONTEXT.m_trigger_component_manager->RegisterEntity(
+            entity, entity, prefab.m_trigger.value());
     }
     if (prefab.m_type == EntityType::Player) {
         GAME_CONTEXT.m_entity_logic_manager
@@ -236,7 +240,8 @@ void Level::doRemoveEntities() {
     m_pending_delete_entities.clear();
 }
 
-AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename, bool force) {
+AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename,
+                                                       bool force) {
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }
@@ -305,6 +310,15 @@ void PlayerLogic::OnInit() {
                     }
                 }
             });
+
+    GAME_CONTEXT.m_event_system->AddListener<TriggerEnterEvent>(
+        [](EventListenerID, const TriggerEnterEvent&) { LOGI("entered"); });
+
+    GAME_CONTEXT.m_event_system->AddListener<TriggerLeaveEvent>(
+        [](EventListenerID, const TriggerLeaveEvent) { LOGI("leave"); });
+
+    GAME_CONTEXT.m_event_system->AddListener<TriggerTouchEvent>(
+        [](EventListenerID, const TriggerTouchEvent) { LOGI("touch"); });
 
     // NOTE: when under android, device will change window size after few frames
     // and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event after rotate

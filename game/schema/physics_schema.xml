@@ -1,0 +1,30 @@
+<schema>
+    <include>math.hpp</include>
+    <import>common</import>
+    <import>collision_group_schema</import>
+    <include>collision_group.hpp</include>
+
+    <asset name="PhysicsActorInfo" extension=".physics_actor">
+        <element name="is_rect" type="bool"/>
+        <element name="rect" type="Rect"/>
+        <element name="circle" type="Circle"/>
+        <element name="collision_layer" type="CollisionGroup"/>
+        <element name="collision_mask" type="CollisionGroup"/>
+    </asset>
+
+    <class name="CCT">
+        <element name="skin" type="float" default="0.1"/>
+        <element name="min_disp" type="float" default="0.001"/>
+        <handle name="physics_actor" type="PhysicsActorInfo"/>
+    </class>
+
+    <enum name="TriggerEventType">
+        <item name="Coin"/>
+    </enum>
+
+    <class name="TriggerInfo">
+        <element name="event_type" type="TriggerEventType"/>
+        <handle name="physics_actor" type="PhysicsActorInfo"/>
+        <element name="trig_every_frame_when_touch" type="bool" default="false"/>
+    </class>
+</schema>

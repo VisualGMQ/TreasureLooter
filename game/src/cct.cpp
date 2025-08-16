@@ -6,16 +6,36 @@
 #include "instance_display.hpp"
 #include "schema/display/common.hpp"
 
-CharacterController::CharacterController(const CCT& create_info)
-    : m_circle{{}, create_info.m_radius},
-      m_skin{create_info.m_skin},
-      m_min_disp{create_info.m_min_disp} {}
+CharacterController::CharacterController(Entity entity, const CCT& create_info)
+    : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
+    m_actor = GAME_CONTEXT.m_physics_scene->CreateActor(
+        entity, create_info.m_physics_actor);
+}
+
+CharacterController::~CharacterController() {
+    GAME_CONTEXT.m_physics_scene->RemoveActor(m_actor);
+}
+
+bool CharacterController::EnableDebugOutput = false;
+
+#define CCT_DEBUG_LOG(fmt, ...)                            \
+    do {                                              \
+        if (CharacterController::EnableDebugOutput) { \
+            LOGI("CCT Debug Log:" fmt, ##__VA_ARGS__);   \
+        }                                             \
+    } while (0)
 
 void CharacterController::MoveAndSlide(const Vec2& dir) {
-    auto& physics_scene = GAME_CONTEXT.m_physics_scene;
+    if (!m_actor) {
+        CCT_DEBUG_LOG("actor is nullptr");
+        return;
+    }
 
     float disp_length = dir.Length();
-    if (disp_length <= std::numeric_limits<float>::epsilon()) {
+    CCT_DEBUG_LOG("disp: {}", dir);
+    CCT_DEBUG_LOG("disp length: {}", disp_length);
+    if (disp_length <= m_min_disp) {
+        CCT_DEBUG_LOG("disp length too small, exit");
         return;
     }
 
@@ -23,40 +43,69 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     Vec2 disp_normalized = disp / disp_length;
     uint32_t max_iter = MaxIter;
     HitResult hit;
+
+    auto& physics_scene = GAME_CONTEXT.m_physics_scene;
+    Vec2 position = GetPosition();
+
+    CCT_DEBUG_LOG("max iter = {}, begin iter", max_iter);
+    CCT_DEBUG_LOG("start position: {}", position);
+
     while (max_iter--) {
-        PhysicsActor actor{m_circle, PhysicsActor::StorageType::Normal};
-        bool hitted = physics_scene->Sweep(actor, disp_normalized,
-                                                   disp_length, &hit, 1);
+        bool hitted = physics_scene->Sweep(*m_actor, disp_normalized,
+                                           disp_length, &hit, 1);
 
         if (!hitted) {
-            m_circle.m_center += disp;
-            return;
+            CCT_DEBUG_LOG("not hitted, move along {}", disp);
+            position += disp;
+            break;
         }
 
-        float actual_move_dist = hit.m_t < m_skin ? -(m_skin - hit.m_t) : hit.m_t - m_skin;
+        CCT_DEBUG_LOG("hitted! hit flags: {}, normal: {}, t: {}", hit.m_flags.Value(),
+                      hit.m_normal, hit.m_t);
 
-        m_circle.m_center +=
-            actual_move_dist * disp_normalized;
+        float actual_move_dist =
+            hit.m_t < m_skin ? -(m_skin - hit.m_t) : hit.m_t - m_skin;
+
+        CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
+                      hit.m_t, m_skin, hit.m_t < m_skin, actual_move_dist);
+
+        position += actual_move_dist * disp_normalized;
+
+        CCT_DEBUG_LOG("move to {}", position);
 
         disp_length -= actual_move_dist;
 
+        CCT_DEBUG_LOG("remain disp length: {}", disp_length);
+
         if (disp_length <= m_min_disp) {
-            return;
+            CCT_DEBUG_LOG("disp length < min disp, exit");
+            break;
         }
 
         auto [tangent, normal] =
             DecomposeVector(disp_normalized * disp_length, hit.m_normal);
         disp_length = tangent.Length();
+
+        CCT_DEBUG_LOG("tangent: {}, length: {}", tangent, disp_length);
+
         if (disp_length <= std::numeric_limits<float>::epsilon()) {
-            return;
+            CCT_DEBUG_LOG("disp too small, exit");
+            break;
         }
+
         disp = tangent;
         disp_normalized = disp / disp_length;
     }
+
+    CCT_DEBUG_LOG("end iter, final position: {}", position);
+    m_actor->MoveTo(position);
 }
 
-const Vec2& CharacterController::GetPosition() const {
-    return m_circle.m_center;
+Vec2 CharacterController::GetPosition() const {
+    if (m_actor) {
+        return m_actor->GetPosition();
+    }
+    return {};
 }
 
 void CharacterController::SetSkin(float skin) {
@@ -68,40 +117,11 @@ void CharacterController::SetMinDisp(float disp) {
 }
 
 void CharacterController::Teleport(const Vec2& pos) {
-    m_circle.m_center = pos;
-}
-
-const Circle& CharacterController::GetCircle() const {
-    return m_circle;
-}
-
-bool CCTManager::IsEnableDebugDraw() const {
-    return m_enable_debug_draw;
-}
-
-void CCTManager::ToggleDebugDraw() {
-    m_enable_debug_draw = !m_enable_debug_draw;
-}
-
-void CCTManager::RenderDebug() {
-    if (!IsEnableDebugDraw()) {
-        return;
-    }
-    for (auto& [_, cct] : m_components) {
-        if (!cct.m_enable) {
-            continue;
-        }
-        GAME_CONTEXT.m_renderer->DrawCircle(cct.m_component->GetCircle(),
-                                            Color::Green);
+    if (m_actor) {
+        m_actor->MoveTo(pos);
     }
 }
 
-void InstanceDisplay(const char* name, CharacterController& cct) {
-    ImGui::PushID(ImGuiIDGenerator::Gen());
-    if(ImGui::TreeNode(name)) {
-        auto circle = cct.GetCircle();
-        InstanceDisplay("circle", circle);
-        ImGui::TreePop();
-    }
-    ImGui::PopID();
+const PhysicsActor* CharacterController::GetActor() const {
+    return m_actor;
 }

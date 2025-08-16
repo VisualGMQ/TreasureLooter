@@ -1,8 +1,6 @@
 ﻿#include "inspector.hpp"
 
 #include "SDL3/SDL.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
 #include "context.hpp"
 #include "imgui.h"
 #include "imgui_id_generator.hpp"
@@ -13,7 +11,7 @@
 #include "transform.hpp"
 #include "window.hpp"
 
-#include "schema/display/physics.hpp"
+#include "schema/display/physics_schema.hpp"
 #include "schema/display/prefab.hpp"
 #include "schema/display/relationship.hpp"
 #include "schema/display/sprite.hpp"
@@ -29,11 +27,6 @@ void Inspector::Update() {
             GAME_CONTEXT.m_physics_scene->IsEnableDebugDraw();
         if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
             GAME_CONTEXT.m_physics_scene->ToggleDebugDraw();
-        }
-
-        bool cct_debug_draw = GAME_CONTEXT.m_cct_manager->IsEnableDebugDraw();
-        if (ImGui::Checkbox("cct debug draw", &cct_debug_draw)) {
-            GAME_CONTEXT.m_cct_manager->ToggleDebugDraw();
         }
     }
     ImGui::End();
@@ -82,7 +75,12 @@ void Inspector::showEntityDetail(Entity entity) {
         auto value = ctx.m_cct_manager->Get(entity);
         InstanceDisplay("cct", *value);
     }
+    if (ctx.m_trigger_component_manager->Has(entity)) {
+        auto value = ctx.m_trigger_component_manager->Get(entity);
+        InstanceDisplay("trigger", *value);
+    }
 }
+
 
 void Inspector::showEntityHierarchy(Entity node) {
     auto& ctx = GAME_CONTEXT;

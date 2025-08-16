@@ -12,6 +12,10 @@ struct NullEntity {
     constexpr bool operator!=(Entity) const;
     constexpr bool operator==(NullEntity) const;
     constexpr bool operator!=(NullEntity) const;
+
+    operator Entity() const {
+        return static_cast<Entity>(0);
+    }
 };
 
 constexpr NullEntity null_entity;

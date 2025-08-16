@@ -66,6 +66,11 @@ void InstanceDisplay(const char* name, Entity);
 void InstanceDisplay(const char* name, NullEntity);
 void InstanceDisplay(const char* name, const Path&);
 void InstanceDisplay(const char* name, Path&);
+void InstanceDisplay(const char* name, CharacterController&);
+void InstanceDisplay(const char* name, CollisionGroup&);
+void InstanceDisplay(const char* name, const CollisionGroup&);
+void InstanceDisplay(const char* name, const Trigger&);
+void InstanceDisplay(const char* name, const PhysicsActor&);
 
 template <typename T>
 void InstanceDisplay(const char* name, std::optional<T>& value) {
