@@ -7,28 +7,6 @@
 #include <cmath>
 #include <limits>
 
-CollisionGroup::CollisionGroup(std::initializer_list<CollisionGroupType> list) {
-    for (CollisionGroupType type : list) {
-        Add(type);
-    }
-}
-
-void CollisionGroup::Add(CollisionGroupType group) {
-    m_collision_group |= 1 << static_cast<underlying_type>(group);
-}
-
-void CollisionGroup::Remove(CollisionGroupType group) {
-    m_collision_group &= ~(1 << static_cast<underlying_type>(group));
-}
-
-void CollisionGroup::Clear() {
-    m_collision_group = 0;
-}
-
-bool CollisionGroup::CanCollision(CollisionGroup o) const {
-    return m_collision_group & o.m_collision_group;
-}
-
 Vec2 NearestRectPoint(const Rect& r, const Vec2& v) {
     Vec2 top_left = r.m_center - r.m_half_size;
     Vec2 bottom_right = r.m_center + r.m_half_size;
@@ -272,11 +250,17 @@ std::optional<HitResult> SweepCircleRect(const Circle& c, const Rect& r,
     return HitResult{*it, hit_types[idx], hit_normal};
 }
 
-PhysicsActor::PhysicsActor(const Rect& r, StorageType storage)
-    : m_type{ShapeType::Rect}, m_rect{r}, m_storage_type{storage} {}
+PhysicsActor::PhysicsActor(Entity entity, const Rect& r, StorageType storage)
+    : m_owner{entity},
+      m_type{ShapeType::Rect},
+      m_rect{r},
+      m_storage_type{storage} {}
 
-PhysicsActor::PhysicsActor(const Circle& c, StorageType storage)
-    : m_type{ShapeType::Circle}, m_circle{c}, m_storage_type{storage} {}
+PhysicsActor::PhysicsActor(Entity entity, const Circle& c, StorageType storage)
+    : m_owner{entity},
+      m_type{ShapeType::Circle},
+      m_circle{c},
+      m_storage_type{storage} {}
 
 const Rect* PhysicsActor::AsRect() const {
     return m_type == ShapeType::Rect ? &m_rect : nullptr;
@@ -298,17 +282,47 @@ const Vec2& PhysicsActor::GetPosition() const {
     return m_rect.m_center;
 }
 
-void PhysicsActor::SetCollisionGroup(CollisionGroup collision_group) {
-    m_collision_group = collision_group;
+void PhysicsActor::SetCollisionLayer(CollisionGroup collision_group) {
+    m_collision_layer = collision_group;
+}
+
+void PhysicsActor::SetCollisionMask(CollisionGroup collision_group) {
+    m_collision_mask = collision_group;
+}
+
+void PhysicsActor::MoveTo(const Vec2& position) {
+    m_rect.m_center = position;
 }
 
 PhysicsScene::PhysicsScene() {
     m_cached_hits.reserve(100);
 }
 
-PhysicsActor* PhysicsScene::CreateActorInChunk(size_t chunk_x, size_t chunk_y,
-                                               size_t x, size_t y,
-                                               const Rect& rect) {
+PhysicsActor* PhysicsScene::CreateActor(Entity entity,
+                                        PhysicsActorInfoHandle info) {
+    if (!info) {
+        return nullptr;
+    }
+
+    PhysicsActor* actor{};
+    if (info->m_is_rect) {
+        actor = CreateActor(entity, info->m_rect);
+    } else {
+        actor = CreateActor(entity, info->m_circle);
+    }
+
+    if (actor) {
+        actor->SetCollisionLayer(info->m_collision_layer);
+        actor->SetCollisionMask(info->m_collision_mask);
+        return actor;
+    }
+
+    return nullptr;
+}
+
+PhysicsActor* PhysicsScene::CreateActorInChunk(Entity entity, size_t chunk_x,
+                                               size_t chunk_y, size_t x,
+                                               size_t y, const Rect& rect) {
     const auto& game_config = GAME_CONTEXT.GetGameConfig();
     if (x >= game_config.m_tile_in_chunk_size_w ||
         y >= game_config.m_tile_in_chunk_size_h) {
@@ -318,14 +332,15 @@ PhysicsActor* PhysicsScene::CreateActorInChunk(size_t chunk_x, size_t chunk_y,
         return nullptr;
     }
 
-    return setActor2Chunk(chunk_x, chunk_y, x, y,
-                          std::make_unique<PhysicsActor>(
-                              rect, PhysicsActor::StorageType::InChunk));
+    return setActor2Chunk(
+        chunk_x, chunk_y, x, y,
+        std::make_unique<PhysicsActor>(entity, rect,
+                                       PhysicsActor::StorageType::InChunk));
 }
 
-PhysicsActor* PhysicsScene::CreateActorInChunk(size_t chunk_x, size_t chunk_y,
-                                               size_t x, size_t y,
-                                               const Circle& circle) {
+PhysicsActor* PhysicsScene::CreateActorInChunk(Entity entity, size_t chunk_x,
+                                               size_t chunk_y, size_t x,
+                                               size_t y, const Circle& circle) {
     const auto& game_config = GAME_CONTEXT.GetGameConfig();
     if (x >= game_config.m_tile_in_chunk_size_w ||
         y >= game_config.m_tile_in_chunk_size_h) {
@@ -335,12 +350,14 @@ PhysicsActor* PhysicsScene::CreateActorInChunk(size_t chunk_x, size_t chunk_y,
         return nullptr;
     }
 
-    return setActor2Chunk(chunk_x, chunk_y, x, y,
-                          std::make_unique<PhysicsActor>(
-                              circle, PhysicsActor::StorageType::InChunk));
+    return setActor2Chunk(
+        chunk_x, chunk_y, x, y,
+        std::make_unique<PhysicsActor>(entity, circle,
+                                       PhysicsActor::StorageType::InChunk));
 }
 
-PhysicsActor* PhysicsScene::CreateActorInChunk(const Vec2& center,
+PhysicsActor* PhysicsScene::CreateActorInChunk(Entity entity,
+                                               const Vec2& center,
                                                const Rect& rect) {
     auto actors = getActorStoreInChunk(center, true);
     if (!actors) {
@@ -349,11 +366,12 @@ PhysicsActor* PhysicsScene::CreateActorInChunk(const Vec2& center,
 
     return actors
         ->emplace_back(std::make_unique<PhysicsActor>(
-            rect, PhysicsActor::StorageType::InChunk))
+            entity, rect, PhysicsActor::StorageType::InChunk))
         .get();
 }
 
-PhysicsActor* PhysicsScene::CreateActorInChunk(const Vec2& center,
+PhysicsActor* PhysicsScene::CreateActorInChunk(Entity entity,
+                                               const Vec2& center,
                                                const Circle& c) {
     auto actors = getActorStoreInChunk(center, true);
     if (!actors) {
@@ -362,21 +380,21 @@ PhysicsActor* PhysicsScene::CreateActorInChunk(const Vec2& center,
 
     return actors
         ->emplace_back(std::make_unique<PhysicsActor>(
-            c, PhysicsActor::StorageType::InChunk))
+            entity, c, PhysicsActor::StorageType::InChunk))
         .get();
 }
 
-PhysicsActor* PhysicsScene::CreateActor(const Circle& circle) {
+PhysicsActor* PhysicsScene::CreateActor(Entity entity, const Circle& circle) {
     return m_actors
         .emplace_back(std::make_unique<PhysicsActor>(
-            circle, PhysicsActor::StorageType::Normal))
+            entity, circle, PhysicsActor::StorageType::Normal))
         .get();
 }
 
-PhysicsActor* PhysicsScene::CreateActor(const Rect& rect) {
+PhysicsActor* PhysicsScene::CreateActor(Entity entity, const Rect& rect) {
     return m_actors
         .emplace_back(std::make_unique<PhysicsActor>(
-            rect, PhysicsActor::StorageType::Normal))
+            entity, rect, PhysicsActor::StorageType::Normal))
         .get();
 }
 
@@ -406,9 +424,8 @@ void PhysicsScene::RemoveActor(PhysicsActor* actor) {
 }
 
 bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
-                         CollisionGroup collision_group, HitResult* out_result,
-                         size_t out_size) {
-    if (!out_result) {
+                         HitResult* out_result, size_t out_size) {
+    if (!out_result || out_size == 0) {
         return false;
     }
 
@@ -420,7 +437,7 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
     sweep_rect.m_half_size += {1, 1};
 
     for (auto& act : m_actors) {
-        if (!collision_group.CanCollision(act->GetCollisionGroup())) {
+        if (!checkNeedQuery(actor, *act)) {
             continue;
         }
         Rect bounding_rect = computeActorBoundingBox(*act);
@@ -433,33 +450,11 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
         }
     }
 
-    const auto& game_config = GAME_CONTEXT.GetGameConfig();
+    Range2D<int> chunk_range, tile_range;
+    getOverlapChunkRange(sweep_rect, chunk_range, tile_range);
 
-    auto top_left = sweep_rect.m_center - sweep_rect.m_half_size;
-    auto bottom_right = sweep_rect.m_center + sweep_rect.m_half_size;
-    int min_x = std::floor(top_left.x / (float)game_config.m_tile_size_w);
-    int max_x =
-        std::round(bottom_right.x / (float)game_config.m_tile_size_h + 0.5);
-    int min_y = std::floor(top_left.y / (float)game_config.m_tile_size_w);
-    int max_y =
-        std::round(bottom_right.y / (float)game_config.m_tile_size_h + 0.5);
-
-    int min_chunk_x =
-        std::floor(min_x / (float)game_config.m_tile_in_chunk_size_w);
-    int max_chunk_x =
-        std::round(max_x / (float)game_config.m_tile_in_chunk_size_w + 0.5);
-    int min_chunk_y =
-        std::floor(min_y / (float)game_config.m_tile_in_chunk_size_h);
-    int max_chunk_y =
-        std::round(max_y / (float)game_config.m_tile_in_chunk_size_h + 0.5);
-
-    int min_tile_x = std::floor(min_x % game_config.m_tile_in_chunk_size_w);
-    int min_tile_y = std::floor(min_y % game_config.m_tile_in_chunk_size_h);
-    int max_tile_x = std::ceil(max_x % game_config.m_tile_in_chunk_size_w);
-    int max_tile_y = std::ceil(max_y % game_config.m_tile_in_chunk_size_h);
-
-    for (int y = min_chunk_y; y < max_chunk_y; y++) {
-        for (int x = min_chunk_x; x < max_chunk_x; x++) {
+    for (int y = chunk_range.m_y.m_begin; y < chunk_range.m_y.m_end; y++) {
+        for (int x = chunk_range.m_x.m_begin; x < chunk_range.m_x.m_end; x++) {
             if (!m_chunks.InRange(x, y)) {
                 continue;
             }
@@ -468,23 +463,21 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
                 continue;
             }
 
-            int x1 = x == min_chunk_x ? min_tile_x : 0;
-            int x2 = x == max_chunk_x - 1 ? max_tile_x
-                                          : game_config.m_tile_in_chunk_size_w;
-            int y1 = y == min_chunk_y ? min_tile_y : 0;
-            int y2 = y == max_chunk_y - 1 ? max_tile_y
-                                          : game_config.m_tile_in_chunk_size_h;
+            Range2D<int> cur_tile_range;
+            getTileRangeInCurrentChunk(chunk_range, tile_range, x, y,
+                                       cur_tile_range);
 
-            for (int sy = y1; sy < y2; sy++) {
-                for (int sx = x1; sx < x2; sx++) {
+            for (int sy = cur_tile_range.m_y.m_begin;
+                 sy < cur_tile_range.m_y.m_end; sy++) {
+                for (int sx = cur_tile_range.m_x.m_begin;
+                     sx < cur_tile_range.m_x.m_end; sx++) {
                     if (!chunk->InRange(sx, sy)) {
                         continue;
                     }
 
                     auto& actors = chunk->Get(sx, sy);
                     for (auto& act : actors) {
-                        if (!collision_group.CanCollision(
-                                act->GetCollisionGroup())) {
+                        if (!checkNeedQuery(actor, *act)) {
                             continue;
                         }
                         std::optional<HitResult> result =
@@ -512,6 +505,91 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
     }
 
     return true;
+}
+
+uint32_t PhysicsScene::Overlap(const PhysicsActor& actor,
+                               OverlapResult* out_result, size_t out_size) {
+    if (!out_result || out_size == 0) {
+        return 0;
+    }
+
+    m_cached_overlaps.clear();
+
+    auto bounding_box = computeActorBoundingBox(actor);
+
+    for (auto& act : m_actors) {
+        if (!checkNeedQuery(actor, *act)) {
+            continue;
+        }
+        Rect bounding_rect = computeActorBoundingBox(*act);
+        if (IsRectsIntersect(bounding_rect, bounding_box) &&
+            Overlap(actor, *act)) {
+            OverlapResult result;
+            result.m_src_entity = actor.GetEntity();
+            result.m_dst_entity = act->GetEntity();
+            result.m_src_actor = &actor;
+            result.m_dst_actor = act.get();
+            m_cached_overlaps.push_back(result);
+        }
+    }
+
+    Range2D<int> chunk_range, tile_range;
+    getOverlapChunkRange(bounding_box, chunk_range, tile_range);
+
+    for (int y = chunk_range.m_y.m_begin; y < chunk_range.m_y.m_end; y++) {
+        for (int x = chunk_range.m_x.m_begin; x < chunk_range.m_x.m_end; x++) {
+            if (!m_chunks.InRange(x, y)) {
+                continue;
+            }
+            auto& chunk = m_chunks.Get(x, y);
+            if (!chunk) {
+                continue;
+            }
+
+            Range2D<int> cur_tile_range;
+            getTileRangeInCurrentChunk(chunk_range, tile_range, x, y,
+                                       cur_tile_range);
+
+            for (int sy = cur_tile_range.m_y.m_begin;
+                 sy < cur_tile_range.m_y.m_end; sy++) {
+                for (int sx = cur_tile_range.m_x.m_begin;
+                     sx < cur_tile_range.m_x.m_end; sx++) {
+                    if (!chunk->InRange(sx, sy)) {
+                        continue;
+                    }
+
+                    auto& actors = chunk->Get(sx, sy);
+                    for (auto& act : actors) {
+                        if (!(checkNeedQuery(actor, *act) &&
+                              Overlap(actor, *act))) {
+                            continue;
+                        }
+                        OverlapResult result;
+                        result.m_src_entity = actor.GetEntity();
+                        result.m_dst_entity = act->GetEntity();
+                        result.m_src_actor = &actor;
+                        result.m_dst_actor = act.get();
+                        m_cached_overlaps.push_back(result);
+                    }
+                }
+            }
+        }
+    }
+
+    if (m_cached_overlaps.empty()) {
+        return 0;
+    }
+
+    size_t count = std::min(m_cached_overlaps.size(), out_size);
+    for (size_t i = 0; i < count; ++i) {
+        out_result[i] = m_cached_overlaps[i];
+    }
+
+    return count;
+}
+
+bool PhysicsScene::IsEnableDebugDraw() const {
+    return m_should_debug_draw;
 }
 
 void PhysicsScene::RenderDebug() const {
@@ -716,4 +794,86 @@ std::optional<HitResult> PhysicsScene::sweepActor(const PhysicsActor& r1,
     }
 
     return std::nullopt;
+}
+
+bool PhysicsScene::Overlap(const PhysicsActor& r1,
+                           const PhysicsActor& r2) const {
+    if (r1.GetShapeType() == PhysicsActor::ShapeType::Rect) {
+        if (r2.GetShapeType() == PhysicsActor::ShapeType::Rect) {
+            return IsRectsIntersect(*r1.AsRect(), *r2.AsRect());
+        }
+        if (r2.GetShapeType() == PhysicsActor::ShapeType::Circle) {
+            return IsCircleRectIntersect(*r2.AsCircle(), *r1.AsRect());
+        }
+    } else if (r1.GetShapeType() == PhysicsActor::ShapeType::Circle) {
+        if (r2.GetShapeType() == PhysicsActor::ShapeType::Rect) {
+            return IsCircleRectIntersect(*r1.AsCircle(), *r2.AsRect());
+        }
+        if (r2.GetShapeType() == PhysicsActor::ShapeType::Circle) {
+            return IsCirclesIntersect(*r1.AsCircle(), *r2.AsCircle());
+        }
+    }
+
+    return false;
+}
+
+bool PhysicsScene::checkNeedQuery(const PhysicsActor& a,
+                                  const PhysicsActor& b) const {
+    if (&a == &b) {
+        return false;
+    }
+
+    auto mask1 = a.GetCollisionMask();
+    auto layer2 = b.GetCollisionLayer();
+
+    return mask1.CanCollision(layer2);
+}
+
+void PhysicsScene::getOverlapChunkRange(const Rect& bounding_box,
+                                        Range2D<int>& out_chunk_range,
+                                        Range2D<int>& out_tile_range) {
+    auto& game_config = GAME_CONTEXT.GetGameConfig();
+    auto top_left = bounding_box.m_center - bounding_box.m_half_size;
+    auto bottom_right = bounding_box.m_center + bounding_box.m_half_size;
+    int min_x = std::floor(top_left.x / (float)game_config.m_tile_size_w);
+    int max_x =
+        std::round(bottom_right.x / (float)game_config.m_tile_size_h + 0.5);
+    int min_y = std::floor(top_left.y / (float)game_config.m_tile_size_w);
+    int max_y =
+        std::round(bottom_right.y / (float)game_config.m_tile_size_h + 0.5);
+
+    out_chunk_range.m_x.m_begin =
+        std::floor(min_x / (float)game_config.m_tile_in_chunk_size_w);
+    out_chunk_range.m_x.m_end =
+        std::round(max_x / (float)game_config.m_tile_in_chunk_size_w + 0.5);
+    out_chunk_range.m_y.m_begin =
+        std::floor(min_y / (float)game_config.m_tile_in_chunk_size_h);
+    out_chunk_range.m_y.m_end =
+        std::round(max_y / (float)game_config.m_tile_in_chunk_size_h + 0.5);
+
+    out_tile_range.m_x.m_begin =
+        std::floor(min_x % game_config.m_tile_in_chunk_size_w);
+    out_tile_range.m_y.m_begin =
+        std::floor(min_y % game_config.m_tile_in_chunk_size_h);
+    out_tile_range.m_x.m_end =
+        std::ceil(max_x % game_config.m_tile_in_chunk_size_w);
+    out_tile_range.m_y.m_end =
+        std::ceil(max_y % game_config.m_tile_in_chunk_size_h);
+}
+
+void PhysicsScene::getTileRangeInCurrentChunk(Range2D<int>& chunk_range,
+                                              Range2D<int>& tile_range, int x,
+                                              int y,
+                                              Range2D<int>& out_tile_range) {
+    auto& game_config = GAME_CONTEXT.GetGameConfig();
+    out_tile_range.m_x.m_begin =
+        x == chunk_range.m_x.m_begin ? tile_range.m_x.m_begin : 0;
+    out_tile_range.m_x.m_end = x == chunk_range.m_x.m_end - 1
+                                   ? tile_range.m_x.m_end
+                                   : game_config.m_tile_in_chunk_size_w;
+    out_tile_range.m_y.m_begin =
+        y == chunk_range.m_y.m_begin ? tile_range.m_y.m_begin : 0;
+    out_tile_range.m_y.m_end = y == chunk_range.m_y.m_end - 1
+                                   ? tile_range.m_y.m_end
+                                   : game_config.m_tile_in_chunk_size_h;
 }

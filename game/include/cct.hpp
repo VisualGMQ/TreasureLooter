@@ -2,43 +2,32 @@
 
 #include "manager.hpp"
 #include "physics.hpp"
-#include "schema/physics.hpp"
+#include "schema/physics_schema.hpp"
 
 class CharacterController {
 public:
-    explicit CharacterController(const CCT& create_info);
+    explicit CharacterController(Entity entity, const CCT& create_info);
+    ~CharacterController();
 
     void MoveAndSlide(const Vec2& dir);
-    const Vec2& GetPosition() const;
+    [[nodiscard]] Vec2 GetPosition() const;
 
     void SetSkin(float skin);
     void SetMinDisp(float);
     void Teleport(const Vec2& pos);
 
-    const Circle& GetCircle() const;
-
-    [[nodiscard]] CollisionGroup GetCollisionGroup() const;
-    void SetCollisionGroup(CollisionGroup collision_group);
+    [[nodiscard]] const PhysicsActor* GetActor() const;
 
 private:
-    Circle m_circle;
     float m_skin = 0.1;
     float m_min_disp = 1;
-    CollisionGroup m_collision_group;
+    PhysicsActor* m_actor;
 
     static constexpr uint32_t MaxIter = 10;
+
+    static bool EnableDebugOutput;
 };
 
-class CCTManager : public ComponentManager<CharacterController> {
-public:
-    bool IsEnableDebugDraw() const;
-
-    void ToggleDebugDraw();
-
-    void RenderDebug();
-
-private:
-    bool m_enable_debug_draw = false;
-};
+class CCTManager : public ComponentManager<CharacterController> {};
 
 void InstanceDisplay(const char*, CharacterController&);

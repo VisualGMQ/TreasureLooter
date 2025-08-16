@@ -2,9 +2,10 @@
 
 #include "context.hpp"
 #include "image.hpp"
+#include "physics.hpp"
 #include "schema/serialize/anim.hpp"
-#include "schema/serialize/flip.hpp"
 #include "schema/serialize/anim_player.hpp"
+#include "schema/serialize/flip.hpp"
 #include <stdexcept>
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
@@ -447,6 +448,35 @@ void Deserialize(const rapidxml::xml_node<>& node, UUID& payload) {
     payload = UUID::CreateFromString(node.value());
 }
 
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const CollisionGroup& payload,
+                                const std::string& name) {
+    static_assert(
+        std::is_unsigned_v<std::underlying_type_t<CollisionGroupType>>,
+        "CollisionGroupType must be unsigned");
+
+    std::vector<CollisionGroupType> types;
+    for (int i = 0; i < sizeof(std::underlying_type_t<CollisionGroupType>);
+         i++) {
+        auto type = static_cast<CollisionGroupType>(1 << i);
+        if (payload.Has(type)) {
+            types.push_back(type);
+        }
+    }
+
+    return Serialize(doc, types, doc.allocate_string(name.c_str()));
+}
+
+void Deserialize(const rapidxml::xml_node<>& node, CollisionGroup& payload) {
+    std::vector<CollisionGroupType> types;
+    Deserialize(node, types);
+
+    payload.Clear();
+    for (auto& type : types) {
+        payload.Add(type);
+    }
+}
+
 // x-macros for shorten code
 #define HANDLE_ANIM_SERIALIZE(binding) if (binding_point == binding)
 #define HANDLE_LINEAR_TRACK_SERIALIZE()                                \
@@ -520,7 +550,7 @@ rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
         HANDLE_DISCRETE_TRACK_SERIALIZE();
     }
 #undef TARGET_TYPE
-    
+
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteRegionSize) {
         HANDLE_DISCRETE_TRACK_SERIALIZE();
@@ -644,7 +674,7 @@ deserializeTrack(rapidxml::xml_node<>& node) {
         HANDLE_DISCRETE_TRACK_DESERIALIZE();
     }
 #undef TARGET_TYPE
-    
+
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteRegionSize) {
         HANDLE_CREATE_TRACK();

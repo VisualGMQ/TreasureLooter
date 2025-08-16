@@ -61,7 +61,11 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
             "include",
             include_mustache.render({"filename", "<unordered_map>"})};
     }
-    
+    if (schema_info.m_include_hints & IncludeHint::Stdint) {
+        include_datas << kainjow::mustache::data{
+            "include",
+            include_mustache.render({"filename", "<cstdint>"})};
+    }
     if (schema_info.m_include_hints & IncludeHint::Handle) {
         include_datas << kainjow::mustache::data{
             "include",
@@ -109,6 +113,10 @@ std::string GenerateEnumCode(const EnumInfo& enum_info) {
     kainjow::mustache::data enum_data;
     enum_data.set("items", item_datas);
     enum_data.set("name", enum_info.m_name);
+
+    if (!enum_info.m_type.empty()) {
+        enum_data.set("type", " : " + enum_info.m_type);
+    }
 
     return enum_mustache.render(enum_data);
 }

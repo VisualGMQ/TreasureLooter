@@ -117,6 +117,11 @@ Vec2 operator-(const Vec2& o) {
     return Vec2(-o.x, -o.y);
 }
 
+std::ostream& operator<<(std::ostream& os, const Vec2& p) {
+    os << "Vec2(" << p.x << ", " << p.y << ")";
+    return os;
+}
+
 Degrees::Degrees(float value) : m_value{value} {}
 
 Degrees::Degrees(Radians radians) {
