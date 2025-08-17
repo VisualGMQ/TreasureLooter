@@ -83,10 +83,8 @@ void Trigger::Update() {
         PhysicsActor* actor = m_touch_actors[i];
         if (!GAME_CONTEXT.m_physics_scene->Overlap(*m_actor, *actor)) {
             OverlapResult result;
-            result.m_src_entity = m_actor->GetEntity();
             result.m_dst_entity = actor->GetEntity();
-            result.m_src_actor = m_actor;
-            result.m_src_actor = actor;
+            result.m_dst_actor = actor;
             TriggerLeaveEvent event{GetEventType(), result};
             GAME_CONTEXT.m_event_system->EnqueueEvent(event);
             m_touch_actors.erase(m_touch_actors.begin() + i);
@@ -97,10 +95,8 @@ void Trigger::Update() {
     if (m_trig_every_frame_when_touch) {
         for (auto actor : m_touch_actors) {
             OverlapResult result;
-            result.m_src_entity = m_actor->GetEntity();
             result.m_dst_entity = actor->GetEntity();
-            result.m_src_actor = m_actor;
-            result.m_src_actor = actor;
+            result.m_dst_actor = actor;
             TriggerTouchEvent event{GetEventType(), result};
             GAME_CONTEXT.m_event_system->EnqueueEvent(event);
         }

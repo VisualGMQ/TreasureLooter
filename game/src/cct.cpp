@@ -16,13 +16,13 @@ CharacterController::~CharacterController() {
     GAME_CONTEXT.m_physics_scene->RemoveActor(m_actor);
 }
 
-bool CharacterController::EnableDebugOutput = false;
+bool CharacterController::EnableDebugOutput = true;
 
-#define CCT_DEBUG_LOG(fmt, ...)                            \
-    do {                                              \
-        if (CharacterController::EnableDebugOutput) { \
-            LOGI("CCT Debug Log:" fmt, ##__VA_ARGS__);   \
-        }                                             \
+#define CCT_DEBUG_LOG(fmt, ...)                        \
+    do {                                               \
+        if (CharacterController::EnableDebugOutput) {  \
+            LOGI("CCT Debug Log:" fmt, ##__VA_ARGS__); \
+        }                                              \
     } while (0)
 
 void CharacterController::MoveAndSlide(const Vec2& dir) {
@@ -42,63 +42,100 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     Vec2 disp = dir;
     Vec2 disp_normalized = disp / disp_length;
     uint32_t max_iter = MaxIter;
-    HitResult hit;
+    SweepResult hit[2];
 
     auto& physics_scene = GAME_CONTEXT.m_physics_scene;
-    Vec2 position = GetPosition();
 
     CCT_DEBUG_LOG("max iter = {}, begin iter", max_iter);
-    CCT_DEBUG_LOG("start position: {}", position);
+    CCT_DEBUG_LOG("start position: {}", m_actor->GetPosition());
+
+    OverlapResult overlapResult[10];
 
     while (max_iter--) {
-        bool hitted = physics_scene->Sweep(*m_actor, disp_normalized,
-                                           disp_length, &hit, 1);
-
-        if (!hitted) {
-            CCT_DEBUG_LOG("not hitted, move along {}", disp);
-            position += disp;
+        if (disp_length <= m_min_disp) {
+            CCT_DEBUG_LOG("disp length({}) < min disp, exit", disp_length);
             break;
         }
 
-        CCT_DEBUG_LOG("hitted! hit flags: {}, normal: {}, t: {}", hit.m_flags.Value(),
-                      hit.m_normal, hit.m_t);
+        if (disp.Dot(dir) <= 0) {
+            CCT_DEBUG_LOG("move to opposite direction: {}, break", disp);
+            break;
+        }
 
-        float actual_move_dist =
-            hit.m_t < m_skin ? -(m_skin - hit.m_t) : hit.m_t - m_skin;
+        uint32_t hitted = physics_scene->Sweep(*m_actor, disp_normalized,
+                                               disp_length + m_skin, hit, 2);
 
-        CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
-                      hit.m_t, m_skin, hit.m_t < m_skin, actual_move_dist);
+        for (int i = 0; i < hitted; i++) {
+            CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
+                          hit[i].m_actor->GetPosition(), hit[i].m_normal,
+                          hit[i].m_t);
+        }
 
-        position += actual_move_dist * disp_normalized;
+        uint32_t count = physics_scene->Overlap(*m_actor, overlapResult, 10);
+        CCT_DEBUG_LOG("overlap count: {}", count);
+        for (int i = 0; i < count; i++) {
+            CCT_DEBUG_LOG("overlap {} center: {}", i,
+                          overlapResult[i].m_dst_actor->GetPosition());
+        }
 
-        CCT_DEBUG_LOG("move to {}", position);
+        if (!hitted) {
+            CCT_DEBUG_LOG("not hitted, move along {}", disp);
+            m_actor->Move(disp);
+            break;
+        }
+
+        if (hit[0].m_is_initial_overlap) {
+            CCT_DEBUG_LOG("initial overlap, move along {}", disp);
+            m_actor->Move(disp);
+            break;
+        }
+
+        CCT_DEBUG_LOG("hitted! hit flags: {}, normal: {}, t: {}",
+                      hit[0].m_flags.Value(), hit[0].m_normal, hit[0].m_t);
+
+        float actual_move_dist = 0;
+        if (hit[0].m_t > m_skin) {
+            actual_move_dist = hit[0].m_t - m_skin;
+            m_actor->Move(actual_move_dist * disp_normalized);
+            CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
+                          hit[0].m_t, m_skin, hit[0].m_t < m_skin,
+                          actual_move_dist);
+            CCT_DEBUG_LOG("move to {}", m_actor->GetPosition());
+
+            count = physics_scene->Overlap(*m_actor,
+                                           overlapResult, 10);
+            for (int i = 0; i < count; i++) {
+                CCT_DEBUG_LOG("overlap {} center: {}", i,
+                              overlapResult[i].m_dst_actor->GetPosition());
+            }
+            CCT_DEBUG_LOG("overlap count: {}", count);
+        }
 
         disp_length -= actual_move_dist;
 
         CCT_DEBUG_LOG("remain disp length: {}", disp_length);
 
-        if (disp_length <= m_min_disp) {
-            CCT_DEBUG_LOG("disp length < min disp, exit");
-            break;
-        }
-
         auto [tangent, normal] =
-            DecomposeVector(disp_normalized * disp_length, hit.m_normal);
+            DecomposeVector(disp_normalized * disp_length, hit[0].m_normal);
         disp_length = tangent.Length();
 
         CCT_DEBUG_LOG("tangent: {}, length: {}", tangent, disp_length);
-
-        if (disp_length <= std::numeric_limits<float>::epsilon()) {
-            CCT_DEBUG_LOG("disp too small, exit");
-            break;
-        }
 
         disp = tangent;
         disp_normalized = disp / disp_length;
     }
 
-    CCT_DEBUG_LOG("end iter, final position: {}", position);
-    m_actor->MoveTo(position);
+    CCT_DEBUG_LOG("end iter, final position: {}", m_actor->GetPosition());
+
+    m_actor->MoveTo(m_actor->GetPosition());
+
+    uint32_t count = physics_scene->Overlap(*m_actor, overlapResult, 10);
+    for (int i = 0; i < count; i++) {
+        CCT_DEBUG_LOG("overlap {} center: {}", i,
+                      overlapResult[i].m_dst_actor->GetPosition());
+    }
+
+    CCT_DEBUG_LOG("overlap count: {}\n", count);
 }
 
 Vec2 CharacterController::GetPosition() const {

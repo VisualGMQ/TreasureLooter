@@ -7,6 +7,12 @@
 #include <cmath>
 #include <limits>
 
+HitResult::HitResult(float t, Flags<HitType> f, Vec2 n, bool is_initial_overlap)
+    : m_t(t),
+      m_flags(f),
+      m_normal(n),
+      m_is_initial_overlap(is_initial_overlap) {}
+
 Vec2 NearestRectPoint(const Rect& r, const Vec2& v) {
     Vec2 top_left = r.m_center - r.m_half_size;
     Vec2 bottom_right = r.m_center + r.m_half_size;
@@ -68,6 +74,12 @@ std::optional<std::pair<float, float>> RayIntersect(const Vec2& p1,
 
 std::optional<HitResult> RaycastRect(const Vec2& p, const Vec2& dir,
                                      const Rect& r) {
+    if (IsPointInRect(p, r)) {
+        HitResult result;
+        result.m_is_initial_overlap = true;
+        return result;
+    }
+
     Vec2 top_left = r.m_center - r.m_half_size;
     Vec2 bottom_right = r.m_center + r.m_half_size;
     auto t1 =
@@ -119,36 +131,38 @@ std::optional<HitResult> RaycastRect(const Vec2& p, const Vec2& dir,
 
     auto it = std::min_element(t_list.begin(), t_list.end());
     size_t idx = it - t_list.begin();
-    return HitResult{*it, hit_types[idx], hit_normals[idx]};
+    return HitResult{*it, hit_types[idx], hit_normals[idx], false};
 }
 
-std::optional<float> RaycastCircle(const Vec2& p, const Vec2& dir,
-                                   const Circle& c) {
+std::optional<HitResult> RaycastCircle(const Vec2& p, const Vec2& dir,
+                                       const Circle& c) {
     Vec2 q = p - c.m_center;
-    float A = dir.LengthSquared();
-    float B = 2.0 * q.Dot(dir);
-    float C = q.LengthSquared() - c.m_radius * c.m_radius;
-    float delta = B * B - 4 * A * C;
+    double A = dir.LengthSquared();
+    double B = 2.0 * q.Dot(dir);
+    double C = q.LengthSquared() - c.m_radius * c.m_radius;
+    double delta = B * B - 4 * A * C;
 
     if (delta <= std::numeric_limits<float>::epsilon()) {
         return std::nullopt;
     }
 
-    float t1 = (-B + std::sqrt(delta)) / (2.0 * A);
-    float t2 = (-B - std::sqrt(delta)) / (2.0 * A);
+    double t1 = (-B + std::sqrt(delta)) / (2.0 * A);
+    double t2 = (-B - std::sqrt(delta)) / (2.0 * A);
 
-    if (t1 < 0) {
-        if (t2 < 0) {
+    if (t1 < 0 || t2 < 0) {
+        if (t1 < 0 && t2 < 0) {
             return std::nullopt;
         }
-        return t2;
+        HitResult result;
+        result.m_is_initial_overlap = true;
+        return result;
     }
 
-    if (t2 < 0) {
-        return t1;
-    }
-
-    return std::min(t1, t2);
+    auto t = std::min(t1, t2);
+    HitResult result;
+    result.m_t = t;
+    result.m_normal = ((p + dir * t) - c.m_center).Normalize();
+    return result;
 }
 
 std::optional<HitResult> SweepRects(const Rect& r1, const Rect& r2,
@@ -159,8 +173,8 @@ std::optional<HitResult> SweepRects(const Rect& r1, const Rect& r2,
     return RaycastRect(r1.m_center, dir, r);
 }
 
-std::optional<float> SweepCircles(const Circle& c1, const Circle& c2,
-                                  const Vec2& dir) {
+std::optional<HitResult> SweepCircles(const Circle& c1, const Circle& c2,
+                                      const Vec2& dir) {
     Circle c = c2;
     c.m_radius += c1.m_radius;
     return RaycastCircle(c1.m_center, dir, c);
@@ -170,108 +184,118 @@ std::optional<HitResult> SweepCircleRect(const Circle& c, const Rect& r,
                                          const Vec2& dir) {
     Vec2 top_left = r.m_center - r.m_half_size;
     Vec2 bottom_right = r.m_center + r.m_half_size;
-    auto t1 =
-        RayIntersect(c.m_center, dir, top_left - Vec2::Y_UNIT * c.m_radius,
-                     Vec2::X_UNIT * r.m_half_size.w * 2);
-    auto t2 =
-        RayIntersect(c.m_center, dir, top_left - Vec2::X_UNIT * c.m_radius,
-                     Vec2::Y_UNIT * r.m_half_size.h * 2);
-    auto t3 =
-        RayIntersect(c.m_center, dir, bottom_right + Vec2::Y_UNIT * c.m_radius,
-                     -Vec2::X_UNIT * r.m_half_size.w * 2);
-    auto t4 =
-        RayIntersect(c.m_center, dir, bottom_right + Vec2::X_UNIT * c.m_radius,
-                     -Vec2::Y_UNIT * r.m_half_size.h * 2);
-    if (t1 && (t1->second < 0 || t1->second > 1)) {
-        t1 = std::nullopt;
-    }
-    if (t2 && (t2->second < 0 || t2->second > 1)) {
-        t2 = std::nullopt;
-    }
-    if (t3 && (t3->second < 0 || t3->second > 1)) {
-        t3 = std::nullopt;
-    }
-    if (t4 && (t4->second < 0 || t4->second > 1)) {
-        t4 = std::nullopt;
+
+    Rect out_rect = r;
+    out_rect.m_half_size += Vec2{c.m_radius, c.m_radius};
+
+    // check whether raycast on rect
+    if (auto t1 = RaycastRect(c.m_center, dir, out_rect)) {
+        Vec2 final_position = c.m_center + dir * t1->m_t;
+        if ((t1->m_flags & HitType::Left || t1->m_flags & HitType::Right) &&
+            final_position.y >= top_left.y &&
+            final_position.y <= bottom_right.y) {
+            return t1;
+        }
+        if ((t1->m_flags & HitType::Top || t1->m_flags & HitType::Bottom) &&
+            final_position.x >= top_left.x &&
+            final_position.x <= bottom_right.x) {
+            return t1;
+        }
     }
 
     const std::array<Vec2, 4> rect_corners = {
         top_left, bottom_right, top_left + Vec2::X_UNIT * 2.0 * r.m_half_size.w,
         bottom_right - Vec2::X_UNIT * 2.0 * r.m_half_size.w};
 
-    auto t5 = RaycastCircle(c.m_center, dir, {rect_corners[0], c.m_radius});
-    auto t6 = RaycastCircle(c.m_center, dir, {rect_corners[1], c.m_radius});
-    auto t7 = RaycastCircle(c.m_center, dir, {rect_corners[2], c.m_radius});
-    auto t8 = RaycastCircle(c.m_center, dir, {rect_corners[3], c.m_radius});
+    std::array<std::optional<HitResult>, 4> circle_hits;
+    for (size_t i = 0; i < circle_hits.size(); ++i) {
+        circle_hits[i] =
+            RaycastCircle(c.m_center, dir, {rect_corners[i], c.m_radius});
+    }
 
-    if (!t1 && !t2 && !t3 && !t4 && !t5 && !t6 && !t7 && !t8) {
+    bool not_hit_corner = std::all_of(circle_hits.begin(), circle_hits.end(),
+                                      [](auto& hit) { return !hit; });
+    if (not_hit_corner) {
         return std::nullopt;
     }
 
-    constexpr std::array<HitType, 8> hit_types = {
-        HitType::Top,
-        HitType::Left,
-        HitType::Bottom,
-        HitType::Right,
+    // find initially overlapped circle
+    if (auto it = std::find_if(
+            circle_hits.begin(), circle_hits.end(),
+            [](auto& hit) { return hit && hit->m_is_initial_overlap; });
+        it != circle_hits.end()) {
+        return *it;
+    }
 
+    constexpr std::array<HitType, 4> hit_types = {
         HitType::LeftTopCorner,
         HitType::RightBottomCorner,
         HitType::RightTopCorner,
         HitType::LeftBottomCorner,
     };
 
-    static const std::array<Vec2, 4> hit_normals = {
-        -Vec2::Y_UNIT,
-        -Vec2::X_UNIT,
-        Vec2::Y_UNIT,
-        Vec2::X_UNIT,
-    };
+    auto it = std::min_element(circle_hits.begin(), circle_hits.end(),
+                               [](auto& hit1, auto& hit2) {
+                                   if (!hit1 && !hit2) {
+                                       return false;
+                                   }
 
-    std::array<float, 8> t_list = {
-        t1 ? t1->first : std::numeric_limits<float>::infinity(),
-        t2 ? t2->first : std::numeric_limits<float>::infinity(),
-        t3 ? t3->first : std::numeric_limits<float>::infinity(),
-        t4 ? t4->first : std::numeric_limits<float>::infinity(),
-        t5 ? *t5 : std::numeric_limits<float>::infinity(),
-        t6 ? *t6 : std::numeric_limits<float>::infinity(),
-        t7 ? *t7 : std::numeric_limits<float>::infinity(),
-        t8 ? *t8 : std::numeric_limits<float>::infinity(),
-    };
+                                   if (hit1 && !hit2) {
+                                       return true;
+                                   }
 
-    auto it = std::min_element(t_list.begin(), t_list.end());
-    size_t idx = it - t_list.begin();
-    if (idx < 4) {
-        return HitResult{*it, hit_types[idx], hit_normals[idx]};
-    }
+                                   if (!hit1 && hit2) {
+                                       return false;
+                                   }
 
-    Vec2 final_center = c.m_center + dir * *it;
-    Vec2 hit_normal = (final_center - rect_corners[idx - 4]).Normalize();
+                                   return hit1->m_t < hit2->m_t;
+                               });
 
-    return HitResult{*it, hit_types[idx], hit_normal};
+    size_t final_hit_index = it - circle_hits.begin();
+    it->value().m_flags = hit_types[final_hit_index];
+    return *it;
+}
+
+PhysicsShape::PhysicsShape(const Rect& r) : m_type(PhysicsShapeType::Rect) {
+    m_rect = r;
+}
+
+PhysicsShape::PhysicsShape(const Circle& c) : m_type(PhysicsShapeType::Circle) {
+    m_circle = c;
+}
+
+const Rect* PhysicsShape::AsRect() const {
+    return m_type == PhysicsShapeType::Rect ? &m_rect : nullptr;
+}
+
+const Circle* PhysicsShape::AsCircle() const {
+    return m_type == PhysicsShapeType::Circle ? &m_circle : nullptr;
+}
+
+PhysicsShapeType PhysicsShape::GetType() const {
+    return m_type;
+}
+
+const Vec2& PhysicsShape::GetPosition() const {
+    return m_rect.m_center;
+}
+
+void PhysicsShape::MoveTo(const Vec2& p) {
+    m_rect.m_center = p;
+}
+
+void PhysicsShape::Move(const Vec2& offset) {
+    m_rect.m_center += offset;
 }
 
 PhysicsActor::PhysicsActor(Entity entity, const Rect& r, StorageType storage)
-    : m_owner{entity},
-      m_type{ShapeType::Rect},
-      m_rect{r},
-      m_storage_type{storage} {}
+    : m_shape{r}, m_owner{entity}, m_storage_type{storage} {}
 
 PhysicsActor::PhysicsActor(Entity entity, const Circle& c, StorageType storage)
-    : m_owner{entity},
-      m_type{ShapeType::Circle},
-      m_circle{c},
-      m_storage_type{storage} {}
+    : m_shape{c}, m_owner{entity}, m_storage_type{storage} {}
 
-const Rect* PhysicsActor::AsRect() const {
-    return m_type == ShapeType::Rect ? &m_rect : nullptr;
-}
-
-const Circle* PhysicsActor::AsCircle() const {
-    return m_type == ShapeType::Circle ? &m_circle : nullptr;
-}
-
-PhysicsActor::ShapeType PhysicsActor::GetShapeType() const {
-    return m_type;
+const PhysicsShape& PhysicsActor::GetShape() const {
+    return m_shape;
 }
 
 PhysicsActor::StorageType PhysicsActor::GetStorageType() const {
@@ -279,7 +303,7 @@ PhysicsActor::StorageType PhysicsActor::GetStorageType() const {
 }
 
 const Vec2& PhysicsActor::GetPosition() const {
-    return m_rect.m_center;
+    return m_shape.GetPosition();
 }
 
 void PhysicsActor::SetCollisionLayer(CollisionGroup collision_group) {
@@ -291,11 +315,15 @@ void PhysicsActor::SetCollisionMask(CollisionGroup collision_group) {
 }
 
 void PhysicsActor::MoveTo(const Vec2& position) {
-    m_rect.m_center = position;
+    m_shape.MoveTo(position);
+}
+
+void PhysicsActor::Move(const Vec2& offset) {
+    m_shape.Move(offset);
 }
 
 PhysicsScene::PhysicsScene() {
-    m_cached_hits.reserve(100);
+    m_cached_sweep_results.reserve(100);
 }
 
 PhysicsActor* PhysicsScene::CreateActor(Entity entity,
@@ -423,30 +451,38 @@ void PhysicsScene::RemoveActor(PhysicsActor* actor) {
     }
 }
 
-bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
-                         HitResult* out_result, size_t out_size) {
+uint32_t PhysicsScene::Sweep(const PhysicsShape& shape, CollisionGroup mask,
+                             const Vec2& dir, float dist,
+                             SweepResult* out_result, size_t out_size) {
     if (!out_result || out_size == 0) {
-        return false;
+        return 0;
     }
 
-    m_cached_hits.clear();
+    m_cached_sweep_results.clear();
 
-    auto sweep_rect = computeSweepBoundingBox(actor, dir, dist);
+    Rect sweep_rect = computeSweepBoundingBox(shape, dir, dist);
 
     // add a little skin for tolerance
     sweep_rect.m_half_size += {1, 1};
 
     for (auto& act : m_actors) {
-        if (!checkNeedQuery(actor, *act)) {
+        if (!checkNeedQuery(shape, mask, *act)) {
             continue;
         }
         Rect bounding_rect = computeActorBoundingBox(*act);
         if (IsRectsIntersect(bounding_rect, sweep_rect)) {
-            auto result = sweepActor(actor, *act, dir);
+            auto result = sweepShape(shape, *act, dir);
             if (!result || result->m_t > dist) {
                 continue;
             }
-            m_cached_hits.push_back(*result);
+            SweepResult sweep_result;
+            sweep_result.m_t = result->m_t;
+            sweep_result.m_normal = result->m_normal;
+            sweep_result.m_flags = result->m_flags;
+            sweep_result.m_entity = act->GetEntity();
+            sweep_result.m_is_initial_overlap = result->m_is_initial_overlap;
+            sweep_result.m_actor = act.get();
+            m_cached_sweep_results.push_back(sweep_result);
         }
     }
 
@@ -477,59 +513,73 @@ bool PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir, float dist,
 
                     auto& actors = chunk->Get(sx, sy);
                     for (auto& act : actors) {
-                        if (!checkNeedQuery(actor, *act)) {
+                        if (!checkNeedQuery(shape, mask, *act)) {
                             continue;
                         }
                         std::optional<HitResult> result =
-                            sweepActor(actor, *act, dir);
+                            sweepShape(shape, *act, dir);
                         if (!result || result->m_t > dist) {
                             continue;
                         }
-                        m_cached_hits.push_back(*result);
+                        SweepResult sweep_result;
+                        sweep_result.m_t = result->m_t;
+                        sweep_result.m_normal = result->m_normal;
+                        sweep_result.m_flags = result->m_flags;
+                        sweep_result.m_entity = act->GetEntity();
+                        sweep_result.m_is_initial_overlap =
+                            result->m_is_initial_overlap;
+                        sweep_result.m_actor = act.get();
+                        m_cached_sweep_results.push_back(sweep_result);
                     }
                 }
             }
         }
     }
 
-    if (m_cached_hits.empty()) {
-        return false;
+    if (m_cached_sweep_results.empty()) {
+        return 0;
     }
 
     std::sort(
-        m_cached_hits.begin(), m_cached_hits.end(),
+        m_cached_sweep_results.begin(), m_cached_sweep_results.end(),
         [](const HitResult& a, const HitResult& b) { return a.m_t < b.m_t; });
 
-    for (size_t i = 0; i < std::min(m_cached_hits.size(), out_size); ++i) {
-        out_result[i] = m_cached_hits[i];
+    size_t count = std::min(m_cached_sweep_results.size(), out_size);
+    for (size_t i = 0; i < count; ++i) {
+        out_result[i] = m_cached_sweep_results[i];
     }
 
-    return true;
+    return count;
 }
 
-uint32_t PhysicsScene::Overlap(const PhysicsActor& actor,
+uint32_t PhysicsScene::Sweep(const PhysicsActor& actor, const Vec2& dir,
+                             float dist, SweepResult* out_result,
+                             size_t out_size) {
+    return Sweep(actor.GetShape(), actor.GetCollisionMask(), dir, dist,
+                 out_result, out_size);
+}
+
+uint32_t PhysicsScene::Overlap(const PhysicsShape& shape, CollisionGroup mask,
                                OverlapResult* out_result, size_t out_size) {
     if (!out_result || out_size == 0) {
         return 0;
     }
 
-    m_cached_overlaps.clear();
+    m_cached_overlaps_results.clear();
 
-    auto bounding_box = computeActorBoundingBox(actor);
+    auto bounding_box = computeShapeBoundingBox(shape);
 
     for (auto& act : m_actors) {
-        if (!checkNeedQuery(actor, *act)) {
+        if (!checkNeedQuery(shape, mask, *act)) {
             continue;
         }
         Rect bounding_rect = computeActorBoundingBox(*act);
         if (IsRectsIntersect(bounding_rect, bounding_box) &&
-            Overlap(actor, *act)) {
+            Overlap(shape, act->GetShape())) {
             OverlapResult result;
-            result.m_src_entity = actor.GetEntity();
             result.m_dst_entity = act->GetEntity();
-            result.m_src_actor = &actor;
             result.m_dst_actor = act.get();
-            m_cached_overlaps.push_back(result);
+            m_cached_overlaps_results.push_back(result);
         }
     }
 
@@ -560,32 +610,36 @@ uint32_t PhysicsScene::Overlap(const PhysicsActor& actor,
 
                     auto& actors = chunk->Get(sx, sy);
                     for (auto& act : actors) {
-                        if (!(checkNeedQuery(actor, *act) &&
-                              Overlap(actor, *act))) {
+                        if (!(checkNeedQuery(shape, mask, *act) &&
+                              Overlap(shape, act->GetShape()))) {
                             continue;
                         }
                         OverlapResult result;
-                        result.m_src_entity = actor.GetEntity();
                         result.m_dst_entity = act->GetEntity();
-                        result.m_src_actor = &actor;
                         result.m_dst_actor = act.get();
-                        m_cached_overlaps.push_back(result);
+                        m_cached_overlaps_results.push_back(result);
                     }
                 }
             }
         }
     }
 
-    if (m_cached_overlaps.empty()) {
+    if (m_cached_overlaps_results.empty()) {
         return 0;
     }
 
-    size_t count = std::min(m_cached_overlaps.size(), out_size);
+    size_t count = std::min(m_cached_overlaps_results.size(), out_size);
     for (size_t i = 0; i < count; ++i) {
-        out_result[i] = m_cached_overlaps[i];
+        out_result[i] = m_cached_overlaps_results[i];
     }
 
     return count;
+}
+
+uint32_t PhysicsScene::Overlap(const PhysicsActor& actor,
+                               OverlapResult* out_result, size_t out_size) {
+    return Overlap(actor.GetShape(), actor.GetCollisionMask(), out_result,
+                   out_size);
 }
 
 bool PhysicsScene::IsEnableDebugDraw() const {
@@ -600,12 +654,13 @@ void PhysicsScene::RenderDebug() const {
     auto& renderer = GAME_CONTEXT.m_renderer;
 
     for (auto& actor : m_actors) {
-        switch (actor->GetShapeType()) {
-            case PhysicsActor::ShapeType::Rect:
-                renderer->DrawRect(*actor->AsRect(), Color::Red);
+        auto& shape = actor->GetShape();
+        switch (shape.GetType()) {
+            case PhysicsShapeType::Rect:
+                renderer->DrawRect(*shape.AsRect(), Color::Red);
                 break;
-            case PhysicsActor::ShapeType::Circle:
-                renderer->DrawCircle(*actor->AsCircle(), Color::Red);
+            case PhysicsShapeType::Circle:
+                renderer->DrawCircle(*shape.AsCircle(), Color::Red);
                 break;
             default:;
         }
@@ -624,13 +679,14 @@ void PhysicsScene::RenderDebug() const {
                         if (!actor) {
                             continue;
                         }
-                        switch (actor->GetShapeType()) {
-                            case PhysicsActor::ShapeType::Rect:
-                                renderer->DrawRect(*actor->AsRect(),
-                                                   Color::Red);
+
+                        auto& shape = actor->GetShape();
+                        switch (shape.GetType()) {
+                            case PhysicsShapeType::Rect:
+                                renderer->DrawRect(*shape.AsRect(), Color::Red);
                                 break;
-                            case PhysicsActor::ShapeType::Circle:
-                                renderer->DrawCircle(*actor->AsCircle(),
+                            case PhysicsShapeType::Circle:
+                                renderer->DrawCircle(*shape.AsCircle(),
                                                      Color::Red);
                                 break;
                             default:;
@@ -706,15 +762,20 @@ Rect PhysicsScene::computeSweepBoundingBox(const Circle& c, const Vec2& dir,
     return computeSweepBoundingBox(rect, dir, dist);
 }
 
-Rect PhysicsScene::computeSweepBoundingBox(const PhysicsActor& actor,
+Rect PhysicsScene::computeSweepBoundingBox(const PhysicsShape& shape,
                                            const Vec2& dir, float dist) const {
-    if (actor.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-        return computeSweepBoundingBox(*actor.AsCircle(), dir, dist);
+    if (shape.GetType() == PhysicsShapeType::Circle) {
+        return computeSweepBoundingBox(*shape.AsCircle(), dir, dist);
     }
-    if (actor.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-        return computeSweepBoundingBox(*actor.AsRect(), dir, dist);
+    if (shape.GetType() == PhysicsShapeType::Rect) {
+        return computeSweepBoundingBox(*shape.AsRect(), dir, dist);
     }
     return {};
+}
+
+Rect PhysicsScene::computeSweepBoundingBox(const PhysicsActor& actor,
+                                           const Vec2& dir, float dist) const {
+    return computeSweepBoundingBox(actor.GetShape(), dir, dist);
 }
 
 std::vector<std::unique_ptr<PhysicsActor>>* PhysicsScene::getActorStoreInChunk(
@@ -751,13 +812,17 @@ std::vector<std::unique_ptr<PhysicsActor>>* PhysicsScene::getActorStoreInChunk(
 }
 
 Rect PhysicsScene::computeActorBoundingBox(const PhysicsActor& actor) const {
-    switch (actor.GetShapeType()) {
-        case PhysicsActor::ShapeType::Unknown:
+    return computeShapeBoundingBox(actor.GetShape());
+}
+
+Rect PhysicsScene::computeShapeBoundingBox(const PhysicsShape& shape) const {
+    switch (shape.GetType()) {
+        case PhysicsShapeType::Unknown:
             return {};
-        case PhysicsActor::ShapeType::Rect:
-            return *actor.AsRect();
-        case PhysicsActor::ShapeType::Circle: {
-            auto& circle = *actor.AsCircle();
+        case PhysicsShapeType::Rect:
+            return *shape.AsRect();
+        case PhysicsShapeType::Circle: {
+            auto& circle = *shape.AsCircle();
             return Rect{
                 circle.m_center, {circle.m_radius, circle.m_radius}
             };
@@ -770,63 +835,91 @@ Rect PhysicsScene::computeActorBoundingBox(const PhysicsActor& actor) const {
 std::optional<HitResult> PhysicsScene::sweepActor(const PhysicsActor& r1,
                                                   const PhysicsActor& r2,
                                                   const Vec2& dir) const {
-    if (r1.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-            return SweepRects(*r1.AsRect(), *r2.AsRect(), dir);
-        }
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-            return SweepCircleRect(*r2.AsCircle(), *r1.AsRect(), -dir);
-        }
-    } else if (r1.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-            return SweepCircleRect(*r1.AsCircle(), *r2.AsRect(), dir);
-        }
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-            auto result = SweepCircles(*r1.AsCircle(), *r2.AsCircle(), dir);
-            if (result) {
-                Vec2 final_position =
-                    r1.AsCircle()->m_center + dir * result.value();
-                return HitResult{
-                    result.value(), HitType::None,
-                    (final_position - r2.AsCircle()->m_center).Normalize()};
-            }
-        }
+    auto& shape1 = r1.GetShape();
+    if (shape1.GetType() == PhysicsShapeType::Rect) {
+        return sweepGeometry(*shape1.AsRect(), r2, dir);
+    }
+    if (shape1.GetType() == PhysicsShapeType::Circle) {
+        return sweepGeometry(*shape1.AsCircle(), r2, dir);
     }
 
     return std::nullopt;
 }
 
+std::optional<HitResult> PhysicsScene::sweepShape(const PhysicsShape& shape,
+                                                  const PhysicsActor& actor,
+                                                  const Vec2& dir) const {
+    if (shape.GetType() == PhysicsShapeType::Circle) {
+        return sweepGeometry(*shape.AsCircle(), actor, dir);
+    }
+    if (shape.GetType() == PhysicsShapeType::Rect) {
+        return sweepGeometry(*shape.AsRect(), actor, dir);
+    }
+    return std::nullopt;
+}
+
+std::optional<HitResult> PhysicsScene::sweepGeometry(const Circle& c,
+                                                     const PhysicsActor& actor,
+                                                     const Vec2& dir) const {
+    auto& shape = actor.GetShape();
+    if (shape.GetType() == PhysicsShapeType::Rect) {
+        return SweepCircleRect(c, *shape.AsRect(), dir);
+    }
+    if (shape.GetType() == PhysicsShapeType::Circle) {
+        return SweepCircles(c, *shape.AsCircle(), dir);
+    }
+    return std::nullopt;
+}
+
+std::optional<HitResult> PhysicsScene::sweepGeometry(const Rect& r,
+                                                     const PhysicsActor& actor,
+                                                     const Vec2& dir) const {
+    auto& shape = actor.GetShape();
+    if (shape.GetType() == PhysicsShapeType::Rect) {
+        return SweepRects(r, *shape.AsRect(), dir);
+    }
+    if (shape.GetType() == PhysicsShapeType::Circle) {
+        return SweepCircleRect(*shape.AsCircle(), r, -dir);
+    }
+    return std::nullopt;
+}
+
 bool PhysicsScene::Overlap(const PhysicsActor& r1,
                            const PhysicsActor& r2) const {
-    if (r1.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-            return IsRectsIntersect(*r1.AsRect(), *r2.AsRect());
+    auto& shape1 = r1.GetShape();
+    auto& shape2 = r2.GetShape();
+    return Overlap(shape1, shape2);
+}
+
+bool PhysicsScene::Overlap(const PhysicsShape& shape1,
+                           const PhysicsShape& shape2) const {
+    if (shape1.GetType() == PhysicsShapeType::Rect) {
+        if (shape2.GetType() == PhysicsShapeType::Rect) {
+            return IsRectsIntersect(*shape1.AsRect(), *shape2.AsRect());
         }
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-            return IsCircleRectIntersect(*r2.AsCircle(), *r1.AsRect());
+        if (shape2.GetType() == PhysicsShapeType::Circle) {
+            return IsCircleRectIntersect(*shape2.AsCircle(), *shape1.AsRect());
         }
-    } else if (r1.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Rect) {
-            return IsCircleRectIntersect(*r1.AsCircle(), *r2.AsRect());
+    } else if (shape1.GetType() == PhysicsShapeType::Circle) {
+        if (shape2.GetType() == PhysicsShapeType::Rect) {
+            return IsCircleRectIntersect(*shape1.AsCircle(), *shape2.AsRect());
         }
-        if (r2.GetShapeType() == PhysicsActor::ShapeType::Circle) {
-            return IsCirclesIntersect(*r1.AsCircle(), *r2.AsCircle());
+        if (shape2.GetType() == PhysicsShapeType::Circle) {
+            return IsCirclesIntersect(*shape1.AsCircle(), *shape2.AsCircle());
         }
     }
-
     return false;
 }
 
-bool PhysicsScene::checkNeedQuery(const PhysicsActor& a,
+bool PhysicsScene::checkNeedQuery(const PhysicsShape& a, CollisionGroup mask,
                                   const PhysicsActor& b) const {
-    if (&a == &b) {
+    if (&a == &b.GetShape()) {
         return false;
     }
 
-    auto mask1 = a.GetCollisionMask();
     auto layer2 = b.GetCollisionLayer();
 
-    return mask1.CanCollision(layer2);
+    return mask.CanCollision(layer2);
 }
 
 void PhysicsScene::getOverlapChunkRange(const Rect& bounding_box,
@@ -861,9 +954,9 @@ void PhysicsScene::getOverlapChunkRange(const Rect& bounding_box,
         std::ceil(max_y % game_config.m_tile_in_chunk_size_h);
 }
 
-void PhysicsScene::getTileRangeInCurrentChunk(Range2D<int>& chunk_range,
-                                              Range2D<int>& tile_range, int x,
-                                              int y,
+void PhysicsScene::getTileRangeInCurrentChunk(const Range2D<int>& chunk_range,
+                                              const Range2D<int>& tile_range,
+                                              int x, int y,
                                               Range2D<int>& out_tile_range) {
     auto& game_config = GAME_CONTEXT.GetGameConfig();
     out_tile_range.m_x.m_begin =

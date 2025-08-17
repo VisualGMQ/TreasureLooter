@@ -20,6 +20,7 @@
 #include "timer.hpp"
 #include "trigger.hpp"
 #include "window.hpp"
+#include "schema/common.hpp"
 
 #include <memory>
 
@@ -86,6 +87,7 @@ private:
     bool m_should_exit = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
     GameConfig m_game_config;
+    FPSOption m_fps_option = FPSOption::FPS_60;
 
 #ifdef TL_ENABLE_EDITOR
     Path m_project_path;  // only used for editor
@@ -104,6 +106,7 @@ private:
     void shutdownImGui();
     void beginImGui();
     void endImGui();
+    void controlFPS(TimeType);
 };
 
 #define GAME_CONTEXT Context::GetInst()
