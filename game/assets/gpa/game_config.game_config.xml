@@ -1,7 +1,7 @@
 <GameConfig>
 	<uuid>18855be3-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<basic_level_asset>assets/gpa/test_collision.level.xml</basic_level_asset>
+		<basic_level_asset>assets/gpa/game.level.xml</basic_level_asset>
 		<input_config_asset>assets/gpa/input_config.input_config.xml</input_config_asset>
 		<tile_in_chunk_size_w>10</tile_in_chunk_size_w>
 		<tile_in_chunk_size_h>10</tile_in_chunk_size_h>

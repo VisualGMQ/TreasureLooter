@@ -16,7 +16,7 @@ CharacterController::~CharacterController() {
     GAME_CONTEXT.m_physics_scene->RemoveActor(m_actor);
 }
 
-bool CharacterController::EnableDebugOutput = true;
+bool CharacterController::EnableDebugOutput = false;
 
 #define CCT_DEBUG_LOG(fmt, ...)                        \
     do {                                               \
