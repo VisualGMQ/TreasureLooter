@@ -772,16 +772,17 @@ void InstanceDisplay(const char* name, const Trigger& trigger) {
 void InstanceDisplay(const char* name, const PhysicsActor& actor) {
     ImGui::Text("%s", name);
 
-    switch (actor.GetShapeType()) {
-        case PhysicsActor::ShapeType::Unknown:
+    auto& shape = actor.GetShape();
+    switch (shape.GetType()) {
+        case PhysicsShapeType::Unknown:
             ImGui::Text("Unknown type");
             break;
-        case PhysicsActor::ShapeType::Rect: {
-            auto underlying = actor.AsRect();
+        case PhysicsShapeType::Rect: {
+            auto underlying = shape.AsRect();
             InstanceDisplay("rect", *underlying);
         } break;
-        case PhysicsActor::ShapeType::Circle: {
-            auto underlying = actor.AsCircle();
+        case PhysicsShapeType::Circle: {
+            auto underlying = shape.AsCircle();
             InstanceDisplay("rect", *underlying);
         } break;
     }

@@ -8,6 +8,7 @@
 #include "rapidxml_utils.hpp"
 #include "relationship.hpp"
 #include "schema/config.hpp"
+#include "schema/display/common.hpp"
 #include "schema/serialize/asset_extensions.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
@@ -106,6 +107,8 @@ void Context::Update() {
     logicPostUpdate(elapse_time);
 
     m_level_manager->PoseUpdate();
+
+    controlFPS(elapse_time);
 }
 
 void Context::HandleEvents(const SDL_Event& event) {
@@ -205,6 +208,27 @@ void Context::logicUpdate(TimeType elapse) {
     m_relationship_manager->Update();
     m_trigger_component_manager->Update();
     m_event_system->Update();
+
+    // test
+    if (true) {
+        PhysicsActor actor{
+            null_entity, Circle{{673.526, 729.127}, 20},
+            PhysicsActor::StorageType::Normal
+        };
+        CollisionGroup layer, mask;
+        layer.Add(CollisionGroupType::CCT);
+        actor.SetCollisionLayer(layer);
+        mask.Add(CollisionGroupType::Obstacle);
+        actor.SetCollisionMask(mask);
+        SweepResult results[10];
+        Vec2 disp{0, -8.302};
+        float dist = disp.Length();
+        int count =
+            m_physics_scene->Sweep(actor, disp / dist, dist + 0.1, results, 10);
+        if (count > 0) {
+            LOGI("here");
+        }
+    }
 }
 
 void Context::logicPostUpdate(TimeType elapse) {
@@ -239,6 +263,8 @@ void Context::renderUpdate(TimeType elapse) {
 
 void Context::renderFPS(TimeType elapse) {
     ImGui::Text("fps: %d", int(elapse > 0 ? 1.0 / elapse : 4000));
+
+    InstanceDisplay("fps option", m_fps_option);
 }
 
 Entity Context::CreateEntity() {
@@ -315,4 +341,36 @@ void Context::endImGui() {
                        io.DisplayFramebufferScale.y);
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(),
                                           m_renderer->GetRenderer());
+}
+
+void Context::controlFPS(TimeType elapse_time) {
+    TimeType expect_one_frame_time = 0;
+    switch (m_fps_option) {
+        case FPSOption::FPS_15:
+            expect_one_frame_time = 1.0f / 15.0f;
+            break;
+        case FPSOption::FPS_30:
+            expect_one_frame_time = 1.0f / 30.0f;
+            break;
+        case FPSOption::FPS_60:
+            expect_one_frame_time = 1.0f / 60.0f;
+            break;
+        case FPSOption::FPS_90:
+            expect_one_frame_time = 1.0f / 90.0f;
+            break;
+        case FPSOption::FPS_120:
+            expect_one_frame_time = 1.0f / 120.0f;
+            break;
+        case FPSOption::FPS_144:
+            expect_one_frame_time = 1.0f / 144.0f;
+            break;
+        case FPSOption::NoLimit:
+            expect_one_frame_time = 0;
+            break;
+    }
+
+    if (expect_one_frame_time != 0 && elapse_time < expect_one_frame_time) {
+        TimeType delay_time = expect_one_frame_time - elapse_time;
+        SDL_Delay(delay_time * 1000);
+    }
 }

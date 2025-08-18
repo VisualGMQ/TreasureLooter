@@ -30,7 +30,7 @@
 		<tilemap/>
 		<cct>
 			<value>
-				<skin>0.001000</skin>
+				<skin>0.1000</skin>
 				<min_disp>0.00100</min_disp>
 				<physics_actor>assets/gpa/waggo.physics_actor.xml</physics_actor>
 			</value>
