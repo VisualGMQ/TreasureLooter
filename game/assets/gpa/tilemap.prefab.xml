@@ -4,11 +4,17 @@
 		<transform>
 			<value>
 				<position x="0.000000" y="0.000000"/>
-				<scale x="4.000000" y="4.000000"/>
+				<scale x="1.000000" y="1.000000"/>
 				<rotation>0.000000</rotation>
 			</value>
 		</transform>
-		<tilemap>assets/tilemap/test.tmx</tilemap>
+		<tilemap>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<tilemap>assets/tilemap/test.tmx</tilemap>
+			</value>
+		</tilemap>
+		<type>Normal</type>
 	</payload>
 </Prefab>
 

@@ -8,7 +8,7 @@
 		</rect>
 		<circle>
 			<center x="0.000000" y="0.000000"/>
-			<radius>32.000000</radius>
+			<radius>10.000000</radius>
 		</circle>
 		<collision_layer>
 			<elem>Coin</elem>
