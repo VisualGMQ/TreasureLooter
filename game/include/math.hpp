@@ -22,6 +22,12 @@ struct TVec2 final {
 
     TVec2();
 
+    template <typename U>
+    explicit TVec2(const TVec2<U>& o) {
+        x = static_cast<T>(o.x);
+        y = static_cast<T>(o.y);
+    }
+
     TVec2(T x, T y);
 
     TVec2 &operator*=(const TVec2 &);

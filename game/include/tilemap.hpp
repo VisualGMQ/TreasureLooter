@@ -53,11 +53,14 @@ private:
     Vec2 m_size;
 };
 
+class Tileset;
+
 struct Tile {
     ImageHandle m_image;
     Region m_region;
     uint32_t m_id;
     Rect m_collision_rect;
+    Vec2 m_tile_size;
 };
 
 class Tileset {
@@ -67,6 +70,7 @@ public:
     const Tile &GetTile(uint32_t gid) const;
 
     bool HasTile(uint32_t gid) const;
+    const Vec2& GetTileSize() const;
 
 private:
     void parse(const tmx::Tileset &tileset);
@@ -78,6 +82,7 @@ private:
     std::vector<Tile> m_tiles;
     uint32_t m_firstgid;
     uint32_t m_lastgid;
+    Vec2 m_tile_size;
 };
 
 class Tilemap {

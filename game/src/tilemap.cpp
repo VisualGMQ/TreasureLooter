@@ -62,6 +62,7 @@ void TilemapTileLayer::parse(const tmx::TileLayer &layer) {
 }
 
 Tileset::Tileset(const tmx::Tileset &tileset) {
+    tileset.getTileSize();
     parse(tileset);
 }
 
@@ -72,6 +73,8 @@ void Tileset::parse(const tmx::Tileset &tileset) {
     m_spacing = tileset.getSpacing();
     m_firstgid = tileset.getFirstGID();
     m_lastgid = tileset.getLastGID();
+    m_tile_size.w = tileset.getTileSize().x;
+    m_tile_size.h = tileset.getTileSize().y;
 
     for (uint32_t i = 0; i < tileset.getTileCount(); i++) {
         auto tmx_tile = tileset.getTile(i + tileset.getFirstGID());
@@ -82,6 +85,8 @@ void Tileset::parse(const tmx::Tileset &tileset) {
         tile.m_region.m_topleft.y = tmx_tile->imagePosition.y;
         tile.m_region.m_size.x = tmx_tile->imageSize.x;
         tile.m_region.m_size.y = tmx_tile->imageSize.y;
+        tile.m_tile_size.x = tileset.getTileSize().x;
+        tile.m_tile_size.y = tileset.getTileSize().y;
 
         auto &objs = tmx_tile->objectGroup.getObjects();
         if (!objs.empty()) {
@@ -109,6 +114,8 @@ const Tile &Tileset::GetTile(uint32_t gid) const {
 bool Tileset::HasTile(uint32_t gid) const {
     return gid >= m_firstgid && gid < m_lastgid;
 }
+
+const Vec2 &Tileset::GetTileSize() const { return m_tile_size; }
 
 Tilemap::Tilemap(const Path &filename) : m_filename{filename} {
     parse(filename);
@@ -171,7 +178,6 @@ TilemapComponent::TilemapComponent(Entity entity,
         return;
     }
 
-    auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
     auto &game_config = GAME_CONTEXT.GetGameConfig();
     auto &physics_scene = GAME_CONTEXT.m_physics_scene;
 
@@ -195,23 +201,21 @@ TilemapComponent::TilemapComponent(Entity entity,
                         continue;
                     }
 
-                    Rect rect;
-                    rect.m_half_size = tile->m_collision_rect.m_half_size;
-                    rect.m_center = tile->m_collision_rect.m_center;
+                    Rect rect = tile->m_collision_rect;
 
                     auto flip = layer_tile.m_flip;
                     if (flip & Flip::Vertical) {
-                        float offset_y = m_handle->GetTileSize().h * 0.5 - rect.m_center.y;
+                        float offset_y = tile->m_tile_size.h * 0.5 - rect.m_center.y;
                         rect.m_center.y += offset_y * 2.0;
                     }
                     if (flip & Flip::Horizontal) {
-                        float offset_x = m_handle->GetTileSize().w * 0.5 - rect.m_center.x;
+                        float offset_x = tile->m_tile_size.w * 0.5 - rect.m_center.x;
                         rect.m_center.x += offset_x * 2.0;
                     }
 
                     rect.m_center +=
-                            transform->m_position +
-                            Vec2(x, y) * m_handle->GetTileSize();
+                            create_info.m_position +
+                            Vec2(x, y + 1) * m_handle->GetTileSize() + Vec2(0, -tile->m_tile_size.h);
 
                     PhysicsShape shape{rect};
                     auto actor = physics_scene->CreateActorInChunk(
@@ -265,8 +269,8 @@ void TilemapComponentManager::drawTilemap(const TilemapComponent &tilemap) {
                     Vec2 scaled_tile_size = handle->GetTileSize() * scale;
 
                     dst_rect.m_center = tilemap.GetTilemapCollision()->m_topleft +
-                                        Vec2(x, y) * scaled_tile_size +
-                                        scaled_tile_size * 0.5;
+                                        Vec2(x, y + 1) * scaled_tile_size + Vec2(
+                                            tile->m_tile_size.w, -tile->m_tile_size.h) * 0.5;
 
                     constexpr float scale_expand = 0.01;
                     scale += scale_expand;
