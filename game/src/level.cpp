@@ -154,7 +154,7 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
     }
     if (prefab.m_tilemap) {
         GAME_CONTEXT.m_tilemap_component_manager->ReplaceComponent(
-            entity, {entity, prefab.m_tilemap});
+            entity, {entity, prefab.m_tilemap.value()});
     }
     if (prefab.m_animation) {
         GAME_CONTEXT.m_animation_player_manager->RegisterEntity(

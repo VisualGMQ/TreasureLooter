@@ -90,7 +90,6 @@ void Context::Initialize() {
 
     m_game_config = *handle;
     m_assets_manager->GetManager<GameConfig>().Unload(handle);
-
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
             m_game_config.m_input_config_asset));

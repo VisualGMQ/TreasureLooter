@@ -2,6 +2,7 @@
 #include "context.hpp"
 #include "imgui.h"
 #include "imgui_id_generator.hpp"
+#include "math.hpp"
 #include "schema/display/anim.hpp"
 
 #include <array>
@@ -10,11 +11,6 @@
 #include <unordered_map>
 #include <vector>
 
-struct Vec2;
-struct Region;
-struct Degrees;
-struct Radians;
-struct Pose;
 class Image;
 
 void InstanceDisplay(const char* name, int& value);
@@ -42,8 +38,6 @@ void InstanceDisplay(const char* name, const double& value);
 void InstanceDisplay(const char* name, std::string& value);
 void InstanceDisplay(const char* name, const std::string& value);
 void InstanceDisplay(const char* name, std::string_view value);
-void InstanceDisplay(const char* name, Vec2& value);
-void InstanceDisplay(const char* name, const Vec2& value);
 void InstanceDisplay(const char* name, Region& value);
 void InstanceDisplay(const char* name, const Region& value);
 void InstanceDisplay(const char* name, Degrees& value);
@@ -131,7 +125,7 @@ void InstanceDisplay(const char* name, std::vector<T>& values) {
         values.emplace_back(T{});
     }
     ImGui::PopID();
-    
+
     for (size_t i = 0; i < values.size(); i++) {
         ImGui::PushID(ImGuiIDGenerator::Gen());
         if (ImGui::Button("del")) {
@@ -221,4 +215,60 @@ void InstanceDisplay(const char* name, AnimationTrack<T, TrackType>& m) {
 
     auto& keyframes = m.GetKeyframes();
     InstanceDisplay("keyframes", keyframes);
+}
+
+template <typename T>
+void InstanceDisplay(const char* name, TVec2<T>& value) {
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    if constexpr (std::is_same_v<T, float>) {
+        ImGui::DragFloat2(name, (float*)&value, 0.1);
+    } else if constexpr (std::is_same_v<T, double>) {
+        ImGui::DragScalarN(name, ImGuiDataType_Double, &value, 2, 0.1);
+    } else if constexpr (std::is_same_v<T, int>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S32, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, char>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S8, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, short>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S16, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, long long>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S64, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint8_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U8, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint16_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U16, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint32_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U32, &value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint64_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U64, &value, 2, 1);
+    }
+    ImGui::PopID();
+}
+
+template <typename T>
+void InstanceDisplay(const char* name, const TVec2<T>& value) {
+    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::BeginDisabled(true);
+    if constexpr (std::is_same_v<T, float>) {
+        ImGui::DragFloat2(name, (float*)&value, 0.1);
+    } else if constexpr (std::is_same_v<T, double>) {
+        ImGui::DragScalarN(name, ImGuiDataType_Double, (void*)&value, 2, 0.1);
+    } else if constexpr (std::is_same_v<T, int>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S32, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, char>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S8, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, short>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S16, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, long long>) {
+        ImGui::DragScalarN(name, ImGuiDataType_S64, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint8_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U8, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint16_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U16, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint32_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U32, (void*)&value, 2, 1);
+    } else if constexpr (std::is_same_v<T, uint64_t>) {
+        ImGui::DragScalarN(name, ImGuiDataType_U64, (void*)&value, 2, 1);
+    }
+    ImGui::EndDisabled();
+    ImGui::PopID();
 }

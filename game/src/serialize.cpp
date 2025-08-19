@@ -259,36 +259,6 @@ void Deserialize(const rapidxml::xml_node<>& node, float& payload) {
 }
 
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Vec2& payload, const std::string& name) {
-    auto node = doc.allocate_node(rapidxml::node_type::node_element,
-                                  doc.allocate_string(name.c_str()));
-    auto x_attr = doc.allocate_attribute(
-        "x", doc.allocate_string(std::to_string(payload.x).c_str()));
-    auto y_attr = doc.allocate_attribute(
-        "y", doc.allocate_string(std::to_string(payload.y).c_str()));
-    node->append_attribute(x_attr);
-    node->append_attribute(y_attr);
-    return node;
-}
-
-void Deserialize(const rapidxml::xml_node<>& node, Vec2& payload) {
-    auto x_attr = node.first_attribute("x");
-    auto y_attr = node.first_attribute("y");
-    if (!x_attr || !y_attr) {
-        LOGE("[Desrialize] parse Vec2 failed!, no x or y attribute");
-        return;
-    }
-
-    try {
-        payload.x = std::stof(x_attr->value());
-        payload.y = std::stof(y_attr->value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stof exception: {}, x = {}, y = {}", e.what(),
-             x_attr->value(), y_attr->value());
-    }
-}
-
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const Region& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
