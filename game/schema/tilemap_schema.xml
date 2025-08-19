@@ -1,0 +1,9 @@
+<schema>
+    <include>tilemap.hpp</include>
+    <include>math.hpp</include>
+
+    <class name="TilemapInfo">
+        <element name="position" type="Vec2"/>
+        <handle name="tilemap" type="Tilemap"/>
+    </class>
+</schema>

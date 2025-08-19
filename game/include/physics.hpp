@@ -114,8 +114,9 @@ public:
     };
 
     explicit PhysicsActor(Entity entity, const Rect& r, StorageType storage);
-
     explicit PhysicsActor(Entity entity, const Circle& c, StorageType storage);
+    explicit PhysicsActor(Entity entity, const PhysicsShape&,
+                          StorageType storage);
 
     [[nodiscard]] const PhysicsShape& GetShape() const;
 
@@ -146,33 +147,66 @@ private:
 
 class PhysicsScene {
 public:
-    using Chunk = MatStorage<std::vector<std::unique_ptr<PhysicsActor>>>;
+    using Chunk = MatStorage<std::vector<PhysicsActor*>>;
+
+    struct Chunks {
+        Vec2UI m_chunk_size{};
+        Vec2UI m_tile_size{};
+        MatStorage<Chunk> m_chunks;
+
+        bool InRange(uint32_t tile_x, uint32_t tile_y) const;
+
+        void getOverlapChunkRange(const Rect& bounding_box,
+                                  Range2D<int>& out_chunk_range,
+                                  Range2D<int>& out_tile_range);
+
+        void getTileRangeInCurrentChunk(const Range2D<int>& chunk_range,
+                                        const Range2D<int>& tile_range, int x,
+                                        int y, Range2D<int>& out_tile_range);
+    };
+
+    struct TilemapCollision {
+        explicit TilemapCollision(const Vec2& topleft) : m_topleft(topleft) {}
+
+        Vec2 m_topleft;
+        std::vector<Chunks> m_layers;
+        std::vector<std::unique_ptr<PhysicsActor>> m_actors;
+
+        Chunks& CreateLayer(const Vec2UI& tile_size, const Vec2UI& chunk_size) {
+            Chunks layer;
+            layer.m_chunk_size = chunk_size;
+            layer.m_tile_size = tile_size;
+            return m_layers.emplace_back(std::move(layer));
+        }
+    };
 
     PhysicsScene();
 
-    PhysicsActor* CreateActorInChunk(Entity, size_t chunk_x, size_t chunk_y,
-                                     size_t x, size_t y, const Rect&);
-    PhysicsActor* CreateActorInChunk(Entity, size_t chunk_x, size_t chunk_y,
-                                     size_t x, size_t y, const Circle&);
-    PhysicsActor* CreateActorInChunk(Entity, const Vec2& center, const Rect&);
-    PhysicsActor* CreateActorInChunk(Entity, const Vec2& center, const Circle&);
+    PhysicsActor* CreateActorInChunk(Entity,
+                                     TilemapCollision* tilemap_collision,
+                                     uint32_t layer, const PhysicsShape&);
+    TilemapCollision* CreateTilemapCollision(const Vec2& topleft);
     PhysicsActor* CreateActor(Entity, PhysicsActorInfoHandle info);
     PhysicsActor* CreateActor(Entity, const Circle&);
     PhysicsActor* CreateActor(Entity, const Rect&);
+
+    void RemoveTilemapCollision(TilemapCollision*);
     void RemoveActor(PhysicsActor*);
+    void RemoveActorInChunk(TilemapCollision*, uint32_t layer,
+                            PhysicsActor* actor);
 
     /*
      * @param dir is normalized vector
      */
     uint32_t Sweep(const PhysicsShape&, CollisionGroup mask, const Vec2& dir,
                    float dist, SweepResult* out_result, size_t out_size);
-    uint32_t Sweep(const PhysicsActor&, const Vec2& dir,
-                   float dist, SweepResult* out_result, size_t out_size);
+    uint32_t Sweep(const PhysicsActor&, const Vec2& dir, float dist,
+                   SweepResult* out_result, size_t out_size);
 
     uint32_t Overlap(const PhysicsShape&, CollisionGroup mask,
                      OverlapResult* out_result, size_t out_size);
-    uint32_t Overlap(const PhysicsActor&,
-                     OverlapResult* out_result, size_t out_size);
+    uint32_t Overlap(const PhysicsActor&, OverlapResult* out_result,
+                     size_t out_size);
     [[nodiscard]] bool Overlap(const PhysicsActor&, const PhysicsActor&) const;
     [[nodiscard]] bool Overlap(const PhysicsShape&, const PhysicsShape&) const;
 
@@ -183,31 +217,24 @@ public:
     void RenderDebug() const;
 
 private:
-    using Chunks = MatStorage<std::unique_ptr<Chunk>>;
+    std::vector<std::unique_ptr<TilemapCollision>> m_tilemap_collisions;
 
-    Chunks m_chunks;
     std::vector<std::unique_ptr<PhysicsActor>> m_actors;  // actors not in chunk
     std::vector<SweepResult> m_cached_sweep_results;
     std::vector<OverlapResult> m_cached_overlaps_results;
     bool m_should_debug_draw = false;
 
-    Chunk& ensureChunk(size_t x, size_t y);
-    PhysicsActor* setActor2Chunk(size_t chunk_x, size_t chunk_y, size_t x,
-                                 size_t y, std::unique_ptr<PhysicsActor>&&);
-
-
     [[nodiscard]] Rect computeSweepBoundingBox(const Rect&, const Vec2& dir,
                                                float dist) const;
     [[nodiscard]] Rect computeSweepBoundingBox(const Circle&, const Vec2& dir,
                                                float dist) const;
-    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsShape&, const Vec2& dir,
+    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsShape&,
+                                               const Vec2& dir,
                                                float dist) const;
     [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsActor&,
                                                const Vec2& dir,
                                                float dist) const;
 
-    std::vector<std::unique_ptr<PhysicsActor>>* getActorStoreInChunk(
-        const Vec2& actor_center, bool ensure);
     [[nodiscard]] Rect computeActorBoundingBox(const PhysicsActor&) const;
     [[nodiscard]] Rect computeShapeBoundingBox(const PhysicsShape&) const;
 
@@ -225,11 +252,4 @@ private:
     [[nodiscard]] bool checkNeedQuery(const PhysicsShape& a,
                                       CollisionGroup mask,
                                       const PhysicsActor& b) const;
-
-    void getOverlapChunkRange(const Rect& bounding_box,
-                              Range2D<int>& out_chunk_range,
-                              Range2D<int>& out_tile_range);
-    void getTileRangeInCurrentChunk(const Range2D<int>& chunk_range,
-                                    const Range2D<int>& tile_range, int x, int y,
-                                    Range2D<int>& out_tile_range);
 };

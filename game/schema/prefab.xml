@@ -1,6 +1,5 @@
 <schema>
     <include>transform.hpp</include>
-    <include>tilemap.hpp</include>
     <include>animation_player.hpp</include>
     <import>sprite</import>
     <import>relationship</import>
@@ -8,13 +7,14 @@
     <import>anim_player</import>
     <import>physics_schema</import>
     <import>common</import>
+    <import>tilemap_schema</import>
 
     <asset name="Prefab" extension=".prefab">
         <option type="Sprite" name="sprite"/>
         <option type="Transform" name="transform"/>
         <option type="Relationship" name="relationship"/>
         <option type="AnimationPlayerCreateInfo" name="animation"/>
-        <handle type="Tilemap" name="tilemap"/>
+        <option type="TilemapInfo" name="tilemap"/>
         <option type="CCT" name="cct"/>
         <option type="TriggerInfo" name="trigger"/>
         <element type="EntityType" name="type" default="EntityType::Normal"/>

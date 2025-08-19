@@ -3,6 +3,8 @@
 #include "asset_manager.hpp"
 #include "context.hpp"
 #include "log.hpp"
+#include "schema/tilemap_schema.hpp"
+#include "tmxlite/TileLayer.hpp"
 
 // Bits on the far end of the 32-bit global tile ID are used for tile flags
 const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x8;
@@ -161,18 +163,25 @@ TilemapHandle TilemapManager::Load(const Path& filename, bool force) {
                  std::make_unique<Tilemap>(filename));
 }
 
-TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
-    : m_handle{handle} {
-    if (!handle) {
+TilemapComponent::TilemapComponent(Entity entity,
+                                   const TilemapInfo& create_info)
+    : m_handle{create_info.m_tilemap} {
+    if (!m_handle) {
         return;
     }
 
     auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
     auto& game_config = GAME_CONTEXT.GetGameConfig();
     auto& physics_scene = GAME_CONTEXT.m_physics_scene;
-    for (auto& layer : m_handle->GetLayers()) {
+
+    m_tilemap_collision = physics_scene->CreateTilemapCollision(create_info.m_position);
+
+    auto& layers = m_handle->GetLayers();
+    for (size_t i = 0; i < layers.size(); i++) {
+        auto& layer = layers[i];
         if (layer->GetType() == TilemapLayer::Type::Tiled) {
             auto tiled_layer = layer->CastAsTiledLayer();
+            m_tilemap_collision->m_layers.emplace_back();
             auto& size = tiled_layer->GetSize();
             for (size_t y = 0; y < size.y; y++) {
                 for (size_t x = 0; x < size.x; x++) {
@@ -185,20 +194,20 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
 
                     Rect rect;
                     rect.m_half_size = tile->m_collision_rect.m_half_size;
-                    Vec2 scale = Vec2(game_config.m_tile_size_w,
-                                      game_config.m_tile_size_h) /
+                    Vec2 scale = Vec2(game_config.m_tile_size.w,
+                                      game_config.m_tile_size.h) /
                                  m_handle->GetTileSize();
                     rect.m_center = tile->m_collision_rect.m_center * scale;
 
                     auto flip = layer_tile.m_flip;
                     if (flip & Flip::Vertical) {
                         float offset_y =
-                            game_config.m_tile_size_h * 0.5 - rect.m_center.y;
+                            game_config.m_tile_size.h * 0.5 - rect.m_center.y;
                         rect.m_center.y += offset_y * 2.0;
                     }
                     if (flip & Flip::Horizontal) {
                         float offset_x =
-                            game_config.m_tile_size_w * 0.5 - rect.m_center.x;
+                            game_config.m_tile_size.w * 0.5 - rect.m_center.x;
                         rect.m_center.x += offset_x * 2.0;
                     }
 
@@ -207,9 +216,9 @@ TilemapComponent::TilemapComponent(Entity entity, TilemapHandle handle)
                         Vec2(x, y) * m_handle->GetTileSize() * scale;
                     rect.m_half_size *= scale;
 
+                    PhysicsShape shape{rect};
                     auto actor = physics_scene->CreateActorInChunk(
-                        entity, rect.m_center, rect);
-
+                        entity, m_tilemap_collision, i, shape);
                     CollisionGroup collision_layer;
                     collision_layer.Add(CollisionGroupType::Obstacle);
                     actor->SetCollisionLayer(collision_layer);

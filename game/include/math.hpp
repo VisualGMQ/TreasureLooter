@@ -1,56 +1,221 @@
 ﻿#pragma once
-#include <cstddef>
-#include <vector>
 #include "spdlog/fmt/ostr.h"
 #include "spdlog/spdlog.h"
+#include <cstddef>
+#include <vector>
 
-struct Vec2 final {
+template <typename T>
+struct TVec2 final {
     union {
-        float w;
-        float x;
+        T w;
+        T x;
     };
 
     union {
-        float h;
-        float y;
+        T h;
+        T y;
     };
 
-    static Vec2 ZERO;
-    static Vec2 X_UNIT;
-    static Vec2 Y_UNIT;
+    static TVec2 ZERO;
+    static TVec2 X_UNIT;
+    static TVec2 Y_UNIT;
 
-    Vec2();
-    Vec2(float x, float y);
+    TVec2();
+    TVec2(T x, T y);
 
-    Vec2& operator*=(const Vec2&);
-    Vec2& operator*=(float);
-    Vec2& operator/=(const Vec2&);
-    Vec2& operator/=(float);
-    Vec2& operator+=(const Vec2&);
-    Vec2& operator-=(const Vec2&);
+    TVec2& operator*=(const TVec2&);
+    TVec2& operator*=(float);
+    TVec2& operator/=(const TVec2&);
+    TVec2& operator/=(float);
+    TVec2& operator+=(const TVec2&);
+    TVec2& operator-=(const TVec2&);
 
-    bool operator==(const Vec2& o) const { return x == o.x && y == o.y; }
+    bool operator==(const TVec2& o) const { return x == o.x && y == o.y; }
 
-    bool operator!=(const Vec2& o) const { return !(*this == o); }
+    bool operator!=(const TVec2& o) const { return !(*this == o); }
 
-    float Dot(const Vec2&) const;
-    float Cross(const Vec2&) const;
+    float Dot(const TVec2&) const;
+    float Cross(const TVec2&) const;
     float LengthSquared() const;
     float Length() const;
-    Vec2 Normalize() const;
+    TVec2 Normalize() const;
 };
 
-Vec2 operator*(float, const Vec2&);
-Vec2 operator*(const Vec2&, float);
-Vec2 operator*(const Vec2&, const Vec2&);
-Vec2 operator/(const Vec2&, float);
-Vec2 operator/(const Vec2&, const Vec2&);
-Vec2 operator+(const Vec2&, const Vec2&);
-Vec2 operator-(const Vec2&, const Vec2&);
-float Dot(const Vec2&, const Vec2&);
-float Cross(const Vec2&, const Vec2&);
-Vec2 operator-(const Vec2&);
-std::ostream& operator<<(std::ostream& os, const Vec2&);
+template <typename T>
+TVec2<T> TVec2<T>::ZERO{};
+
+template <typename T>
+TVec2<T> TVec2<T>::X_UNIT{1, 0};
+
+template <typename T>
+TVec2<T> TVec2<T>::Y_UNIT{0, 1};
+
+template <typename T>
+TVec2<T> operator*(float, const TVec2<T>&);
+template <typename T>
+TVec2<T> operator*(const TVec2<T>&, float);
+template <typename T>
+TVec2<T> operator*(const TVec2<T>&, const TVec2<T>&);
+template <typename T>
+TVec2<T> operator/(const TVec2<T>&, float);
+template <typename T>
+TVec2<T> operator/(const TVec2<T>&, const TVec2<T>&);
+template <typename T>
+TVec2<T> operator+(const TVec2<T>&, const TVec2<T>&);
+template <typename T>
+TVec2<T> operator-(const TVec2<T>&, const TVec2<T>&);
+template <typename T>
+float Dot(const TVec2<T>&, const TVec2<T>&);
+template <typename T>
+float Cross(const TVec2<T>&, const TVec2<T>&);
+template <typename T>
+TVec2<T> operator-(const TVec2<T>&);
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const TVec2<T>&);
+
+using Vec2 = TVec2<float>;
+using Vec2I = TVec2<int>;
+using Vec2UI = TVec2<uint32_t>;
+
+template <typename T>
+TVec2<T>::TVec2() : x{0}, y{0} {}
+
+template <typename T>
+TVec2<T>::TVec2(T x, T y) : x{x}, y{y} {}
+
+template <typename T>
+TVec2<T>& TVec2<T>::operator*=(const TVec2& o) {
+    x *= o.x;
+    y *= o.y;
+    return *this;
+}
+
+template <typename T>
+TVec2<T>& TVec2<T>::operator*=(float scalar) {
+    x *= scalar;
+    y *= scalar;
+    return *this;
+}
+
+template <typename T>
+TVec2<T>& TVec2<T>::operator/=(const TVec2& o) {
+    x /= o.x;
+    y /= o.y;
+    return *this;
+}
+
+template <typename T>
+TVec2<T>& TVec2<T>::operator/=(float scalar) {
+    x /= scalar;
+    y /= scalar;
+    return *this;
+}
+
+template <typename T>
+TVec2<T>& TVec2<T>::operator+=(const TVec2& o) {
+    x += o.x;
+    y += o.y;
+    return *this;
+}
+
+template <typename T>
+TVec2<T>& TVec2<T>::operator-=(const TVec2& o) {
+    x -= o.x;
+    y -= o.y;
+    return *this;
+}
+
+template <typename T>
+float TVec2<T>::Dot(const TVec2& o) const {
+    return x * o.x + y * o.y;
+}
+
+template <typename T>
+float TVec2<T>::Cross(const TVec2& o) const {
+    return x * o.y - y * o.x;
+}
+
+template <typename T>
+float TVec2<T>::LengthSquared() const {
+    return x * x + y * y;
+}
+
+template <typename T>
+float TVec2<T>::Length() const {
+    return std::sqrt(LengthSquared());
+}
+
+template <typename T>
+TVec2<T> TVec2<T>::Normalize() const {
+    float len = Length();
+    if (len <= std::numeric_limits<float>::epsilon()) {
+        return {};
+    }
+    return *this / len;
+}
+
+template <typename T>
+TVec2<T> operator*(float x, const TVec2<T>& v) {
+    TVec2<T> o = v;
+    return o *= x;
+}
+
+template <typename T>
+TVec2<T> operator*(const TVec2<T>& v, float x) {
+    TVec2<T> o = v;
+    return o *= x;
+}
+
+template <typename T>
+TVec2<T> operator*(const TVec2<T>& v1, const TVec2<T>& v2) {
+    TVec2<T> v3 = v1;
+    return v3 *= v2;
+}
+
+template <typename T>
+TVec2<T> operator/(const TVec2<T>& v, float x) {
+    TVec2<T> o = v;
+    return o /= x;
+}
+
+template <typename T>
+TVec2<T> operator/(const TVec2<T>& v1, const TVec2<T>& v2) {
+    TVec2<T> v3 = v1;
+    return v3 /= v2;
+}
+
+template <typename T>
+TVec2<T> operator+(const TVec2<T>& v1, const TVec2<T>& v2) {
+    TVec2<T> v3 = v1;
+    return v3 += v2;
+}
+
+template <typename T>
+TVec2<T> operator-(const TVec2<T>& v1, const TVec2<T>& v2) {
+    TVec2<T> v3 = v1;
+    return v3 -= v2;
+}
+
+template <typename T>
+float Dot(const TVec2<T>& v1, const TVec2<T>& v2) {
+    return v1.Dot(v2);
+}
+
+template <typename T>
+float Cross(const TVec2<T>& v1, const TVec2<T>& v2) {
+    return v1.Cross(v2);
+}
+
+template <typename T>
+TVec2<T> operator-(const TVec2<T>& o) {
+    return TVec2<T>(-o.x, -o.y);
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const TVec2<T>& p) {
+    os << "TVec2<T>(" << p.x << ", " << p.y << ")";
+    return os;
+}
 
 struct Color {
     static const Color Red;
@@ -112,9 +277,7 @@ class MatStorage {
 public:
     MatStorage() = default;
 
-    MatStorage(size_t w, size_t h) {
-        Resize(w, h);
-    }
+    MatStorage(size_t w, size_t h) { Resize(w, h); }
 
     bool InRange(int x, int y) const { return x < m_w && y < m_h; }
 
@@ -131,7 +294,6 @@ public:
         }
     }
 
-
     void ExpandTo(size_t w, size_t h) {
         if (w > m_w) {
             m_w = w;
@@ -147,17 +309,14 @@ public:
             }
         }
     }
+
     const T& Get(size_t x, size_t y) const { return m_data[x][y]; }
 
     T& Get(size_t x, size_t y) { return m_data[x][y]; }
 
-    void Set(const T& value, size_t x, size_t y) {
-        m_data[x][y] = value;
-    }
+    void Set(const T& value, size_t x, size_t y) { m_data[x][y] = value; }
 
-    void Set(T&& value, size_t x, size_t y) {
-        m_data[x][y] = std::move(value);
-    }
+    void Set(T&& value, size_t x, size_t y) { m_data[x][y] = std::move(value); }
 
     void Clear() {
         m_w = 0;

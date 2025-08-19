@@ -3,14 +3,14 @@
 #include "image.hpp"
 #include "manager.hpp"
 #include "path.hpp"
+#include "physics.hpp"
 #include "schema/common.hpp"
 #include "schema/flip.hpp"
 #include "tmxlite/Layer.hpp"
 #include "tmxlite/Map.hpp"
-#include "tmxlite/ObjectGroup.hpp"
-#include "tmxlite/TileLayer.hpp"
 
 class TilemapTileLayer;
+class TilemapInfo;
 
 class TilemapLayer {
 public:
@@ -110,11 +110,12 @@ public:
 
 class TilemapComponent {
 public:
-    TilemapComponent(Entity, TilemapHandle);
+    TilemapComponent(Entity, const TilemapInfo&);
     TilemapHandle GetHandle() const { return m_handle; }
 
 private:
     TilemapHandle m_handle;
+    PhysicsScene::TilemapCollision* m_tilemap_collision{};
 };
 
 class TilemapComponentManager: public ComponentManager<TilemapComponent> {

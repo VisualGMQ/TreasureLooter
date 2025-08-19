@@ -82,11 +82,6 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 void Deserialize(const rapidxml::xml_node<>& node, double& payload);
 void Deserialize(const rapidxml::xml_node<>& node, float& payload);
 
-// vec2
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
-                                const Vec2& payload, const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Vec2& payload);
-
 // region
 rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                 const Region& payload, const std::string& name);
@@ -359,5 +354,40 @@ void Deserialize(const rapidxml::xml_node<>& node, Handle<T>& payload) {
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);
+    }
+}
+
+// TVec2
+
+template <typename T>
+rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+                                const TVec2<T>& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    auto x_attr = doc.allocate_attribute(
+        "x", doc.allocate_string(std::to_string(payload.x).c_str()));
+    auto y_attr = doc.allocate_attribute(
+        "y", doc.allocate_string(std::to_string(payload.y).c_str()));
+    node->append_attribute(x_attr);
+    node->append_attribute(y_attr);
+    return node;
+}
+
+template <typename T>
+void Deserialize(const rapidxml::xml_node<>& node, TVec2<T>& payload) {
+    auto x_attr = node.first_attribute("x");
+    auto y_attr = node.first_attribute("y");
+    if (!x_attr || !y_attr) {
+        LOGE("[Desrialize] parse TVec2<T> failed!, no x or y attribute");
+        return;
+    }
+
+    try {
+        payload.x = std::stod(x_attr->value());
+        payload.y = std::stod(y_attr->value());
+    } catch (std::exception& e) {
+        LOGE("[Deserialize]: stod exception: {}, x = {}, y = {}", e.what(),
+             x_attr->value(), y_attr->value());
     }
 }
