@@ -23,13 +23,13 @@ public:
     void DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
                   bool use_camera = true);
     void DrawRect(const Rect&, const Color&, bool use_camera = true);
-    void DrawCircle(const Circle&, const Color&, uint32_t fragment = 20);
+    void DrawCircle(const Circle&, const Color&, uint32_t fragment = 20, bool use_camera = true);
     void FillRect(const Rect&, const Color&, bool use_camera = true);
     void DrawImage(const Image&, const Region& src, const Region& dst,
                    Degrees rotation, const Vec2& center, Flags<Flip>,
                    bool use_camera = true);
     void DrawRectEx(const Image& image, const Region& src, const Vec2& topleft,
-                    const Vec2& topright, const Vec2& bottomleft);
+                    const Vec2& topright, const Vec2& bottomleft, bool use_camera = true);
 
     void Clear();
     void Present();

@@ -9,12 +9,12 @@ class IDebugDrawer {
 public:
     virtual ~IDebugDrawer() = default;
 
-    virtual void DrawRect(const Rect&, const Color& color, TimeType m_time) = 0;
+    virtual void DrawRect(const Rect&, const Color& color, TimeType m_time, bool use_camera) = 0;
     virtual void DrawCircle(const Circle&, const Color& color,
-                            TimeType m_time) = 0;
-    virtual void FillRect(const Rect&, const Color& color, TimeType m_time) = 0;
+                            TimeType m_time, bool use_camera) = 0;
+    virtual void FillRect(const Rect&, const Color& color, TimeType m_time, bool use_camera) = 0;
     virtual void AddLine(const Vec2&, const Vec2&, const Color& color,
-                         TimeType m_time) = 0;
+                         TimeType m_time, bool use_camera) = 0;
     virtual void Clear() = 0;
 
     virtual void Update(TimeType) = 0;
@@ -22,15 +22,15 @@ public:
 
 class TrivialDebugDrawer final : public IDebugDrawer {
 public:
-    void DrawRect(const Rect&, const Color& color, TimeType m_time) override {}
+    void DrawRect(const Rect&, const Color& color, TimeType m_time, bool use_camera) override {}
 
     void DrawCircle(const Circle&, const Color& color,
-                    TimeType m_time) override {}
+                    TimeType m_time, bool use_camera) override {}
 
-    void FillRect(const Rect&, const Color& color, TimeType m_time) override {}
+    void FillRect(const Rect&, const Color& color, TimeType m_time, bool use_camera) override {}
 
     void AddLine(const Vec2&, const Vec2&, const Color& color,
-                 TimeType m_time) override {}
+                 TimeType m_time, bool use_camera) override {}
 
     void Clear() override {}
 
@@ -39,12 +39,12 @@ public:
 
 class DebugDrawer final : public IDebugDrawer {
 public:
-    void DrawRect(const Rect&, const Color& color, TimeType m_time) override;
+    void DrawRect(const Rect&, const Color& color, TimeType m_time, bool use_camera = true) override;
     void DrawCircle(const Circle&, const Color& color,
-                    TimeType m_time) override;
-    void FillRect(const Rect&, const Color& color, TimeType m_time) override;
+                    TimeType m_time, bool use_camera = true) override;
+    void FillRect(const Rect&, const Color& color, TimeType m_time, bool use_camera = true) override;
     void AddLine(const Vec2&, const Vec2&, const Color& color,
-                 TimeType m_time) override;
+                 TimeType m_time, bool use_camera = true) override;
 
     void Update(TimeType) override;
     void Clear() override;
@@ -55,6 +55,7 @@ private:
         Color m_color;
         T m_value;
         TimeType m_time{};
+        bool use_camera = false;
     };
 
     std::vector<Element<Rect>> m_fill_rects;
