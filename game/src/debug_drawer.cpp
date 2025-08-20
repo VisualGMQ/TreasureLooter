@@ -2,22 +2,22 @@
 
 #include "context.hpp"
 
-void DebugDrawer::DrawRect(const Rect& r, const Color& color, TimeType time) {
-    m_rects.push_back({color, r, time});
+void DebugDrawer::DrawRect(const Rect& r, const Color& color, TimeType time, bool use_camera) {
+    m_rects.push_back({color, r, time, use_camera});
 }
 
 void DebugDrawer::DrawCircle(const Circle& c, const Color& color,
-                             TimeType time) {
-    m_circles.push_back({color, c, time});
+                             TimeType time, bool use_camera) {
+    m_circles.push_back({color, c, time, use_camera});
 }
 
-void DebugDrawer::FillRect(const Rect& r, const Color& color, TimeType time) {
-    m_fill_rects.push_back({color, r, time});
+void DebugDrawer::FillRect(const Rect& r, const Color& color, TimeType time, bool use_camera) {
+    m_fill_rects.push_back({color, r, time, use_camera});
 }
 
 void DebugDrawer::AddLine(const Vec2& p1, const Vec2& p2, const Color& color,
-                          TimeType time) {
-    m_segments.push_back({color, std::make_pair(p1, p2), time});
+                          TimeType time, bool use_camera) {
+    m_segments.push_back({color, std::make_pair(p1, p2), time, use_camera});
 }
 
 void DebugDrawer::Update(TimeType elapse) {
@@ -27,7 +27,7 @@ void DebugDrawer::Update(TimeType elapse) {
 
     while (i < m_rects.size()) {
         auto& elem = m_rects[i];
-        renderer->DrawRect(elem.m_value, elem.m_color);
+        renderer->DrawRect(elem.m_value, elem.m_color, elem.use_camera);
         elem.m_time -= elapse;
 
         if (elem.m_time <= 0) {
@@ -41,7 +41,7 @@ void DebugDrawer::Update(TimeType elapse) {
     i = 0;
     while (i < m_fill_rects.size()) {
         auto& elem = m_fill_rects[i];
-        renderer->FillRect(elem.m_value, elem.m_color);
+        renderer->FillRect(elem.m_value, elem.m_color, elem.use_camera);
         elem.m_time -= elapse;
 
         if (elem.m_time <= 0) {
@@ -55,7 +55,7 @@ void DebugDrawer::Update(TimeType elapse) {
     i = 0;
     while (i < m_circles.size()) {
         auto& elem = m_circles[i];
-        renderer->DrawCircle(elem.m_value, elem.m_color);
+        renderer->DrawCircle(elem.m_value, elem.m_color, 20, elem.use_camera);
         elem.m_time -= elapse;
 
         if (elem.m_time <= 0) {
@@ -70,7 +70,7 @@ void DebugDrawer::Update(TimeType elapse) {
     while (i < m_segments.size()) {
         auto& elem = m_segments[i];
         renderer->DrawLine(elem.m_value.first, elem.m_value.second,
-                           elem.m_color);
+                           elem.m_color, elem.use_camera);
         elem.m_time -= elapse;
 
         if (elem.m_time <= 0) {
