@@ -271,9 +271,6 @@ void TilemapComponentManager::drawTilemap(const TilemapComponent &tilemap) {
                     dst_rect.m_center = tilemap.GetTilemapCollision()->m_topleft +
                                         Vec2(x, y + 1) * scaled_tile_size + Vec2(
                                             tile->m_tile_size.w, -tile->m_tile_size.h) * 0.5;
-                    dst_rect.m_half_size *= GAME_CONTEXT.m_camera.GetScale();
-                    dst_rect.m_center *= GAME_CONTEXT.m_camera.GetScale();
-                    dst_rect.m_center += GAME_CONTEXT.m_camera.GetPosition();
 
                     constexpr float scale_expand = 0.01;
                     scale += scale_expand;
