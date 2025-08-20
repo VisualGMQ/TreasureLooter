@@ -24,7 +24,7 @@ void SpriteManager::Update() {
         Vec2 half_size = sprite->m_size * 0.5f;
 
         std::array<Vec2, 3> pts;
-        pts[0] = -half_size;                   // top left
+        pts[0] = -half_size;  // top left
         pts[1] = {half_size.x, -half_size.y};  // top right
         pts[2] = {-half_size.x, half_size.y};  // bottom left
 
@@ -43,30 +43,22 @@ void SpriteManager::Update() {
             pts[2] = -half_size;
         }
 
+        for (auto& pt : pts) {
+            pt *= GAME_CONTEXT.m_camera.GetScale();
+        }
+
         auto& m = transform->GetGlobalMat();
         for (auto& pt : pts) {
             Vec2 new_pt;
-            new_pt.x = pt.x * m.Get(0, 0) + pt.y * m.Get(1, 0) + m.Get(2, 0);
-            new_pt.y = pt.x * m.Get(0, 1) + pt.y * m.Get(1, 1) + m.Get(2, 1);
+            new_pt.x = pt.x * m.Get(0, 0) + pt.y * m.Get(1, 0) +
+                       m.Get(2, 0) * GAME_CONTEXT.m_camera.GetScale().x;
+            new_pt.y = pt.x * m.Get(0, 1) + pt.y * m.Get(1, 1) +
+                       m.Get(2, 1) * GAME_CONTEXT.m_camera.GetScale().y;
             pt = new_pt;
+
+            pt += GAME_CONTEXT.m_camera.GetPosition();
         }
 
-        SDL_FPoint topleft, topright, bottomleft;
-        topleft.x = pts[0].x;
-        topleft.y = pts[0].y;
-        topright.x = pts[1].x;
-        topright.y = pts[1].y;
-        bottomleft.x = pts[2].x;
-        bottomleft.y = pts[2].y;
-
-        SDL_FRect src_rect;
-        src_rect.x = src_region.m_topleft.x;
-        src_rect.y = src_region.m_topleft.y;
-        src_rect.w = src_region.m_size.w;
-        src_rect.h = src_region.m_size.h;
-
-        SDL_CALL(SDL_RenderTextureAffine(
-            renderer->GetRenderer(), sprite->m_image->GetTexture(), &src_rect,
-            &topleft, &topright, &bottomleft));
+        renderer->DrawRectEx(*sprite->m_image, src_region, pts[0], pts[1], pts[2]);
     }
 }

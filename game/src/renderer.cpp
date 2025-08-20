@@ -1,5 +1,7 @@
 ﻿#include "renderer.hpp"
 
+#include "camera.hpp"
+#include "context.hpp"
 #include "image.hpp"
 #include "log.hpp"
 #include "sdl_call.hpp"
@@ -23,19 +25,35 @@ void Renderer::SetClearColor(const Color& c) {
     m_clear_color.a = c.a * 255;
 }
 
-void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color) {
+void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
+                        bool use_camera) {
     setRenderColor(color);
+
+    Vec2 dp1 = p1;
+    Vec2 dp2 = p2;
+    if (use_camera) {
+        transformByCamera(GAME_CONTEXT.m_camera, &dp1, nullptr);
+        transformByCamera(GAME_CONTEXT.m_camera, &dp2, nullptr);
+    }
     SDL_CALL(SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y));
 }
 
-void Renderer::DrawRect(const Rect& r, const Color& c) {
+void Renderer::DrawRect(const Rect& r, const Color& c, bool use_camera) {
     setRenderColor(c);
-    Vec2 tl = r.m_center - r.m_half_size;
-    SDL_FRect rect{tl.x, tl.y, r.m_half_size.w * 2.0f, r.m_half_size.h * 2.0f};
+
+    Rect dst = r;
+    if (use_camera) {
+        transformByCamera(GAME_CONTEXT.m_camera, &dst.m_center,
+                          &dst.m_half_size);
+    }
+    Vec2 tl = dst.m_center - dst.m_half_size;
+    SDL_FRect rect{tl.x, tl.y, dst.m_half_size.w * 2.0f,
+                   dst.m_half_size.h * 2.0f};
     SDL_CALL(SDL_RenderRect(m_renderer, &rect));
 }
 
-void Renderer::DrawCircle(const Circle& c, const Color& color, uint32_t fragment) {
+void Renderer::DrawCircle(const Circle& c, const Color& color,
+                          uint32_t fragment) {
     float angle_step = 2 * PI / fragment;
     Vec2 p = c.m_center + Vec2::X_UNIT * c.m_radius;
     setRenderColor(color);
@@ -49,50 +67,65 @@ void Renderer::DrawCircle(const Circle& c, const Color& color, uint32_t fragment
     }
 }
 
-void Renderer::FillRect(const Rect& r, const Color& c) {
+void Renderer::FillRect(const Rect& r, const Color& c, bool use_camera) {
     setRenderColor(c);
-    Vec2 tl = r.m_center - r.m_half_size;
-    SDL_FRect rect{tl.x, tl.y, r.m_half_size.w * 2.0f, r.m_half_size.h * 2.0f};
+    Rect dst = r;
+    if (use_camera) {
+        transformByCamera(GAME_CONTEXT.m_camera, &dst.m_center,
+                          &dst.m_half_size);
+    }
+    Vec2 tl = dst.m_center - dst.m_half_size;
+    SDL_FRect rect{tl.x, tl.y, dst.m_half_size.w * 2.0f,
+                   dst.m_half_size.h * 2.0f};
     SDL_CALL(SDL_RenderFillRect(m_renderer, &rect));
 }
 
 void Renderer::DrawImage(const Image& image, const Region& src,
                          const Region& dst, Degrees rotation,
-                         const Vec2& center, Flags<Flip> flip) {
+                         const Vec2& center, Flags<Flip> flip,
+                         bool use_camera) {
+    Rect dst_region;
+    dst_region.m_half_size = dst.m_size * 0.5;
+    dst_region.m_center = dst.m_topleft + dst_region.m_half_size;
+
+    if (use_camera) {
+        transformByCamera(GAME_CONTEXT.m_camera, &dst_region.m_center,
+                          &dst_region.m_half_size);
+    }
+
     SDL_FRect src_rect, dst_rect;
     src_rect.x = src.m_topleft.x;
     src_rect.y = src.m_topleft.y;
     src_rect.w = src.m_size.w;
     src_rect.h = src.m_size.h;
 
-    dst_rect.x = dst.m_topleft.x;
-    dst_rect.y = dst.m_topleft.y;
-    dst_rect.w = dst.m_size.w;
-    dst_rect.h = dst.m_size.h;
+    auto top_left = dst_region.m_center - dst_region.m_half_size;
+    dst_rect.x = top_left.x;
+    dst_rect.y = top_left.y;
+    dst_rect.w = dst_region.m_half_size.w * 2.0f;
+    dst_rect.h = dst_region.m_half_size.h * 2.0f;
 
     SDL_FPoint sdl_center;
-    sdl_center.x = center.x;
-    sdl_center.y = center.y;
+    Vec2 rot_center;
+    if (use_camera) {
+        transformByCamera(GAME_CONTEXT.m_camera, &rot_center, nullptr);
+    }
+    sdl_center.x = rot_center.x;
+    sdl_center.y = rot_center.y;
     SDL_CALL(SDL_RenderTextureRotated(m_renderer, image.GetTexture(), &src_rect,
                                       &dst_rect, rotation.Value(), &sdl_center,
                                       static_cast<SDL_FlipMode>(flip.Value())));
 }
 
-void Renderer::DrawTiled(const Image& image, const Region& src,
-                         const Region& dst, float scale) {
-    SDL_FRect src_rect, dst_rect;
-    src_rect.x = src.m_topleft.x;
-    src_rect.y = src.m_topleft.y;
-    src_rect.w = src.m_size.w;
-    src_rect.h = src.m_size.h;
-
-    dst_rect.x = dst.m_topleft.x;
-    dst_rect.y = dst.m_topleft.y;
-    dst_rect.w = dst.m_size.w * (scale + 0.01);
-    dst_rect.h = dst.m_size.h * (scale + 0.01);
-
-    SDL_CALL(SDL_RenderTextureTiled(m_renderer, image.GetTexture(), &src_rect,
-                                    scale, &dst_rect));
+void Renderer::DrawRectEx(const Image& image, const Region& src,
+                          const Vec2& topleft, const Vec2& topright,
+                          const Vec2& bottomleft) {
+    SDL_FRect rect = {src.m_topleft.x, src.m_topleft.y, src.m_size.w,
+                      src.m_size.h};
+    SDL_FPoint tl{topleft.x, topleft.y}, tr{topright.x, topright.y},
+        bl{bottomleft.x, bottomleft.y};
+    SDL_CALL(SDL_RenderTextureAffine(m_renderer, image.GetTexture(), &rect, &tl,
+                                     &tr, &bl));
 }
 
 void Renderer::Clear() {
@@ -113,4 +146,14 @@ SDL_Renderer* Renderer::GetRenderer() const {
 void Renderer::setRenderColor(const Color& c) {
     SDL_CALL(SDL_SetRenderDrawColor(m_renderer, c.r * 255, c.g * 255, c.b * 255,
                                     c.a * 255));
+}
+
+void Renderer::transformByCamera(const Camera& camera, Vec2* center,
+                                 Vec2* size) const {
+    if (center) {
+        *center = *center * camera.GetScale() + camera.GetPosition();
+    }
+    if (size) {
+        *size *= camera.GetScale();
+    }
 }

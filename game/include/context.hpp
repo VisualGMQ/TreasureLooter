@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "animation_player.hpp"
+#include "camera.hpp"
 #include "cct.hpp"
 #include "debug_drawer.hpp"
 #include "editor/editor.hpp"
@@ -15,12 +16,12 @@
 #include "level.hpp"
 #include "physics.hpp"
 #include "renderer.hpp"
+#include "schema/common.hpp"
 #include "schema/config.hpp"
 #include "tilemap.hpp"
 #include "timer.hpp"
 #include "trigger.hpp"
 #include "window.hpp"
-#include "schema/common.hpp"
 
 #include <memory>
 
@@ -76,6 +77,7 @@ public:
     std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
     std::unique_ptr<LevelManager> m_level_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
+    Camera m_camera;
 
 #ifdef TL_ENABLE_EDITOR
     const Path& GetProjectPath() const;
@@ -90,7 +92,7 @@ private:
     FPSOption m_fps_option = FPSOption::FPS_60;
 
 #ifdef TL_ENABLE_EDITOR
-    Path m_project_path;  // only used for editor
+        Path m_project_path;  // only used for editor
 #endif
 
     Context();
