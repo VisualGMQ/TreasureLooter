@@ -45,10 +45,12 @@ void SpriteManager::Update() {
 
         auto &m = transform->GetGlobalMat();
         for (auto &pt: pts) {
+            Vec2 pt_with_anchor = pt;
+            pt_with_anchor -= component.m_component->m_anchor;
             Vec2 new_pt;
-            new_pt.x = pt.x * m.Get(0, 0) + pt.y * m.Get(1, 0) +
+            new_pt.x = pt_with_anchor.x * m.Get(0, 0) + pt_with_anchor.y * m.Get(1, 0) +
                        m.Get(2, 0);
-            new_pt.y = pt.x * m.Get(0, 1) + pt.y * m.Get(1, 1) +
+            new_pt.y = pt_with_anchor.x * m.Get(0, 1) + pt_with_anchor.y * m.Get(1, 1) +
                        m.Get(2, 1);
             pt = new_pt;
         }

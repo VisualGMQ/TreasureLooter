@@ -8,6 +8,7 @@
         <handle type="Image" name="image"/>
         <element type="Region" name="region"/>
         <element type="Vec2" name="size"/>
+        <element type="Vec2" name="anchor"/>
         <flags type="Flip" name="flip"/>
     </class>
 </schema>
