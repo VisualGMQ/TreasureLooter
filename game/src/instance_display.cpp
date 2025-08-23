@@ -486,6 +486,13 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
         HANDLE_LINEAR_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_TRACK_DISPLAY(AnimationBindingPoint::SpriteAnchor) {
+        HANDLE_DISCRETE_TRACK_DISPLAY();
+        HANDLE_LINEAR_TRACK_DISPLAY();
+    }
+#undef TARGET_TYPE
 }
 
 #undef HANDLE_TRACK_DISPLAY
@@ -578,6 +585,13 @@ void displayAnimationContent(Animation& anim) {
 
 #define TARGET_TYPE Vec2
             HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteSize) {
+                HANDLE_ANIM_LINEAR_DISPLAY();
+                HANDLE_ANIM_DISCRETE_DISPLAY();
+            }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+            HANDLE_ANIM_DISPLAY(AnimationBindingPoint::SpriteAnchor) {
                 HANDLE_ANIM_LINEAR_DISPLAY();
                 HANDLE_ANIM_DISCRETE_DISPLAY();
             }

@@ -1,0 +1,32 @@
+﻿<Prefab>
+    <uuid>732c6c00-9fb7-4c94-adfc-bdd49cd14004</uuid>
+    <payload>
+        <sprite>
+            <value>
+                <image>assets/Items/Weapons/Fork/Sprite.png</image>
+                <region>
+                    <topleft x="0.000000" y="0.000000"/>
+                    <size x="0.000000" y="0.000000"/>
+                </region>
+                <size x="16.000000" y="16.000000"/>
+                <anchor x="0.000000" y="0.000000"/>
+                <flip>None</flip>
+            </value>
+        </sprite>
+        <transform>
+            <value>
+                <position x="0.000000" y="0.000000"/>
+                <scale x="1.000000" y="1.000000"/>
+                <rotation>0.000000</rotation>
+            </value>
+        </transform>
+        <animation>
+            <value>
+                <loop>0</loop>
+                <rate>1.000000</rate>
+                <auto_play>false</auto_play>
+                <animation>assets/gpa/anim/item/weapon_forward_attack.animation.xml</animation>
+            </value>
+        </animation>
+    </payload>
+</Prefab>

@@ -16,12 +16,24 @@ void SpriteManager::Update() {
 
         auto &sprite = component.m_component;
 
+        if (!sprite->m_image) {
+            return;
+        }
+
         const Transform *transform = transform_manager->Get(entity);
         if (!transform) {
             continue;
         }
         auto src_region = sprite->m_region;
-        Vec2 half_size = sprite->m_size * 0.5f;
+        if (src_region.m_size.w == 0 || src_region.m_size.h == 0) {
+            src_region.m_size = sprite->m_image->GetSize();
+        }
+
+        Vec2 half_size = sprite->m_region.m_size * 0.5f;
+
+        if (half_size.x == 0 || half_size.y == 0) {
+            half_size = sprite->m_image->GetSize() * 0.5;
+        }
 
         std::array<Vec2, 3> pts;
         pts[0] = -half_size; // top left

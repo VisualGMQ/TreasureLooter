@@ -57,7 +57,7 @@ void Renderer::DrawRect(const Rect& r, const Color& c, bool use_camera) {
 
 void Renderer::DrawCircle(const Circle& c, const Color& color,
                           uint32_t fragment, bool use_camera) {
-    float angle_step = 2 * PI / fragment;
+    Radians angle_step = 2 * PI / fragment;
     Vec2 p = c.m_center + Vec2::X_UNIT * c.m_radius;
     setRenderColor(color);
     auto& camera = GAME_CONTEXT.m_camera;
@@ -66,9 +66,9 @@ void Renderer::DrawCircle(const Circle& c, const Color& color,
     }
     for (int i = 1; i <= fragment; i++) {
         Vec2 new_p = c.m_center;
-        float angle = angle_step * i;
-        new_p.x += c.m_radius * std::cos(angle);
-        new_p.y += c.m_radius * std::sin(angle);
+        Radians angle = angle_step * i;
+        new_p.x += c.m_radius * std::cos(angle.Value());
+        new_p.y += c.m_radius * std::sin(angle.Value());
         if (use_camera) {
             transformByCamera(camera, &new_p, nullptr);
         }

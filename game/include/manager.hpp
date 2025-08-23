@@ -73,13 +73,13 @@ public:
         return false;
     }
     
-    void Enable(Entity entity) const {
+    void Enable(Entity entity) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             it->second.m_enable = true;
         }
     }
  
-    void Disable(Entity entity) const {
+    void Disable(Entity entity) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             it->second.m_enable = false;
         }

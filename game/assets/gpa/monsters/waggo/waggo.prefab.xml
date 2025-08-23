@@ -9,6 +9,7 @@
 					<size x="16.000000" y="16.000000"/>
 				</region>
 				<size x="16.000000" y="16.000000"/>
+				<anchor x="0.000000" y="0.000000"/>
 				<flip>None</flip>
 			</value>
 		</sprite>
@@ -19,23 +20,25 @@
 				<rotation>0.000000</rotation>
 			</value>
 		</transform>
+		<children>
+			<elem>assets/gpa/weapons/generic_forward_attack_weapon.prefab.xml</elem>
+		</children>
 		<animation>
 			<value>
 				<loop>-1</loop>
 				<rate>1.000000</rate>
 				<auto_play>false</auto_play>
-				<animation>assets/gpa/anim/character/waggo/status_walk_down.animation.xml</animation>
+				<animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</animation>
 			</value>
 		</animation>
-		<tilemap/>
 		<cct>
 			<value>
-				<skin>0.1000</skin>
-				<min_disp>0.00100</min_disp>
-				<physics_actor>assets/gpa/waggo.physics_actor.xml</physics_actor>
+				<skin>0.100000</skin>
+				<min_disp>0.001000</min_disp>
+				<physics_actor>assets/gpa/monsters/waggo/waggo.physics_actor.xml</physics_actor>
 			</value>
 		</cct>
-		<type>Player</type>
+		<motor_config>assets/gpa/monsters/waggo/waggo.motor_config.xml</motor_config>
 	</payload>
 </Prefab>
 

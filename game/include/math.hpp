@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <vector>
 
-template<typename T>
+template <typename T>
 struct TVec2 final {
     union {
         T w;
@@ -23,7 +23,7 @@ struct TVec2 final {
     TVec2();
 
     template <typename U>
-    explicit TVec2(const TVec2<U>& o) {
+    explicit TVec2(const TVec2<U> &o) {
         x = static_cast<T>(o.x);
         y = static_cast<T>(o.y);
     }
@@ -57,123 +57,121 @@ struct TVec2 final {
     TVec2 Normalize() const;
 };
 
-template<typename T>
+template <typename T>
 TVec2<T> TVec2<T>::ZERO{};
 
-template<typename T>
+template <typename T>
 TVec2<T> TVec2<T>::X_UNIT{1, 0};
 
-template<typename T>
+template <typename T>
 TVec2<T> TVec2<T>::Y_UNIT{0, 1};
 
-template<typename T>
+template <typename T>
 TVec2<T> operator*(float, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator*(const TVec2<T> &, float);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator*(const TVec2<T> &, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator/(const TVec2<T> &, float);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator/(const TVec2<T> &, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator+(const TVec2<T> &, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator-(const TVec2<T> &, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 float Dot(const TVec2<T> &, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 float Cross(const TVec2<T> &, const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 TVec2<T> operator-(const TVec2<T> &);
 
-template<typename T>
+template <typename T>
 std::ostream &operator<<(std::ostream &os, const TVec2<T> &);
 
 using Vec2 = TVec2<float>;
 using Vec2I = TVec2<int>;
 using Vec2UI = TVec2<uint32_t>;
 
-template<typename T>
-TVec2<T>::TVec2() : x{0}, y{0} {
-}
+template <typename T>
+TVec2<T>::TVec2() : x{0}, y{0} {}
 
-template<typename T>
-TVec2<T>::TVec2(T x, T y) : x{x}, y{y} {
-}
+template <typename T>
+TVec2<T>::TVec2(T x, T y) : x{x}, y{y} {}
 
-template<typename T>
+template <typename T>
 TVec2<T> &TVec2<T>::operator*=(const TVec2 &o) {
     x *= o.x;
     y *= o.y;
     return *this;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> &TVec2<T>::operator*=(float scalar) {
     x *= scalar;
     y *= scalar;
     return *this;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> &TVec2<T>::operator/=(const TVec2 &o) {
     x /= o.x;
     y /= o.y;
     return *this;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> &TVec2<T>::operator/=(float scalar) {
     x /= scalar;
     y /= scalar;
     return *this;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> &TVec2<T>::operator+=(const TVec2 &o) {
     x += o.x;
     y += o.y;
     return *this;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> &TVec2<T>::operator-=(const TVec2 &o) {
     x -= o.x;
     y -= o.y;
     return *this;
 }
 
-template<typename T>
+template <typename T>
 float TVec2<T>::Dot(const TVec2 &o) const {
     return x * o.x + y * o.y;
 }
 
-template<typename T>
+template <typename T>
 float TVec2<T>::Cross(const TVec2 &o) const {
     return x * o.y - y * o.x;
 }
 
-template<typename T>
+template <typename T>
 float TVec2<T>::LengthSquared() const {
     return x * x + y * y;
 }
 
-template<typename T>
+template <typename T>
 float TVec2<T>::Length() const {
     return std::sqrt(LengthSquared());
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> TVec2<T>::Normalize() const {
     float len = Length();
     if (len <= std::numeric_limits<float>::epsilon()) {
@@ -182,68 +180,70 @@ TVec2<T> TVec2<T>::Normalize() const {
     return *this / len;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator*(float x, const TVec2<T> &v) {
     TVec2<T> o = v;
     return o *= x;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator*(const TVec2<T> &v, float x) {
     TVec2<T> o = v;
     return o *= x;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator*(const TVec2<T> &v1, const TVec2<T> &v2) {
     TVec2<T> v3 = v1;
     return v3 *= v2;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator/(const TVec2<T> &v, float x) {
     TVec2<T> o = v;
     return o /= x;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator/(const TVec2<T> &v1, const TVec2<T> &v2) {
     TVec2<T> v3 = v1;
     return v3 /= v2;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator+(const TVec2<T> &v1, const TVec2<T> &v2) {
     TVec2<T> v3 = v1;
     return v3 += v2;
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator-(const TVec2<T> &v1, const TVec2<T> &v2) {
     TVec2<T> v3 = v1;
     return v3 -= v2;
 }
 
-template<typename T>
+template <typename T>
 float Dot(const TVec2<T> &v1, const TVec2<T> &v2) {
     return v1.Dot(v2);
 }
 
-template<typename T>
+template <typename T>
 float Cross(const TVec2<T> &v1, const TVec2<T> &v2) {
     return v1.Cross(v2);
 }
 
-template<typename T>
+template <typename T>
 TVec2<T> operator-(const TVec2<T> &o) {
     return TVec2<T>(-o.x, -o.y);
 }
 
-template<typename T>
+template <typename T>
 std::ostream &operator<<(std::ostream &os, const TVec2<T> &p) {
     os << "TVec2<T>(" << p.x << ", " << p.y << ")";
     return os;
 }
+
+Vec2 Reflect(const Vec2& v, const Vec2& n);
 
 struct Color {
     static const Color Red;
@@ -257,8 +257,6 @@ struct Color {
     float r{}, g{}, b{}, a = 1;
 };
 
-constexpr float PI = 3.14159265358979323846f;
-
 struct Radians;
 
 struct Degrees {
@@ -269,16 +267,18 @@ struct Degrees {
     Degrees(Radians);
 
     Degrees &operator=(Radians);
-
     Degrees &operator=(float);
-
     Degrees &operator-=(Degrees);
-
     Degrees &operator+=(Degrees);
-
     Degrees &operator*=(Degrees);
-
     Degrees &operator/=(Degrees);
+
+    bool operator>(Degrees) const;
+    bool operator<(Degrees) const;
+    bool operator>=(Degrees) const;
+    bool operator<=(Degrees) const;
+    bool operator==(Degrees) const;
+    bool operator!=(Degrees) const;
 
     float Value() const { return m_value; }
 
@@ -287,12 +287,45 @@ private:
 };
 
 Degrees operator+(Degrees d1, Degrees d2);
-
 Degrees operator-(Degrees d1, Degrees d2);
-
 Degrees operator*(Degrees d1, Degrees d2);
-
 Degrees operator/(Degrees d1, Degrees d2);
+
+struct Radians {
+    Radians() = default;
+
+    Radians(float value);
+
+    Radians(Degrees);
+
+    Radians &operator=(Degrees);
+    Radians &operator=(float);
+    Radians &operator-=(Radians);
+    Radians &operator+=(Radians);
+    Radians &operator*=(Radians);
+    Radians &operator/=(Radians);
+
+    bool operator>(Radians) const;
+    bool operator<(Radians) const;
+    bool operator>=(Radians) const;
+    bool operator<=(Radians) const;
+    bool operator==(Radians) const;
+    bool operator!=(Radians) const;
+
+    float Value() const { return m_value; }
+
+private:
+    float m_value{};
+};
+
+Radians operator+(Radians d1, Radians d2);
+Radians operator-(Radians d1, Radians d2);
+Radians operator*(Radians d1, Radians d2);
+Radians operator/(Radians d1, Radians d2);
+
+inline const Radians PI{3.14159265358979323846f};
+inline const Radians PI_Half{3.14159265358979323846f * 0.5};
+
 
 struct Mat33 {
     static Mat33 CreateTranslation(const Vec2 &);
@@ -317,7 +350,7 @@ private:
 
 Mat33 operator*(const Mat33 &, const Mat33 &);
 
-template<typename T>
+template <typename T>
 class MatStorage {
 public:
     MatStorage() = default;
@@ -372,28 +405,12 @@ public:
     size_t GetWidth() const { return m_w; }
 
     size_t GetHeight() const { return m_h; }
+
     size_t GetSize() const { return GetWidth() * GetHeight(); }
 
 private:
     std::vector<std::vector<T> > m_data;
     size_t m_w{}, m_h{};
-};
-
-struct Radians {
-    Radians() = default;
-
-    Radians(float value);
-
-    Radians(Degrees);
-
-    Radians &operator=(Degrees);
-
-    Radians &operator=(float);
-
-    float Value() const { return m_value; }
-
-private:
-    float m_value{};
 };
 
 Vec2 Rotate(const Vec2 &, Degrees);
@@ -405,12 +422,12 @@ struct Region {
 /**
  * present a range, value in [m_a, m_b)
  */
-template<typename T>
+template <typename T>
 struct Range {
     T m_begin{}, m_end{};
 };
 
-template<typename T>
+template <typename T>
 struct Range2D {
     Range<T> m_x;
     Range<T> m_y;
@@ -434,15 +451,23 @@ private:
     Mat33 m_global_mat;
 };
 
-template<typename T>
+template <typename T>
 T Lerp(T a, T b, float t) {
     return a + (b - a) * t;
 }
 
-template<typename T>
+template <typename T>
 T Clamp(T v, T a, T b) {
     return v < a ? a : v > b ? b : v;
 }
+
+/**
+ *
+ * @param norm_a normalized vector
+ * @param norm_b normalized vector
+ * @return radians of angle between norm_a & norm_b in [0, 2PI]
+ */
+Radians GetAngle(const Vec2 &norm_a, const Vec2 &norm_b);
 
 struct DecompositionResult {
     Vec2 m_tangent;
@@ -456,6 +481,5 @@ struct DecompositionResult {
 DecompositionResult DecomposeVector(const Vec2 &v, const Vec2 &normal);
 
 // for spdlog output
-template<>
-struct fmt::formatter<Vec2> : fmt::ostream_formatter {
-};
+template <>
+struct fmt::formatter<Vec2> : fmt::ostream_formatter {};
