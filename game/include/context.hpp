@@ -77,6 +77,7 @@ public:
     std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
     std::unique_ptr<LevelManager> m_level_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
+    std::unique_ptr<TimerManager> m_timer_manager;
     Camera m_camera;
 
 #ifdef TL_ENABLE_EDITOR
