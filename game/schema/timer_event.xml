@@ -1,0 +1,5 @@
+﻿<schema>
+    <enum name="TimerEventType">
+        <item name="Unknown"/>
+    </enum>
+</schema>

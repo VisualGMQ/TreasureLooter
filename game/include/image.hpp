@@ -28,7 +28,7 @@ using ImageHandle = Handle<Image>;
 class ImageManager: public AssetManagerBase<Image> {
 public:
     explicit ImageManager(Renderer& renderer);
-    
+
     ImageHandle Load(const Path& filename, bool force = false) override;
 
 private:
