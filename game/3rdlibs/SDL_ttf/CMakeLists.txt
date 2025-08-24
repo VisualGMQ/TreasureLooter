@@ -53,11 +53,7 @@ endif()
 # Assume MSVC projects don't have a package manager and need vendored dependencies (by default).
 # Most other platforms have some kind of package manager.
 # FIXME: consider a package manager such as conan/vcpkg instead of vendoring
-if(ANDROID OR MSVC)
-    set(vendored_default TRUE)
-else()
-    set(vendored_default FALSE)
-endif()
+set(vendored_default TRUE)
 
 set(sdl3ttf_install_enableable ON)
 if ((TARGET SDL3-shared OR TARGET SDL3-static) AND SDL_DISABLE_INSTALL)
@@ -407,135 +403,6 @@ endif()
 
 # Restore BUILD_SHARED_LIBS variable
 set(BUILD_SHARED_LIBS ${SDLTTF_BUILD_SHARED_LIBS})
-
-if(SDLTTF_INSTALL)
-    install(
-        TARGETS ${sdl3_ttf_target_name}
-        EXPORT SDL3_ttfTargets
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT devel
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT library
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT library
-    )
-    install(FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/SDL3_ttf/SDL_textengine.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/SDL3_ttf/SDL_ttf.h"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/SDL3_ttf" COMPONENT devel
-    )
-    if(BUILD_SHARED_LIBS)
-        set(pdbdir "${CMAKE_INSTALL_BINDIR}")
-    else()
-        set(pdbdir "${CMAKE_INSTALL_LIBDIR}")
-    endif()
-    if(MSVC)
-        SDL_install_pdb("${sdl3_ttf_target_name}" "${pdbdir}")
-    endif()
-
-    if(WIN32 AND NOT MINGW)
-        set(SDLTTF_INSTALL_CMAKEDIR_DEFAULT "cmake")
-    else()
-        set(SDLTTF_INSTALL_CMAKEDIR_DEFAULT "${CMAKE_INSTALL_LIBDIR}/cmake")
-    endif()
-    set(SDLTTF_INSTALL_CMAKEDIR_ROOT "${SDLTTF_INSTALL_CMAKEDIR_DEFAULT}" CACHE STRING "Location where to install SDL3_ttfConfig.cmake")
-    set(SDLTTF_PKGCONFIG_INSTALLDIR "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-
-    if(WIN32 AND NOT MINGW)
-        set(SDLTTF_INSTALL_CMAKEDIR "${SDLTTF_INSTALL_CMAKEDIR_ROOT}")
-        set(LICENSES_PREFIX "licenses/SDL3_ttf")
-    else()
-        set(SDLTTF_INSTALL_CMAKEDIR "${SDLTTF_INSTALL_CMAKEDIR_ROOT}/SDL3_ttf")
-        set(LICENSES_PREFIX "${CMAKE_INSTALL_DATAROOTDIR}/licenses/SDL3_ttf")
-    endif()
-
-    configure_package_config_file(cmake/SDL3_ttfConfig.cmake.in SDL3_ttfConfig.cmake
-        NO_SET_AND_CHECK_MACRO
-        INSTALL_DESTINATION "${SDLTTF_INSTALL_CMAKEDIR}"
-    )
-    write_basic_package_version_file("${PROJECT_BINARY_DIR}/SDL3_ttfConfigVersion.cmake"
-        COMPATIBILITY AnyNewerVersion
-    )
-    install(
-        FILES
-            "${CMAKE_CURRENT_BINARY_DIR}/SDL3_ttfConfig.cmake"
-            "${CMAKE_CURRENT_BINARY_DIR}/SDL3_ttfConfigVersion.cmake"
-        DESTINATION ${SDLTTF_INSTALL_CMAKEDIR}
-        COMPONENT devel
-    )
-    if(NOT SDLTTF_VENDORED)
-      install(
-          FILES
-              cmake/PkgConfigHelper.cmake
-              cmake/Findharfbuzz.cmake
-              cmake/Findplutosvg.cmake
-              cmake/Findplutovg.cmake
-          DESTINATION "${SDLTTF_INSTALL_CMAKEDIR}"
-          COMPONENT devel
-      )
-    endif()
-    install(EXPORT SDL3_ttfTargets
-        FILE ${sdl3_ttf_target_name}-targets.cmake
-        NAMESPACE SDL3_ttf::
-        DESTINATION "${SDLTTF_INSTALL_CMAKEDIR}"
-        COMPONENT devel
-    )
-
-    export(TARGETS ${sdl3_ttf_target_name} NAMESPACE "SDL3_ttf::" FILE "${sdl3_ttf_target_name}-targets.cmake")
-
-    if(SDLTTF_RELOCATABLE)
-      file(RELATIVE_PATH SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG "${CMAKE_INSTALL_PREFIX}/${SDLTTF_PKGCONFIG_INSTALLDIR}" "${CMAKE_INSTALL_PREFIX}")
-      string(REGEX REPLACE "[/]+$" "" SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG "${SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG}")
-      set(SDL_PKGCONFIG_PREFIX "\${pcfiledir}/${SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG}")
-    else()
-      set(SDL_PKGCONFIG_PREFIX "${CMAKE_INSTALL_PREFIX}")
-    endif()
-
-    if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
-      set(INCLUDEDIR_FOR_PKG_CONFIG "${CMAKE_INSTALL_INCLUDEDIR}")
-    else()
-      set(INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
-    endif()
-    if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
-      set(LIBDIR_FOR_PKG_CONFIG "${CMAKE_INSTALL_LIBDIR}")
-    else()
-      set(LIBDIR_FOR_PKG_CONFIG "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
-    endif()
-
-    string(JOIN " " PC_REQUIRES ${PC_REQUIRES})
-    string(JOIN " " PC_LIBS ${PC_LIBS})
-    configure_file(cmake/sdl3-ttf.pc.in sdl3-ttf.pc @ONLY)
-
-    # Always install sdl3-ttf.pc file: libraries might be different between config modes
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sdl3-ttf.pc"
-        DESTINATION "${SDLTTF_PKGCONFIG_INSTALLDIR}" COMPONENT devel)
-
-    install(FILES "LICENSE.txt"
-        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/licenses/${PROJECT_NAME}"
-        COMPONENT library
-    )
-
-    if(SDLTTF_INSTALL_CPACK)
-        if(MSVC)
-            set(CPACK_GENERATOR "ZIP")
-        else()
-            set(CPACK_GENERATOR "TGZ")
-        endif()
-        configure_file(cmake/CPackProjectConfig.cmake.in CPackProjectConfig.cmake @ONLY)
-        set(CPACK_PROJECT_CONFIG_FILE "${PROJECT_BINARY_DIR}/CPackProjectConfig.cmake")
-        # CPACK_SOURCE_PACKAGE_FILE_NAME must end with "-src" (so we can block creating a source archive)
-        set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-src")
-        set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
-        include(CPack)
-    endif()
-
-    if(SDLTTF_INSTALL_MAN)
-        sdl_get_git_revision_hash(SDLTTF_REVISION)
-        SDL_generate_manpages(
-            HEADERS_DIR "${PROJECT_SOURCE_DIR}/include/SDL3_ttf"
-            SYMBOL "TTF_Init"
-            WIKIHEADERS_PL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build-scripts/wikiheaders.pl"
-            REVISION "${SDLTTF_REVISION}"
-        )
-    endif()
-endif()
 
 if(SDLTTF_SAMPLES)
     add_executable(glfont examples/glfont.c)
