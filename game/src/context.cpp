@@ -89,6 +89,7 @@ void Context::Initialize() {
     }
 
     m_game_config = *handle;
+    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
     m_assets_manager->GetManager<GameConfig>().Unload(handle);
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
@@ -145,7 +146,7 @@ const Path& Context::GetProjectPath() const {
 
 Context::Context() {
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-                      SDL_INIT_GAMEPAD));
+        SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
 #ifdef TL_ENABLE_EDITOR
@@ -300,8 +301,8 @@ void Context::initImGui() {
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
+        ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -309,10 +310,10 @@ void Context::initImGui() {
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(
-        main_scale);  // Bake a fixed style scale. (until we have a solution for
+        main_scale); // Bake a fixed style scale. (until we have a solution for
     // dynamic style scaling, changing this requires resetting
     // Style + calling this again)
-    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
+    style.FontScaleDpi = main_scale; // Set initial font scale. (using
     // io.ConfigDpiScaleFonts=true makes this unnecessary. We
     // leave both here for documentation purpose)
 

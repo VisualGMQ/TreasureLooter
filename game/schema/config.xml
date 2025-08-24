@@ -9,5 +9,6 @@
         <element name="basic_level_asset" type="Path"/>
         <element name="input_config_asset" type="Path"/>
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
+        <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
     </asset>
 </schema>

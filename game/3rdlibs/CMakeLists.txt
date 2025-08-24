@@ -7,6 +7,9 @@ else()
 endif()
 
 add_3rdlib(SDL)
+
+set(SDLTTF_BUILD_SHARED_LIBS OFF)
+add_3rdlib(SDL_ttf)
 add_3rdlib(spdlog)
 add_3rdlib(stb)
 add_3rdlib(imgui)
