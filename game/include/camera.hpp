@@ -14,6 +14,6 @@ public:
     const Vec2& GetPosition() const { return m_position; }
 
 private:
-    Vec2 m_scale = {3, 3};
+    Vec2 m_scale = {1, 1};
     Vec2 m_position = {0, 0};
 };

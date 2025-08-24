@@ -251,6 +251,8 @@ struct Color {
     static const Color Blue;
     static const Color Yellow;
     static const Color Purple;
+    static const Color Black;
+    static const Color White;
 
     float r{}, g{}, b{}, a = 1;
 };

@@ -85,6 +85,7 @@ public:
 
     void OnInit() override;
     void OnLogicUpdate(TimeType) override;
+    void OnRenderUpdate(TimeType) override;
     void OnQuit() override;
 
 private:
@@ -109,6 +110,8 @@ private:
     EventListenerID m_gamepad_event_listener;
     EventListenerID m_window_resize_event_listener;
     SDL_JoystickID m_gamepad_id = 0;
+
+    FontHandle m_font;
 
     TouchJoystick m_touch_joystick;
     Circle m_finger_attack_button;

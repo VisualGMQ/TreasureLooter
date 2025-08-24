@@ -19,6 +19,7 @@
 #include "tilemap.hpp"
 #include "transform.hpp"
 #include "uuid.h"
+#include "SDL3_ttf/SDL_ttf.h"
 
 std::unique_ptr<Context> Context::instance;
 
@@ -75,6 +76,7 @@ Context::~Context() {
     m_renderer.reset();
     m_window.reset();
     shutdownImGui();
+    TTF_Quit();
     SDL_Quit();
     LOGI("game exits");
 }
@@ -90,6 +92,7 @@ void Context::Initialize() {
     }
 
     m_game_config = *handle;
+    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
     m_assets_manager->GetManager<GameConfig>().Unload(handle);
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
@@ -148,6 +151,7 @@ Context::Context() {
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
         SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    SDL_CALL(TTF_Init());
 
 #ifdef TL_ENABLE_EDITOR
     parseProjectPath();
@@ -282,7 +286,7 @@ void Context::initImGui() {
     ImGuiIO &io = ImGui::GetIO();
     (void) io;
     io.ConfigFlags |=
-            ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
     // Setup Dear ImGui style
