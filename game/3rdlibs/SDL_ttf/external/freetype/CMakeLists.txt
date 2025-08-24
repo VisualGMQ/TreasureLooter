@@ -220,6 +220,8 @@ cmake_dependent_option(FT_REQUIRE_BROTLI
 option(FT_ENABLE_ERROR_STRINGS
   "Enable support for meaningful error descriptions." OFF)
 
+option(FT_BUILD_SHARED "Build FreeType shared library" OFF)
+
 # Disallow in-source builds
 if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   message(FATAL_ERROR
@@ -465,8 +467,13 @@ if (NOT DISABLE_FORCE_DEBUG_POSTFIX)
   set(CMAKE_DEBUG_POSTFIX d)
 endif ()
 
-
-add_library(freetype
+if (FT_BUILD_SHARED)
+  add_library(freetype SHARED)
+else()
+  add_library(freetype STATIC)
+endif()
+target_sources(freetype
+  PRIVATE
   ${PUBLIC_HEADERS}
   ${PUBLIC_CONFIG_HEADERS}
   ${PRIVATE_HEADERS}

@@ -38,6 +38,7 @@ option(HB_HAVE_FREETYPE "Enable freetype interop helpers" OFF)
 option(HB_HAVE_GRAPHITE2 "Enable Graphite2 complementary shaper" OFF)
 option(HB_HAVE_GLIB "Enable glib unicode functions" OFF)
 option(HB_HAVE_ICU "Enable icu unicode functions" OFF)
+option(HB_BUILD_SHARED "Enable build HarfBuzz shared library" OFF)
 if (TARGET freetype)
   set (HB_HAVE_FREETYPE ON)
   add_definitions(-DHAVE_FREETYPE=1)
@@ -468,7 +469,12 @@ endif ()
 
 
 ## Define harfbuzz library
-add_library(harfbuzz ${project_sources} ${project_extra_sources} ${project_headers})
+if (HB_BUILD_SHARED)
+  add_library(harfbuzz SHARED)
+else()
+  add_library(harfbuzz STATIC)
+endif()
+target_sources(harfbuzz PRIVATE ${project_sources} ${project_extra_sources} ${project_headers})
 target_link_libraries(harfbuzz ${THIRD_PARTY_LIBS})
 target_include_directories(harfbuzz PUBLIC
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
@@ -480,7 +486,12 @@ endif ()
 
 ## Define harfbuzz-icu library
 if (HB_HAVE_ICU)
-  add_library(harfbuzz-icu ${PROJECT_SOURCE_DIR}/src/hb-icu.cc ${PROJECT_SOURCE_DIR}/src/hb-icu.h)
+  if (HB_BUILD_SHARED)
+    add_library(harfbuzz-icu SHARED)
+  else()
+    add_library(harfbuzz-icu STATIC)
+  endif()
+  target_sources(harfbuzz-icu PRIVATE ${PROJECT_SOURCE_DIR}/src/hb-icu.cc ${PROJECT_SOURCE_DIR}/src/hb-icu.h)
   add_dependencies(harfbuzz-icu harfbuzz)
   target_link_libraries(harfbuzz-icu harfbuzz ${THIRD_PARTY_LIBS})
 
@@ -492,7 +503,12 @@ endif ()
 
 ## Define harfbuzz-subset library
 if (HB_BUILD_SUBSET)
-  add_library(harfbuzz-subset ${subset_project_sources} ${subset_project_headers})
+  if (HB_BUILD_SHARED)
+    add_library(harfbuzz-subset SHARED)
+  else()
+    add_library(harfbuzz-subset STATIC)
+  endif()
+  target_sources(harfbuzz-subset PRIVATE ${subset_project_sources} ${subset_project_headers})
   list(APPEND project_headers ${PROJECT_SOURCE_DIR}/src/hb-subset.h ${PROJECT_SOURCE_DIR}/src/hb-subset-repacker.h)
   add_dependencies(harfbuzz-subset harfbuzz)
   target_link_libraries(harfbuzz-subset harfbuzz ${THIRD_PARTY_LIBS})
@@ -537,7 +553,13 @@ endif ()
 
 ## Define harfbuzz-gobject library
 if (HB_HAVE_GOBJECT)
-  add_library(harfbuzz-gobject
+  if (HB_BUILD_SHARED)
+    add_library(harfbuzz-gobject SHARED)
+  else()
+    add_library(harfbuzz-gobject STATIC)
+  endif()
+  target_sources(harfbuzz-gobject
+    PRIVATE
     ${hb_gobject_sources}
     ${hb_gobject_gen_sources}
     ${hb_gobject_headers}
@@ -555,7 +577,12 @@ endif ()
 ## Define harfbuzz-cairo library
 if (HB_HAVE_CAIRO)
   include_directories(${CAIRO_INCLUDE_DIRS})
-  add_library(harfbuzz-cairo ${PROJECT_SOURCE_DIR}/src/hb-cairo.cc ${PROJECT_SOURCE_DIR}/src/hb-static.cc ${PROJECT_SOURCE_DIR}/src/hb-cairo.h)
+  if (HB_BUILD_SHARED)
+    add_library(harfbuzz-cairo SHARED)
+  else()
+    add_library(harfbuzz-cairo STATIC)
+  endif()
+  target_sources(harfbuzz-cairo PRIVATE ${PROJECT_SOURCE_DIR}/src/hb-cairo.cc ${PROJECT_SOURCE_DIR}/src/hb-static.cc ${PROJECT_SOURCE_DIR}/src/hb-cairo.h)
   add_dependencies(harfbuzz-cairo harfbuzz)
   target_link_libraries(harfbuzz-cairo harfbuzz ${THIRD_PARTY_LIBS})
 

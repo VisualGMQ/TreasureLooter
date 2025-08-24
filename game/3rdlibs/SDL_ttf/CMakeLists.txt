@@ -66,13 +66,11 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 include(CheckSymbolExists)
 
-set(PLATFORM_SUPPORTS_SHARED ON)
-if(EMSCRIPTEN OR VITA OR PSP OR PS2 OR N3DS OR RISCOS)
-  set(PLATFORM_SUPPORTS_SHARED OFF)
-endif()
+option(SDLTTF_BUILD_SHARED_LIBS "Build SDL_TTF dynamic libraray" OFF)
 
-option(CMAKE_POSITION_INDEPENDENT_CODE "Build static libraries with -fPIC" ${PLATFORM_SUPPORTS_SHARED})
-cmake_dependent_option(BUILD_SHARED_LIBS "Build the library as a shared library" ON PLATFORM_SUPPORTS_SHARED OFF)
+if(EMSCRIPTEN OR VITA OR PSP OR PS2 OR N3DS OR RISCOS)
+  set(SDLTTF_BUILD_SHARED_LIBS OFF)
+endif()
 
 cmake_dependent_option(SDLTTF_INSTALL "Enable SDL3_ttf install target" ${SDLTTF_ROOTPROJECT} "${sdl3ttf_install_enableable}" OFF)
 cmake_dependent_option(SDLTTF_INSTALL_CPACK "Create binary SDL3_ttf archive using CPack" ${SDLTTF_ROOTPROJECT} "SDLTTF_INSTALL" OFF)
@@ -103,9 +101,6 @@ set(SDLTTF_HARFBUZZ_VENDORED "${SDLTTF_VENDORED}")
 option(SDLTTF_PLUTOSVG "Use plutosvg for color emoji support" ON)
 set(SDLTTF_PLUTOSVG_VENDORED "${SDLTTF_VENDORED}")
 
-# Save BUILD_SHARED_LIBS variable
-option(SDLTTF_BUILD_SHARED_LIBS "Build SDL_TTF dynamic libraray" OFF)
-
 message(STATUS "Is SDL-ttf Build Dynamic ? ${SDLTTF_BUILD_SHARED_LIBS}")
 
 set(sdl_required_components Headers)
@@ -130,7 +125,13 @@ if (LIBC_IS_GLIBC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
     add_compile_definitions(_FILE_OFFSET_BITS=64)
 endif()
 
-add_library(${sdl3_ttf_target_name}
+if (SDLTTF_BUILD_SHARED_LIBS)
+    add_library(${sdl3_ttf_target_name} SHARED)
+else()
+    add_library(${sdl3_ttf_target_name} STATIC)
+endif()
+target_sources(${sdl3_ttf_target_name}
+    PRIVATE
     src/SDL_hashtable.c
     src/SDL_hashtable_ttf.c
     src/SDL_gpu_textengine.c
@@ -213,18 +214,11 @@ endif()
 
 sdl_target_link_option_version_file(${sdl3_ttf_target_name} "${CMAKE_CURRENT_SOURCE_DIR}/src/SDL_ttf.sym")
 
-if(SDLTTF_BUILD_SHARED_LIBS)
-    # Make sure static library dependencies are built with -fPIC when building a shared SDL3_ttf
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
-
 set(INSTALL_EXTRA_TARGETS)
 set(PC_LIBS)
 set(PC_REQUIRES)
 
 # Build freetype and harfbuzz as a static library
-set(BUILD_SHARED_LIBS OFF)
-
 list(APPEND SDLTTF_BACKENDS HARFBUZZ)
 set(SDLTTF_HARFBUZZ_ENABLED FALSE)
 if(SDLTTF_HARFBUZZ)
@@ -363,7 +357,6 @@ if(SDLTTF_PLUTOSVG)
     set(plutosvg_sources)
     if(SDLTTF_PLUTOSVG_VENDORED)
         message(STATUS "${PROJECT_NAME}: Using vendored plutosvg library")
-        set(BUILD_SHARED_LIBS OFF)
         set(PLUTOSVG_ENABLE_FREETYPE ON CACHE BOOL "plutosvg enable freetype" FORCE)
         set(PLUTOSVG_BUILD_EXAMPLES OFF CACHE BOOL "plutosvg build examples" FORCE)
         set(PLUTOVG_BUILD_EXAMPLES OFF CACHE BOOL "plutovg build examples" FORCE)
@@ -402,9 +395,6 @@ if(SDLTTF_PLUTOSVG)
         target_link_libraries(${sdl3_ttf_target_name} PRIVATE ${plutosvg_link_libraries})
     endif()
 endif()
-
-# Restore BUILD_SHARED_LIBS variable
-set(BUILD_SHARED_LIBS ${SDLTTF_BUILD_SHARED_LIBS})
 
 if(SDLTTF_SAMPLES)
     add_executable(glfont examples/glfont.c)

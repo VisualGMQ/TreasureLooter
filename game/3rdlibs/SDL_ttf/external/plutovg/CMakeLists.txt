@@ -6,6 +6,8 @@ set(PLUTOVG_VERSION_MICRO 12)
 
 project(plutovg LANGUAGES C VERSION ${PLUTOVG_VERSION_MAJOR}.${PLUTOVG_VERSION_MINOR}.${PLUTOVG_VERSION_MICRO})
 
+option(PLUTOVG_BUILD_SHARED "plutovg build shared library" OFF)
+
 set(plutovg_sources
     source/plutovg-blend.c
     source/plutovg-canvas.c
@@ -33,7 +35,13 @@ set(plutovg_headers
     source/plutovg-stb-truetype.h
 )
 
-add_library(plutovg ${plutovg_sources} ${plutovg_headers})
+if (PLUTOVG_BUILD_SHARED)
+    add_library(plutovg SHARED)
+else()
+    add_library(plutovg STATIC)
+    target_compile_definitions(plutovg PUBLIC PLUTOVG_BUILD_STATIC)
+endif()
+target_sources(plutovg PRIVATE ${plutovg_sources} ${plutovg_headers})
 add_library(plutovg::plutovg ALIAS plutovg)
 
 set_target_properties(plutovg PROPERTIES
@@ -59,9 +67,6 @@ if(MATH_LIBRARY)
 endif()
 
 target_compile_definitions(plutovg PRIVATE PLUTOVG_BUILD)
-if(NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(plutovg PUBLIC PLUTOVG_BUILD_STATIC)
-endif()
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(

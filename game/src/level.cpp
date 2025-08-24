@@ -296,6 +296,9 @@ void PlayerLogic::OnInit() {
         "assets/gpa/anim/character/waggo/status_walk_down.animation.xml");
     m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
         "assets/Characters/Statue/SpriteSheet.png");
+    m_font = GAME_CONTEXT.m_assets_manager->GetManager<Font>().Load(
+        "assets/fonts/zpix.ttf");
+    m_font->SetFontSize(30);
 
     m_gamepad_event_listener =
             GAME_CONTEXT.m_event_system->AddListener<SDL_GamepadDeviceEvent>(
@@ -438,6 +441,17 @@ void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
                                                 elapse_time, false);
     }
 #endif
+}
+
+void PlayerLogic::OnRenderUpdate(TimeType time) {
+    EntityLogic::OnRenderUpdate(time);
+
+    GAME_CONTEXT.m_renderer->DrawText("Hello TTF", m_font, {50, 100}, {0, 0}, Color::Black);
+    GAME_CONTEXT.m_renderer->DrawText("I am the second line", m_font, {50, 150}, {0, 0}, Color::Black);
+    GAME_CONTEXT.m_renderer->DrawText("HaiHai", m_font, {50, 200}, {0, 0}, Color::Black);
+    GAME_CONTEXT.m_renderer->DrawText("中文", m_font, {50, 250}, {0, 0}, Color::Black);
+    GAME_CONTEXT.m_renderer->DrawText("The Brow fox Jumped Over The Lazy Dog", m_font, {50, 300}, {0, 0}, Color::Black);
+    GAME_CONTEXT.m_renderer->DrawText("!@#$%^&*()_+-=[]/.<>?", m_font, {50, 350}, {0, 0}, Color::Black);
 }
 
 void PlayerLogic::OnQuit() {

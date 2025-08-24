@@ -6,6 +6,8 @@ set(PLUTOSVG_VERSION_MICRO 6)
 
 project(plutosvg LANGUAGES C VERSION ${PLUTOSVG_VERSION_MAJOR}.${PLUTOSVG_VERSION_MINOR}.${PLUTOSVG_VERSION_MICRO})
 
+option(PLUTOSVG_BUILD_SHARED "plutosvg build shared library" OFF)
+
 if(NOT TARGET plutovg::plutovg)
     find_package(plutovg 0.0.4 QUIET)
 endif()
@@ -15,8 +17,14 @@ set(plutosvg_sources
     source/plutosvg-ft.h
     source/plutosvg.c
 )
+if (PLUTOSVG_BUILD_SHARED)
+    add_library(plutosvg SHARED)
+else()
+    add_library(plutosvg STATIC)
+    target_compile_definitions(plutosvg PUBLIC PLUTOSVG_BUILD_STATIC)
+endif()
 
-add_library(plutosvg ${plutosvg_sources})
+target_sources(plutosvg PRIVATE ${plutosvg_sources})
 add_library(plutosvg::plutosvg ALIAS plutosvg)
 
 set_target_properties(plutosvg PROPERTIES
@@ -43,9 +51,6 @@ if(MATH_LIBRARY)
 endif()
 
 target_compile_definitions(plutosvg PRIVATE PLUTOSVG_BUILD)
-if(NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(plutosvg PUBLIC PLUTOSVG_BUILD_STATIC)
-endif()
 
 option(PLUTOSVG_ENABLE_FREETYPE "Enable Freetype integration" OFF)
 if(PLUTOSVG_ENABLE_FREETYPE)
