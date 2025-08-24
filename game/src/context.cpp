@@ -37,7 +37,7 @@ void Context::Destroy() {
     instance.reset();
 }
 
-Context& GAME_CONTEXT {
+Context & GAME_CONTEXT {
     return *instance;
 }
 
@@ -49,6 +49,7 @@ void Context::Shutdown() {
 }
 
 Context::~Context() {
+    m_timer_manager.reset();
     m_debug_drawer.reset();
     m_event_system.reset();
     m_entity_logic_manager.reset();
@@ -113,7 +114,7 @@ void Context::Update() {
     controlFPS(elapse_time);
 }
 
-void Context::HandleEvents(const SDL_Event& event) {
+void Context::HandleEvents(const SDL_Event &event) {
     ImGui_ImplSDL3_ProcessEvent(&event);
     if (event.type == SDL_EVENT_QUIT) {
         m_should_exit = true;
@@ -136,12 +137,12 @@ bool Context::ShouldExit() const {
     return m_should_exit;
 }
 
-const GameConfig& Context::GetGameConfig() const {
+const GameConfig &Context::GetGameConfig() const {
     return m_game_config;
 }
 
 #ifdef TL_ENABLE_EDITOR
-const Path& Context::GetProjectPath() const {
+const Path &Context::GetProjectPath() const {
     return m_project_path;
 }
 #endif
@@ -189,6 +190,7 @@ Context::Context() {
     m_entity_logic_manager = std::make_unique<EntityLogicManager>();
     m_level_manager = std::make_unique<LevelManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
+    m_timer_manager = std::make_unique<TimerManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -211,27 +213,7 @@ void Context::logicUpdate(TimeType elapse) {
     m_relationship_manager->Update();
     m_trigger_component_manager->Update();
     m_event_system->Update();
-
-    // test
-    if (true) {
-        PhysicsActor actor{
-            null_entity, Circle{{673.526, 729.127}, 20},
-            PhysicsActor::StorageType::Normal
-        };
-        CollisionGroup layer, mask;
-        layer.Add(CollisionGroupType::CCT);
-        actor.SetCollisionLayer(layer);
-        mask.Add(CollisionGroupType::Obstacle);
-        actor.SetCollisionMask(mask);
-        SweepResult results[10];
-        Vec2 disp{0, -8.302};
-        float dist = disp.Length();
-        int count =
-            m_physics_scene->Sweep(actor, disp / dist, dist + 0.1, results, 10);
-        if (count > 0) {
-            LOGI("here");
-        }
-    }
+    m_timer_manager->Update(elapse);
 }
 
 void Context::logicPostUpdate(TimeType elapse) {
@@ -276,7 +258,7 @@ Entity Context::CreateEntity() {
 
 void Context::parseProjectPath() {
     auto file =
-        IOStream::CreateFromFile("project_path.xml", IOMode::Read, true);
+            IOStream::CreateFromFile("project_path.xml", IOMode::Read, true);
     if (!file) {
         return;
     }
@@ -301,8 +283,8 @@ void Context::initImGui() {
     float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
+    ImGuiIO &io = ImGui::GetIO();
+    (void) io;
     io.ConfigFlags |=
         ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
@@ -311,7 +293,7 @@ void Context::initImGui() {
     ImGui::StyleColorsDark();
 
     // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
+    ImGuiStyle &style = ImGui::GetStyle();
     style.ScaleAllSizes(
         main_scale); // Bake a fixed style scale. (until we have a solution for
     // dynamic style scaling, changing this requires resetting
@@ -339,7 +321,7 @@ void Context::beginImGui() {
 
 void Context::endImGui() {
     ImGui::Render();
-    auto& io = ImGui::GetIO();
+    auto &io = ImGui::GetIO();
     SDL_SetRenderScale(m_renderer->GetRenderer(), io.DisplayFramebufferScale.x,
                        io.DisplayFramebufferScale.y);
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(),

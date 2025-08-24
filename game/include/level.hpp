@@ -100,6 +100,8 @@ private:
         Circle m_circle;
     };
 
+    TimerID m_timer = null_timer_id;
+
     AnimationHandle m_walk_left;
     AnimationHandle m_walk_right;
     AnimationHandle m_walk_up;
