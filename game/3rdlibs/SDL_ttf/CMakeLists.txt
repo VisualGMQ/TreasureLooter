@@ -104,7 +104,9 @@ option(SDLTTF_PLUTOSVG "Use plutosvg for color emoji support" ON)
 set(SDLTTF_PLUTOSVG_VENDORED "${SDLTTF_VENDORED}")
 
 # Save BUILD_SHARED_LIBS variable
-option(SDLTTF_BUILD_SHARED_LIBS "Build SDL_TTF dynamic libraray" ON)
+option(SDLTTF_BUILD_SHARED_LIBS "Build SDL_TTF dynamic libraray" OFF)
+
+message(STATUS "Is SDL-ttf Build Dynamic ? ${SDLTTF_BUILD_SHARED_LIBS}")
 
 set(sdl_required_components Headers)
 
