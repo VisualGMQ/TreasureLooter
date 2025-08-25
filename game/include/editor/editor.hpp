@@ -21,7 +21,8 @@ class TrivialEditor : public IEditor {
 using AssetTypes = std::variant < std::monostate, AssetLoadResult<Prefab>,
       AssetLoadResult<InputConfig>, AssetLoadResult<Animation>,
       AssetLoadResult<GameConfig>, AssetLoadResult<LevelContent>,
-      AssetLoadResult<PhysicsActorInfo>>;
+      AssetLoadResult<PhysicsActorInfo>,
+      AssetLoadResult<MotorConfig>>;
 
 class Editor : public IEditor {
 public:

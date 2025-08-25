@@ -1,9 +1,10 @@
+{{#is_asset}}
+    struct {{class_name}};
+    using {{class_name}}Handle = Handle<{{class_name}}>;
+{{/is_asset}}
+
 struct {{class_name}} {
     {{#properties}}
     {{{property}}}
     {{/properties}}
 };
-
-{{#is_asset}}
-using {{class_name}}Handle = Handle<{{class_name}}>;
-{{/is_asset}}

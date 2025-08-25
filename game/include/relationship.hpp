@@ -3,8 +3,6 @@
 #include "manager.hpp"
 #include "schema/relationship.hpp"
 
-#include <vector>
-
 class Transform;
 
 class RelationshipManager : public ComponentManager<Relationship> {

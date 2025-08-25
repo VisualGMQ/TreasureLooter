@@ -42,14 +42,12 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     Vec2 disp = dir;
     Vec2 disp_normalized = disp / disp_length;
     uint32_t max_iter = MaxIter;
-    SweepResult hit[2];
+    SweepResult hit;
 
     auto& physics_scene = GAME_CONTEXT.m_physics_scene;
 
     CCT_DEBUG_LOG("max iter = {}, begin iter", max_iter);
     CCT_DEBUG_LOG("start position: {}", m_actor->GetPosition());
-
-    OverlapResult overlapResult[10];
 
     while (max_iter--) {
         if (disp_length <= m_min_disp) {
@@ -63,19 +61,12 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
         }
 
         uint32_t hitted = physics_scene->Sweep(*m_actor, disp_normalized,
-                                               disp_length + m_skin, hit, 2);
+                                               disp_length + m_skin, &hit, 1);
 
         for (int i = 0; i < hitted; i++) {
             CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
-                          hit[i].m_actor->GetPosition(), hit[i].m_normal,
-                          hit[i].m_t);
-        }
-
-        uint32_t count = physics_scene->Overlap(*m_actor, overlapResult, 10);
-        CCT_DEBUG_LOG("overlap count: {}", count);
-        for (int i = 0; i < count; i++) {
-            CCT_DEBUG_LOG("overlap {} center: {}", i,
-                          overlapResult[i].m_dst_actor->GetPosition());
+                          hit.m_actor->GetPosition(), hit.m_normal,
+                          hit.m_t);
         }
 
         if (!hitted) {
@@ -84,31 +75,23 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
             break;
         }
 
-        if (hit[0].m_is_initial_overlap) {
+        if (hit.m_is_initial_overlap) {
             CCT_DEBUG_LOG("initial overlap, move along {}", disp);
             m_actor->Move(disp);
             break;
         }
 
         CCT_DEBUG_LOG("hitted! hit flags: {}, normal: {}, t: {}",
-                      hit[0].m_flags.Value(), hit[0].m_normal, hit[0].m_t);
+                      hit.m_flags.Value(), hit.m_normal, hit.m_t);
 
         float actual_move_dist = 0;
-        if (hit[0].m_t > m_skin) {
-            actual_move_dist = hit[0].m_t - m_skin;
+        if (hit.m_t > m_skin) {
+            actual_move_dist = hit.m_t - m_skin;
             m_actor->Move(actual_move_dist * disp_normalized);
             CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
-                          hit[0].m_t, m_skin, hit[0].m_t < m_skin,
+                          hit.m_t, m_skin, hit.m_t < m_skin,
                           actual_move_dist);
             CCT_DEBUG_LOG("move to {}", m_actor->GetPosition());
-
-            count = physics_scene->Overlap(*m_actor,
-                                           overlapResult, 10);
-            for (int i = 0; i < count; i++) {
-                CCT_DEBUG_LOG("overlap {} center: {}", i,
-                              overlapResult[i].m_dst_actor->GetPosition());
-            }
-            CCT_DEBUG_LOG("overlap count: {}", count);
         }
 
         disp_length -= actual_move_dist;
@@ -116,7 +99,7 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
         CCT_DEBUG_LOG("remain disp length: {}", disp_length);
 
         auto [tangent, normal] =
-            DecomposeVector(disp_normalized * disp_length, hit[0].m_normal);
+            DecomposeVector(disp_normalized * disp_length, hit.m_normal);
         disp_length = tangent.Length();
 
         CCT_DEBUG_LOG("tangent: {}, length: {}", tangent, disp_length);
@@ -128,14 +111,6 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     CCT_DEBUG_LOG("end iter, final position: {}", m_actor->GetPosition());
 
     m_actor->MoveTo(m_actor->GetPosition());
-
-    uint32_t count = physics_scene->Overlap(*m_actor, overlapResult, 10);
-    for (int i = 0; i < count; i++) {
-        CCT_DEBUG_LOG("overlap {} center: {}", i,
-                      overlapResult[i].m_dst_actor->GetPosition());
-    }
-
-    CCT_DEBUG_LOG("overlap count: {}\n", count);
 }
 
 Vec2 CharacterController::GetPosition() const {

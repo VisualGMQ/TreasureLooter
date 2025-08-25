@@ -6,24 +6,27 @@
 template <typename T>
 class State {
 public:
-    friend class StateSingletonManager;
-    
     using type = T;
 
     State(const State& other) = delete;
+
     State(State&& other) = delete;
+
     State& operator=(const State& other) = delete;
+
     State& operator=(State&& other) = delete;
 
     virtual ~State() = default;
 
-    virtual void OnEnter(T* state) {}
+    virtual void OnEnter(T* state) {
+    }
 
-    virtual void OnQuit(T* state) {}
+    virtual void OnQuit(T* state) {
+    }
 
-    virtual void OnUpdate(T* state) {}
+    virtual void OnUpdate(T* state) {
+    }
 
-private:
     State() = default;
 };
 
@@ -45,6 +48,13 @@ public:
     using payload_type = T;
     using state_type = State<T>;
 
+    StateMachine() = default;
+
+    StateMachine(payload_type* payload)
+        : m_payload(payload) {
+    }
+
+    void ChangePayload(payload_type* payload) { m_payload = payload; }
     void ChangeState(state_type* state) { m_next_state = state; }
 
     void ExitAllState() { ChangeState(nullptr); }

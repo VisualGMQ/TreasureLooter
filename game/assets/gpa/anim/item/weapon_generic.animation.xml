@@ -1,0 +1,26 @@
+<Animation>
+	<uuid>730d16e9-0000-0000-0000-000000000000</uuid>
+	<value>
+		<tracks>
+			<track>
+				<binding_point>TransformRotation</binding_point>
+				<type>Linear</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value>0.000000</value>
+					</keyframe>
+					<keyframe>
+						<time>0.3000000</time>
+						<value>90.000000</value>
+					</keyframe>
+					<keyframe>
+						<time>0.4000000</time>
+						<value>0.000000</value>
+					</keyframe>
+				</keyframes>
+			</track>
+		</tracks>
+	</value>
+</Animation>
+

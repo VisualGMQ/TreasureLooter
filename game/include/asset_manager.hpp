@@ -7,6 +7,7 @@
 #include "tilemap.hpp"
 #include "level.hpp"
 #include "text.hpp"
+#include "prefab_manager.hpp"
 
 class AssetsManager {
 public:
@@ -21,6 +22,8 @@ public:
             return ensureManager<AnimationManager>(index);
         } else if constexpr (std::is_same_v<T, Level>) {
             return *GAME_CONTEXT.m_level_manager;
+        } else if constexpr (std::is_same_v<T, Prefab>) {
+            return ensureManager<PrefabManager>(index);
         } else if constexpr (std::is_same_v<T, Font>) {
             return ensureManager<FontManager>(index);
         } else {

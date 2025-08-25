@@ -1,0 +1,41 @@
+<Prefab>
+	<uuid>23e9cc9f-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<sprite>
+			<value>
+				<image>assets/Characters/Slime2/Slime2.png</image>
+				<region>
+					<topleft x="0.000000" y="0.000000"/>
+					<size x="16.000000" y="16.000000"/>
+				</region>
+				<size x="0.000000" y="0.000000"/>
+				<anchor x="0.000000" y="0.000000"/>
+				<flip>None</flip>
+			</value>
+		</sprite>
+		<transform>
+			<value>
+				<position x="300.000000" y="300.000000"/>
+				<scale x="1.000000" y="1.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<animation>
+			<value>
+				<loop>-1</loop>
+				<rate>3.000000</rate>
+				<auto_play>false</auto_play>
+				<animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</animation>
+			</value>
+		</animation>
+		<cct>
+			<value>
+				<skin>0.100000</skin>
+				<min_disp>0.001000</min_disp>
+				<physics_actor>assets/gpa/monsters/slime2/slime2.physics_actor.xml</physics_actor>
+			</value>
+		</cct>
+		<motor_config>assets/gpa/monsters/slime2/slime2.motor_config.xml</motor_config>
+	</payload>
+</Prefab>
+

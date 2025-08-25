@@ -50,9 +50,9 @@ void Context::Shutdown() {
 
 Context::~Context() {
     m_timer_manager.reset();
+    m_motor_manager.reset();
     m_debug_drawer.reset();
     m_event_system.reset();
-    m_entity_logic_manager.reset();
     m_cct_manager.reset();
     m_physics_scene.reset();
     m_time.reset();
@@ -187,10 +187,10 @@ Context::Context() {
     m_physics_scene = std::make_unique<PhysicsScene>();
     m_cct_manager = std::make_unique<CCTManager>();
     m_event_system = std::make_unique<EventSystem>();
-    m_entity_logic_manager = std::make_unique<EntityLogicManager>();
     m_level_manager = std::make_unique<LevelManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
+    m_motor_manager = std::make_unique<MotorManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -208,6 +208,7 @@ void Context::logicUpdate(TimeType elapse) {
     m_touches->Update();
 
     m_level_manager->UpdateLogic(elapse);
+    m_motor_manager->Update(elapse);
 
     m_animation_player_manager->Update(elapse);
     m_relationship_manager->Update();

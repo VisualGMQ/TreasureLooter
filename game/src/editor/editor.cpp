@@ -17,6 +17,8 @@
 #include "schema/serialize/level_content.hpp"
 #include "schema/serialize/physics_schema.hpp"
 #include "schema/serialize/prefab.hpp"
+#include "schema/serialize/motor_config.hpp"
+#include "schema/display/motor_config.hpp"
 #include "sdl_call.hpp"
 
 #include <array>
@@ -29,7 +31,8 @@ struct AssetDisplay {
         InstanceDisplay("Asset", payload.m_payload);
     }
 
-    void operator()(std::monostate) const {}
+    void operator()(std::monostate) const {
+    }
 };
 
 struct AssetSyncHelper {
@@ -52,7 +55,8 @@ struct AssetSyncHelper {
             ->ReloadEntitiesFromPrefab(payload.m_uuid);
     }
 
-    void operator()(std::monostate) {}
+    void operator()(std::monostate) {
+    }
 };
 
 void AddEntityToScene(Entity entity, AssetLoadResult<Prefab>& instance) {
@@ -84,7 +88,9 @@ AssetTypes LoadAssetFromPath<Prefab>(const Path& filename) {
 }
 
 struct AssetSaver {
-    AssetSaver(const Path& filename) : m_filename(filename) {}
+    AssetSaver(const Path& filename)
+        : m_filename(filename) {
+    }
 
     template <typename T>
     void operator()(AssetLoadResult<T>& payload) {
@@ -94,7 +100,8 @@ struct AssetSaver {
         SaveAsset(payload.m_uuid, payload.m_payload, m_filename);
     }
 
-    void operator()(std::monostate) {}
+    void operator()(std::monostate) {
+    }
 
 private:
     Path m_filename;
@@ -109,17 +116,18 @@ AssetTypes CreateAsset() {
 
 void Editor::Update() {
     if (ImGui::Begin("Editor", &m_open)) {
-        static const std::array<const char*, 6> asset_types = {
+        static const std::array<const char*, 7> asset_types = {
             "InputConfig", "EntityInstance", "Animation",
-            "GameConfig",  "Level",          "PhysicsActor"};
+            "GameConfig", "Level", "PhysicsActor", "MotorConfig"};
 
-        static const std::array<std::string_view, 6> asset_extensions = {
-            InputConfig_AssetExtension,  Prefab_AssetExtension,
-            Animation_AssetExtension,    GameConfig_AssetExtension,
-            LevelContent_AssetExtension, PhysicsActorInfo_AssetExtension};
+        static const std::array<std::string_view, 7> asset_extensions = {
+            InputConfig_AssetExtension, Prefab_AssetExtension,
+            Animation_AssetExtension, GameConfig_AssetExtension,
+            LevelContent_AssetExtension, PhysicsActorInfo_AssetExtension,
+            MotorConfig_AssetExtension};
 
         static const std::array<std::function<AssetTypes(const Path& filename)>,
-                                6>
+                                7>
             asset_loader = {
                 LoadAssetFromPath<InputConfig>,
                 LoadAssetFromPath<Prefab>,
@@ -127,14 +135,16 @@ void Editor::Update() {
                 LoadAssetFromPath<GameConfig>,
                 LoadAssetFromPath<LevelContent>,
                 LoadAssetFromPath<PhysicsActorInfo>,
+                LoadAssetFromPath<MotorConfig>,
             };
 
-        static const std::array<std::function<AssetTypes()>, 6> asset_creator =
-            {
-                CreateAsset<InputConfig>,  CreateAsset<Prefab>,
-                CreateAsset<Animation>,    CreateAsset<GameConfig>,
-                CreateAsset<LevelContent>, CreateAsset<PhysicsActorInfo>,
-            };
+        static const std::array<std::function<AssetTypes()>, 7> asset_creator =
+        {
+            CreateAsset<InputConfig>, CreateAsset<Prefab>,
+            CreateAsset<Animation>, CreateAsset<GameConfig>,
+            CreateAsset<LevelContent>, CreateAsset<PhysicsActorInfo>,
+            CreateAsset<MotorConfig>,
+        };
 
         if (ImGui::BeginPopupModal("popup")) {
             for (size_t i = 0; i < asset_types.size(); i++) {

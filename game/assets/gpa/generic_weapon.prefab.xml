@@ -1,0 +1,34 @@
+<Prefab>
+	<uuid>ba70717e-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<transform>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<scale x="1.000000" y="1.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<sprite>
+			<value>
+				<image>assets/Items/Weapons/Pickaxe/Sprite.png</image>
+				<region>
+					<topleft x="0.000000" y="0.000000"/>
+					<size x="0.000000" y="0.000000"/>
+				</region>
+				<size x="0.000000" y="0.000000"/>
+				<anchor x="0.000000" y="6.000000"/>
+				<flip>None</flip>
+			</value>
+		</sprite>
+		<animation>
+			<value>
+				<loop>0</loop>
+				<rate>1.000000</rate>
+				<auto_play>false</auto_play>
+				<animation>assets/gpa/anim/item/weapon_generic.animation.xml</animation>
+			</value>
+		</animation>
+		<type>Normal</type>
+	</payload>
+</Prefab>
+

@@ -157,6 +157,13 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
             HANDLE_DISCRETE_TRACK_CREATION();
         }
 #undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteAnchor) {
+            HANDLE_LINEAR_TRACK_CREATION()
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
     }
 }
 
@@ -294,6 +301,13 @@ void AnimationPlayer::Sync(Entity entity) {
 #define BINDING_TARGET sprite->m_flip
         BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteFlip) {
             HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET sprite->m_anchor
+        BEGIN_BINDING_POINT(AnimationBindingPoint::SpriteAnchor) {
+            HANDLE_DISCRETE_TRACK();
+            HANDLE_LINEAR_TRACK();
         }
 #undef BINDING_TARGET
     }

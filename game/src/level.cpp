@@ -31,41 +31,13 @@ void Level::OnEnter() {
     }
 }
 
-void Level::OnInit() {
-    for (auto entity : m_entities) {
-        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
-        if (logic) {
-            logic->OnInit();
-        }
-    }
-}
+void Level::OnInit() { }
 
-void Level::OnLogicUpdate(TimeType time) {
-    for (auto entity : m_entities) {
-        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
-        if (logic) {
-            logic->OnLogicUpdate(time);
-        }
-    }
-}
+void Level::OnLogicUpdate(TimeType time) { }
 
-void Level::OnRenderUpdate(TimeType time) {
-    for (auto entity : m_entities) {
-        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
-        if (logic) {
-            logic->OnRenderUpdate(time);
-        }
-    }
-}
+void Level::OnRenderUpdate(TimeType time) { }
 
-void Level::OnQuit() {
-    for (auto entity : m_entities) {
-        auto logic = GAME_CONTEXT.m_entity_logic_manager->Get(entity);
-        if (logic) {
-            logic->OnQuit();
-        }
-    }
-}
+void Level::OnQuit() { }
 
 void Level::PoseUpdate() {
     doRemoveEntities();
@@ -77,7 +49,7 @@ bool Level::IsInited() const {
 
 Entity Level::Instantiate(PrefabHandle prefab) {
     Entity entity = GAME_CONTEXT.CreateEntity();
-    registerEntity({entity, prefab->m_transform.value_or(Transform{}), prefab});
+    registerEntity(entity, {prefab->m_transform.value_or(Transform{}), prefab});
     m_entities.insert(entity);
     return entity;
 }
@@ -101,13 +73,12 @@ void Level::ReloadEntitiesFromPrefab(PrefabHandle prefab) {
         auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
 
         EntityInstance instance;
-        instance.m_entity = entity;
         if (transform) {
             instance.m_transform = *transform;
         }
         instance.m_prefab = prefab;
         RemoveEntity(entity);
-        registerEntity(instance);
+        registerEntity(entity, instance);
     }
 }
 
@@ -127,14 +98,14 @@ void Level::initRootEntity() {
     GAME_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
 }
 
-void Level::registerEntity(const EntityInstance& instance) {
+void Level::registerEntity(Entity entity, const EntityInstance& instance) {
     createEntityByPrefab(
-        instance.m_entity,
+        entity,
         instance.m_transform ? &instance.m_transform.value() : nullptr,
         *instance.m_prefab);
 
 #ifdef TL_ENABLE_EDITOR
-    m_prefab_entity_map[instance.m_prefab].push_back(instance.m_entity);
+    m_prefab_entity_map[instance.m_prefab].push_back(entity);
 #endif
 }
 
@@ -147,10 +118,6 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
     if (transform || prefab.m_transform) {
         GAME_CONTEXT.m_transform_manager->ReplaceComponent(
             entity, transform ? *transform : prefab.m_transform.value());
-    }
-    if (prefab.m_relationship) {
-        GAME_CONTEXT.m_relationship_manager->ReplaceComponent(
-            entity, prefab.m_relationship.value());
     }
     if (prefab.m_tilemap) {
         GAME_CONTEXT.m_tilemap_component_manager->ReplaceComponent(
@@ -170,38 +137,62 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         GAME_CONTEXT.m_trigger_component_manager->RegisterEntity(
             entity, entity, prefab.m_trigger.value());
     }
-    if (prefab.m_type == EntityType::Player) {
-        GAME_CONTEXT.m_entity_logic_manager
-            ->RegisterEntityByDerive<PlayerLogic>(entity, entity);
+
+    if (prefab.m_motor_config) {
+        switch (prefab.m_motor_config->m_type) {
+            case MotorType::Unknown:
+                LOGE("unknown motor type");
+                break;
+            case MotorType::Enemy:
+                GAME_CONTEXT.m_motor_manager
+                    ->RegisterEntityByDerive<EnemyMotorContext>(
+                        entity, entity);
+                break;
+            case MotorType::Player:
+                GAME_CONTEXT.m_motor_manager
+                    ->RegisterEntityByDerive<PlayerMotorContext>(
+                        entity, entity);
+                break;
+        }
+
+        auto motor = GAME_CONTEXT.m_motor_manager->Get(entity);
+        if (motor) {
+            motor->Initialize(prefab.m_motor_config);
+        }
+    }
+
+    if (!prefab.m_children.empty()) {
+        GAME_CONTEXT.m_relationship_manager->RegisterEntity(entity);
+        auto relationship = GAME_CONTEXT.m_relationship_manager->Get(entity);
+        for (auto child : prefab.m_children) {
+            EntityInstance instance;
+            auto child_entity = GAME_CONTEXT.CreateEntity();
+            instance.m_prefab = child;
+            registerEntity(child_entity, instance);
+
+            relationship->m_children.push_back(child_entity);
+        }
+    }
+
+    if (auto motor = GAME_CONTEXT.m_motor_manager->Get(entity)) {
+        motor->Initialize(prefab.m_motor_config);
     }
 }
 
 void Level::initByLevelContent(LevelContentHandle level_content) {
     initRootEntity();
 
-    std::unordered_map<Entity, bool> is_entity_root_map;
-    for (auto& instance : level_content->m_entities) {
-        is_entity_root_map.emplace(instance.m_entity, true);
-    }
-
     for (auto& instance : level_content->m_entities) {
         if (!instance.m_prefab) {
             LOGW("prefab {} invalid", *instance.m_prefab.GetFilename());
             continue;
         }
-        registerEntity(instance);
-        if (instance.m_prefab->m_relationship &&
-            !instance.m_prefab->m_relationship->m_children.empty()) {
-            for (auto& child : instance.m_prefab->m_relationship->m_children) {
-                is_entity_root_map[child] = false;
-            }
-        }
-        m_entities.insert(instance.m_entity);
-    }
+        auto entity = GAME_CONTEXT.CreateEntity();
+        registerEntity(entity, instance);
+        m_entities.insert(entity);
 
-    auto relationship =
-        GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
-    for (auto& [entity, is_root] : is_entity_root_map) {
+        auto relationship =
+            GAME_CONTEXT.m_relationship_manager->Get(GetRootEntity());
         relationship->m_children.emplace_back(entity);
     }
 }
@@ -280,245 +271,4 @@ void LevelManager::PoseUpdate() {
 
 LevelHandle LevelManager::GetCurrentLevel() const {
     return m_level;
-}
-
-void PlayerLogic::OnInit() {
-    auto& animation_manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<Animation>();
-
-    m_walk_left = animation_manager.Load(
-        "assets/gpa/anim/character/waggo/status_walk_left.animation.xml");
-    m_walk_right = animation_manager.Load(
-        "assets/gpa/anim/character/waggo/status_walk_right.animation.xml");
-    m_walk_up = animation_manager.Load(
-        "assets/gpa/anim/character/waggo/status_walk_up.animation.xml");
-    m_walk_down = animation_manager.Load(
-        "assets/gpa/anim/character/waggo/status_walk_down.animation.xml");
-    m_image_sheet = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(
-        "assets/Characters/Statue/SpriteSheet.png");
-    m_font = GAME_CONTEXT.m_assets_manager->GetManager<Font>().Load(
-        "assets/fonts/zpix.ttf");
-    m_font->SetFontSize(30);
-
-    m_gamepad_event_listener =
-        GAME_CONTEXT.m_event_system->AddListener<SDL_GamepadDeviceEvent>(
-            [&](EventListenerID id, const SDL_GamepadDeviceEvent& event) {
-                if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
-                    if (m_gamepad_id == 0) {
-                        m_gamepad_id = event.which;
-                    }
-                } else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
-                    if (m_gamepad_id == event.which) {
-                        m_gamepad_id = 0;
-                    }
-                }
-            });
-
-    GAME_CONTEXT.m_event_system->AddListener<TriggerEnterEvent>(
-        [](EventListenerID, const TriggerEnterEvent&) { LOGI("entered"); });
-    GAME_CONTEXT.m_event_system->AddListener<TriggerLeaveEvent>(
-        [](EventListenerID, const TriggerLeaveEvent&) { LOGI("leave"); });
-    GAME_CONTEXT.m_event_system->AddListener<TriggerTouchEvent>(
-        [](EventListenerID, const TriggerTouchEvent&) { LOGI("touch"); });
-
-    // NOTE: when under android, device will change window size after few frames
-    // and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event after rotate
-    // screen. So we must listen this event and change our button position
-    m_window_resize_event_listener =
-        GAME_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
-            [&](EventListenerID id, const SDL_WindowEvent& event) {
-                if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-                    int w = event.data1;
-                    int h = event.data2;
-                    m_touch_joystick.m_circle.m_radius = 100;
-                    m_touch_joystick.m_circle.m_center.x = 300;
-                    m_touch_joystick.m_circle.m_center.y = h - 300;
-
-                    m_finger_attack_button.m_radius = 50;
-                    m_finger_attack_button.m_center.x = w - 200;
-                    m_finger_attack_button.m_center.y = h - 200;
-                }
-            });
-}
-
-void PlayerLogic::OnLogicUpdate(TimeType elapse_time) {
-    handleFingerTouchJoystick();
-
-    Entity entity = GetEntity();
-
-    Transform* transform = GAME_CONTEXT.m_transform_manager->Get(entity);
-
-    WalkDirection old_direction = m_walk_direction;
-
-    Vec2 axises = GAME_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY")
-        .Value(m_gamepad_id);
-
-    auto& action = GAME_CONTEXT.m_input_manager->GetAction("Attack");
-    if (action.IsPressed()) {
-        transform->m_rotation += 10;
-    }
-
-    constexpr float speed = 100;
-    auto cct = GAME_CONTEXT.m_cct_manager->Get(entity);
-    if (cct) {
-        cct->MoveAndSlide(speed * elapse_time * axises);
-        transform->m_position = cct->GetPosition();
-    }
-
-    AnimationPlayer* player =
-        GAME_CONTEXT.m_animation_player_manager->Get(entity);
-
-    if (axises == Vec2{}) {
-        player->Stop();
-    }
-    if (axises.y < 0) {
-        m_walk_direction = WalkDirection::Up;
-    }
-    if (axises.y > 0) {
-        m_walk_direction = WalkDirection::Down;
-    }
-    if (axises.x < 0) {
-        m_walk_direction = WalkDirection::Left;
-    }
-    if (axises.x > 0) {
-        m_walk_direction = WalkDirection::Right;
-    }
-
-    if ((!player->IsPlaying() && axises != Vec2::ZERO) ||
-        old_direction != m_walk_direction) {
-        switch (m_walk_direction) {
-            case WalkDirection::Up:
-                player->ChangeAnimation(m_walk_up);
-                break;
-            case WalkDirection::Left:
-                player->ChangeAnimation(m_walk_left);
-                break;
-            case WalkDirection::Right:
-                player->ChangeAnimation(m_walk_right);
-                break;
-            case WalkDirection::Down:
-                player->ChangeAnimation(m_walk_down);
-                break;
-        }
-        player->Play();
-    }
-
-    if (axises == Vec2::ZERO) {
-        auto sprite = GAME_CONTEXT.m_sprite_manager->Get(entity);
-        switch (m_walk_direction) {
-            case WalkDirection::Up:
-                sprite->m_region.m_topleft = {16, 0};
-                break;
-            case WalkDirection::Left:
-                sprite->m_region.m_topleft = {32, 0};
-                break;
-            case WalkDirection::Right:
-                sprite->m_region.m_topleft = {48, 0};
-                break;
-            case WalkDirection::Down:
-                sprite->m_region.m_topleft = {0, 0};
-                break;
-        }
-    }
-
-    GAME_CONTEXT.m_camera.MoveTo(transform->m_position);
-
-    // draw touch joystick
-#ifdef SDL_PLATFORM_ANDROID
-    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_touch_joystick.m_circle,
-                                            Color::Green, elapse_time, false);
-    GAME_CONTEXT.m_debug_drawer->DrawCircle(m_finger_attack_button,
-                                            Color::Purple, elapse_time, false);
-
-    if (m_move_finger_idx) {
-        auto& finger =
-            GAME_CONTEXT.m_touches->GetFingers()[m_move_finger_idx.value()];
-        auto position =
-            finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
-        GAME_CONTEXT.m_debug_drawer->DrawCircle({position, 5}, Color::Red,
-                                                elapse_time, false);
-    }
-#endif
-}
-
-void PlayerLogic::OnRenderUpdate(TimeType time) {
-    EntityLogic::OnRenderUpdate(time);
-
-    GAME_CONTEXT.m_renderer->DrawText("Hello TTF", m_font, {50, 100}, {0, 0}, Color::Black);
-    GAME_CONTEXT.m_renderer->DrawText("I am the second line", m_font, {50, 150}, {0, 0}, Color::Black);
-    GAME_CONTEXT.m_renderer->DrawText("HaiHai", m_font, {50, 200}, {0, 0}, Color::Black);
-    GAME_CONTEXT.m_renderer->DrawText("中文", m_font, {50, 250}, {0, 0}, Color::Black);
-    GAME_CONTEXT.m_renderer->DrawText("The Brow fox Jumped Over The Lazy Dog", m_font, {50, 300}, {0, 0}, Color::Black);
-    GAME_CONTEXT.m_renderer->DrawText("!@#$%^&*()_+-=[]/.<>?", m_font, {50, 350}, {0, 0}, Color::Black);
-}
-
-void PlayerLogic::OnQuit() {
-    GAME_CONTEXT.m_event_system->RemoveListener<SDL_GamepadDeviceEvent>(
-        m_gamepad_event_listener);
-    GAME_CONTEXT.m_event_system->RemoveListener<SDL_WindowEvent>(
-        m_window_resize_event_listener);
-}
-
-void PlayerLogic::handleFingerTouchJoystick() {
-    auto& fingers = GAME_CONTEXT.m_touches->GetFingers();
-    for (size_t i = 0; i < fingers.size(); i++) {
-        auto& finger = fingers[i];
-
-        Vec2 position =
-            finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
-
-        if (finger.IsPressed()) {
-            if (IsPointInCircle(position, m_touch_joystick.m_circle)) {
-                m_move_finger_idx = i;
-            }
-        } else if (m_move_finger_idx && m_move_finger_idx.value() == i &&
-                   finger.IsReleased()) {
-            m_move_finger_idx = std::nullopt;
-        }
-
-        if (finger.IsPressed()) {
-            if (IsPointInCircle(position, m_finger_attack_button)) {
-                m_attack_finger_idx = i;
-            }
-        } else if (m_attack_finger_idx && m_attack_finger_idx.value() == i &&
-                   finger.IsReleased()) {
-            m_attack_finger_idx = std::nullopt;
-        }
-    }
-
-    if (!m_move_finger_idx) {
-        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", 0);
-        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", 0);
-    } else {
-        auto& finger = fingers[m_move_finger_idx.value()];
-        Vec2 position =
-            finger.Position() * GAME_CONTEXT.m_window->GetWindowSize();
-        Vec2 dir = position - m_touch_joystick.m_circle.m_center;
-        float len =
-            Clamp(dir.Length(), 0.0f, m_touch_joystick.m_circle.m_radius) /
-            m_touch_joystick.m_circle.m_radius;
-        dir = dir.Normalize() * len;
-        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", dir.x);
-        GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", dir.y);
-    }
-
-    if (!m_attack_finger_idx) {
-        GAME_CONTEXT.m_input_manager->AcceptFingerButton(
-            "Attack", Action::State::Releasing);
-    } else {
-        auto& finger = fingers[m_attack_finger_idx.value()];
-        if (finger.IsPressed()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Pressed);
-        } else if (finger.IsPressing()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Pressing);
-        } else if (finger.IsReleased()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Released);
-        } else if (finger.IsReleasing()) {
-            GAME_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Releasing);
-        }
-    }
 }

@@ -2,6 +2,9 @@
 
 #include <valarray>
 
+Vec2 Reflect(const Vec2& v, const Vec2& n) {
+    return 2.0 * n * v.Length() - v;
+}
 
 Degrees::Degrees(float value) : m_value{value} {}
 
@@ -10,7 +13,7 @@ Degrees::Degrees(Radians radians) {
 }
 
 Degrees& Degrees::operator=(Radians radians) {
-    m_value = radians.Value() * 180.0f / PI;
+    m_value = radians.Value() * 180.0f / PI.Value();
     return *this;
 }
 
@@ -37,6 +40,30 @@ Degrees& Degrees::operator*=(Degrees o) {
 Degrees& Degrees::operator/=(Degrees o) {
     m_value /= o.m_value;
     return *this;
+}
+
+bool Degrees::operator>(Degrees o) const {
+    return m_value > o.m_value;
+}
+
+bool Degrees::operator<(Degrees o) const {
+    return m_value < o.m_value;
+}
+
+bool Degrees::operator>=(Degrees o) const {
+    return m_value >= o.m_value;
+}
+
+bool Degrees::operator<=(Degrees o) const {
+    return m_value <= o.m_value;
+}
+
+bool Degrees::operator==(Degrees o) const {
+    return m_value == o.m_value;
+}
+
+bool Degrees::operator!=(Degrees o) const {
+    return !(*this == o);
 }
 
 Degrees operator+(Degrees d1, Degrees d2) {
@@ -127,13 +154,73 @@ Radians::Radians(Degrees degrees) {
 }
 
 Radians& Radians::operator=(Degrees degrees) {
-    m_value = degrees.Value() * PI / 180.0f;
+    m_value = degrees.Value() * PI.Value() / 180.0f;
     return *this;
 }
 
 Radians& Radians::operator=(float value) {
     m_value = value;
     return *this;
+}
+
+Radians& Radians::operator-=(Radians o) {
+    m_value -= o.m_value;
+    return *this;
+}
+
+Radians& Radians::operator+=(Radians o) {
+    m_value += o.m_value;
+    return *this;
+}
+
+Radians& Radians::operator*=(Radians o) {
+    m_value *= o.m_value;
+    return *this;
+}
+
+Radians& Radians::operator/=(Radians o) {
+    m_value /= o.m_value;
+    return *this;
+}
+
+Radians operator+(Radians d1, Radians d2) {
+    return d1 += d2;
+}
+
+Radians operator-(Radians d1, Radians d2) {
+    return d1 -= d2;
+}
+
+Radians operator*(Radians d1, Radians d2) {
+    return d1 *= d2;
+}
+
+Radians operator/(Radians d1, Radians d2) {
+    return d1 /= d2;
+}
+
+bool Radians::operator>(Radians o) const {
+    return m_value > o.m_value;
+}
+
+bool Radians::operator<(Radians o) const {
+    return m_value < o.m_value;
+}
+
+bool Radians::operator>=(Radians o) const {
+    return m_value >= o.m_value;
+}
+
+bool Radians::operator<=(Radians o) const {
+    return m_value <= o.m_value;
+}
+
+bool Radians::operator==(Radians o) const {
+    return m_value == o.m_value;
+}
+
+bool Radians::operator!=(Radians o) const {
+    return !(*this == o);
 }
 
 Vec2 Rotate(const Vec2& p, Degrees d) {
@@ -162,15 +249,27 @@ void Transform::UpdateMat(const Transform* parent) {
     }
 }
 
+Radians GetAngle(const Vec2& norm_a, const Vec2& norm_b) {
+    float c = norm_a.Dot(norm_b);
+    float s = norm_b.Cross(norm_a);
+
+    float theta = std::acos(c);
+
+    if ((c >= 0 && s >= 0) || (c < 0 && s >= 0)) {
+        return theta;
+    }
+    return 2 * PI - theta;
+}
+
 DecompositionResult DecomposeVector(const Vec2& v, const Vec2& normal) {
-    DecompositionResult  result;
+    DecompositionResult result;
     result.m_normal = v.Dot(normal) * normal;
     result.m_tangent = v - result.m_normal;
     return result;
 }
 
 const Color Color::Red{1, 0, 0};
-const Color Color::Green{ 0, 1, 0};
+const Color Color::Green{0, 1, 0};
 const Color Color::Blue{0, 0, 1};
 const Color Color::Black{0, 0, 0};
 const Color Color::White{1, 1, 1};

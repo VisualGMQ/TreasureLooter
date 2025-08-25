@@ -3,16 +3,6 @@
 	<value>
 		<tracks>
 			<track>
-				<binding_point>SpriteImage</binding_point>
-				<type>Discrete</type>
-				<keyframes>
-					<keyframe>
-						<time>0.000000</time>
-						<value>assets/Characters/Statue/SpriteSheet.png</value>
-					</keyframe>
-				</keyframes>
-			</track>
-			<track>
 				<binding_point>SpriteRegionPosition</binding_point>
 				<type>Discrete</type>
 				<keyframes>

@@ -8,15 +8,18 @@
     <import>physics_schema</import>
     <import>common</import>
     <import>tilemap_schema</import>
+    <import>motor_config</import>
 
     <asset name="Prefab" extension=".prefab">
+        <handle type="Prefab" name="base"/>
+
         <option type="Sprite" name="sprite"/>
         <option type="Transform" name="transform"/>
-        <option type="Relationship" name="relationship"/>
+        <array  type="PrefabHandle" name="children"/>
         <option type="AnimationPlayerCreateInfo" name="animation"/>
         <option type="TilemapInfo" name="tilemap"/>
         <option type="CCT" name="cct"/>
         <option type="TriggerInfo" name="trigger"/>
-        <element type="EntityType" name="type" default="EntityType::Normal"/>
+        <handle type="MotorConfig" name="motor_config"/>
     </asset>
 </schema>

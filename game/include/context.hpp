@@ -5,7 +5,6 @@
 #include "debug_drawer.hpp"
 #include "editor/editor.hpp"
 #include "entity.hpp"
-#include "entity_logic.hpp"
 #include "event.hpp"
 #include "input/finger_touch.hpp"
 #include "input/gamepad.hpp"
@@ -24,6 +23,8 @@
 #include "window.hpp"
 
 #include <memory>
+
+#include "motor.hpp"
 
 struct EntityInstance;
 class RelationshipManager;
@@ -74,10 +75,11 @@ public:
     std::unique_ptr<PhysicsScene> m_physics_scene;
     std::unique_ptr<CCTManager> m_cct_manager;
     std::unique_ptr<EventSystem> m_event_system;
-    std::unique_ptr<EntityLogicManager> m_entity_logic_manager;
     std::unique_ptr<LevelManager> m_level_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<TimerManager> m_timer_manager;
+    std::unique_ptr<MotorManager> m_motor_manager;
+
     Camera m_camera;
 
 #ifdef TL_ENABLE_EDITOR

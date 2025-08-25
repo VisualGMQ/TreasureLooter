@@ -1,0 +1,23 @@
+﻿<schema>
+    <include>image.hpp</include>
+    <include>animation.hpp</include>
+
+    <enum name="MotorType">
+        <item name="Unknown"/>
+        <item name="Enemy"/>
+        <item name="Player"/>
+    </enum>
+
+    <asset name="MotorConfig" extension=".motor_config">
+        <handle name="sprite_sheet" type="Image"/>
+        <handle name="faceset" type="Image"/>
+        <element name="speed" type="float" default="100"/>
+        <element name="type" type="MotorType" default="MotorType::Unknown"/>
+
+        <handle name="move_left_animation" type="Animation"/>
+        <handle name="move_right_animation" type="Animation"/>
+        <handle name="move_up_animation" type="Animation"/>
+        <handle name="move_down_animation" type="Animation"/>
+        <option name="weapon_entity" type="uint32_t"/>
+    </asset>
+</schema>
