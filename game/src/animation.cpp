@@ -34,6 +34,11 @@ void Animation::AddTrack(AnimationBindingPoint binding,
     }
 }
 
+void Animation::AddBindPointTrack(
+    const std::string& name, std::unique_ptr<IAnimationTrack<Vec2>>&& track) {
+    m_bind_point_tracks.emplace(name, std::move(track));
+}
+
 void Animation::AddTracks(const SpriteRowColumnAnimationInfo& info) {
     if (info.m_begin == info.m_end) {
         return;

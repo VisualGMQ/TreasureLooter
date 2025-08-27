@@ -67,6 +67,9 @@ TimeType AnimationPlayer::GetMaxTime() const {
     for (auto& [_, track] : m_animation->GetTracks()) {
         max_time = std::max(max_time, track->GetFinishTime());
     }
+    for (auto& [_, track] : m_animation->GetBindPointTracks()) {
+        max_time = std::max(max_time, track->GetFinishTime());
+    }
     return max_time;
 }
 
@@ -165,6 +168,29 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
         }
 #undef TARGET_TYPE
     }
+
+    auto& bind_point_tracks = m_animation->GetBindPointTracks();
+    for (auto& [name, track] : bind_point_tracks) {
+        if (track->GetType() == AnimationTrackType::Linear) {
+            auto& raw_track =
+                static_cast<AnimationTrack<Vec2, AnimationTrackType::Linear>&>(
+                    *track);
+            m_bind_point_track_players.emplace(
+                name,
+                std::make_unique<
+                    AnimationTrackPlayer<Vec2, AnimationTrackType::Linear>>(
+                    raw_track));
+        }
+        if (track->GetType() == AnimationTrackType::Discrete) {
+            auto& raw_track = static_cast<
+                AnimationTrack<Vec2, AnimationTrackType::Discrete>&>(*track);
+            m_bind_point_track_players.emplace(
+                name,
+                std::make_unique<
+                    AnimationTrackPlayer<Vec2, AnimationTrackType::Discrete>>(
+                    raw_track));
+        }
+    }
 }
 
 #undef HANDLE_LINEAR_TRACK_CREATION
@@ -173,8 +199,7 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
 
 void AnimationPlayer::ChangeAnimation(const Path& filename) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(
-            filename);
+        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(filename);
     ChangeAnimation(animation);
 }
 
@@ -203,6 +228,9 @@ void AnimationPlayer::Update(TimeType delta_time) {
     for (auto& [_, track] : m_track_players) {
         track->Update(elapsed_time);
     }
+    for (auto& [_, track] : m_bind_point_track_players) {
+        track->Update(elapsed_time);
+    }
 
     if (m_cur_time >= GetMaxTime()) {
         if (m_loop > 0 || m_loop == InfLoop) {
@@ -212,6 +240,9 @@ void AnimationPlayer::Update(TimeType delta_time) {
 
             for (auto& [_, track] : m_track_players) {
                 track->Update(m_cur_time);
+            }
+            for (auto& [_, track] : m_bind_point_track_players) {
+                track->Update(elapsed_time);
             }
 
             if (m_loop != InfLoop) {
@@ -310,6 +341,18 @@ void AnimationPlayer::Sync(Entity entity) {
             HANDLE_LINEAR_TRACK();
         }
 #undef BINDING_TARGET
+    }
+
+    if (auto bind_points = ctx.m_bind_point_component_manager->Get(entity)) {
+        for (auto& [name, bind_point] : bind_points->m_bind_points) {
+            if (auto it = m_bind_point_track_players.find(name);
+                it != m_bind_point_track_players.end()) {
+#define BINDING_TARGET bind_point.m_position
+                HANDLE_DISCRETE_TRACK();
+                HANDLE_LINEAR_TRACK();
+#undef BINDING_TARGET
+            }
+        }
     }
 }
 

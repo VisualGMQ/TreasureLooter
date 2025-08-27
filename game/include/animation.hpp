@@ -6,6 +6,7 @@
 #include "math.hpp"
 
 #include "schema/anim.hpp"
+#include "schema/bind_point_schema.hpp"
 #include "timer.hpp"
 
 #include <memory>
@@ -84,6 +85,7 @@ class Animation {
 public:
     void AddTrack(AnimationBindingPoint binding,
                   std::unique_ptr<AnimationTrackBase>&& track);
+    void AddBindPointTrack(const std::string& name, std::unique_ptr<IAnimationTrack<Vec2>>&& track);
 
     void AddTracks(const SpriteRowColumnAnimationInfo& info);
 
@@ -91,10 +93,16 @@ public:
 
     auto& GetTracks() { return m_tracks; }
 
+    auto& GetBindPointTracks() const { return m_bind_point_tracks; }
+
+    auto& GetBindPointTracks() { return m_bind_point_tracks; }
+
 private:
     std::unordered_map<AnimationBindingPoint,
                        std::unique_ptr<AnimationTrackBase>>
         m_tracks;
+    std::unordered_map<std::string, std::unique_ptr<AnimationTrackBase>>
+        m_bind_point_tracks;
 };
 
 using AnimationHandle = Handle<Animation>;

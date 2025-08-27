@@ -49,6 +49,7 @@ void Context::Shutdown() {
 }
 
 Context::~Context() {
+    m_bind_point_component_manager.reset();
     m_timer_manager.reset();
     m_motor_manager.reset();
     m_debug_drawer.reset();
@@ -191,6 +192,7 @@ Context::Context() {
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
     m_motor_manager = std::make_unique<MotorManager>();
+    m_bind_point_component_manager = std::make_unique<BindPointsComponentManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -207,8 +209,8 @@ void Context::logicUpdate(TimeType elapse) {
     m_mouse->Update();
     m_touches->Update();
 
-    m_level_manager->UpdateLogic(elapse);
     m_motor_manager->Update(elapse);
+    m_bind_point_component_manager->Update();
 
     m_animation_player_manager->Update(elapse);
     m_relationship_manager->Update();
@@ -228,8 +230,6 @@ void Context::renderUpdate(TimeType elapse) {
 
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
-
-    m_level_manager->UpdateRender(elapse);
 
     m_physics_scene->RenderDebug();
 

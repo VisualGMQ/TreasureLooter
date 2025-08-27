@@ -97,8 +97,7 @@ class AnimationTrackPlayer<T, AnimationTrackType::Discrete>
 public:
     using track_type = AnimationTrack<T, AnimationTrackType::Discrete>;
 
-    explicit AnimationTrackPlayer(const track_type& track)
-        : IAnimationTrackPlayer<T>(track) {}
+    using IAnimationTrackPlayer<T>::IAnimationTrackPlayer;
 
     T GetValue() const override {
         auto& track = static_cast<const track_type&>(this->GetTrack());
@@ -152,6 +151,8 @@ private:
     std::unordered_map<AnimationBindingPoint,
                        std::unique_ptr<AnimationTrackPlayerBase>>
         m_track_players;
+    std::unordered_map<std::string, std::unique_ptr<AnimationTrackPlayerBase>>
+        m_bind_point_track_players;
 
     bool m_auto_play = false;
     bool m_is_playing = false;
