@@ -541,6 +541,13 @@ rapidxml::xml_node<>* serializeAnimTrack(rapidxml::xml_document<>& doc,
     }
 #undef TARGET_TYPE
 
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::BindPoint) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
     return node;
 }
 
@@ -565,6 +572,22 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     }
 
     node->append_node(tracks_node);
+
+    auto bind_point_tracks_node = doc.allocate_node(
+        rapidxml::node_type::node_element, "bind_point_tracks");
+
+    auto& bind_point_tracks = payload.GetBindPointTracks();
+    for (auto& [name, track] : bind_point_tracks) {
+        auto track_node = serializeAnimTrack(
+            doc, AnimationBindingPoint::BindPoint, *track, "track");
+        auto attribute_node =
+            doc.allocate_attribute("name", doc.allocate_string(name.c_str()));
+        track_node->append_attribute(attribute_node);
+        bind_point_tracks_node->append_node(track_node);
+    }
+
+    node->append_node(bind_point_tracks_node);
+
     return node;
 }
 
@@ -675,6 +698,14 @@ deserializeTrack(rapidxml::xml_node<>& node) {
     }
 #undef TARGET_TYPE
 
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::BindPoint) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
+#undef TARGET_TYPE
+
     return {binding_point, std::move(track)};
 }
 
@@ -684,12 +715,27 @@ deserializeTrack(rapidxml::xml_node<>& node) {
 
 void Deserialize(const rapidxml::xml_node<>& node, Animation& payload) {
     auto tracks_node = node.first_node("tracks");
+    if (tracks_node) {
+        auto n = tracks_node->first_node();
+        while (n) {
+            auto [binding, track] = deserializeTrack(*n);
+            payload.AddTrack(binding, std::move(track));
+            n = n->next_sibling();
+        }
+    }
 
-    auto n = tracks_node->first_node();
-    while (n) {
-        auto [binding, track] = deserializeTrack(*n);
-        payload.AddTrack(binding, std::move(track));
-        n = n->next_sibling();
+    auto bind_point_tracks_node = node.first_node("bind_point_tracks");
+    if (bind_point_tracks_node) {
+        auto n = bind_point_tracks_node->first_node();
+        while (n) {
+            auto name_attribute = n->first_attribute("name");
+            auto [_, track] = deserializeTrack(*n);
+            payload.AddBindPointTrack(
+                name_attribute->value(),
+                std::unique_ptr<IAnimationTrack<Vec2>>(
+                    static_cast<IAnimationTrack<Vec2>*>(track.release())));
+            n = n->next_sibling();
+        }
     }
 }
 

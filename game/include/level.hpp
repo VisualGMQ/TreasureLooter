@@ -20,12 +20,6 @@ public:
 
     void OnEnter();
 
-    void OnInit();
-
-    void OnLogicUpdate(TimeType);
-
-    void OnRenderUpdate(TimeType);
-
     void OnQuit();
 
     void PoseUpdate();
@@ -76,10 +70,6 @@ public:
     HandleType Load(const Path& filename, bool force = false) override;
 
     void Switch(LevelHandle);
-
-    void UpdateLogic(TimeType t);
-
-    void UpdateRender(TimeType t);
 
     void PoseUpdate();
 

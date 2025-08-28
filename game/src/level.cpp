@@ -26,18 +26,11 @@ Level::~Level() {
 
 void Level::OnEnter() {
     if (!m_inited) {
-        OnInit();
         m_inited = false;
     }
 }
 
-void Level::OnInit() { }
-
-void Level::OnLogicUpdate(TimeType time) { }
-
-void Level::OnRenderUpdate(TimeType time) { }
-
-void Level::OnQuit() { }
+void Level::OnQuit() {}
 
 void Level::PoseUpdate() {
     doRemoveEntities();
@@ -248,18 +241,6 @@ void LevelManager::Switch(LevelHandle level) {
         level->OnEnter();
     }
     m_level = level;
-}
-
-void LevelManager::UpdateLogic(TimeType t) {
-    if (m_level) {
-        m_level->OnLogicUpdate(t);
-    }
-}
-
-void LevelManager::UpdateRender(TimeType t) {
-    if (m_level) {
-        m_level->OnRenderUpdate(t);
-    }
 }
 
 void LevelManager::PoseUpdate() {

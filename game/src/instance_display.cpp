@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "imgui_id_generator.hpp"
 #include "math.hpp"
+#include "schema/display/bind_point_schema.hpp"
 #include "schema/display/collision_group_schema.hpp"
 #include "schema/display/common.hpp"
 
@@ -493,6 +494,13 @@ void animTrackDisplay(AnimationBindingPoint binding_point,
         HANDLE_LINEAR_TRACK_DISPLAY();
     }
 #undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_TRACK_DISPLAY(AnimationBindingPoint::BindPoint) {
+        HANDLE_DISCRETE_TRACK_DISPLAY();
+        HANDLE_LINEAR_TRACK_DISPLAY();
+    }
+#undef TARGET_TYPE
 }
 
 #undef HANDLE_TRACK_DISPLAY
@@ -518,6 +526,8 @@ void displayAnimationContent(Animation& anim) {
         ImGui::OpenPopup("create new track");
     } else if (ImGui::Button("create sprite animation row column animation")) {
         ImGui::OpenPopup("create sprite region row column animation");
+    } else if (ImGui::Button("create bind point track")) {
+        ImGui::OpenPopup("create bind point track");
     }
 
     for (auto& [binding, track] : tracks) {
@@ -534,6 +544,26 @@ void displayAnimationContent(Animation& anim) {
             ImGui::TreePop();
         }
         ImGui::PopID();
+    }
+
+    auto& bind_point_tracks = anim.GetBindPointTracks();
+    if (!bind_point_tracks.empty()) {
+        ImGui::SeparatorText("bind point tracks");
+        for (auto& [name, track] : bind_point_tracks) {
+            ImGui::PushID(ImGuiIDGenerator::Gen());
+            if (ImGui::TreeNode("track")) {
+                if (ImGui::Button("delete")) {
+                    bind_point_tracks.erase(name);
+                    ImGui::TreePop();
+                    ImGui::PopID();
+                    break;
+                }
+                InstanceDisplay("name", name);
+                animTrackDisplay(AnimationBindingPoint::BindPoint, *track);
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+        }
     }
 
     // popup window
@@ -618,6 +648,30 @@ void displayAnimationContent(Animation& anim) {
             anim.AddTracks(info);
             ImGui::CloseCurrentPopup();
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Close")) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopup("create bind point track")) {
+        static std::string name;
+        InstanceDisplay("name", name);
+
+        if (ImGui::Button("Create")) {
+            std::unique_ptr<IAnimationTrack<Vec2>> track;
+            if (track_type == AnimationTrackType::Linear) {
+                track = std::make_unique<
+                    AnimationTrack<Vec2, AnimationTrackType::Linear>>();
+            } else if (track_type == AnimationTrackType::Discrete) {
+                track = std::make_unique<
+                    AnimationTrack<Vec2, AnimationTrackType::Discrete>>();
+            }
+            anim.AddBindPointTrack(name, std::move(track));
+            ImGui::CloseCurrentPopup();
+        }
+
         ImGui::SameLine();
         if (ImGui::Button("Close")) {
             ImGui::CloseCurrentPopup();
