@@ -39,3 +39,7 @@ SDL_WindowID Window::GetID() const {
 SDL_Window* Window::GetWindow() {
     return m_window;
 }
+
+void Window::Resize(const Vec2UI& size) {
+    SDL_CALL(SDL_SetWindowSize(m_window, size.x, size.y));
+}

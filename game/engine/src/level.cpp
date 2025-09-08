@@ -25,6 +25,21 @@ void Level::OnEnter() {
     if (!m_inited) {
         m_inited = false;
     }
+
+    ////////// test for UI ///////////
+    auto entity = GetUIRootEntity();
+    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(entity);
+
+    auto text_entity = GAME_CONTEXT.CreateEntity();
+    UIText text;
+    text.m_align = UITextAlign::Center;
+    text.m_resize_by_text = true;
+    text.m_color = Color::Black;
+    text.SetFont(GAME_CONTEXT.GetGameConfig().m_default_font);
+    text.ChangeText("hello ui");
+    GAME_CONTEXT.m_ui_manager->RegisterEntityByDerive<UIText>(text_entity, std::move(text));
+    GAME_CONTEXT.m_transform_manager->RegisterEntity(text_entity);
+    relationship->m_children.push_back(text_entity);
 }
 
 void Level::OnQuit() {
@@ -67,8 +82,7 @@ void Level::initRootEntity() {
 
 void Level::registerEntity(Entity entity, const EntityInstance& instance) {
     createEntityByPrefab(
-        entity,
-        instance.m_transform ? &instance.m_transform.value() : nullptr,
+        entity, instance.m_transform ? &instance.m_transform.value() : nullptr,
         *instance.m_prefab);
 }
 
@@ -177,7 +191,7 @@ void Level::doRemoveEntities() {
 }
 
 AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename,
-    bool force) {
+                                                       bool force) {
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }

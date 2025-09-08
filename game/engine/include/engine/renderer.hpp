@@ -2,13 +2,20 @@
 #include "SDL3/SDL.h"
 #include "flag.hpp"
 #include "math.hpp"
-#include "text.hpp"
 #include "schema/common.hpp"
 #include "schema/flip.hpp"
+#include "text.hpp"
 #include "window.hpp"
 
 class Camera;
 class Image;
+
+struct Image9Grid {
+    float left = 0;
+    float right = 0;
+    float top = 0;
+    float bottom = 0;
+};
 
 class Renderer {
 public:
@@ -39,6 +46,9 @@ public:
     void DrawImage(const Image&, const Region& src, const Region& dst,
                    Degrees rotation, const Vec2& center, Flags<Flip>,
                    bool use_camera = true);
+
+    void DrawImage9Grid(const Image&, const Region& src, const Region& dst,
+                        const Image9Grid&, bool use_camera = true);
 
     void DrawRectEx(const Image& image, const Region& src, const Vec2& topleft,
                     const Vec2& topright, const Vec2& bottomleft,

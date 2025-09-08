@@ -17,6 +17,8 @@ public:
     SDL_WindowID GetID() const;
 
     SDL_Window* GetWindow();
+
+    void Resize(const Vec2UI&);
     
 private:
     SDL_Window* m_window{};

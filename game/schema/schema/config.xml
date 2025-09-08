@@ -3,6 +3,7 @@
     <import>input</import>
     <include>level.hpp</include>
     <include>path.hpp</include>
+    <include>text.hpp</include>
     
     <asset name="GameConfig" extension=".game_config">
         <!-- don't use handle, due to asset rely on GameConfig itself! -->
@@ -10,5 +11,7 @@
         <element name="input_config_asset" type="Path"/>
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
         <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
+        <element name="logic_size" type="Vec2UI" default="{1024, 720}"/>
+        <handle  name="default_font" type="Font"/>
     </asset>
 </schema>
