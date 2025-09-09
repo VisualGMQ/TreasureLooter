@@ -26,7 +26,7 @@ endif()
 
 ################ run schema parser ################
 file(GLOB_RECURSE SCHEMAS schema/schema/*)
-file(GLOB_RECURSE MUSTACHES ./schema_parser/mustaches/*.mustache)
+file(GLOB_RECURSE MUSTACHES ./schema/schema_parser/mustaches/*.mustache)
 set(SCHEMA_OUTPUT_PATH "schema_generate/schema")
 set(SCHEMA_DECLARE_OUTPUT_FILES)
 set(SCHEMA_SERD_OUTPUT_FILES)

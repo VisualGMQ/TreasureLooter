@@ -1,4 +1,4 @@
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext&, rapidxml::xml_document<>& doc,
                                 const {{type}}& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
@@ -13,7 +13,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(const rapidxml::xml_node<>& node, {{type}}& payload) {
+void Deserialize(CommonContext&, const rapidxml::xml_node<>& node, {{type}}& payload) {
     std::string_view value = node.value();
     if (value.empty()) {
         LOGE("[Deserialize] parse enum {{type}} failed: no value");
@@ -30,7 +30,7 @@ void Deserialize(const rapidxml::xml_node<>& node, {{type}}& payload) {
 }
 
 
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext&, rapidxml::xml_document<>& doc,
                                 const Flags<{{type}}>& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
@@ -51,7 +51,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     return node;
 }
 
-void Deserialize(const rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
+void Deserialize(CommonContext&, const rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
     std::string_view value = node.value();
     if (value.empty()) {
         LOGE("[Deserialize] parse enum {{type}} failed: no value");

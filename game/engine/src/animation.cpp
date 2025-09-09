@@ -106,8 +106,8 @@ AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
     }
 
     AssetLoadResult<Animation> result;
-    Deserialize(*uuid_node, result.m_uuid);
-    Deserialize(*value_node, result.m_payload);
+    Deserialize(CURRENT_CONTEXT, *uuid_node, result.m_uuid);
+    Deserialize(CURRENT_CONTEXT, *value_node, result.m_payload);
     return result;
 }
 
@@ -115,11 +115,11 @@ void SaveAsset(const UUID& uuid, const Animation& payload,
                const Path& filename) {
     rapidxml::xml_document<> doc;
 
-    auto value_node = Serialize(doc, payload, "value");
+    auto value_node = Serialize(CURRENT_CONTEXT, doc, payload, "value");
     if (!value_node) {
         LOGE("save asset {} failed", filename);
     }
-    auto uuid_node = Serialize(doc, uuid, "uuid");
+    auto uuid_node = Serialize(CURRENT_CONTEXT, doc, uuid, "uuid");
     if (!uuid_node) {
         LOGE("save asset {} failed", filename);
     }

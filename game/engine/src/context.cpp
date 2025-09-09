@@ -1,32 +1,42 @@
 #include "engine/context.hpp"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "engine/asset_manager.hpp"
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
-#include "imgui.h"
+#include "engine/asset_manager.hpp"
 #include "engine/level.hpp"
 #include "engine/log.hpp"
 #include "engine/relationship.hpp"
-#include "schema/config.hpp"
-#include "schema/serialize/asset_extensions.hpp"
-#include "schema/serialize/input.hpp"
-#include "schema/serialize/prefab.hpp"
 #include "engine/sdl_call.hpp"
 #include "engine/serialize.hpp"
 #include "engine/sprite.hpp"
 #include "engine/storage.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
+#include "imgui.h"
+#include "schema/config.hpp"
+#include "schema/serialize/asset_extensions.hpp"
+#include "schema/serialize/input.hpp"
+#include "schema/serialize/prefab.hpp"
 #include "uuid.h"
 
 std::unique_ptr<GameContext> GameContext::instance;
+
+CommonContext* CommonContext::m_current_context{};
+
+void CommonContext::ChangeContext(CommonContext& ctx) {
+    m_current_context = &ctx;
+}
+
+CommonContext& CommonContext::GetInst() {
+    return *m_current_context;
+}
 
 CommonContext::~CommonContext() {}
 
 void CommonContext::InitSystem() {
     LOGT("system init");
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-        SDL_INIT_GAMEPAD));
+                      SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
     SDL_CALL(TTF_Init());
 }
@@ -63,8 +73,8 @@ void CommonContext::Initialize() {
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
     m_motor_manager = std::make_unique<MotorManager>();
-    m_bind_point_component_manager = std::make_unique<
-        BindPointsComponentManager>();
+    m_bind_point_component_manager =
+        std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -155,8 +165,8 @@ void CommonContext::initImGui() {
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -164,10 +174,10 @@ void CommonContext::initImGui() {
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(
-        main_scale); // Bake a fixed style scale. (until we have a solution for
+        main_scale);  // Bake a fixed style scale. (until we have a solution for
     // dynamic style scaling, changing this requires resetting
     // Style + calling this again)
-    style.FontScaleDpi = main_scale; // Set initial font scale. (using
+    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
     // io.ConfigDpiScaleFonts=true makes this unnecessary. We
     // leave both here for documentation purpose)
 
@@ -223,7 +233,8 @@ void GameContext::Initialize() {
     m_assets_manager->GetManager<GameConfig>().Unload(handle);
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
-            m_game_config.m_input_config_asset), *this);
+            m_game_config.m_input_config_asset),
+        *this);
 
     m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
         m_game_config.m_basic_level_asset));

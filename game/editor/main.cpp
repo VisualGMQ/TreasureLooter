@@ -7,6 +7,7 @@
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     editor::EditorContext::Init();
+    CommonContext::ChangeContext(EDITOR_CONTEXT);
     editor::EditorContext::GetInst().InitSystem();
     editor::EditorContext::GetInst().Initialize();
     LOGI("editor start");

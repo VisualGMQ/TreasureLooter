@@ -34,6 +34,10 @@ struct GameConfig;
 
 class CommonContext {
 public:
+    static void ChangeContext(CommonContext&);
+
+    static CommonContext& GetInst();
+
     virtual ~CommonContext();
 
     /**
@@ -98,6 +102,8 @@ private:
 
     void initImGui();
     void shutdownImGui();
+
+    static CommonContext* m_current_context;
 };
 
 class GameContext : public CommonContext {
@@ -132,3 +138,4 @@ private:
 };
 
 #define GAME_CONTEXT ::GameContext::GetInst()
+#define CURRENT_CONTEXT ::CommonContext::GetInst()

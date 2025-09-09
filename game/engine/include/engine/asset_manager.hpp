@@ -15,13 +15,13 @@ public:
     auto& GetManager() {
         TypeIndex index = TypeIndexGenerator::Get<T>();
         if constexpr (std::is_same_v<T, Image>) {
-            return ensureManager<ImageManager>(index, *GAME_CONTEXT.m_renderer);
+            return ensureManager<ImageManager>(index, *CURRENT_CONTEXT.m_renderer);
         } else if constexpr (std::is_same_v<T, Tilemap>) {
             return ensureManager<TilemapManager>(index);
         } else if constexpr (std::is_same_v<T, Animation>) {
             return ensureManager<AnimationManager>(index);
         } else if constexpr (std::is_same_v<T, Level>) {
-            return *GAME_CONTEXT.m_level_manager;
+            return *CURRENT_CONTEXT.m_level_manager;
         } else if constexpr (std::is_same_v<T, Prefab>) {
             return ensureManager<PrefabManager>(index);
         } else if constexpr (std::is_same_v<T, Font>) {
