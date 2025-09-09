@@ -1,8 +1,0 @@
-﻿<schema>
-    <include>math.hpp</include>
-
-    <class name="BindPoint">
-        <element name="name" type="std::string"/>
-        <element name="position" type="Vec2"/>
-    </class>
-</schema>
