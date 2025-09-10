@@ -21,7 +21,7 @@ void DebugDrawer::AddLine(const Vec2& p1, const Vec2& p2, const Color& color,
 }
 
 void DebugDrawer::Update(TimeType elapse) {
-    auto& renderer = GAME_CONTEXT.m_renderer;
+    auto& renderer = CURRENT_CONTEXT.m_renderer;
 
     size_t i = 0;
 

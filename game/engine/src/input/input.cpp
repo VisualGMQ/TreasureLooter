@@ -19,7 +19,7 @@ bool Action::IsPressed(SDL_JoystickID id) const {
         return true;
     }
 
-    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    auto gamepad = CURRENT_CONTEXT.m_gamepad_manager->Find(id);
     if (gamepad) {
         for (auto button : m_gamepad_button_types) {
             if (gamepad->GetButton(button).IsPressed()) {
@@ -39,7 +39,7 @@ bool Action::IsPressing(SDL_JoystickID id) const {
         return true;
     }
 
-    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    auto gamepad = CURRENT_CONTEXT.m_gamepad_manager->Find(id);
     if (gamepad) {
         for (auto button : m_gamepad_button_types) {
             if (gamepad->GetButton(button).IsPressing()) {
@@ -60,7 +60,7 @@ bool Action::IsReleased(SDL_JoystickID id) const {
         return true;
     }
 
-    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    auto gamepad = CURRENT_CONTEXT.m_gamepad_manager->Find(id);
     if (gamepad) {
         for (auto button : m_gamepad_button_types) {
             if (gamepad->GetButton(button).IsReleased()) {
@@ -77,7 +77,7 @@ bool Action::IsReleasing(SDL_JoystickID id) const {
         m_buttons.begin(), m_buttons.end(),
         [](const Button* const button) { return button->IsReleasing(); });
 
-    auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(id);
+    auto gamepad = CURRENT_CONTEXT.m_gamepad_manager->Find(id);
     bool is_gamepad_button_releasing = false;
     if (gamepad) {
         for (auto button : m_gamepad_button_types) {
@@ -136,7 +136,7 @@ float Axis::Value(SDL_JoystickID gamepad_id) const {
     }
 
 
-    if (auto gamepad = GAME_CONTEXT.m_gamepad_manager->Find(gamepad_id)) {
+    if (auto gamepad = CURRENT_CONTEXT.m_gamepad_manager->Find(gamepad_id)) {
         for (auto& mapping : m_axis_mappings) {
             auto& axis = gamepad->GetAxis(mapping.m_axis);
             float axis_value = axis.Value();

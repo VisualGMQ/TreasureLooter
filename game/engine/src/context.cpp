@@ -13,8 +13,8 @@
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
 #include "imgui.h"
+#include "schema/asset_info.hpp"
 #include "schema/config.hpp"
-#include "schema/serialize/asset_extensions.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "uuid.h"
@@ -78,6 +78,25 @@ void CommonContext::Initialize() {
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
     m_debug_drawer = std::make_unique<DebugDrawer>();
+
+#ifdef TL_DEBUG
+    m_debug_drawer = std::make_unique<DebugDrawer>();
+#else
+    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
+#endif
+
+    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
+        std::string{"assets/gpa/game_config"} +
+        GameConfig_AssetExtension.data());
+    if (!handle) {
+        LOGC("game config not found!");
+        SDL_Quit();
+        return;
+    }
+
+    m_game_config = *handle;
+    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
+    m_assets_manager->GetManager<GameConfig>().Unload(handle);
 }
 
 void CommonContext::Shutdown() {
@@ -141,6 +160,10 @@ bool CommonContext::ShouldExit() const {
 
 void CommonContext::Exit() {
     m_should_exit = true;
+}
+
+const GameConfig& CommonContext::GetGameConfig() const {
+    return m_game_config;
 }
 
 void CommonContext::beginImGui() {
@@ -211,33 +234,15 @@ GameContext& GameContext::GetInst() {
 }
 
 void GameContext::Initialize() {
-#ifdef TL_DEBUG
-    m_debug_drawer = std::make_unique<DebugDrawer>();
-#else
-    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
-#endif
-
     CommonContext::Initialize();
 
-    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
-        std::string{"assets/gpa/game_config"} +
-        GameConfig_AssetExtension.data());
-    if (!handle) {
-        LOGC("game config not found!");
-        SDL_Quit();
-        return;
-    }
-
-    m_game_config = *handle;
-    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
-    m_assets_manager->GetManager<GameConfig>().Unload(handle);
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
-            m_game_config.m_input_config_asset),
+            GetGameConfig().m_input_config_asset),
         *this);
 
     m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
-        m_game_config.m_basic_level_asset));
+        GetGameConfig().m_basic_level_asset));
 }
 
 void GameContext::Update() {
@@ -248,10 +253,6 @@ void GameContext::Update() {
     logicPostUpdate(elapse_time);
 
     m_level_manager->PoseUpdate();
-}
-
-const GameConfig& GameContext::GetGameConfig() const {
-    return m_game_config;
 }
 
 void GameContext::logicUpdate(TimeType elapse) {

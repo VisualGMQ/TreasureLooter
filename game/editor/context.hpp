@@ -1,5 +1,5 @@
 #pragma once
-#include "editor.hpp"
+#include "asset_viewer.hpp"
 #include "engine/context.hpp"
 #include "inspector.hpp"
 
@@ -30,7 +30,9 @@ private:
     void parseProjectPath();
     void controlFPS(TimeType elapse_time);
     Inspector m_inspector;
-    Editor m_editor;
+    AssetViewer m_asset_viewer;
+
+    void displayMenu();
 };
 }
 

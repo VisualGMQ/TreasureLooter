@@ -7,7 +7,7 @@
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     GameContext::Init();
-    CommonContext::ChangeContext(GAME_CONTEXT);
+    CommonContext::ChangeContext(CURRENT_CONTEXT);
     GameContext::GetInst().InitSystem();
     GameContext::GetInst().Initialize();
     LOGI("app start");
@@ -16,16 +16,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-    auto &ctx = GAME_CONTEXT;
+    auto &ctx = CURRENT_CONTEXT;
     if (ctx.ShouldExit()) {
         return SDL_APP_SUCCESS;
     }
-    GAME_CONTEXT.Update();
+    CURRENT_CONTEXT.Update();
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-    GAME_CONTEXT.HandleEvents(*event);
+    CURRENT_CONTEXT.HandleEvents(*event);
     return SDL_APP_CONTINUE;
 }
 

@@ -7,8 +7,8 @@
 #include <array>
 
 void SpriteManager::Update() {
-    auto &renderer = GAME_CONTEXT.m_renderer;
-    auto &transform_manager = GAME_CONTEXT.m_transform_manager;
+    auto &renderer = CURRENT_CONTEXT.m_renderer;
+    auto &transform_manager = CURRENT_CONTEXT.m_transform_manager;
     for (auto &[entity, component]: m_components) {
         if (!component.m_enable) {
             continue;

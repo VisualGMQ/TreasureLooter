@@ -28,10 +28,13 @@ struct PropertyInfo {
 };
 
 struct ClassInfo {
+    static constexpr std::string_view ExtensionVarSuffix = "_AssetExtension";
+    
     std::string m_name;
     std::vector<PropertyInfo> m_properties;
     bool is_asset = false;
     std::string m_asset_extension;
+    std::string m_asset_extension_var;
 };
 
 struct EnumInfo {
@@ -51,6 +54,7 @@ struct SchemaInfo {
     std::vector<std::string> m_includes;
     std::filesystem::path m_filename;
     std::filesystem::path m_pure_filename; //! without directory & extension
+    std::filesystem::path m_generate_filename;
     std::vector<ClassInfo> m_classes;
     std::vector<EnumInfo> m_enums;
     std::vector<std::string> m_imports;
@@ -75,7 +79,6 @@ struct MustacheManager {
     kainjow::mustache::mustache m_class_serd_impl_mustache;
     kainjow::mustache::mustache m_asset_sl_header_mustache;
     kainjow::mustache::mustache m_asset_sl_impl_mustache;
-    kainjow::mustache::mustache m_asset_extension_mustache;
     
     kainjow::mustache::mustache m_instance_display_header_mustache;
     kainjow::mustache::mustache m_instance_display_impl_mustache;
@@ -83,6 +86,11 @@ struct MustacheManager {
     kainjow::mustache::mustache m_enum_display_header_mustache;
     kainjow::mustache::mustache m_class_display_header_mustache;
     kainjow::mustache::mustache m_class_display_impl_mustache;
+    kainjow::mustache::mustache m_asset_info_header_mustache;
+    kainjow::mustache::mustache m_asset_info_impl_mustache;
+    
+    kainjow::mustache::mustache m_asset_serialize_header_mustache;
+    kainjow::mustache::mustache m_asset_display_header_mustache;
 
     static MustacheManager& GetInst();
 

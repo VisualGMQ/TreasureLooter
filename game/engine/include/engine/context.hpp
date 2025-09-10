@@ -68,6 +68,8 @@ public:
     bool ShouldExit() const;
     void Exit();
 
+    const GameConfig& GetGameConfig() const;
+
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<EventSystem> m_event_system;
@@ -91,6 +93,7 @@ public:
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
+    Camera m_camera;
 
 protected:
     void beginImGui();
@@ -104,6 +107,7 @@ private:
     void shutdownImGui();
 
     static CommonContext* m_current_context;
+    GameConfig m_game_config;
 };
 
 class GameContext : public CommonContext {
@@ -121,14 +125,9 @@ public:
     void Initialize() override;
 
     void Update() override;
-    const GameConfig& GetGameConfig() const;
-
-    Camera m_camera;
 
 private:
     static std::unique_ptr<GameContext> instance;
-
-    GameConfig m_game_config;
 
     void logicUpdate(TimeType elapse);
     void logicPostUpdate(TimeType elapse);

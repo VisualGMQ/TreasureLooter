@@ -5,7 +5,7 @@
 #include "engine/transform.hpp"
 
 void RelationshipManager::Update() {
-    auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
     }
@@ -17,7 +17,7 @@ void RelationshipManager::Update() {
         return;
     }
 
-    auto& transform_manager = GAME_CONTEXT.m_transform_manager;
+    auto& transform_manager = CURRENT_CONTEXT.m_transform_manager;
     Transform* root_transform = transform_manager->Get(root);
     if (!root_transform) {
         LOGE(
@@ -34,7 +34,7 @@ void RelationshipManager::Update() {
 
 void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
                                               Entity child) {
-    auto& transform_manager = GAME_CONTEXT.m_transform_manager;
+    auto& transform_manager = CURRENT_CONTEXT.m_transform_manager;
     Transform* transform = transform_manager->Get(child);
 
     if (!transform) {

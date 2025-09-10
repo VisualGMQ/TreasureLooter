@@ -1,6 +1,8 @@
 #include "context.hpp"
 
+#include "imgui.h"
 #include "engine/asset_manager.hpp"
+#include "engine/dialog.hpp"
 #include "engine/relationship.hpp"
 #include "engine/storage.hpp"
 
@@ -23,7 +25,8 @@ EditorContext& EditorContext::GetInst() {
     return *instance;
 }
 
-EditorContext::~EditorContext() {}
+EditorContext::~EditorContext() {
+}
 
 void EditorContext::Initialize() {
     CommonContext::Initialize();
@@ -32,13 +35,20 @@ void EditorContext::Initialize() {
     m_window->Resize({1920, 1080});
 
     parseProjectPath();
+
+    auto path = Path{"game/editor/filename.prefab.xml"};
+    auto str = path.string();
 }
 
 void EditorContext::Update() {
     m_renderer->Clear();
     beginImGui();
 
-    m_editor.Update();
+    ImGui::ShowDemoWindow();
+
+    displayMenu();
+
+    m_asset_viewer.Update();
     m_inspector.Update();
 
     endImGui();
@@ -67,9 +77,7 @@ void EditorContext::parseProjectPath() {
         return;
     }
 
-#ifdef TL_ENABLE_EDITOR
     m_project_path = node->value();
-#endif
 }
 
 
@@ -105,4 +113,9 @@ void EditorContext::controlFPS(TimeType elapse_time) {
     }
 }
 
+
+
+void EditorContext::displayMenu() {
+    // TODO:
+}
 }

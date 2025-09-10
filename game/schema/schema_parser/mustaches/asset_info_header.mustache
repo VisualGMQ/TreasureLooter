@@ -1,0 +1,48 @@
+#pragma once
+#include <array>
+#include <variant>
+#include <type_traits>
+#include "engine/type_index.hpp"
+#include "engine/path.hpp"
+{{#includes}}
+#include "{{include}}"
+{{/includes}}
+    
+template <typename... Args>
+struct TypeList {};
+    
+using AssetTypeList = TypeList<
+    {{#asset_names}}
+    {{{name}}}
+    {{/asset_names}}
+>;
+    
+{{#asset_extensions}}
+constexpr std::string_view {{extension_var}} = "{{extension}}.xml";
+{{/asset_extensions}}
+    
+struct AssetInfoManager {
+    template <typename T>
+    static std::string_view GetExtension() {
+        {{#type_check}}
+        if constexpr (std::is_same_v<T, {{type}}>) {
+            return {{extension_var}};
+        }
+        {{/type_check}}
+        return {};
+    }
+
+    template <typename T>
+    static std::string_view GetName() {
+        {{#type_check}}
+        if constexpr (std::is_same_v<T, {{type}}>) {
+            return "{{type}}";
+        }
+        {{/type_check}}
+        return {};
+    }
+    
+    static size_t GetNum() {
+        return {{asset_num}};
+    }
+};

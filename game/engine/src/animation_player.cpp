@@ -199,13 +199,13 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
 
 void AnimationPlayer::ChangeAnimation(const Path& filename) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(filename);
+        CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().Find(filename);
     ChangeAnimation(animation);
 }
 
 void AnimationPlayer::ChangeAnimation(UUID uuid) {
     auto animation =
-        GAME_CONTEXT.m_assets_manager->GetManager<Animation>().Find(uuid);
+        CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().Find(uuid);
     ChangeAnimation(animation);
 }
 
@@ -278,7 +278,7 @@ void AnimationPlayer::Update(TimeType delta_time) {
     }
 
 void AnimationPlayer::Sync(Entity entity) {
-    auto& ctx = GAME_CONTEXT;
+    auto& ctx = CURRENT_CONTEXT;
 
     if (auto transform = ctx.m_transform_manager->Get(entity)) {
 #define BINDING_TARGET transform->m_position

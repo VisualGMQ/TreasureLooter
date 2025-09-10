@@ -33,8 +33,8 @@ void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
     Vec2 dp1 = p1;
     Vec2 dp2 = p2;
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &dp1, nullptr);
-        transformByCamera(GAME_CONTEXT.m_camera, &dp2, nullptr);
+        transformByCamera(CURRENT_CONTEXT.m_camera, &dp1, nullptr);
+        transformByCamera(CURRENT_CONTEXT.m_camera, &dp2, nullptr);
     }
     SDL_CALL(SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y));
 }
@@ -44,7 +44,7 @@ void Renderer::DrawRect(const Rect& r, const Color& c, bool use_camera) {
 
     Rect dst = r;
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &dst.m_center,
+        transformByCamera(CURRENT_CONTEXT.m_camera, &dst.m_center,
                           &dst.m_half_size);
     }
     Vec2 tl = dst.m_center - dst.m_half_size;
@@ -60,7 +60,7 @@ void Renderer::DrawCircle(const Circle& c, const Color& color,
     Radians angle_step = 2 * PI / fragment;
     Vec2 p = c.m_center + Vec2::X_UNIT * c.m_radius;
     setRenderColor(color);
-    auto& camera = GAME_CONTEXT.m_camera;
+    auto& camera = CURRENT_CONTEXT.m_camera;
     if (use_camera) {
         transformByCamera(camera, &p, nullptr);
     }
@@ -81,7 +81,7 @@ void Renderer::FillRect(const Rect& r, const Color& c, bool use_camera) {
     setRenderColor(c);
     Rect dst = r;
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &dst.m_center,
+        transformByCamera(CURRENT_CONTEXT.m_camera, &dst.m_center,
                           &dst.m_half_size);
     }
     Vec2 tl = dst.m_center - dst.m_half_size;
@@ -101,7 +101,7 @@ void Renderer::DrawImage(const Image& image, const Region& src,
     dst_region.m_center = dst.m_topleft + dst_region.m_half_size;
 
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &dst_region.m_center,
+        transformByCamera(CURRENT_CONTEXT.m_camera, &dst_region.m_center,
                           &dst_region.m_half_size);
     }
 
@@ -120,7 +120,7 @@ void Renderer::DrawImage(const Image& image, const Region& src,
     SDL_FPoint sdl_center;
     Vec2 rot_center;
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &rot_center, nullptr);
+        transformByCamera(CURRENT_CONTEXT.m_camera, &rot_center, nullptr);
     }
     sdl_center.x = rot_center.x;
     sdl_center.y = rot_center.y;
@@ -139,9 +139,9 @@ void Renderer::DrawRectEx(const Image& image, const Region& src,
     Vec2 tl{topleft.x, topleft.y}, tr{topright.x, topright.y},
         bl{bottomleft.x, bottomleft.y};
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &tl, nullptr);
-        transformByCamera(GAME_CONTEXT.m_camera, &tr, nullptr);
-        transformByCamera(GAME_CONTEXT.m_camera, &bl, nullptr);
+        transformByCamera(CURRENT_CONTEXT.m_camera, &tl, nullptr);
+        transformByCamera(CURRENT_CONTEXT.m_camera, &tr, nullptr);
+        transformByCamera(CURRENT_CONTEXT.m_camera, &bl, nullptr);
     }
 
     SDL_FPoint sdl_tl{tl.x, tl.y}, sdl_tr{tr.x, tr.y}, sdl_bl{bl.x, bl.y};
@@ -210,7 +210,7 @@ void Renderer::setRenderColor(const Color& c) {
 void Renderer::transformByCamera(const Camera& camera, Vec2* center,
                                  Vec2* size) const {
     if (center) {
-        auto window_size = GAME_CONTEXT.m_window->GetWindowSize();
+        auto window_size = CURRENT_CONTEXT.m_window->GetWindowSize();
         *center = (*center - camera.GetPosition()) * camera.GetScale() +
                   window_size * 0.5;
     }

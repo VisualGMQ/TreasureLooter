@@ -69,10 +69,10 @@ int main(int argc, char** argv) {
         // generate class declare codes
         {
             std::string code = GenerateSchemaCode(info);
-            auto filename = info.m_pure_filename;
-            filename.replace_extension(".hpp");
-            std::ofstream file(output_dir / filename);
+            std::ofstream file(output_dir / info.m_generate_filename);
             file.write(code.c_str(), code.length());
+            std::cout << "generate file to : " << output_dir / info.
+                m_generate_filename << std::endl;
         }
 
         // generate serialize codes
@@ -115,18 +115,32 @@ int main(int argc, char** argv) {
             }
         }
     }
-    
+
+    // generate asset_info.hpp
     {
-        kainjow::mustache::data data{kainjow::mustache::data::type::list};
+        std::string code = GenerateAssetInfoHeaderCode(manager);
+        std::ofstream file(output_dir / "asset_info.hpp");
+        file.write(code.c_str(), code.length());
+    }
 
-        for (auto& info : manager.m_infos) {
-            GenerateSchemaAssetExtensionMustacheData(info, data);
-        }
+    // generate asset_info.cpp
+    {
+        std::string code = GenerateAssetInfoImplCode(manager);
+        std::ofstream file(output_dir / "asset_info.cpp");
+        file.write(code.c_str(), code.length());
+    }
 
-        auto code =
-            MustacheManager::GetInst().m_asset_extension_mustache.render(
-                {"extensions", data});
-        std::ofstream file(serd_output_dir / "asset_extensions.hpp");
+    // generate serialize.hpp
+    {
+        std::string code = GenerateAssetSerializeTotleHeaderCode(manager);
+        std::ofstream file(serd_output_dir / "serialize.hpp");
+        file.write(code.c_str(), code.length());
+    }
+
+    // generate display.hpp
+    {
+        std::string code = GenerateAssetDisplayTotleHeaderCode(manager);
+        std::ofstream file(display_output_dir / "display.hpp");
         file.write(code.c_str(), code.length());
     }
 

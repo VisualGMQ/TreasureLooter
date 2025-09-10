@@ -3,7 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-std::optional<EnumInfo> ParseEnum(SchemaInfo& schema, rapidxml::xml_node<>* node) {
+std::optional<EnumInfo> ParseEnum(SchemaInfo& schema,
+                                  rapidxml::xml_node<>* node) {
     EnumInfo info;
     auto name_node = node->first_attribute("name");
     if (!name_node) {
@@ -125,7 +126,7 @@ std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
             count = std::stoll(count_node->value());
         } catch (std::exception const& ex) {
             std::cerr << "Error parsing array, count invalid: "
-                      << count_node->value() << std::endl;
+                << count_node->value() << std::endl;
         }
     }
 
@@ -221,6 +222,8 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
         return std::nullopt;
     }
 
+    class_info.m_name = name_attr->value();
+    
     if (is_asset) {
         auto extension_attr = node->first_attribute("extension");
         if (!extension_attr) {
@@ -228,9 +231,8 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
             return std::nullopt;
         }
         class_info.m_asset_extension = extension_attr->value();
+        class_info.m_asset_extension_var = class_info.m_name + std::string{ClassInfo::ExtensionVarSuffix};
     }
-
-    class_info.m_name = name_attr->value();
 
     auto element = node->first_node();
     while (element) {
@@ -250,7 +252,7 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
             property = ParseHandle(schema, element);
         } else {
             std::cerr << "Error parsing class, unknown node " << element->name()
-                      << std::endl;
+                << std::endl;
             return std::nullopt;
         }
 
@@ -287,6 +289,8 @@ std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
     schema_info.m_pure_filename = filename.filename();
     schema_info.m_pure_filename =
         schema_info.m_pure_filename.replace_extension("");
+    schema_info.m_generate_filename = schema_info.m_pure_filename;
+    schema_info.m_generate_filename.replace_extension(".hpp");
 
     auto child = node->first_node();
     while (child) {

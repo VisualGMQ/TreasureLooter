@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "handle.hpp"
 
 #include "asset.hpp"
@@ -132,8 +132,8 @@ public:
         return this->store(nullptr, UUID::CreateV4(), std::make_unique<T>());
     }
 
-    HandleType Create(const T& value) {
-        return this->store(nullptr, UUID::CreateV4(),
+    HandleType Create(const T& value, const Path& filename) {
+        return this->store(&filename, UUID::CreateV4(),
                            std::make_unique<T>(value));
     }
 };
