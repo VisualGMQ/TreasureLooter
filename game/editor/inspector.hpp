@@ -19,4 +19,6 @@ private:
 
     void showEntityHierarchy(Entity node);
     void showEntityDetail(Entity entity);
+
+    void showMenu();
 };

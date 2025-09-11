@@ -59,10 +59,12 @@ public:
      * shutdown context
      */
     virtual void Shutdown();
-    
+
     virtual void Update() = 0;
     virtual void HandleEvents(const SDL_Event&);
-    
+
+    bool IsRunning() const;
+
     Entity CreateEntity();
 
     bool ShouldExit() const;

@@ -15,27 +15,13 @@ void AssetViewer::LoadAsset(const Path& filename) {
     m_current_open_filename = filename;
 }
 
-Path appendExtension(const Path& path, const std::string& extension) {
-    std::string filename = path.string();
-    if (path.has_extension()) {
-        auto ext = filename.substr(filename.find_last_of("."));
-        if (extension != ext) {
-            filename += extension;
-        }
-    } else {
-        filename += extension;
-    }
-
-    return filename;
-}
-
 namespace internal {
 struct AssetFilterGetter {
     template <typename... Args>
     std::vector<Filter> operator()(TypeList<Args...>) {
         std::vector<Filter> filters;
         (filters.push_back(Filter{AssetInfoManager::GetName<Args>(),
-                                  AssetInfoManager::GetExtension<Args>()}),
+                                  AssetInfoManager::GetExtensionNoDot<Args>()}),
          ...);
         return filters;
     }
@@ -71,7 +57,7 @@ private:
 
             auto& filenames = file_dialog.GetSelectedFiles();
             if (!filenames.empty()) {
-                out_path = appendExtension(filenames[0], filter.pattern);
+                out_path = AppendExtension(filenames[0], filter.pattern);
                 EDITOR_CONTEXT.m_assets_manager->GetManager<T>().Create(
                     {}, out_path);
             }
@@ -183,7 +169,7 @@ void AssetViewer::showMenu() {
                 auto& filenames = file_dialog.GetSelectedFiles();
                 if (!filenames.empty()) {
                     auto filename =
-                        appendExtension(filenames[0], filter.pattern);
+                        AppendExtension(filenames[0], filter.pattern);
                     SaveAsVariantAsset(m_asset, filename);
 
                     this->LoadAsset(filename);

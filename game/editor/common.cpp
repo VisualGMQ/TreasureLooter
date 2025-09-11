@@ -60,3 +60,17 @@ VariantAsset LoadVariantAsset(const Path& filename) {
     internal::AssetLoader loader{};
     return loader(AssetTypeList{}, filename);
 }
+
+Path AppendExtension(const Path& path, const std::string& extension) {
+    std::string filename = path.string();
+    if (path.has_extension()) {
+        auto ext = filename.substr(filename.find_last_of("."));
+        if (extension != ext) {
+            filename += extension;
+        }
+    } else {
+        filename += extension;
+    }
+
+    return filename;
+}

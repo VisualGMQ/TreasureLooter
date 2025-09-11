@@ -32,6 +32,12 @@ struct AssetInfoManager {
         return {};
     }
 
+    template <typename  T>
+    static std::string_view GetExtensionNoDot() {
+        std::string_view extension = GetExtension<T>();
+        return extension.substr(1);
+    }
+
     template <typename T>
     static std::string_view GetName() {
         {{#type_check}}

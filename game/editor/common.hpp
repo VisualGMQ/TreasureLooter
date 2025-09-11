@@ -14,3 +14,5 @@ void SaveVariantAsset(const VariantAsset& asset);
 void SaveAsVariantAsset(const VariantAsset& asset, const Path&);
 VariantAsset LoadVariantAsset(const Path& filename);
 
+Path AppendExtension(const Path& path, const std::string& extension);
+

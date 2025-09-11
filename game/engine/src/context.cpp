@@ -48,6 +48,7 @@ void CommonContext::ShutdownSystem() {
 }
 
 void CommonContext::Initialize() {
+    m_should_exit = false;
     m_assets_manager = std::make_unique<AssetsManager>();
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
@@ -148,6 +149,10 @@ void CommonContext::HandleEvents(const SDL_Event& event) {
     m_mouse->HandleEvent(event);
 
     m_event_system->HandleEvent(event);
+}
+
+bool CommonContext::IsRunning() const {
+    return !m_should_exit;
 }
 
 Entity CommonContext::CreateEntity() {

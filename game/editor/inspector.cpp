@@ -1,8 +1,7 @@
 #include "inspector.hpp"
 
-#include "context.hpp"
 #include "SDL3/SDL.h"
-#include "imgui.h"
+#include "context.hpp"
 #include "engine/imgui_id_generator.hpp"
 #include "engine/level.hpp"
 #include "engine/relationship.hpp"
@@ -10,24 +9,29 @@
 #include "engine/sprite.hpp"
 #include "engine/transform.hpp"
 #include "engine/window.hpp"
+#include "imgui.h"
 
+#include "engine/dialog.hpp"
 #include "instance_display.hpp"
-#include "schema/display/physics_schema.hpp"
-#include "schema/display/prefab.hpp"
-#include "schema/display/relationship.hpp"
-#include "schema/display/sprite.hpp"
+#include "schema/display/display.hpp"
+#include "schema/prefab.hpp"
+#include "schema/serialize/serialize.hpp"
 
 void Inspector::Update() {
-    if (ImGui::Begin("Debug Panel")) {
-        bool physics_debug_draw =
-            EDITOR_CONTEXT.m_physics_scene->IsEnableDebugDraw();
-        if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
-            EDITOR_CONTEXT.m_physics_scene->ToggleDebugDraw();
-        }
-    }
-    ImGui::End();
+    // if (ImGui::Begin("Debug Panel")) {
+    //     bool physics_debug_draw =
+    //         EDITOR_CONTEXT.m_physics_scene->IsEnableDebugDraw();
+    //     if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
+    //         EDITOR_CONTEXT.m_physics_scene->ToggleDebugDraw();
+    //     }
+    // }
+    // ImGui::End();
 
-    if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
+    if (m_hierarchy_window_open &&
+        ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open,
+                     ImGuiWindowFlags_MenuBar)) {
+        showMenu();
+
         auto level = EDITOR_CONTEXT.m_level_manager->GetCurrentLevel();
         if (level) {
             showEntityHierarchy(level->GetRootEntity());
@@ -77,6 +81,79 @@ void Inspector::showEntityDetail(Entity entity) {
     }
 }
 
+void Inspector::showMenu() {
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("Level")) {
+            if (ImGui::MenuItem("New Level")) {
+                FileDialog dialog{FileDialog::Type::SaveFile};
+                dialog.SetTitle("Create Level");
+                dialog.AddFilter(
+                    AssetInfoManager::GetName<LevelContent>().data(),
+                    AssetInfoManager::GetExtensionNoDot<LevelContent>().data());
+                dialog.Open();
+
+                auto files = dialog.GetSelectedFiles();
+                if (!files.empty()) {
+                    auto& filename = files.front();
+                    AppendExtension(
+                        filename,
+                        AssetInfoManager::GetExtension<LevelContent>().data());
+                    LevelHandle level =
+                        EDITOR_CONTEXT.m_level_manager->Load(filename);
+                    EDITOR_CONTEXT.m_level_manager->Switch(level);
+                }
+            }
+
+            if (ImGui::MenuItem("Open Level")) {
+                FileDialog dialog{FileDialog::Type::OpenFile};
+                dialog.SetTitle("Open Level");
+                dialog.AddFilter(
+                    AssetInfoManager::GetName<LevelContent>().data(),
+                    AssetInfoManager::GetExtensionNoDot<LevelContent>().data());
+                dialog.Open();
+
+                auto files = dialog.GetSelectedFiles();
+                if (!files.empty()) {
+                    LevelHandle level =
+                        EDITOR_CONTEXT.m_level_manager->Load(files[0], true);
+                    EDITOR_CONTEXT.m_level_manager->Switch(level);
+                }
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::MenuItem("Instantiate")) {
+            FileDialog dialog{FileDialog::Type::OpenFile};
+            dialog.SetTitle("Choose Prefab");
+            dialog.AddFilter(
+                AssetInfoManager::GetName<Prefab>().data(),
+                AssetInfoManager::GetExtensionNoDot<Prefab>().data());
+            dialog.Open();
+
+            auto files = dialog.GetSelectedFiles();
+            if (!files.empty()) {
+                auto& filename = files.front();
+
+                LevelHandle current_level =
+                    EDITOR_CONTEXT.m_level_manager->GetCurrentLevel();
+                if (current_level) {
+                    PrefabHandle handle =
+                        EDITOR_CONTEXT.m_assets_manager->GetManager<Prefab>()
+                            .Load(filename);
+                    Entity entity = current_level->Instantiate(handle);
+                    Entity root = current_level->GetRootEntity();
+                    auto relationship =
+                        EDITOR_CONTEXT.m_relationship_manager->Get(root);
+                    relationship->m_children.push_back(entity);
+                } else {
+                    LOGE("no level");
+                }
+            }
+        }
+        ImGui::EndMenuBar();
+    }
+}
 
 void Inspector::showEntityHierarchy(Entity node) {
     auto& ctx = EDITOR_CONTEXT;

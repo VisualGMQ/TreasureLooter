@@ -41,18 +41,27 @@ void EditorContext::Initialize() {
 }
 
 void EditorContext::Update() {
+    m_mouse->Update();
+    m_keyboard->Update();
+
+    handleCamera();
+    m_relationship_manager->Update();
+
     m_renderer->Clear();
     beginImGui();
 
     ImGui::ShowDemoWindow();
 
-    displayMenu();
-
     m_asset_viewer.Update();
     m_inspector.Update();
 
+    m_sprite_manager->Update();
+    m_tilemap_component_manager->Update();
+
     endImGui();
     m_renderer->Present();
+
+    m_mouse->PostUpdate();
 }
 
 const Path& EditorContext::GetProjectPath() const {
@@ -113,9 +122,22 @@ void EditorContext::controlFPS(TimeType elapse_time) {
     }
 }
 
+void EditorContext::handleCamera() {
+    auto& mouse = EDITOR_CONTEXT.m_mouse;
 
+    constexpr float scale_delta = 0.1;
+    Vec2 scale = m_camera.GetScale();
+    scale.x += mouse->GetWheel() * scale_delta;
+    scale.y += mouse->GetWheel() * scale_delta;
 
-void EditorContext::displayMenu() {
-    // TODO:
+    scale.x = Clamp(scale.x, 0.0001f, 1000.f);
+    scale.y = Clamp(scale.x, 0.0001f, 1000.f);
+
+    m_camera.ChangeScale(scale);
+
+    if (mouse->Get(MouseButtonType::Right).IsPressing()) {
+        m_camera.Move(-(mouse->GetOffset() / scale));
+    }
 }
-}
+
+}  // namespace editor

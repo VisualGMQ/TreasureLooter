@@ -4,7 +4,7 @@
 #include "inspector.hpp"
 
 namespace editor {
-class EditorContext: public CommonContext {
+class EditorContext : public CommonContext {
 public:
     static void Init();
     static void Destroy();
@@ -25,15 +25,14 @@ private:
     static std::unique_ptr<EditorContext> instance;
     Path m_project_path;
     FPSOption m_fps_option = FPSOption::FPS_60;
+    Inspector m_inspector;
+    AssetViewer m_asset_viewer;
 
     EditorContext() = default;
     void parseProjectPath();
     void controlFPS(TimeType elapse_time);
-    Inspector m_inspector;
-    AssetViewer m_asset_viewer;
-
-    void displayMenu();
+    void handleCamera();
 };
-}
+}  // namespace editor
 
 #define EDITOR_CONTEXT editor::EditorContext::GetInst()
