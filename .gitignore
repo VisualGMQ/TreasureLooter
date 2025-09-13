@@ -17,3 +17,5 @@ android/app/release
 project_path.xml
 *.tiled-project
 *.tiled-session
+
+proto-generate

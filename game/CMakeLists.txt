@@ -71,6 +71,30 @@ if (NEED_SCHEMA_PARSER)
             COMMENT "parsing schemas...")
 endif()
 
+################ run protoc ################
+file(GLOB_RECURSE PROTO_FILES protobuf/*.proto)
+set(PROTO_OUTPUT_PATH "proto-generate")
+set(PROTO_DECLARE_OUTPUT_FILES "")
+set(PROTO_IMPL_OUTPUT_FILES "")
+foreach(proto ${PROTO_FILES})
+    cmake_path(GET proto FILENAME proto_filename)
+    cmake_path(REPLACE_EXTENSION proto_filename ".pb.h" OUTPUT_VARIABLE proto_generate_hpp)
+    cmake_path(REPLACE_EXTENSION proto_filename ".pb.cc" OUTPUT_VARIABLE proto_generate_cpp)
+    set(proto_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${PROTO_OUTPUT_PATH}")
+    list(APPEND
+            PROTO_DECLARE_OUTPUT_FILES
+            "${proto_final_path}/${proto_generate_hpp}")
+    list(APPEND
+            PROTO_IMPL_OUTPUT_FILES
+            "${proto_final_path}/${proto_generate_cpp}")
+endforeach()
+
+add_custom_command(OUTPUT ${PROTO_DECLARE_OUTPUT_FILES} ${PROTO_IMPL_OUTPUT_FILES}
+            COMMAND $<TARGET_FILE:protobuf::protoc> --proto_path=${CMAKE_CURRENT_SOURCE_DIR}/protobuf --cpp_out=${PROTO_OUTPUT_PATH} ${PROTO_FILES}
+            DEPENDS $<TARGET_FILE:protobuf::protoc> ${PROTO_FILES}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "parsing protobuf files...")
+
 ################ build engine ################
 set(ENGINE_NAME engine)
 file(GLOB_RECURSE ENGINE_SRC engine/src/*.cpp engine/src/*.c)
@@ -79,10 +103,10 @@ file(GLOB_RECURSE ASSETS assets/*)
 
 add_library(${ENGINE_NAME} STATIC)
 
-target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES})
+target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES} ${PROTO_DECLARE_OUTPUT_FILES} ${PROTO_IMPL_OUTPUT_FILES})
 target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
-target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf)
+target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf enet protobuf::libprotobuf)
 target_compile_definitions(${ENGINE_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
     PRIVATE _CRT_SECURE_NO_WARNINGS)
