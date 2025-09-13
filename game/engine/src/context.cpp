@@ -18,6 +18,7 @@
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "uuid.h"
+#include "imgui_internal.h"
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -49,6 +50,7 @@ void CommonContext::ShutdownSystem() {
 
 void CommonContext::Initialize() {
     m_should_exit = false;
+    m_is_inited = true;
     m_assets_manager = std::make_unique<AssetsManager>();
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
@@ -78,7 +80,6 @@ void CommonContext::Initialize() {
         std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
-    m_debug_drawer = std::make_unique<DebugDrawer>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -101,6 +102,8 @@ void CommonContext::Initialize() {
 }
 
 void CommonContext::Shutdown() {
+    m_should_exit = true;
+    m_is_inited = false;
     if (m_level_manager) {
         m_level_manager->Switch({});
     }
@@ -133,9 +136,12 @@ void CommonContext::Shutdown() {
 }
 
 void CommonContext::HandleEvents(const SDL_Event& event) {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDL3_ProcessEvent(&event);
-    if (event.type == SDL_EVENT_QUIT) {
-        m_should_exit = true;
+    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+        if (event.window.windowID == m_window->GetID()) {
+            m_should_exit = true;
+        }
     } else if (event.type == SDL_EVENT_KEY_UP ||
                event.type == SDL_EVENT_KEY_DOWN) {
         m_keyboard->HandleEvent(event.key);
@@ -163,6 +169,10 @@ bool CommonContext::ShouldExit() const {
     return m_should_exit;
 }
 
+bool CommonContext::IsInited() const {
+    return m_is_inited;
+}
+
 void CommonContext::Exit() {
     m_should_exit = true;
 }
@@ -172,12 +182,14 @@ const GameConfig& CommonContext::GetGameConfig() const {
 }
 
 void CommonContext::beginImGui() {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 }
 
 void CommonContext::endImGui() {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGui::Render();
     auto& io = ImGui::GetIO();
     SDL_SetRenderScale(m_renderer->GetRenderer(), io.DisplayFramebufferScale.x,
@@ -189,7 +201,8 @@ void CommonContext::endImGui() {
 void CommonContext::initImGui() {
     float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    m_imgui_context = ImGui::CreateContext();
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |=
@@ -215,10 +228,12 @@ void CommonContext::initImGui() {
 }
 
 void CommonContext::shutdownImGui() {
-    if (ImGui::GetCurrentContext()) {
+    if (m_imgui_context) {
+        ImGui::SetCurrentContext(m_imgui_context);
         ImGui_ImplSDLRenderer3_Shutdown();
         ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();
+        m_imgui_context = nullptr;
     }
 }
 

@@ -1,5 +1,5 @@
 <Prefab>
-	<uuid>8633cf5a-0000-0000-0000-000000000000</uuid>
+	<uuid>3022b1fe-724c-4468-86d5-9dc95d5e876b</uuid>
 	<payload>
 		<transform>
 			<value>
@@ -8,7 +8,12 @@
 				<rotation>0.000000</rotation>
 			</value>
 		</transform>
-		<tilemap>assets/tilemap/test/test.tmx</tilemap>
+		<tilemap>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<tilemap>assets/tilemap/test.tmx</tilemap>
+			</value>
+		</tilemap>
 	</payload>
 </Prefab>
 

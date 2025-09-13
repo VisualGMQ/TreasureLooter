@@ -36,7 +36,7 @@ void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
         transformByCamera(CURRENT_CONTEXT.m_camera, &dp1, nullptr);
         transformByCamera(CURRENT_CONTEXT.m_camera, &dp2, nullptr);
     }
-    SDL_CALL(SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y));
+    SDL_CALL(SDL_RenderLine(m_renderer, dp1.x, dp1.y, dp2.x, dp2.y));
 }
 
 void Renderer::DrawRect(const Rect& r, const Color& c, bool use_camera) {

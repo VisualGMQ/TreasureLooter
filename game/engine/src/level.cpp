@@ -13,15 +13,12 @@ Level::Level(LevelContentHandle level_content) {
 Level::Level(const Path& filename) {
     auto handle =
         CURRENT_CONTEXT.m_assets_manager->GetManager<LevelContent>().Load(
-            filename);
+            filename, true);
     initByLevelContent(handle);
 }
 
 Level::~Level() {
-    for (auto entity : m_entities) {
-        RemoveEntity(entity);
-    }
-    doRemoveEntities();
+    OnQuit();
 }
 
 void Level::OnEnter() {
@@ -30,7 +27,13 @@ void Level::OnEnter() {
     }
 }
 
-void Level::OnQuit() {}
+void Level::OnQuit() {
+    for (auto entity : m_entities) {
+        RemoveEntity(entity);
+    }
+    doRemoveEntities();
+    m_entities.clear();
+}
 
 void Level::PoseUpdate() {
     doRemoveEntities();
@@ -55,38 +58,9 @@ Entity Level::GetRootEntity() const {
     return m_root_entity;
 }
 
-#ifdef TL_ENABLE_EDITOR
-void Level::ReloadEntitiesFromPrefab(PrefabHandle prefab) {
-    auto it = m_prefab_entity_map.find(prefab);
-    if (it == m_prefab_entity_map.end()) {
-        return;
-    }
-
-    for (auto entity : it->second) {
-        auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
-
-        EntityInstance instance;
-        if (transform) {
-            instance.m_transform = *transform;
-        }
-        instance.m_prefab = prefab;
-        RemoveEntity(entity);
-        registerEntity(entity, instance);
-    }
-}
-
-void Level::ReloadEntitiesFromPrefab(UUID uuid) {
-    auto prefab =
-        CURRENT_CONTEXT.m_assets_manager->GetManager<Prefab>().Find(uuid);
-    if (!prefab) {
-        return;
-    }
-    ReloadEntitiesFromPrefab(prefab);
-}
-#endif
-
 void Level::initRootEntity() {
     m_root_entity = CURRENT_CONTEXT.CreateEntity();
+    m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
 }
@@ -96,10 +70,6 @@ void Level::registerEntity(Entity entity, const EntityInstance& instance) {
         entity,
         instance.m_transform ? &instance.m_transform.value() : nullptr,
         *instance.m_prefab);
-
-#ifdef TL_ENABLE_EDITOR
-    m_prefab_entity_map[instance.m_prefab].push_back(entity);
-#endif
 }
 
 void Level::createEntityByPrefab(Entity entity, const Transform* transform,
@@ -158,11 +128,7 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);
         auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
         for (auto child : prefab.m_children) {
-            EntityInstance instance;
-            auto child_entity = CURRENT_CONTEXT.CreateEntity();
-            instance.m_prefab = child;
-            registerEntity(child_entity, instance);
-
+            Entity child_entity = Instantiate(child);
             relationship->m_children.push_back(child_entity);
         }
     }
@@ -200,26 +166,12 @@ void Level::doRemoveEntities() {
         CURRENT_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
         CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
         CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
+        CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
+        CURRENT_CONTEXT.m_motor_manager->RemoveEntity(entity);
+        CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
 
         m_entities.erase(entity);
-
-#ifdef TL_ENABLE_EDITOR
-        for (auto& [prefab, entities] : m_prefab_entity_map) {
-            entities.erase(
-                std::remove(entities.begin(), entities.end(), entity),
-                entities.end());
-            if (entities.empty()) {
-                remove_prefabs.push_back(prefab);
-            }
-        }
-#endif
     }
-
-#ifdef TL_ENABLE_EDITOR
-    for (auto prefab : remove_prefabs) {
-        m_prefab_entity_map.erase(prefab);
-    }
-#endif
 
     m_pending_delete_entities.clear();
 }
@@ -237,6 +189,7 @@ void LevelManager::Switch(LevelHandle level) {
     if (m_level) {
         m_level->OnQuit();
     }
+    Unload(m_level);
     if (level) {
         level->OnEnter();
     }

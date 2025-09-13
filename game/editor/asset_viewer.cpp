@@ -89,9 +89,12 @@ Filter GetAssetFilterByType(const VariantAsset& asset) {
 }
 
 void AssetViewer::Update() {
-    ImGui::SetNextWindowSize({m_window_size.w, m_window_size.h});
-    if (m_is_open &&
-        ImGui::Begin(("AssetViewer" + m_current_open_filename.string()).c_str(),
+    if (!m_is_open) {
+        return;
+    }
+    ImGui::SetNextWindowSize({m_window_size.w, m_window_size.h},
+                             ImGuiCond_FirstUseEver);
+    if (ImGui::Begin(("AssetViewer" + m_current_open_filename.string()).c_str(),
                      &m_is_open, ImGuiWindowFlags_MenuBar)) {
         auto new_size = ImGui::GetWindowSize();
         m_window_size.w = new_size.x;
@@ -111,9 +114,8 @@ void AssetViewer::Update() {
                 },
                 m_asset);
         }
-
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 void AssetViewer::changeID(const Path& filename) {

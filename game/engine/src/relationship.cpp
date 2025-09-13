@@ -38,8 +38,6 @@ void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
     Transform* transform = transform_manager->Get(child);
 
     if (!transform) {
-        LOGE("[Component][RelationshipManager] entity {} don't has transform",
-             child);
         return;
     }
 

@@ -1,10 +1,11 @@
 #include "context.hpp"
 
-#include "imgui.h"
 #include "engine/asset_manager.hpp"
 #include "engine/dialog.hpp"
 #include "engine/relationship.hpp"
 #include "engine/storage.hpp"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace editor {
 std::unique_ptr<EditorContext> EditorContext::instance;
@@ -26,6 +27,7 @@ EditorContext& EditorContext::GetInst() {
 }
 
 EditorContext::~EditorContext() {
+    GAME_CONTEXT.Destroy();
 }
 
 void EditorContext::Initialize() {
@@ -38,27 +40,72 @@ void EditorContext::Initialize() {
 
     auto path = Path{"game/editor/filename.prefab.xml"};
     auto str = path.string();
+
+    m_editor_inspector = std::make_unique<Inspector>(EDITOR_CONTEXT);
+    m_game_inspector = std::make_unique<Inspector>(GAME_CONTEXT);
+}
+
+void EditorContext::HandleEvents(const SDL_Event& event) {
+    CURRENT_CONTEXT.ChangeContext(EDITOR_CONTEXT);
+    CommonContext::HandleEvents(event);
+
+    CURRENT_CONTEXT.ChangeContext(GAME_CONTEXT);
+    if (!GAME_CONTEXT.ShouldExit()) {
+        GAME_CONTEXT.HandleEvents(event);
+    }
+
+    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
+        event.window.windowID == m_window->GetID()) {
+        if (GAME_CONTEXT.IsInited()) {
+            GAME_CONTEXT.Exit();
+            GAME_CONTEXT.Shutdown();
+        }
+    }
+    CURRENT_CONTEXT.ChangeContext(EDITOR_CONTEXT);
 }
 
 void EditorContext::Update() {
+    // logic update
+    if (GAME_CONTEXT.ShouldExit() && GAME_CONTEXT.IsInited()) {
+        CURRENT_CONTEXT.ChangeContext(GAME_CONTEXT);
+        GAME_CONTEXT.Shutdown();
+        CURRENT_CONTEXT.ChangeContext(EDITOR_CONTEXT);
+    }
+
+    if (!GAME_CONTEXT.ShouldExit()) {
+        CURRENT_CONTEXT.ChangeContext(GAME_CONTEXT);
+        GAME_CONTEXT.Update();
+        CURRENT_CONTEXT.ChangeContext(EDITOR_CONTEXT);
+    }
+
     m_mouse->Update();
     m_keyboard->Update();
 
     handleCamera();
     m_relationship_manager->Update();
 
+    // render update
     m_renderer->Clear();
     beginImGui();
 
     ImGui::ShowDemoWindow();
+    showMainMenu();
 
     m_asset_viewer.Update();
-    m_inspector.Update();
 
-    m_sprite_manager->Update();
+    if (!GAME_CONTEXT.ShouldExit()) {
+        m_game_inspector->Update();
+    } else {
+        m_editor_inspector->Update();
+    }
+
     m_tilemap_component_manager->Update();
+    m_sprite_manager->Update();
+    m_renderer->DrawLine({-10000, 0}, {10000, 0}, Color::Red);
+    m_renderer->DrawLine({0, -100000}, {0, 10000}, Color::Green);
 
     endImGui();
+
     m_renderer->Present();
 
     m_mouse->PostUpdate();
@@ -66,6 +113,14 @@ void EditorContext::Update() {
 
 const Path& EditorContext::GetProjectPath() const {
     return m_project_path;
+}
+
+bool EditorContext::IsRunningGame() const {
+    return GAME_CONTEXT.IsRunning();
+}
+
+EditorContext::EditorContext() {
+    GAME_CONTEXT.Init();
 }
 
 void EditorContext::parseProjectPath() {
@@ -88,7 +143,6 @@ void EditorContext::parseProjectPath() {
 
     m_project_path = node->value();
 }
-
 
 void EditorContext::controlFPS(TimeType elapse_time) {
     TimeType expect_one_frame_time = 0;
@@ -137,6 +191,116 @@ void EditorContext::handleCamera() {
 
     if (mouse->Get(MouseButtonType::Right).IsPressing()) {
         m_camera.Move(-(mouse->GetOffset() / scale));
+    }
+}
+
+void EditorContext::showMainMenu() {
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Level")) {
+            if (ImGui::MenuItem("New")) {
+                FileDialog dialog{FileDialog::Type::SaveFile};
+                dialog.SetTitle("Create Level");
+                dialog.AddFilter(
+                    AssetInfoManager::GetName<LevelContent>().data(),
+                    AssetInfoManager::GetExtensionNoDot<LevelContent>().data());
+                dialog.Open();
+
+                auto files = dialog.GetSelectedFiles();
+                if (!files.empty()) {
+                    auto& filename = files.front();
+                    AppendExtension(
+                        filename,
+                        AssetInfoManager::GetExtension<LevelContent>().data());
+                    LevelHandle level =
+                        EDITOR_CONTEXT.m_level_manager->Load(filename);
+                    EDITOR_CONTEXT.m_level_manager->Switch(level);
+                }
+            }
+
+            if (ImGui::MenuItem("Open")) {
+                FileDialog dialog{FileDialog::Type::OpenFile};
+                dialog.SetTitle("Open Level");
+                dialog.AddFilter(
+                    AssetInfoManager::GetName<LevelContent>().data(),
+                    AssetInfoManager::GetExtensionNoDot<LevelContent>().data());
+                dialog.Open();
+
+                auto files = dialog.GetSelectedFiles();
+                if (!files.empty()) {
+                    LevelHandle level =
+                        EDITOR_CONTEXT.m_level_manager->Load(files[0], true);
+                    EDITOR_CONTEXT.m_level_manager->Switch(level);
+                }
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Save")) {
+                // TODO: not finish
+            }
+            if (ImGui::MenuItem("Save As")) {
+                // TODO: not finish
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::MenuItem("Instantiate")) {
+            FileDialog dialog{FileDialog::Type::OpenFile};
+            dialog.SetTitle("Choose Prefab");
+            dialog.AddFilter(
+                AssetInfoManager::GetName<Prefab>().data(),
+                AssetInfoManager::GetExtensionNoDot<Prefab>().data());
+            dialog.Open();
+
+            auto files = dialog.GetSelectedFiles();
+            if (!files.empty()) {
+                auto& filename = files.front();
+
+                LevelHandle current_level =
+                    EDITOR_CONTEXT.m_level_manager->GetCurrentLevel();
+                if (current_level) {
+                    PrefabHandle handle =
+                        EDITOR_CONTEXT.m_assets_manager->GetManager<Prefab>()
+                            .Load(filename);
+                    Entity entity = current_level->Instantiate(handle);
+                    Entity root = current_level->GetRootEntity();
+                    auto relationship =
+                        EDITOR_CONTEXT.m_relationship_manager->Get(root);
+                    relationship->m_children.push_back(entity);
+                } else {
+                    LOGE("no level");
+                }
+            }
+        }
+
+        if (ImGui::BeginMenu("Debug")) {
+            if (ImGui::MenuItem(
+                    "Show Physics Actor", 0,
+                    EDITOR_CONTEXT.m_physics_scene->IsEnableDebugDraw())) {
+                EDITOR_CONTEXT.m_physics_scene->ToggleDebugDraw();
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Game")) {
+            if (ImGui::MenuItem("Run")) {
+                CURRENT_CONTEXT.ChangeContext(GAME_CONTEXT);
+                GAME_CONTEXT.Initialize();
+                ImGui::SetCurrentContext(m_imgui_context);
+            }
+            if (ImGui::MenuItem("Stop")) {
+                GAME_CONTEXT.Exit();
+                GAME_CONTEXT.Shutdown();
+                CURRENT_CONTEXT.ChangeContext(EDITOR_CONTEXT);
+                ImGui::SetCurrentContext(m_imgui_context);
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
     }
 }
 

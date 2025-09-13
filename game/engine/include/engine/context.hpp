@@ -68,6 +68,7 @@ public:
     Entity CreateEntity();
 
     bool ShouldExit() const;
+    bool IsInited() const;
     void Exit();
 
     const GameConfig& GetGameConfig() const;
@@ -100,16 +101,18 @@ public:
 protected:
     void beginImGui();
     void endImGui();
+    class ImGuiContext* m_imgui_context{};
 
 private:
-    bool m_should_exit = false;
+    static CommonContext* m_current_context;
+
+    bool m_should_exit = true;
+    bool m_is_inited = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
+    GameConfig m_game_config;
 
     void initImGui();
     void shutdownImGui();
-
-    static CommonContext* m_current_context;
-    GameConfig m_game_config;
 };
 
 class GameContext : public CommonContext {
