@@ -68,7 +68,7 @@ Tileset::Tileset(const tmx::Tileset &tileset) {
 
 void Tileset::parse(const tmx::Tileset &tileset) {
     auto path = tileset.getImagePath();
-    m_image = GAME_CONTEXT.m_assets_manager->GetManager<Image>().Load(path);
+    m_image = CURRENT_CONTEXT.m_assets_manager->GetManager<Image>().Load(path);
     m_margin = tileset.getMargin();
     m_spacing = tileset.getSpacing();
     m_firstgid = tileset.getFirstGID();
@@ -178,8 +178,8 @@ TilemapComponent::TilemapComponent(Entity entity,
         return;
     }
 
-    auto &game_config = GAME_CONTEXT.GetGameConfig();
-    auto &physics_scene = GAME_CONTEXT.m_physics_scene;
+    auto &game_config = CURRENT_CONTEXT.GetGameConfig();
+    auto &physics_scene = CURRENT_CONTEXT.m_physics_scene;
 
     auto tile_size = m_handle->GetTileSize();
     m_tilemap_collision = physics_scene->CreateTilemapCollision(create_info.m_position);
@@ -249,7 +249,7 @@ void TilemapComponentManager::Update() {
 }
 
 void TilemapComponentManager::drawTilemap(const TilemapComponent &tilemap) {
-    auto &renderer = GAME_CONTEXT.m_renderer;
+    auto &renderer = CURRENT_CONTEXT.m_renderer;
     auto handle = tilemap.GetHandle();
     for (auto &layer: handle->GetLayers()) {
         if (layer->GetType() == TilemapLayer::Type::Tiled) {

@@ -1,8 +1,7 @@
 #include "inspector.hpp"
 
-#include "context.hpp"
 #include "SDL3/SDL.h"
-#include "imgui.h"
+#include "context.hpp"
 #include "engine/imgui_id_generator.hpp"
 #include "engine/level.hpp"
 #include "engine/relationship.hpp"
@@ -10,78 +9,74 @@
 #include "engine/sprite.hpp"
 #include "engine/transform.hpp"
 #include "engine/window.hpp"
+#include "imgui.h"
 
+#include "engine/dialog.hpp"
 #include "instance_display.hpp"
-#include "schema/display/physics_schema.hpp"
-#include "schema/display/prefab.hpp"
-#include "schema/display/relationship.hpp"
-#include "schema/display/sprite.hpp"
+#include "schema/display/display.hpp"
+#include "schema/prefab.hpp"
+#include "schema/serialize/serialize.hpp"
+
+Inspector::Inspector(CommonContext& context) : m_context{context} {}
 
 void Inspector::Update() {
-    if (ImGui::Begin("Debug Panel")) {
-        bool physics_debug_draw =
-            EDITOR_CONTEXT.m_physics_scene->IsEnableDebugDraw();
-        if (ImGui::Checkbox("physics debug draw", &physics_debug_draw)) {
-            EDITOR_CONTEXT.m_physics_scene->ToggleDebugDraw();
-        }
-    }
-    ImGui::End();
-
-    if (ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open)) {
-        auto level = EDITOR_CONTEXT.m_level_manager->GetCurrentLevel();
+    if (m_hierarchy_window_open &&
+        ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open,
+                     ImGuiWindowFlags_MenuBar)) {
+        auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
         if (level) {
             showEntityHierarchy(level->GetRootEntity());
         }
     }
-    ImGui::End();
+    if (m_hierarchy_window_open) {
+        ImGui::End();
+    }
 
-    if (ImGui::Begin("Detail", &m_detail_window_open)) {
+    if (m_detail_window_open && ImGui::Begin("Detail", &m_detail_window_open)) {
         if (m_selected_entity) {
             showEntityDetail(m_selected_entity.value());
         }
     }
-    ImGui::End();
+    if (m_detail_window_open) {
+        ImGui::End();
+    }
 
     ImGuiIDGenerator::Reset();
 }
 
 void Inspector::showEntityDetail(Entity entity) {
-    auto& ctx = EDITOR_CONTEXT;
-    if (ctx.m_transform_manager->Has(entity)) {
-        auto value = ctx.m_transform_manager->Get(entity);
+    if (m_context.m_transform_manager->Has(entity)) {
+        auto value = m_context.m_transform_manager->Get(entity);
         InstanceDisplay("transform", *value);
     }
 
-    if (ctx.m_relationship_manager->Has(entity)) {
-        auto value = ctx.m_relationship_manager->Get(entity);
+    if (m_context.m_relationship_manager->Has(entity)) {
+        auto value = m_context.m_relationship_manager->Get(entity);
         InstanceDisplay("relationship", *value);
     }
 
-    if (ctx.m_sprite_manager->Has(entity)) {
-        auto value = ctx.m_sprite_manager->Get(entity);
+    if (m_context.m_sprite_manager->Has(entity)) {
+        auto value = m_context.m_sprite_manager->Get(entity);
         InstanceDisplay("sprite", *value);
     }
 
-    if (ctx.m_animation_player_manager->Has(entity)) {
-        auto value = ctx.m_animation_player_manager->Get(entity);
+    if (m_context.m_animation_player_manager->Has(entity)) {
+        auto value = m_context.m_animation_player_manager->Get(entity);
         InstanceDisplay("animation", *value);
     }
 
-    if (ctx.m_cct_manager->Has(entity)) {
-        auto value = ctx.m_cct_manager->Get(entity);
+    if (m_context.m_cct_manager->Has(entity)) {
+        auto value = m_context.m_cct_manager->Get(entity);
         InstanceDisplay("cct", *value);
     }
-    if (ctx.m_trigger_component_manager->Has(entity)) {
-        auto value = ctx.m_trigger_component_manager->Get(entity);
+    if (m_context.m_trigger_component_manager->Has(entity)) {
+        auto value = m_context.m_trigger_component_manager->Get(entity);
         InstanceDisplay("trigger", *value);
     }
 }
 
-
 void Inspector::showEntityHierarchy(Entity node) {
-    auto& ctx = EDITOR_CONTEXT;
-
-    auto relationship = ctx.m_relationship_manager->Get(node);
+    auto relationship = m_context.m_relationship_manager->Get(node);
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnDoubleClick;
     flags |= relationship ? ImGuiTreeNodeFlags_None : ImGuiTreeNodeFlags_Leaf;

@@ -50,7 +50,7 @@ void Timer::Update(TimeType time) {
 
     if (m_cur_loop == 0) {
         if (m_cur_time >= m_interval) {
-            GAME_CONTEXT.m_event_system->EnqueueEvent<TimerEvent>(
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent<TimerEvent>(
                 TimerEvent{m_event_type, m_id});
             Stop();
         }
@@ -60,7 +60,7 @@ void Timer::Update(TimeType time) {
             if (m_cur_loop > 0) {
                 m_cur_loop--;
             }
-            GAME_CONTEXT.m_event_system->EnqueueEvent<TimerEvent>(
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent<TimerEvent>(
                 TimerEvent{m_event_type, m_id});
         }
     }

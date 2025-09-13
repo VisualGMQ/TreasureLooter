@@ -20,124 +20,124 @@ class Relationship;
 class CollisionGroup;
 
 // integral
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext&, rapidxml::xml_document<>& doc,
                                 const long long& payload,
                                 const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext&, rapidxml::xml_document<>& doc,
                                 const long& payload, const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const int& payload, const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const short& payload, const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const char& payload, const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const unsigned long long& payload,
                                 const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const unsigned long& payload,
                                 const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const unsigned int& payload,
                                 const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const unsigned short& payload,
                                 const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const unsigned char& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, long long& payload);
-void Deserialize(const rapidxml::xml_node<>& node, long& payload);
-void Deserialize(const rapidxml::xml_node<>& node, int& payload);
-void Deserialize(const rapidxml::xml_node<>& node, short& payload);
-void Deserialize(const rapidxml::xml_node<>& node, char& payload);
-void Deserialize(const rapidxml::xml_node<>& node, unsigned long long& payload);
-void Deserialize(const rapidxml::xml_node<>& node, unsigned long& payload);
-void Deserialize(const rapidxml::xml_node<>& node, unsigned int& payload);
-void Deserialize(const rapidxml::xml_node<>& node, unsigned short& payload);
-void Deserialize(const rapidxml::xml_node<>& node, unsigned char& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, long long& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, long& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, int& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, short& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, char& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned long long& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned long& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned int& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned short& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned char& payload);
 
 // Path
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const Path& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Path& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Path& payload);
 
 // Entity
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 Entity payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Entity& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Entity& payload);
 
 // bool
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const bool& payload, const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, bool& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, bool& payload);
 
 // floating
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const double& payload, const std::string& name);
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const float& payload, const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, double& payload);
-void Deserialize(const rapidxml::xml_node<>& node, float& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, double& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, float& payload);
 
 // region
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const Region& payload, const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Region& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Region& payload);
 
 // Degrees
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const Degrees& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Degrees& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Degrees& payload);
 
 // Radians
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const Radians& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Radians& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Radians& payload);
 
 // transform
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const Transform& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Transform& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Transform& payload);
 
 // std::string
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const std::string& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, std::string& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::string& payload);
 
 // UUID
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const UUID& payload, const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, UUID& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, UUID& payload);
 
 // Animation
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const Animation& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, Animation& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Animation& payload);
 
 // AnimationPlayer
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const AnimationPlayer& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, AnimationPlayer& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, AnimationPlayer& payload);
 
 // collision group
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const CollisionGroup& payload,
                                 const std::string& name);
-void Deserialize(const rapidxml::xml_node<>& node, CollisionGroup& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, CollisionGroup& payload);
 
 
 // optional
 template <typename T>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const std::optional<T>& payload,
                                 const std::string& name) {
     if (!payload) {
@@ -146,12 +146,12 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->append_node(Serialize(doc, payload.value(), "value"));
+    node->append_node(Serialize(ctx,doc, payload.value(), "value"));
     return node;
 }
 
 template <typename T>
-void Deserialize(const rapidxml::xml_node<>& node, std::optional<T>& payload) {
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::optional<T>& payload) {
     auto value_node = node.first_node("value");
     if (!value_node) {
         payload = std::nullopt;
@@ -159,13 +159,13 @@ void Deserialize(const rapidxml::xml_node<>& node, std::optional<T>& payload) {
     }
 
     T value;
-    Deserialize(*value_node, value);
+    Deserialize(ctx, *value_node, value);
     payload.emplace(std::move(value));
 }
 
 // vector
 template <typename T>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const std::vector<T>& payload,
                                 const std::string& name) {
     if (payload.empty()) {
@@ -176,14 +176,14 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                   doc.allocate_string(name.c_str()));
 
     for (auto& elem : payload) {
-        auto elem_node = Serialize(doc, elem, "elem");
+        auto elem_node = Serialize(ctx,doc, elem, "elem");
         node->append_node(elem_node);
     }
     return node;
 }
 
 template <typename T>
-void Deserialize(const rapidxml::xml_node<>& node, std::vector<T>& payload) {
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::vector<T>& payload) {
     auto value_node = node.first_node("elem");
     while (value_node) {
         if (std::string_view{value_node->name()} != "elem") {
@@ -191,7 +191,7 @@ void Deserialize(const rapidxml::xml_node<>& node, std::vector<T>& payload) {
         }
 
         T new_value;
-        Deserialize(*value_node, new_value);
+        Deserialize(ctx, *value_node, new_value);
         payload.emplace_back(std::move(new_value));
 
         value_node = value_node->next_sibling();
@@ -200,7 +200,7 @@ void Deserialize(const rapidxml::xml_node<>& node, std::vector<T>& payload) {
 
 // array
 template <typename T, size_t Size>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const std::array<T, Size>& payload,
                                 const std::string& name) {
     if (payload.empty()) {
@@ -211,14 +211,14 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
                                   doc.allocate_string(name.c_str()));
 
     for (auto& elem : payload) {
-        auto elem_node = Serialize(doc, elem, "elem");
+        auto elem_node = Serialize(ctx,doc, elem, "elem");
         node->append_node(elem_node);
     }
     return node;
 }
 
 template <typename T, size_t Size>
-void Deserialize(const rapidxml::xml_node<>& node,
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  std::array<T, Size>& payload) {
     auto value_node = node.first_node("elem");
     size_t size = Size;
@@ -227,7 +227,7 @@ void Deserialize(const rapidxml::xml_node<>& node,
             continue;
         }
 
-        Deserialize(*value_node, payload[Size - size]);
+        Deserialize(ctx, *value_node, payload[Size - size]);
 
         value_node = value_node->next_sibling();
         size--;
@@ -236,7 +236,7 @@ void Deserialize(const rapidxml::xml_node<>& node,
 
 // unordered_map
 template <typename Key, typename Value>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const std::unordered_map<Key, Value>& payload,
                                 const std::string& name) {
     if (payload.empty()) {
@@ -249,8 +249,8 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     for (auto&& [key, value] : payload) {
         auto elem_node =
             doc.allocate_node(rapidxml::node_type::node_element, "elem");
-        auto key_node = Serialize(doc, key, "key");
-        auto value_node = Serialize(doc, value, "value");
+        auto key_node = Serialize(ctx,doc, key, "key");
+        auto value_node = Serialize(ctx,doc, value, "value");
         elem_node->append_node(key_node);
         elem_node->append_node(value_node);
         node->append_node(elem_node);
@@ -259,7 +259,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 }
 
 template <typename Key, typename Value>
-void Deserialize(const rapidxml::xml_node<>& node,
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  std::unordered_map<Key, Value>& payload) {
     auto elem_node = node.first_node("elem");
 
@@ -274,15 +274,15 @@ void Deserialize(const rapidxml::xml_node<>& node,
 
         Key key;
         Value value;
-        Deserialize(*key_node, key);
-        Deserialize(*value_node, value);
+        Deserialize(ctx, *key_node, key);
+        Deserialize(ctx, *value_node, value);
         payload.emplace(std::move(key), std::move(value));
     }
 }
 
 // AssetLoadResult
 template <typename T>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const AssetLoadResult<T>& payload,
                                 const std::string& name) {
     if (!payload.m_uuid) {
@@ -291,49 +291,49 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
     }
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    auto uuid_node = Serialize(doc, payload.m_uuid, "uuid");
+    auto uuid_node = Serialize(ctx,doc, payload.m_uuid, "uuid");
     node->append_node(uuid_node);
 
-    auto value_node = Serialize(doc, payload.m_payload, "payload");
+    auto value_node = Serialize(ctx,doc, payload.m_payload, "payload");
     node->append_node(value_node);
     return node;
 }
 
 template <typename T>
-void Deserialize(const rapidxml::xml_node<>& node,
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  AssetLoadResult<T>& payload) {
     auto uuid_node = node.first_node("uuid");
-    Deserialize(*uuid_node, payload.m_uuid);
+    Deserialize(ctx, *uuid_node, payload.m_uuid);
 
     auto value_node = node.first_node("payload");
-    Deserialize(*value_node, payload.m_payload);
+    Deserialize(ctx, *value_node, payload.m_payload);
 }
 
 // Keyframe
 template <typename T>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const KeyFrame<T>& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->append_node(Serialize(doc, payload.m_time, "time"));
-    node->append_node(Serialize(doc, payload.m_value, "value"));
+    node->append_node(Serialize(ctx,doc, payload.m_time, "time"));
+    node->append_node(Serialize(ctx,doc, payload.m_value, "value"));
     return node;
 }
 
 template <typename T>
-void Deserialize(const rapidxml::xml_node<>& node, KeyFrame<T>& payload) {
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, KeyFrame<T>& payload) {
     if (auto time_node = node.first_node("time")) {
-        Deserialize(*time_node, payload.m_time);
+        Deserialize(ctx, *time_node, payload.m_time);
     }
     if (auto value_node = node.first_node("value")) {
-        Deserialize(*value_node, payload.m_value);
+        Deserialize(ctx, *value_node, payload.m_value);
     }
 }
 
 // Handle<T>
 template <typename T>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 Handle<T> payload, const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
@@ -347,10 +347,10 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 }
 
 template <typename T>
-void Deserialize(const rapidxml::xml_node<>& node, Handle<T>& payload) {
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Handle<T>& payload) {
     Path filename = node.value();
     auto& manager =
-        GAME_CONTEXT.m_assets_manager->GetManager<T>();
+        CURRENT_CONTEXT.m_assets_manager->GetManager<T>();
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);
@@ -360,7 +360,7 @@ void Deserialize(const rapidxml::xml_node<>& node, Handle<T>& payload) {
 // TVec2
 
 template <typename T>
-rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const TVec2<T>& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
@@ -375,7 +375,7 @@ rapidxml::xml_node<>* Serialize(rapidxml::xml_document<>& doc,
 }
 
 template <typename T>
-void Deserialize(const rapidxml::xml_node<>& node, TVec2<T>& payload) {
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, TVec2<T>& payload) {
     auto x_attr = node.first_attribute("x");
     auto y_attr = node.first_attribute("y");
     if (!x_attr || !y_attr) {

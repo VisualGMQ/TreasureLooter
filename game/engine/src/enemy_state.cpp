@@ -25,7 +25,7 @@ void EnemyIdleState::OnEnter(EnemyMotorContext* state) {
 void EnemyIdleState::OnUpdate(EnemyMotorContext* state) {
     state->GetAnimationPlayer()->Stop();
     if (state->m_cur_idle_time < state->m_idle_time) {
-        state->m_cur_idle_time += GAME_CONTEXT.m_time->GetElapseTime();
+        state->m_cur_idle_time += CURRENT_CONTEXT.m_time->GetElapseTime();
     } else {
         state->m_cur_idle_time = 0;
         auto& state_machine = state->GetStateMachine();
@@ -50,7 +50,7 @@ void EnemyMoveState::OnQuit(EnemyMotorContext* state) {
 }
 
 void EnemyMoveState::OnUpdate(EnemyMotorContext* state) {
-    state->m_cur_force_idle_time += GAME_CONTEXT.m_time->GetElapseTime();
+    state->m_cur_force_idle_time += CURRENT_CONTEXT.m_time->GetElapseTime();
     auto position = state->GetPosition();
     auto disp = position - state->m_target_position;
     if (disp.LengthSquared() <= 0.00001 || state->m_cur_force_idle_time >= state
@@ -60,6 +60,6 @@ void EnemyMoveState::OnUpdate(EnemyMotorContext* state) {
             &StateSingletonManager::GetState<EnemyIdleState>());
     } else {
         auto dir = disp.Normalize();
-        state->Move(dir, GAME_CONTEXT.m_time->GetElapseTime());
+        state->Move(dir, CURRENT_CONTEXT.m_time->GetElapseTime());
     }
 }

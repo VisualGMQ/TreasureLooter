@@ -6,12 +6,12 @@
 
 CharacterController::CharacterController(Entity entity, const CCT& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
-    m_actor = GAME_CONTEXT.m_physics_scene->CreateActor(
+    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(
         entity, create_info.m_physics_actor);
 }
 
 CharacterController::~CharacterController() {
-    GAME_CONTEXT.m_physics_scene->RemoveActor(m_actor);
+    CURRENT_CONTEXT.m_physics_scene->RemoveActor(m_actor);
 }
 
 bool CharacterController::EnableDebugOutput = false;
@@ -42,7 +42,7 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     uint32_t max_iter = MaxIter;
     SweepResult hit;
 
-    auto& physics_scene = GAME_CONTEXT.m_physics_scene;
+    auto& physics_scene = CURRENT_CONTEXT.m_physics_scene;
 
     CCT_DEBUG_LOG("max iter = {}, begin iter", max_iter);
     CCT_DEBUG_LOG("start position: {}", m_actor->GetPosition());

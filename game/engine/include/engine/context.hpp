@@ -34,6 +34,10 @@ struct GameConfig;
 
 class CommonContext {
 public:
+    static void ChangeContext(CommonContext&);
+
+    static CommonContext& GetInst();
+
     virtual ~CommonContext();
 
     /**
@@ -55,14 +59,19 @@ public:
      * shutdown context
      */
     virtual void Shutdown();
-    
+
     virtual void Update() = 0;
     virtual void HandleEvents(const SDL_Event&);
-    
+
+    bool IsRunning() const;
+
     Entity CreateEntity();
 
     bool ShouldExit() const;
+    bool IsInited() const;
     void Exit();
+
+    const GameConfig& GetGameConfig() const;
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
@@ -87,14 +96,20 @@ public:
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
+    Camera m_camera;
 
 protected:
     void beginImGui();
     void endImGui();
+    class ImGuiContext* m_imgui_context{};
 
 private:
-    bool m_should_exit = false;
+    static CommonContext* m_current_context;
+
+    bool m_should_exit = true;
+    bool m_is_inited = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
+    GameConfig m_game_config;
 
     void initImGui();
     void shutdownImGui();
@@ -115,14 +130,9 @@ public:
     void Initialize() override;
 
     void Update() override;
-    const GameConfig& GetGameConfig() const;
-
-    Camera m_camera;
 
 private:
     static std::unique_ptr<GameContext> instance;
-
-    GameConfig m_game_config;
 
     void logicUpdate(TimeType elapse);
     void logicPostUpdate(TimeType elapse);
@@ -132,3 +142,4 @@ private:
 };
 
 #define GAME_CONTEXT ::GameContext::GetInst()
+#define CURRENT_CONTEXT ::CommonContext::GetInst()

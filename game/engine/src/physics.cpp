@@ -778,7 +778,7 @@ void PhysicsScene::RenderDebug() const {
         return;
     }
 
-    auto &renderer = GAME_CONTEXT.m_renderer;
+    auto &renderer = CURRENT_CONTEXT.m_renderer;
 
     for (auto &actor: m_actors) {
         auto &shape = actor->GetShape();

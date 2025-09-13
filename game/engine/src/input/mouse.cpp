@@ -53,6 +53,10 @@ const Vec2& Mouse::GetOffset() const {
     return m_cur_offset;
 }
 
+float Mouse::GetWheel() const {
+    return m_wheel;
+}
+
 Mouse::Mouse()
     : m_buttons{MouseButton{MouseButtonType::Left},
                 MouseButton{MouseButtonType::Middle},
@@ -71,6 +75,9 @@ void Mouse::HandleEvent(const SDL_Event& event) {
         m_cur_position.y = event.motion.y;
         m_cur_offset.x = event.motion.xrel;
         m_cur_offset.y = event.motion.yrel;
+    } else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+        m_wheel = (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1 : 1) *
+                  event.wheel.y;
     }
 }
 
@@ -82,4 +89,5 @@ void Mouse::Update() {
 
 void Mouse::PostUpdate() {
     m_cur_offset = Vec2{};
+    m_wheel = 0;
 }

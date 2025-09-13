@@ -26,7 +26,7 @@ endif()
 
 ################ run schema parser ################
 file(GLOB_RECURSE SCHEMAS schema/schema/*)
-file(GLOB_RECURSE MUSTACHES ./schema_parser/mustaches/*.mustache)
+file(GLOB_RECURSE MUSTACHES ./schema/schema_parser/mustaches/*.mustache)
 set(SCHEMA_OUTPUT_PATH "schema_generate/schema")
 set(SCHEMA_DECLARE_OUTPUT_FILES)
 set(SCHEMA_SERD_OUTPUT_FILES)
@@ -49,7 +49,13 @@ foreach(schema ${SCHEMAS})
             "${schema_final_path}/display/${schema_generate_cpp}")
 endforeach()
 
-list(APPEND SCHEMA_DECLARE_OUTPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/serialize/asset_extensions.hpp)
+set(SCHEMA_ASSET_INFO_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/asset_info.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}/asset_info.cpp)
+
+
+list(APPEND SCHEMA_SERD_OUTPUT_FILES "${schema_final_path}/serialize/serialize.hpp")
+list(APPEND SCHEMA_DISPLAY_OUTPUT_FILES "${schema_final_path}/display/display.hpp")
 
 if (NEED_SCHEMA_PARSER)
     add_custom_target(run_schema_parser
@@ -58,7 +64,7 @@ if (NEED_SCHEMA_PARSER)
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "parsing schemas...")
 
-    add_custom_command(OUTPUT ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_DISPLAY_OUTPUT_FILES}
+    add_custom_command(OUTPUT ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_DISPLAY_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES}
             COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
             DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -73,7 +79,7 @@ file(GLOB_RECURSE ASSETS assets/*)
 
 add_library(${ENGINE_NAME} STATIC)
 
-target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES})
+target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES})
 target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf)

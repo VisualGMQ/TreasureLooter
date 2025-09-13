@@ -38,9 +38,11 @@ public:
     const MouseButton& Get(MouseButtonType) const;
     const Vec2& GetPosition() const;
     const Vec2& GetOffset() const;
+    float GetWheel() const;
 
 private:
     std::array<MouseButton, 5> m_buttons;
+    float m_wheel{};
     Vec2 m_cur_position;
     Vec2 m_cur_offset;
 };

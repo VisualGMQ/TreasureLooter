@@ -1,5 +1,5 @@
 file(GLOB_RECURSE SRC ./*.cpp ./*.hpp)
-file(GLOB_RECURSE mustaches ./mustaches/*.mustache)
+file(GLOB_RECURSE MUSTACHES ./mustaches/*.mustache)
 
 add_executable(schema_parser)
 target_sources(schema_parser PRIVATE ${SRC} ${MUSTACHES})

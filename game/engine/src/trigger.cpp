@@ -30,14 +30,14 @@ Trigger::Trigger(Entity entity, const TriggerInfo& info)
     : m_event_type{info.m_event_type},
       m_trig_every_frame_when_touch{info.m_trig_every_frame_when_touch} {
     m_actor =
-        GAME_CONTEXT.m_physics_scene->CreateActor(entity, info.m_physics_actor);
+        CURRENT_CONTEXT.m_physics_scene->CreateActor(entity, info.m_physics_actor);
 }
 
 Trigger::Trigger(Entity entity, const Rect& rect, TriggerEventType event_type,
                  const CollisionGroup& collision_layer,
                  const CollisionGroup& collision_mask)
     : m_event_type{event_type} {
-    m_actor = GAME_CONTEXT.m_physics_scene->CreateActor(entity, rect);
+    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(entity, rect);
     if (m_actor) {
         m_actor->SetCollisionLayer(collision_layer);
         m_actor->SetCollisionMask(collision_mask);
@@ -49,7 +49,7 @@ Trigger::Trigger(Entity entity, const Circle& circle,
                  const CollisionGroup& collision_layer,
                  const CollisionGroup& collision_mask)
     : m_event_type{event_type} {
-    m_actor = GAME_CONTEXT.m_physics_scene->CreateActor(entity, circle);
+    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(entity, circle);
     if (m_actor) {
         m_actor->SetCollisionLayer(collision_layer);
         m_actor->SetCollisionMask(collision_mask);
@@ -61,7 +61,7 @@ const PhysicsActor* Trigger::GetActor() const {
 }
 
 Trigger::~Trigger() {
-    GAME_CONTEXT.m_physics_scene->RemoveActor(m_actor);
+    CURRENT_CONTEXT.m_physics_scene->RemoveActor(m_actor);
 }
 
 void Trigger::SetEventType(TriggerEventType type) {
@@ -81,12 +81,12 @@ void Trigger::Update() {
     int i = m_touch_actors.size();
     while (--i >= 0) {
         PhysicsActor* actor = m_touch_actors[i];
-        if (!GAME_CONTEXT.m_physics_scene->Overlap(*m_actor, *actor)) {
+        if (!CURRENT_CONTEXT.m_physics_scene->Overlap(*m_actor, *actor)) {
             OverlapResult result;
             result.m_dst_entity = actor->GetEntity();
             result.m_dst_actor = actor;
             TriggerLeaveEvent event{GetEventType(), result};
-            GAME_CONTEXT.m_event_system->EnqueueEvent(event);
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
             m_touch_actors.erase(m_touch_actors.begin() + i);
         }
     }
@@ -98,13 +98,13 @@ void Trigger::Update() {
             result.m_dst_entity = actor->GetEntity();
             result.m_dst_actor = actor;
             TriggerTouchEvent event{GetEventType(), result};
-            GAME_CONTEXT.m_event_system->EnqueueEvent(event);
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
         }
     }
 
     // check entered actors
     OverlapResult results[16];
-    uint32_t count = GAME_CONTEXT.m_physics_scene->Overlap(*m_actor, results,
+    uint32_t count = CURRENT_CONTEXT.m_physics_scene->Overlap(*m_actor, results,
                                                            std::size(results));
     for (size_t i = 0; i < count; i++) {
         auto& result = results[i];
@@ -118,7 +118,7 @@ void Trigger::Update() {
         if (it == m_touch_actors.end()) {
             m_touch_actors.push_back(result.m_dst_actor);
             TriggerEnterEvent event{GetEventType(), result};
-            GAME_CONTEXT.m_event_system->EnqueueEvent(event);
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
         }
     }
 }
@@ -129,7 +129,7 @@ void TriggerComponentManager::Update() {
             continue;
         }
 
-        auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+        auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
         if (!transform) {
             continue;
         }

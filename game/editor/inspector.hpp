@@ -1,7 +1,6 @@
 #pragma once
-#include "../engine/include/engine/entity.hpp"
+#include "engine/context.hpp"
 
-#include "SDL3/SDL.h"
 #include <optional>
 
 class Window;
@@ -9,11 +8,13 @@ class Renderer;
 
 class Inspector {
 public:
+    explicit Inspector(CommonContext& context);
     void Update();
 
 private:
     bool m_hierarchy_window_open = true;
     bool m_detail_window_open = true;
+    CommonContext& m_context;
 
     std::optional<Entity> m_selected_entity;
 

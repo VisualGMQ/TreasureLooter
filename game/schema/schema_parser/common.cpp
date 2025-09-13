@@ -11,44 +11,63 @@ MustacheManager& MustacheManager::GetInst() {
 }
 
 MustacheManager::MustacheManager()
-    : m_class_mustache{readMustache("schema/schema_parser/mustaches/class.mustache")},
+    : m_class_mustache{
+          readMustache("schema/schema_parser/mustaches/class.mustache")},
       m_property_mustache{
           readMustache("schema/schema_parser/mustaches/property.mustache")},
       m_schema_mustache{
           readMustache("schema/schema_parser/mustaches/schema.mustache")},
       m_include_mustache{
           readMustache("schema/schema_parser/mustaches/include.mustache")},
-      m_enum_mustache{readMustache("schema/schema_parser/mustaches/enum.mustache")},
+      m_enum_mustache{
+          readMustache("schema/schema_parser/mustaches/enum.mustache")},
       m_enum_serd_header_mustache{
-          readMustache("schema/schema_parser/mustaches/enum_serd_header.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/enum_serd_header.mustache")},
       m_enum_serd_impl_mustache{
-          readMustache("schema/schema_parser/mustaches/enum_serd_impl.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/enum_serd_impl.mustache")},
       m_schema_serd_header_mustache{
-          readMustache("schema/schema_parser/mustaches/schema_serd_header.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/schema_serd_header.mustache")},
       m_schema_serd_impl_mustache{
-          readMustache("schema/schema_parser/mustaches/schema_serd_impl.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/schema_serd_impl.mustache")},
       m_class_serd_header_mustache{
-          readMustache("schema/schema_parser/mustaches/class_serd_header.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/class_serd_header.mustache")},
       m_class_serd_impl_mustache{
-          readMustache("schema/schema_parser/mustaches/class_serd_impl.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/class_serd_impl.mustache")},
       m_asset_sl_header_mustache{
-          readMustache("schema/schema_parser/mustaches/asset_sl_header.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/asset_sl_header.mustache")},
       m_asset_sl_impl_mustache{
-          readMustache("schema/schema_parser/mustaches/asset_sl_impl.mustache")},
-      m_asset_extension_mustache{
-          readMustache("schema/schema_parser/mustaches/asset_extension.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/asset_sl_impl.mustache")},
       m_instance_display_header_mustache{readMustache(
           "schema/schema_parser/mustaches/instance_display_header.mustache")},
       m_instance_display_impl_mustache{readMustache(
           "schema/schema_parser/mustaches/instance_display_impl.mustache")},
       m_enum_display_impl_mustache{
-          readMustache("schema/schema_parser/mustaches/enum_display_impl.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/enum_display_impl.mustache")},
       m_enum_display_header_mustache{
-          readMustache("schema/schema_parser/mustaches/enum_display_header.mustache")},
+          readMustache(
+              "schema/schema_parser/mustaches/enum_display_header.mustache")},
       m_class_display_header_mustache{readMustache(
           "schema/schema_parser/mustaches/class_display_header.mustache")},
       m_class_display_impl_mustache{
-          readMustache("schema/schema_parser/mustaches/class_display_impl.mustache")} {
+          readMustache(
+              "schema/schema_parser/mustaches/class_display_impl.mustache")},
+      m_asset_info_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/asset_info_header.mustache")},
+      m_asset_info_impl_mustache{readMustache(
+          "schema/schema_parser/mustaches/asset_info_impl.mustache")},
+      m_asset_serialize_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/serialize_header.mustache")},
+      m_asset_display_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/display_header.mustache")} {
 }
 
 kainjow::mustache::mustache MustacheManager::readMustache(

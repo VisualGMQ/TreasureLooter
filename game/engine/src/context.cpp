@@ -1,32 +1,43 @@
 #include "engine/context.hpp"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "engine/asset_manager.hpp"
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
-#include "imgui.h"
+#include "engine/asset_manager.hpp"
 #include "engine/level.hpp"
 #include "engine/log.hpp"
 #include "engine/relationship.hpp"
-#include "schema/config.hpp"
-#include "schema/serialize/asset_extensions.hpp"
-#include "schema/serialize/input.hpp"
-#include "schema/serialize/prefab.hpp"
 #include "engine/sdl_call.hpp"
 #include "engine/serialize.hpp"
 #include "engine/sprite.hpp"
 #include "engine/storage.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
+#include "imgui.h"
+#include "schema/asset_info.hpp"
+#include "schema/config.hpp"
+#include "schema/serialize/input.hpp"
+#include "schema/serialize/prefab.hpp"
 #include "uuid.h"
+#include "imgui_internal.h"
 
 std::unique_ptr<GameContext> GameContext::instance;
+
+CommonContext* CommonContext::m_current_context{};
+
+void CommonContext::ChangeContext(CommonContext& ctx) {
+    m_current_context = &ctx;
+}
+
+CommonContext& CommonContext::GetInst() {
+    return *m_current_context;
+}
 
 CommonContext::~CommonContext() {}
 
 void CommonContext::InitSystem() {
     LOGT("system init");
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-        SDL_INIT_GAMEPAD));
+                      SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
     SDL_CALL(TTF_Init());
 }
@@ -38,6 +49,8 @@ void CommonContext::ShutdownSystem() {
 }
 
 void CommonContext::Initialize() {
+    m_should_exit = false;
+    m_is_inited = true;
     m_assets_manager = std::make_unique<AssetsManager>();
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
@@ -63,14 +76,34 @@ void CommonContext::Initialize() {
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
     m_motor_manager = std::make_unique<MotorManager>();
-    m_bind_point_component_manager = std::make_unique<
-        BindPointsComponentManager>();
+    m_bind_point_component_manager =
+        std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
+
+#ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
+#else
+    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
+#endif
+
+    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
+        std::string{"assets/gpa/game_config"} +
+        GameConfig_AssetExtension.data());
+    if (!handle) {
+        LOGC("game config not found!");
+        SDL_Quit();
+        return;
+    }
+
+    m_game_config = *handle;
+    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
+    m_assets_manager->GetManager<GameConfig>().Unload(handle);
 }
 
 void CommonContext::Shutdown() {
+    m_should_exit = true;
+    m_is_inited = false;
     if (m_level_manager) {
         m_level_manager->Switch({});
     }
@@ -103,9 +136,12 @@ void CommonContext::Shutdown() {
 }
 
 void CommonContext::HandleEvents(const SDL_Event& event) {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDL3_ProcessEvent(&event);
-    if (event.type == SDL_EVENT_QUIT) {
-        m_should_exit = true;
+    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+        if (event.window.windowID == m_window->GetID()) {
+            m_should_exit = true;
+        }
     } else if (event.type == SDL_EVENT_KEY_UP ||
                event.type == SDL_EVENT_KEY_DOWN) {
         m_keyboard->HandleEvent(event.key);
@@ -121,6 +157,10 @@ void CommonContext::HandleEvents(const SDL_Event& event) {
     m_event_system->HandleEvent(event);
 }
 
+bool CommonContext::IsRunning() const {
+    return !m_should_exit;
+}
+
 Entity CommonContext::CreateEntity() {
     return static_cast<Entity>(m_last_entity++);
 }
@@ -129,17 +169,27 @@ bool CommonContext::ShouldExit() const {
     return m_should_exit;
 }
 
+bool CommonContext::IsInited() const {
+    return m_is_inited;
+}
+
 void CommonContext::Exit() {
     m_should_exit = true;
 }
 
+const GameConfig& CommonContext::GetGameConfig() const {
+    return m_game_config;
+}
+
 void CommonContext::beginImGui() {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 }
 
 void CommonContext::endImGui() {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGui::Render();
     auto& io = ImGui::GetIO();
     SDL_SetRenderScale(m_renderer->GetRenderer(), io.DisplayFramebufferScale.x,
@@ -151,12 +201,13 @@ void CommonContext::endImGui() {
 void CommonContext::initImGui() {
     float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    m_imgui_context = ImGui::CreateContext();
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -164,10 +215,10 @@ void CommonContext::initImGui() {
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(
-        main_scale); // Bake a fixed style scale. (until we have a solution for
+        main_scale);  // Bake a fixed style scale. (until we have a solution for
     // dynamic style scaling, changing this requires resetting
     // Style + calling this again)
-    style.FontScaleDpi = main_scale; // Set initial font scale. (using
+    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
     // io.ConfigDpiScaleFonts=true makes this unnecessary. We
     // leave both here for documentation purpose)
 
@@ -177,10 +228,12 @@ void CommonContext::initImGui() {
 }
 
 void CommonContext::shutdownImGui() {
-    if (ImGui::GetCurrentContext()) {
+    if (m_imgui_context) {
+        ImGui::SetCurrentContext(m_imgui_context);
         ImGui_ImplSDLRenderer3_Shutdown();
         ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();
+        m_imgui_context = nullptr;
     }
 }
 
@@ -201,32 +254,15 @@ GameContext& GameContext::GetInst() {
 }
 
 void GameContext::Initialize() {
-#ifdef TL_DEBUG
-    m_debug_drawer = std::make_unique<DebugDrawer>();
-#else
-    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
-#endif
-
     CommonContext::Initialize();
 
-    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
-        std::string{"assets/gpa/game_config"} +
-        GameConfig_AssetExtension.data());
-    if (!handle) {
-        LOGC("game config not found!");
-        SDL_Quit();
-        return;
-    }
-
-    m_game_config = *handle;
-    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
-    m_assets_manager->GetManager<GameConfig>().Unload(handle);
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
-            m_game_config.m_input_config_asset), *this);
+            GetGameConfig().m_input_config_asset),
+        *this);
 
     m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
-        m_game_config.m_basic_level_asset));
+        GetGameConfig().m_basic_level_asset));
 }
 
 void GameContext::Update() {
@@ -237,10 +273,6 @@ void GameContext::Update() {
     logicPostUpdate(elapse_time);
 
     m_level_manager->PoseUpdate();
-}
-
-const GameConfig& GameContext::GetGameConfig() const {
-    return m_game_config;
 }
 
 void GameContext::logicUpdate(TimeType elapse) {
