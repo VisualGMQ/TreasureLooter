@@ -28,17 +28,17 @@ void Level::OnEnter() {
 
     ////////// test for UI ///////////
     auto entity = GetUIRootEntity();
-    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(entity);
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
 
-    auto text_entity = GAME_CONTEXT.CreateEntity();
+    auto text_entity = CURRENT_CONTEXT.CreateEntity();
     UIText text;
     text.m_align = UITextAlign::Center;
     text.m_resize_by_text = true;
     text.m_color = Color::Black;
-    text.SetFont(GAME_CONTEXT.GetGameConfig().m_default_font);
+    text.SetFont(CURRENT_CONTEXT.GetGameConfig().m_default_font);
     text.ChangeText("hello ui");
-    GAME_CONTEXT.m_ui_manager->RegisterEntityByDerive<UIText>(text_entity, std::move(text));
-    GAME_CONTEXT.m_transform_manager->RegisterEntity(text_entity);
+    CURRENT_CONTEXT.m_ui_manager->RegisterEntityByDerive<UIText>(text_entity, std::move(text));
+    CURRENT_CONTEXT.m_transform_manager->RegisterEntity(text_entity);
     relationship->m_children.push_back(text_entity);
 }
 
@@ -73,11 +73,20 @@ Entity Level::GetRootEntity() const {
     return m_root_entity;
 }
 
+Entity Level::GetUIRootEntity() const {
+    return m_ui_root_entity;
+}
+
 void Level::initRootEntity() {
     m_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
+
+    m_ui_root_entity = CURRENT_CONTEXT.CreateEntity();
+    m_entities.insert(m_ui_root_entity);
+    CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity);
 }
 
 void Level::registerEntity(Entity entity, const EntityInstance& instance) {

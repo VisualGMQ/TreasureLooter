@@ -13,10 +13,12 @@
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
+#include "engine/ui.hpp"
 #include "uuid.h"
 
 std::unique_ptr<GameContext> GameContext::instance;

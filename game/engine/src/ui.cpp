@@ -1,7 +1,7 @@
 #include "engine/ui.hpp"
 
-#include "context.hpp"
-#include "relationship.hpp"
+#include "engine/context.hpp"
+#include "engine/relationship.hpp"
 
 UIWidget::UIWidget(UIType type) : m_type{type} {}
 
@@ -106,7 +106,7 @@ void UIText::regenerateText() {
     m_font->SetFontSize(m_pt);
 
     m_text_image =
-        Image{*GAME_CONTEXT.m_renderer, m_font->GenerateText(m_text, m_color)};
+        Image{*CURRENT_CONTEXT.m_renderer, m_font->GenerateText(m_text, m_color)};
 }
 
 UIButton::UIButton() : UIWidget(UIType::Button) {}
@@ -148,14 +148,14 @@ void UIButton::render(const Transform& transform, Renderer& renderer) {
 }
 
 void UIComponentManager::Update() {
-    auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
     }
 
     Entity ui_root_entity = level->GetUIRootEntity();
     auto relationship =
-        GAME_CONTEXT.m_relationship_manager->Get(ui_root_entity);
+        CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
     for (auto child : relationship->m_children) {
         updateSize(child);
     }
@@ -166,22 +166,22 @@ void UIComponentManager::Update() {
 }
 
 void UIComponentManager::Render() {
-    auto level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
     }
 
     Entity ui_root_entity = level->GetUIRootEntity();
-    auto& renderer = GAME_CONTEXT.m_renderer;
-    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(ui_root_entity);
+    auto& renderer = CURRENT_CONTEXT.m_renderer;
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
     for (auto child : relationship->m_children) {
         render(*renderer, child);
     }
 }
 
 void UIComponentManager::updateSize(Entity entity) {
-    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(entity);
-    auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
     if (!transform || !ui) {
@@ -200,8 +200,8 @@ void UIComponentManager::updateSize(Entity entity) {
 }
 
 void UIComponentManager::updateTransform(Entity entity) {
-    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(entity);
-    auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
     if (!transform || !ui) {
@@ -220,8 +220,8 @@ void UIComponentManager::updateTransform(Entity entity) {
 }
 
 void UIComponentManager::render(Renderer& renderer, Entity entity) {
-    auto relationship = GAME_CONTEXT.m_relationship_manager->Get(entity);
-    auto transform = GAME_CONTEXT.m_transform_manager->Get(entity);
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
     if (!transform || !ui) {
