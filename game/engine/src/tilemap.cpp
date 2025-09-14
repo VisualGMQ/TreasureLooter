@@ -167,7 +167,7 @@ TilemapHandle TilemapManager::Load(const Path &filename, bool force) {
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::Create(),
                  std::make_unique<Tilemap>(filename));
 }
 

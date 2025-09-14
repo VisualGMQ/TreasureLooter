@@ -1,3 +1,3 @@
-add_library(enet INTERFACE)
-target_sources(enet INTERFACE enet.h)
-target_include_directories(enet INTERFACE .)
+add_library(enet STATIC)
+target_sources(enet PRIVATE enet.h enet.cpp)
+target_include_directories(enet PUBLIC .)

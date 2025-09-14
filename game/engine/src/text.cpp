@@ -45,6 +45,6 @@ FontHandle FontManager::Load(const Path& filename, bool force) {
         return it;
     }
 
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::Create(),
                  std::make_unique<Font>(filename, 16));
 }

@@ -24,7 +24,7 @@ AnimationHandle AnimationManager::Load(const Path& filename, bool force) {
 }
 
 AnimationHandle AnimationManager::Create() {
-    return store(nullptr, UUID::CreateV4(), std::make_unique<Animation>());
+    return store(nullptr, UUIDv4::Create(), std::make_unique<Animation>());
 }
 
 void Animation::AddTrack(AnimationBindingPoint binding,
@@ -111,7 +111,7 @@ AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
     return result;
 }
 
-void SaveAsset(const UUID& uuid, const Animation& payload,
+void SaveAsset(const UUIDv4& uuid, const Animation& payload,
                const Path& filename) {
     rapidxml::xml_document<> doc;
 

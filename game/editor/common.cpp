@@ -50,7 +50,7 @@ void SaveAsVariantAsset(const VariantAsset& asset, const Path& filename) {
         [&](auto payload) {
             using type = std::decay_t<decltype(payload)>;
             if constexpr (!std::is_same_v<type, std::monostate>) {
-                SaveAsset(UUID::CreateV4(), *payload.Get(), filename);
+                SaveAsset(UUIDv4::Create(), *payload.Get(), filename);
             }
         },
         asset);

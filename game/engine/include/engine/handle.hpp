@@ -1,7 +1,7 @@
 #pragma once
+#include "uuid.hpp"
 #include "asset.hpp"
 #include "path.hpp"
-#include "uuid.hpp"
 
 template <typename T>
 class Handle {
@@ -12,7 +12,7 @@ public:
 
     Handle(nullptr_t) {}
 
-    Handle(UUID uuid, T* data, IAssetManager* manager)
+    Handle(UUIDv4 uuid, T* data, IAssetManager* manager)
         : m_data{data}, m_uuid{uuid}, m_manager{manager} {}
 
     operator bool() const { return m_data; }
@@ -31,7 +31,7 @@ public:
 
     void Reset() { m_data = nullptr; }
 
-    const UUID& GetUUID() const { return m_uuid; }
+    const UUIDv4& GetUUID() const { return m_uuid; }
 
     const Path* GetFilename() const {
         return m_manager ? m_manager->GetFilename(m_uuid) : nullptr;
@@ -44,7 +44,7 @@ public:
 private:
     T* m_data{};
     IAssetManager* m_manager{};
-    UUID m_uuid;
+    UUIDv4 m_uuid;
 };
 
 namespace internal {
@@ -71,7 +71,7 @@ struct hash<Handle<T>> {
 
     [[nodiscard]] result_type operator()(
         argument_type const& handle) const noexcept {
-        return hash<UUID>()(handle.GetUUID());
+        return hash<UUIDv4>()(handle.GetUUID());
     }
 };
 }  // namespace std

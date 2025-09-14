@@ -113,8 +113,8 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::stri
 
 // UUID
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
-                                const UUID& payload, const std::string& name);
-void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, UUID& payload);
+                                const UUIDv4& payload, const std::string& name);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, UUIDv4& payload);
 
 // Animation
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,

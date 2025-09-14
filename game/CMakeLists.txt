@@ -73,7 +73,7 @@ endif()
 
 ################ run protoc ################
 file(GLOB_RECURSE PROTO_FILES protobuf/*.proto)
-set(PROTO_OUTPUT_PATH "proto-generate")
+set(PROTO_OUTPUT_PATH "proto-generate/proto")
 set(PROTO_DECLARE_OUTPUT_FILES "")
 set(PROTO_IMPL_OUTPUT_FILES "")
 foreach(proto ${PROTO_FILES})
@@ -103,8 +103,13 @@ file(GLOB_RECURSE ASSETS assets/*)
 
 add_library(${ENGINE_NAME} STATIC)
 
-target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES} ${PROTO_DECLARE_OUTPUT_FILES} ${PROTO_IMPL_OUTPUT_FILES})
-target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
+target_sources(${ENGINE_NAME}
+    PRIVATE
+        ${ENGINE_SRC} ${ENGINE_HEADER}
+        ${ASSETS}
+        ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES}
+        ${PROTO_DECLARE_OUTPUT_FILES} ${PROTO_IMPL_OUTPUT_FILES})
+target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate proto-generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf enet protobuf::libprotobuf)
 target_compile_definitions(${ENGINE_NAME}
@@ -127,9 +132,17 @@ target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
 ################ build editor ################
 if (NOT ANDROID)
     file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
-    add_executable(editor)
-    target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
-    target_link_libraries(editor PRIVATE ${ENGINE_NAME})
+    add_executable(TreasureLooter-Editor)
+    target_sources(TreasureLooter-Editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
+    target_link_libraries(TreasureLooter-Editor PRIVATE ${ENGINE_NAME})
+endif()
+
+################ build server ################
+if (NOT ANDROID)
+    file(GLOB_RECURSE SERVER_SRC server/*.hpp server/*.cpp)
+    add_executable(TreasureLooter-Server)
+    target_sources(TreasureLooter-Server PRIVATE ${SERVER_SRC})
+    target_link_libraries(TreasureLooter-Server PRIVATE ${ENGINE_NAME})
 endif()
 
 ################ install #######################

@@ -5,7 +5,7 @@ AssetLoadResult<{{type}}> LoadAsset<{{type}}>(rapidxml::xml_node<>& node) {
     return payload;
 }
 
-rapidxml::xml_node<>* SaveAsset(const UUID& uuid, rapidxml::xml_document<>& doc, const {{type}}& payload) {
+rapidxml::xml_node<>* SaveAsset(const UUIDv4& uuid, rapidxml::xml_document<>& doc, const {{type}}& payload) {
     AssetLoadResult<{{type}}> asset_load_result;
     asset_load_result.m_uuid = uuid;
     asset_load_result.m_payload = payload;
@@ -33,7 +33,7 @@ AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const Path& filename) {
     return LoadAsset<{{type}}>(*node);
 }
 
-void SaveAsset(const UUID& uuid, const {{type}}& payload, const Path& filename) {
+void SaveAsset(const UUIDv4& uuid, const {{type}}& payload, const Path& filename) {
     rapidxml::xml_document<> doc;
     auto node = SaveAsset(uuid, doc, payload);    
     if (!node) {

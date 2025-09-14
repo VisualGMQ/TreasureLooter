@@ -181,7 +181,7 @@ AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename,
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::Create(),
                  std::make_unique<Level>(filename));
 }
 

@@ -10,12 +10,12 @@ AssetManagerBase<Prefab>::HandleType PrefabManager::Load(const Path& filename,
 }
 
 AssetManagerBase<Prefab>::HandleType PrefabManager::Create() {
-    return this->store(nullptr, UUID::CreateV4(), std::make_unique<Prefab>());
+    return this->store(nullptr, UUIDv4::Create(), std::make_unique<Prefab>());
 }
 
 AssetManagerBase<Prefab>::HandleType PrefabManager::Create(
     const Prefab& value, const Path& filename) {
-    return this->store(&filename, UUID::CreateV4(),
+    return this->store(&filename, UUIDv4::Create(),
                        std::make_unique<Prefab>(value));
 }
 

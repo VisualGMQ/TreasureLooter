@@ -430,15 +430,15 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::stri
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 rapidxml::xml_document<>& doc,
-                                const UUID& payload, const std::string& name) {
+                                const UUIDv4& payload, const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     node->value(doc.allocate_string(payload.ToString().c_str()));
     return node;
 }
 
-void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, UUID& payload) {
-    payload = UUID::CreateFromString(node.value());
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, UUIDv4& payload) {
+    payload = UUIDv4::CreateFromString(node.value());
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,

@@ -76,6 +76,6 @@ ImageHandle ImageManager::Load(const Path& filename, bool force) {
         return it;
     }
 
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::Create(),
                  std::make_unique<Image>(m_renderer, filename));
 }

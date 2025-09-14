@@ -2,6 +2,7 @@
 #include "engine/context.hpp"
 #include "engine/enemy_state.hpp"
 #include "engine/relationship.hpp"
+#include "enet.h"
 
 CharacterMotorContext::CharacterMotorContext(Entity entity)
     : m_entity{entity} {}
@@ -243,6 +244,10 @@ void PlayerMotorContext::Update(TimeType duration) {
     auto& action = CURRENT_CONTEXT.m_input_manager->GetAction("Attack");
     if (action.IsPressed()) {
         Attack();
+
+        constexpr std::string_view msg = "HelloEnet";
+        ENetPacket* packet = enet_packet_create(msg.data(), msg.size() + 1, ENET_PACKET_FLAG_RELIABLE);
+        enet_peer_send(GAME_CONTEXT.m_enet_peer, 0, packet);
     }
 
     Move(axises, duration);

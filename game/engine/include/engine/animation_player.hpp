@@ -130,7 +130,7 @@ public:
 
     void ChangeAnimation(const Path& filename);
     void ChangeAnimation(AnimationHandle);
-    void ChangeAnimation(UUID);
+    void ChangeAnimation(UUIDv4);
     void ClearAnimation();
     bool HasAnimation() const;
 

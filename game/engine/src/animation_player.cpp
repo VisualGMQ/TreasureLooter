@@ -203,7 +203,7 @@ void AnimationPlayer::ChangeAnimation(const Path& filename) {
     ChangeAnimation(animation);
 }
 
-void AnimationPlayer::ChangeAnimation(UUID uuid) {
+void AnimationPlayer::ChangeAnimation(UUIDv4 uuid) {
     auto animation =
         CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().Find(uuid);
     ChangeAnimation(animation);

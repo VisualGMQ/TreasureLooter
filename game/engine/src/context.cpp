@@ -2,6 +2,7 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
+#include "enet.h"
 #include "engine/asset_manager.hpp"
 #include "engine/level.hpp"
 #include "engine/log.hpp"
@@ -13,12 +14,12 @@
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "uuid.h"
-#include "imgui_internal.h"
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -263,6 +264,13 @@ void GameContext::Initialize() {
 
     m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
         GetGameConfig().m_basic_level_asset));
+
+    initNetwork();
+}
+
+void GameContext::Shutdown() {
+    shutdownNetwork();
+    CommonContext::Shutdown();
 }
 
 void GameContext::Update() {
@@ -276,6 +284,7 @@ void GameContext::Update() {
 }
 
 void GameContext::logicUpdate(TimeType elapse) {
+    networkUpdate(elapse);
     m_time->Update();
     m_gamepad_manager->Update();
     m_keyboard->Update();
@@ -310,6 +319,60 @@ void GameContext::renderUpdate(TimeType elapse) {
 
     endImGui();
     m_renderer->Present();
+}
+
+void GameContext::initNetwork() {
+    if (enet_initialize() != 0) {
+        LOGE("initialize enet failed!");
+    }
+
+    m_enet_host = enet_host_create(nullptr, 1, 2, 0, 0);
+    if (!m_enet_host) {
+        LOGE("enet host create failed");
+    }
+
+    ENetAddress address;
+    enet_address_set_host(&address, "127.0.0.1");
+    address.port = 1234;
+    m_enet_peer = enet_host_connect(m_enet_host, &address, 2, 0);
+    if (!m_enet_peer) {
+        LOGE("connect to server failed");
+    }
+}
+
+void GameContext::shutdownNetwork() {
+    enet_peer_disconnect(m_enet_peer, 0);
+    ENetEvent event;
+    bool disconnect_success = false;
+    while (enet_host_service(m_enet_host, &event, 3000) > 0) {
+        switch (event.type) {
+            case ENET_EVENT_TYPE_DISCONNECT:
+                puts("disconnection succeeded.");
+                disconnect_success = true;
+                break;
+        }
+    }
+
+    if (!disconnect_success) {
+        enet_peer_reset(m_enet_peer);
+    }
+    enet_host_destroy(m_enet_host);
+    enet_deinitialize();
+}
+
+void GameContext::networkUpdate(TimeType elapse) {
+    ENetEvent event;
+    if (enet_host_service(m_enet_host, &event, 10) > 0) {
+        if (event.type == ENET_EVENT_TYPE_CONNECT) {
+            LOGI("connect to server");
+        } else if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
+            LOGI("disconnect to server");
+        } else if (event.type == ENET_EVENT_TYPE_DISCONNECT_TIMEOUT) {
+            LOGI("server timeout");
+        } else if (event.type == ENET_EVENT_TYPE_RECEIVE) {
+            LOGI("received {}", (char*)event.data);
+        }
+    }
 }
 
 GameContext::~GameContext() {}

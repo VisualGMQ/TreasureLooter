@@ -32,6 +32,11 @@ class AssetsManager;
 class Level;
 struct GameConfig;
 
+struct _ENetPeer;
+struct _ENetHost;
+using ENetPeer = _ENetPeer;
+using ENetHost = _ENetHost;
+
 class CommonContext {
 public:
     static void ChangeContext(CommonContext&);
@@ -102,12 +107,12 @@ protected:
     void beginImGui();
     void endImGui();
     class ImGuiContext* m_imgui_context{};
+    bool m_should_exit = true;
+    bool m_is_inited = false;
 
 private:
     static CommonContext* m_current_context;
 
-    bool m_should_exit = true;
-    bool m_is_inited = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
     GameConfig m_game_config;
 
@@ -128,8 +133,12 @@ public:
     ~GameContext() override;
 
     void Initialize() override;
+    void Shutdown() override;
 
     void Update() override;
+
+    ENetPeer* m_enet_peer{};
+    ENetHost* m_enet_host{};
 
 private:
     static std::unique_ptr<GameContext> instance;
@@ -137,6 +146,9 @@ private:
     void logicUpdate(TimeType elapse);
     void logicPostUpdate(TimeType elapse);
     void renderUpdate(TimeType elapse);
+    void initNetwork();
+    void shutdownNetwork();
+    void networkUpdate(TimeType elapse);
 
     GameContext() = default;
 };

@@ -4,17 +4,17 @@
 #include <cstddef>
 #include <string>
 
-struct UUID {
-    friend class std::hash<UUID>;
+struct UUIDv4 {
+    friend class std::hash<UUIDv4>;
 
-    static UUID CreateV4();
-    static UUID CreateFromString(const std::string &);
+    static UUIDv4 Create();
+    static UUIDv4 CreateFromString(const std::string &);
 
-    UUID();
+    UUIDv4();
 
     operator bool() const;
-    bool operator==(UUID const &) const;
-    bool operator!=(UUID const &) const;
+    bool operator==(UUIDv4 const &) const;
+    bool operator!=(UUIDv4 const &) const;
 
     std::string ToString() const;
 
@@ -22,12 +22,12 @@ private:
     std::array<std::byte, 16> m_data;
 };
 
-std::ostream &operator<<(std::ostream &o, const UUID &uuid);
+std::ostream &operator<<(std::ostream &o, const UUIDv4 &uuid);
 
 namespace std {
 template <>
-struct hash<UUID> {
-    using argument_type = UUID;
+struct hash<UUIDv4> {
+    using argument_type = UUIDv4;
     using result_type = std::size_t;
 
     [[nodiscard]] result_type operator()(

@@ -1,11 +1,10 @@
 ﻿#pragma once
 #include "handle.hpp"
 
+#include "uuid.hpp"
 #include "asset.hpp"
 #include "log.hpp"
 #include "path.hpp"
-#include "type_index.hpp"
-#include "uuid.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -41,20 +40,20 @@ public:
         return nullptr;
     }
 
-    HandleType Find(UUID uuid) {
+    HandleType Find(UUIDv4 uuid) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             return {it->first, it->second.get(), this};
         }
         return nullptr;
     }
 
-    void Replace(UUID uuid, T&& payload) {
+    void Replace(UUIDv4 uuid, T&& payload) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             *it->second = std::move(payload);
         }
     }
 
-    void Reload(UUID uuid) {
+    void Reload(UUIDv4 uuid) {
         if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
             Load(it->second, true);
         }
@@ -66,7 +65,7 @@ public:
         }
     }
 
-    HandleType Replace(UUID uuid, const T& payload) {
+    HandleType Replace(UUIDv4 uuid, const T& payload) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             *it->second = payload;
             return HandleType{it->first, it->second.get(), this};
@@ -78,11 +77,11 @@ public:
         return m_paths_uuid_map.find(filename) != m_paths_uuid_map.end();
     }
 
-    bool IsExists(const UUID& uuid) const override {
+    bool IsExists(const UUIDv4& uuid) const override {
         return m_payloads.find(uuid) != m_payloads.end();
     }
 
-    const Path* GetFilename(const UUID& uuid) const override {
+    const Path* GetFilename(const UUIDv4& uuid) const override {
         if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
             return &it->second;
         }
@@ -90,7 +89,7 @@ public:
     }
 
 protected:
-    HandleType store(const Path* filename, UUID uuid,
+    HandleType store(const Path* filename, UUIDv4 uuid,
                      std::unique_ptr<T>&& payload) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             it->second.reset();
@@ -108,9 +107,9 @@ protected:
     }
 
 private:
-    std::unordered_map<UUID, std::unique_ptr<T>> m_payloads;
-    std::unordered_map<Path, UUID> m_paths_uuid_map;
-    std::unordered_map<UUID, Path> m_uuid_path_map;
+    std::unordered_map<UUIDv4, std::unique_ptr<T>> m_payloads;
+    std::unordered_map<Path, UUIDv4> m_paths_uuid_map;
+    std::unordered_map<UUIDv4, Path> m_uuid_path_map;
 };
 
 template <typename T>
@@ -129,11 +128,11 @@ public:
     }
 
     HandleType Create() {
-        return this->store(nullptr, UUID::CreateV4(), std::make_unique<T>());
+        return this->store(nullptr, UUIDv4::Create(), std::make_unique<T>());
     }
 
     HandleType Create(const T& value, const Path& filename) {
-        return this->store(&filename, UUID::CreateV4(),
+        return this->store(&filename, UUIDv4::Create(),
                            std::make_unique<T>(value));
     }
 };
