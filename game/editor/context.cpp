@@ -215,15 +215,11 @@ void EditorContext::showMainMenu() {
                 auto files = dialog.GetSelectedFiles();
                 if (!files.empty()) {
                     auto& filename = files.front();
-                    auto final_filename = AppendExtension(
+                    AppendExtension(
                         filename,
                         AssetInfoManager::GetExtension<LevelContent>().data());
-                    auto new_level_handle = CURRENT_CONTEXT.m_assets_manager
-                                                ->GetManager<LevelContent>()
-                                                .Create({}, final_filename);
-                    SaveAsVariantAsset(new_level_handle, final_filename);
                     LevelHandle level =
-                        EDITOR_CONTEXT.m_level_manager->Load(final_filename);
+                        EDITOR_CONTEXT.m_level_manager->Load(filename);
                     EDITOR_CONTEXT.m_level_manager->Switch(level);
                 }
             }
@@ -279,7 +275,6 @@ void EditorContext::showMainMenu() {
                     auto relationship =
                         EDITOR_CONTEXT.m_relationship_manager->Get(root);
                     relationship->m_children.push_back(entity);
-                    m_entity_prefab_component->RegisterEntity(entity, handle);
                 } else {
                     LOGE("no level");
                 }

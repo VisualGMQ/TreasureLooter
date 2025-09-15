@@ -6,21 +6,7 @@
 #include "engine/renderer.hpp"
 #include "schema/relationship.hpp"
 #include "engine/text.hpp"
-
-enum class UIAnchor {
-    Center = 0,
-    Left = 0x01,
-    Right = 0x02,
-    Top = 0x04,
-    Bottom = 0x08,
-};
-
-enum class UIType {
-    Text,
-    Button,
-    Panel,
-    Table
-};
+#include "schema/ui_config.hpp"
 
 class UIWidget {
 public:
@@ -93,6 +79,8 @@ public:
     ImageHandle m_image;
     Image9Grid m_image_9grid;
     UIText m_text;
+    Vec2 m_margin{16, 16};
+    bool m_fit_text{false};
 
     void HandleEvent() override;
     void UpdateTransform(Transform&, const Relationship*) override;

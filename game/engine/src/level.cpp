@@ -25,6 +25,43 @@ void Level::OnEnter() {
     if (!m_inited) {
         m_inited = false;
     }
+
+    // ui test
+    if (0) {
+        auto ui_root = GetUIRootEntity();
+        Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(ui_root);
+
+        Entity entity = CURRENT_CONTEXT.CreateEntity();
+        relationship->m_children.push_back(entity);
+        UIText text;
+        FontHandle font = CURRENT_CONTEXT.m_assets_manager->GetManager<Font>().Load("assets/fonts/zpix.ttf");
+        text.SetFont(font);
+        text.ChangeTextPt(16);
+        text.ChangeText("Hello UI");
+        text.m_resize_by_text = true;
+        CURRENT_CONTEXT.m_transform_manager->RegisterEntity(entity);
+        CURRENT_CONTEXT.m_ui_manager->RegisterEntityByDerive<UIText>(entity, std::move(text));
+    }
+    {
+        auto ui_root = GetUIRootEntity();
+        Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(ui_root);
+
+        Entity entity = CURRENT_CONTEXT.CreateEntity();
+        relationship->m_children.push_back(entity);
+
+        UIButton button;
+        FontHandle font = CURRENT_CONTEXT.m_assets_manager->GetManager<Font>().Load("assets/fonts/zpix.ttf");
+        button.m_text.SetFont(font);
+        button.m_text.ChangeTextPt(16);
+        button.m_text.ChangeText("Hello UI");
+        button.m_text.m_resize_by_text = true;
+
+        button.m_background_color = Color::Green;
+        button.m_border_color = Color::Black;
+        button.m_fit_text = true;
+        CURRENT_CONTEXT.m_transform_manager->RegisterEntity(entity);
+        CURRENT_CONTEXT.m_ui_manager->RegisterEntityByDerive<UIButton>(entity, std::move(button));
+    }
 }
 
 void Level::OnQuit() {

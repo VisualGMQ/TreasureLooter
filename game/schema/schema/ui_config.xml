@@ -1,0 +1,21 @@
+<schema>
+    <enum name = "UIType">
+        <item name="Unknown"/>
+        <item name="Text"/>
+        <item name="Button"/>
+        <item name="Panel"/>
+        <item name="Table"/>
+    </enum>
+    
+    <enum name="UIAnchor">
+        <item name="Center" value="0"/>
+        <item name="Left"   value="0x01"/>
+        <item name="Right"  value="0x02"/>
+        <item name="Top"    value="0x04"/>
+        <item name="Bottom" value="0x08"/>
+    </enum>
+    
+    <asset name = "UIWidgetInfo" extension=".ui">
+        <element name="type"  type="UIType" default="UIType::Unknown"/>
+    </asset>
+</schema>

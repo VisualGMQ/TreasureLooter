@@ -26,7 +26,7 @@ public:
     bool IsRunningGame() const;
 
     std::unique_ptr<EntityPrefabComponent> m_entity_prefab_component;
-
+    
 private:
     static std::unique_ptr<EditorContext> instance;
     Path m_project_path;

@@ -47,10 +47,7 @@ public:
     Entity GetWeaponEntity() const;
 
     void Attack();
-
-protected:
-    Entity m_entity = null_entity;
-    Entity m_weapon_entity = null_entity;
+    
     ImageHandle m_faceset_image;
     ImageHandle m_sprite_sheet;
     CharacterDirection m_direction;
@@ -58,12 +55,16 @@ protected:
     AnimationHandle m_move_right_animation;
     AnimationHandle m_move_up_animation;
     AnimationHandle m_move_down_animation;
+    float m_move_speed{20};
 
+protected:
+    Entity m_entity = null_entity;
+    Entity m_weapon_entity = null_entity;
+    
     Transform* m_transform{};
     AnimationPlayer* m_move_animation{};
     CharacterController* m_cct{};
     Sprite* m_sprite{};
-    float m_move_speed{20};
     Vec2 m_weapon_dir = Vec2::X_UNIT;
 };
 

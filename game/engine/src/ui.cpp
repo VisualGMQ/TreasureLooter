@@ -109,7 +109,9 @@ void UIText::regenerateText() {
         Image{*CURRENT_CONTEXT.m_renderer, m_font->GenerateText(m_text, m_color)};
 }
 
-UIButton::UIButton() : UIWidget(UIType::Button) {}
+UIButton::UIButton() : UIWidget(UIType::Button) {
+    m_text.m_resize_by_text = true;
+}
 
 void UIButton::HandleEvent() {
     // TODO: not finish
@@ -118,21 +120,20 @@ void UIButton::HandleEvent() {
 void UIButton::UpdateTransform(Transform&, const Relationship*) {}
 
 void UIButton::UpdateSize(Vec2& size) {
+    if (!m_fit_text) {
+        return;
+    }
+    
     Vec2 text_size;
     m_text.UpdateSize(text_size);
-    Vec2 image_size;
-    if (m_image) {
-        image_size = m_image->GetSize();
-    }
 
-    size.w = std::max(text_size.w, image_size.w);
-    size.h = std::max(text_size.h, image_size.h);
+    size = text_size + m_margin * 2.0;
 }
 
 void UIButton::render(const Transform& transform, Renderer& renderer) {
     Rect rect;
-    rect.m_center = transform.m_position;
     rect.m_half_size = transform.m_size * 0.5;
+    rect.m_center = transform.m_position + rect.m_half_size;
 
     renderer.FillRect(rect, m_background_color, false);
     if (m_image) {
