@@ -25,21 +25,6 @@ void Level::OnEnter() {
     if (!m_inited) {
         m_inited = false;
     }
-
-    ////////// test for UI ///////////
-    auto entity = GetUIRootEntity();
-    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-
-    auto text_entity = CURRENT_CONTEXT.CreateEntity();
-    UIText text;
-    text.m_align = UITextAlign::Center;
-    text.m_resize_by_text = true;
-    text.m_color = Color::Black;
-    text.SetFont(CURRENT_CONTEXT.GetGameConfig().m_default_font);
-    text.ChangeText("hello ui");
-    CURRENT_CONTEXT.m_ui_manager->RegisterEntityByDerive<UIText>(text_entity, std::move(text));
-    CURRENT_CONTEXT.m_transform_manager->RegisterEntity(text_entity);
-    relationship->m_children.push_back(text_entity);
 }
 
 void Level::OnQuit() {

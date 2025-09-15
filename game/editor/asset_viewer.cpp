@@ -58,8 +58,9 @@ private:
             auto& filenames = file_dialog.GetSelectedFiles();
             if (!filenames.empty()) {
                 out_path = AppendExtension(filenames[0], filter.pattern);
-                EDITOR_CONTEXT.m_assets_manager->GetManager<T>().Create(
+                auto handle = EDITOR_CONTEXT.m_assets_manager->GetManager<T>().Create(
                     {}, out_path);
+                SaveAsVariantAsset(handle, out_path);
             }
         }
     }

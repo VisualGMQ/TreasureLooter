@@ -118,9 +118,15 @@ void UIButton::HandleEvent() {
 void UIButton::UpdateTransform(Transform&, const Relationship*) {}
 
 void UIButton::UpdateSize(Vec2& size) {
+    Vec2 text_size;
+    m_text.UpdateSize(text_size);
+    Vec2 image_size;
     if (m_image) {
-        size = m_image->GetSize();
+        image_size = m_image->GetSize();
     }
+
+    size.w = std::max(text_size.w, image_size.w);
+    size.h = std::max(text_size.h, image_size.h);
 }
 
 void UIButton::render(const Transform& transform, Renderer& renderer) {
@@ -145,6 +151,8 @@ void UIButton::render(const Transform& transform, Renderer& renderer) {
         }
     }
     renderer.DrawRect(rect, m_border_color, false);
+
+    m_text.Render(transform, renderer);
 }
 
 void UIComponentManager::Update() {

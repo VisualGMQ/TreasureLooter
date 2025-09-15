@@ -92,6 +92,7 @@ public:
     Color m_border_color = {0, 0, 0, 1};
     ImageHandle m_image;
     Image9Grid m_image_9grid;
+    UIText m_text;
 
     void HandleEvent() override;
     void UpdateTransform(Transform&, const Relationship*) override;

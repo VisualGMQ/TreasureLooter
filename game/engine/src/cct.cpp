@@ -122,8 +122,16 @@ void CharacterController::SetSkin(float skin) {
     m_skin = skin;
 }
 
+float CharacterController::GetSkin() const {
+    return m_skin;
+}
+
 void CharacterController::SetMinDisp(float disp) {
     m_min_disp = disp;
+}
+
+float CharacterController::GetMinDisp() const {
+    return m_min_disp;
 }
 
 void CharacterController::Teleport(const Vec2& pos) {

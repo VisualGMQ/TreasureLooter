@@ -16,3 +16,6 @@ VariantAsset LoadVariantAsset(const Path& filename);
 
 Path AppendExtension(const Path& path, const std::string& extension);
 
+void SaveEntity(Entity entity);
+
+class EntityPrefabComponent: public ComponentManager<PrefabHandle> {};

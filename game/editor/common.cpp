@@ -2,6 +2,7 @@
 
 #include "context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/relationship.hpp"
 #include "schema/serialize/serialize.hpp"
 
 namespace internal {
@@ -73,4 +74,73 @@ Path AppendExtension(const Path& path, const std::string& extension) {
     }
 
     return filename;
+}
+
+void SaveEntity(Entity entity) {
+    PrefabHandle prefab_handle = EDITOR_CONTEXT.m_entity_prefab_component->Get(entity);
+    if (!prefab_handle) {
+        LOGE("entity not has related prefab");
+        return;
+    }
+
+    if (auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity)) {
+        prefab_handle->m_transform = *transform;
+    }
+
+    if (auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity)) {
+        for (auto child : relationship->m_children) {
+            PrefabHandle child_prefab = EDITOR_CONTEXT.m_entity_prefab_component->Get(child);
+            if (!child_prefab) {
+                LOGE("entity not has related prefab");
+                continue;
+            }
+            prefab_handle->m_children.push_back(child_prefab);
+        }
+    }
+
+    if (auto sprite = CURRENT_CONTEXT.m_sprite_manager->Get(entity)) {
+        prefab_handle->m_sprite = *sprite;
+    }
+
+    if (auto animator = CURRENT_CONTEXT.m_animation_player_manager->Get(entity)) {
+        AnimationPlayerCreateInfo create_info;
+        create_info.m_auto_play = animator->IsAutoPlayEnabled();
+        create_info.m_loop = animator->GetLoopCount();
+        create_info.m_rate = animator->GetRate();
+        create_info.m_animation = animator->GetAnimation();
+        
+        prefab_handle->m_animation  = create_info;
+    }
+
+    if (auto cct = CURRENT_CONTEXT.m_cct_manager->Get(entity)) {
+        CCT prefab_cct;
+        prefab_cct.m_min_disp = cct->GetMinDisp();
+        prefab_cct.m_skin = cct->GetSkin();
+        
+        // TODO: 
+        prefab_cct.m_physics_actor = prefab_handle->m_cct->m_physics_actor;
+        
+        prefab_handle->m_cct = prefab_cct; 
+    }
+
+    if (auto trigger = CURRENT_CONTEXT.m_trigger_component_manager->Get(entity)) {
+        TriggerInfo trigger_info;
+        trigger_info.m_event_type = trigger->GetEventType();
+        trigger_info.m_trig_every_frame_when_touch = trigger->IsTriggerEveryFrameWhenTouch();
+        trigger_info.m_physics_actor = prefab_handle->m_cct->m_physics_actor;
+        prefab_handle->m_trigger = trigger_info;
+    }
+
+    if (auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity)) {
+        MotorConfig config;
+        config.
+        prefab_handle->m_motor_config = config;
+    }
+
+    if (auto tilemap = CURRENT_CONTEXT.m_tilemap_component_manager->Get(entity)) {
+        TilemapInfo tilemap_info;
+        tilemap_info.m_tilemap = tilemap->GetHandle();
+        tilemap_info.m_position = {}; // TODO
+        prefab_handle->m_tilemap = tilemap_info;
+    }
 }
