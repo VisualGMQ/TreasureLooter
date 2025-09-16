@@ -15,6 +15,10 @@ struct Image9Grid {
     float right = 0;
     float top = 0;
     float bottom = 0;
+
+    operator bool() const noexcept {
+        return (left == 0 && right == 0) || (top == 0 && bottom == 0);
+    }
 };
 
 class Renderer {
