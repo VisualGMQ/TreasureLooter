@@ -44,19 +44,25 @@ private:
 class UILayer {
 public:
     virtual ~UILayer() = default;
-    
-    virtual void UpdateSize(const Transform& transform,
-                            Relationship& relatioship) = 0;
+
+    virtual void UpdateSize(const Transform& old_transform,
+                            const Transform& new_transform,
+                            const Relationship& relationship) = 0;
+    virtual void UpdatePosition(const Transform& old_transform,
+                                const Transform& new_transform,
+                                const Relationship& relationship) = 0;
 
     Vec2 m_margin;
     Vec2 m_padding;
 };
 
-/**
-* @brief don't layout child, only a container
-*/
 struct UIPanelComponent : public UILayer {
-    void UpdateSize(const Transform& transform, Relationship& relatioship) override {}
+    void UpdateSize(const Transform& old_transform,
+                    const Transform& new_transform,
+                    const Relationship& relationship) override;
+    void UpdatePosition(const Transform& old_transform,
+                        const Transform& new_transform,
+                        const Relationship& relationship) override;
 };
 
 enum class UIBoxPanelType {
@@ -64,12 +70,22 @@ enum class UIBoxPanelType {
     Horizontal,
 };
 
-class UIBoxPanelComponent : public UIPanelComponent {
-public:
+struct UIBoxPanelComponent : public UIPanelComponent {
     UIBoxPanelType m_type = UIBoxPanelType::Vertical;
     float m_spacing = 0.0;
 
-    void UpdateSize(const Transform& transform, Relationship& relatioship) override;
+    void UpdateSize(const Transform& old_transform,
+                    const Transform& new_transform,
+                    const Relationship& relationship) override;
+    void UpdatePosition(const Transform& old_transform,
+                        const Transform& new_transform,
+                        const Relationship& relationship) override;
+};
+
+class UIGridPanelComponent : public UIPanelComponent {
+public:
+    Vec2UI m_grid_count;
+    Vec2 m_spacing;
 };
 
 struct UITheme {
@@ -87,6 +103,8 @@ enum class UIState {
 };
 
 struct UIWidget {
+    friend class UIComponentManager;
+    
     Flags<UIAnchor> m_anchor = UIAnchor::Center;
     bool m_use_clip = false;
 
@@ -98,9 +116,9 @@ struct UIWidget {
     std::unique_ptr<UITheme> m_down_theme;
 
     UIState m_state = UIState::Normal;
-    Vec2 m_unscale_position;
 
-    explicit UIWidget(const Vec2& position);
+private:
+    Transform m_old_transform;
 };
 
 class UIComponentManager : public ComponentManager<UIWidget> {
@@ -110,7 +128,7 @@ public:
 
 private:
     void updateSize(Entity);
-    void updateTransform(Entity, bool need_scale_position);
+    void updateTransform(Entity);
     void handleEvent(Entity);
     void render(Renderer&, Entity);
 };

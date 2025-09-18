@@ -50,10 +50,106 @@ void UIText::regenerateText() {
               m_font->GenerateText(m_text, m_color)};
 }
 
-void UIBoxPanelComponent::UpdateSize(const Transform& transform,
-                                     Relationship& relationship) {
-    Vec2 start_position = transform.m_position + m_padding;
-    Vec2 ceil_size = transform.m_size - (m_margin + m_padding) * 2.0;
+void UIPanelComponent::UpdateSize(const Transform& old_transform,
+                                  const Transform& new_transform,
+                                  const Relationship& relationship) {
+    if (old_transform.m_size == new_transform.m_size) {
+        return;
+    }
+
+    for (auto child : relationship.m_children) {
+        Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(child);
+        UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
+
+        if (!transform || !child_ui) {
+            continue;
+        }
+
+        if (child_ui->m_anchor == UIAnchor::None || child_ui->m_anchor ==
+            UIAnchor::Center) {
+            continue;
+        }
+
+        if (child_ui->m_anchor & UIAnchor::Left && child_ui->m_anchor &
+            UIAnchor::Right) {
+            assert(new_transform.m_size.w != 0);
+            transform->m_size.w *= old_transform.m_size.w / new_transform.m_size
+                .w;
+        }
+
+        if (child_ui->m_anchor & UIAnchor::Top && child_ui->m_anchor &
+            UIAnchor::Bottom) {
+            assert(new_transform.m_size.h != 0);
+            transform->m_size.h *= new_transform.m_size.h / old_transform.
+                m_size.h;
+        }
+    }
+}
+
+void UIPanelComponent::UpdatePosition(const Transform& old_transform,
+                                      const Transform& new_transform,
+                                      const Relationship& relationship) {
+    if (old_transform.m_size == new_transform.m_size) {
+        return;
+    }
+    for (auto child : relationship.m_children) {
+        Transform* child_transform = CURRENT_CONTEXT.m_transform_manager->
+            Get(child);
+        UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
+
+        if (!child_transform || !child_ui) {
+            continue;
+        }
+
+        if (child_ui->m_anchor == UIAnchor::None) {
+            continue;
+        }
+
+        if (child_ui->m_anchor == UIAnchor::Center) {
+            Vec2 offset = child_transform->m_position - (old_transform.
+                              m_position + old_transform.m_size * 0.5);
+            child_transform->m_position =
+                new_transform.m_position + new_transform.m_size * 0.5 + offset;
+            continue;
+        }
+
+        if (child_ui->m_anchor & UIAnchor::Left) {
+            float offset = child_transform->m_position.x - old_transform.
+                           m_position.x;
+            child_transform->m_position.x = new_transform.m_position.x + offset;
+        }
+        if (child_ui->m_anchor & UIAnchor::Right) {
+            float offset = child_transform->m_position.x - (
+                               old_transform.m_position.x + old_transform.m_size
+                               .w);
+            child_transform->m_position.x =
+                new_transform.m_position.x + new_transform.m_size.w + offset;
+        }
+
+        if (child_ui->m_anchor & UIAnchor::Top) {
+            float offset = child_transform->m_position.y - old_transform.
+                           m_position.x;
+            child_transform->m_position.y = new_transform.m_position.y + offset;
+        }
+
+        if (child_ui->m_anchor & UIAnchor::Bottom) {
+            float offset = child_transform->m_position.y - (
+                               old_transform.m_position.y + old_transform.m_size
+                               .h);
+            child_transform->m_position.y =
+                new_transform.m_position.y + new_transform.m_size.h + offset;
+        }
+    }
+}
+
+void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
+                                     const Transform& new_transform,
+                                     const Relationship& relationship) {
+    if (old_transform == new_transform) {
+        return;
+    }
+
+    Vec2 ceil_size = new_transform.m_size - m_padding * 2.0;
     float totle_spacing = m_spacing * std::max(
                               (int)relationship.m_children.size() - 1, 0);
     if (m_type == UIBoxPanelType::Vertical) {
@@ -72,19 +168,37 @@ void UIBoxPanelComponent::UpdateSize(const Transform& transform,
         }
 
         child_transform->m_size = ceil_size;
-
-        if (m_type == UIBoxPanelType::Vertical) {
-            child_transform->m_position =
-                start_position + (ceil_size + Vec2{0, m_spacing}) * i;
-        } else {
-            child_transform->m_position =
-                start_position + (ceil_size + Vec2{m_spacing, 0}) * i;
-        }
     }
 }
 
-UIWidget::UIWidget(const Vec2& position) {
-    m_unscale_position = position;
+void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
+                                         const Transform& new_transform,
+                                         const Relationship& relationship) {
+    if (old_transform == new_transform) {
+        return;
+    }
+
+    Vec2 start_position = new_transform.m_position + m_padding;
+
+    for (int i = 0; i < relationship.m_children.size(); i++) {
+        Entity entity = relationship.m_children[i];
+        UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(entity);
+        Transform* child_transform = CURRENT_CONTEXT.m_transform_manager->
+            Get(entity);
+        if (!child_transform || !ui) {
+            continue;
+        }
+
+        if (m_type == UIBoxPanelType::Vertical) {
+            child_transform->m_position =
+                start_position + (child_transform->m_size + Vec2{0, m_spacing})
+                * i;
+        } else {
+            child_transform->m_position =
+                start_position + (child_transform->m_size + Vec2{m_spacing, 0})
+                * i;
+        }
+    }
 }
 
 void UIComponentManager::Update() {
@@ -98,11 +212,11 @@ void UIComponentManager::Update() {
         CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
 
     for (auto child : relationship->m_children) {
-        updateTransform(child, true);
+        updateSize(child);
     }
 
     for (auto child : relationship->m_children) {
-        updateSize(child);
+        updateTransform(child);
     }
 }
 
@@ -126,16 +240,12 @@ void UIComponentManager::updateSize(Entity entity) {
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
-    if (!transform || !ui) {
+    if (!transform || !ui || !relationship) {
         return;
     }
 
     if (ui->m_panel) {
-        ui->m_panel->UpdateSize(*transform, *relationship);
-    }
-
-    if (!relationship) {
-        return;
+        ui->m_panel->UpdateSize(ui->m_old_transform, *transform, *relationship);
     }
 
     for (auto child : relationship->m_children) {
@@ -143,67 +253,29 @@ void UIComponentManager::updateSize(Entity entity) {
     }
 }
 
-void UIComponentManager::updateTransform(Entity entity,
-                                         bool need_scale_position) {
+void UIComponentManager::updateTransform(Entity entity) {
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     auto ui = Get(entity);
+    auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
 
-    if (need_scale_position) {
-        auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
-
-        if (!transform || !ui) {
-            return;
-        }
-
-        Vec2 logic_size(CURRENT_CONTEXT.GetGameConfig().m_logic_size.x,
-                        CURRENT_CONTEXT.GetGameConfig().m_logic_size.y);
-        Vec2 window_size = logic_size;
-        if (&CURRENT_CONTEXT == &GAME_CONTEXT) {
-            window_size = GAME_CONTEXT.m_window->GetWindowSize();
-        }
-        auto anchor = ui->m_anchor;
-        if ((anchor & UIAnchor::Left && anchor & UIAnchor::Right) ||
-            (anchor & UIAnchor::Top && anchor & UIAnchor::Bottom)) {
-            LOGE("invalid ui anchor");
-        }
-
-        Vec2 position_offset_scale = window_size / logic_size;
-        Vec2 anchor_offset;
-
-        if (anchor & UIAnchor::Left) {
-            anchor_offset.x = ui->m_unscale_position.x;
-        } else if (anchor & UIAnchor::Right) {
-            anchor_offset.x = logic_size.w - ui->m_unscale_position.x;
-        }
-
-        if (anchor & UIAnchor::Top) {
-            anchor_offset.y = ui->m_unscale_position.y;
-        } else if (anchor & UIAnchor::Bottom) {
-            anchor_offset.y = logic_size.h - ui->m_unscale_position.y;
-        }
-
-        anchor_offset = anchor_offset * position_offset_scale;
-
-        if (anchor & UIAnchor::Left) {
-            transform->m_position.x = anchor_offset.x;
-        } else if (anchor & UIAnchor::Right) {
-            transform->m_position.x = window_size.w - anchor_offset.x;
-        }
-
-        if (anchor & UIAnchor::Top) {
-            transform->m_position.y = anchor_offset.y;
-        } else if (anchor & UIAnchor::Bottom) {
-            transform->m_position.y = window_size.h - anchor_offset.y;
-        }
+    if (!transform || !ui) {
+        return;
     }
 
     if (!relationship) {
         return;
     }
 
-    for (auto child : relationship->m_children) {
-        updateTransform(child, ui && ui->m_panel != nullptr);
+    if (ui->m_panel) {
+        ui->m_panel->UpdatePosition(ui->m_old_transform, *transform,
+                                    *relationship);
     }
+
+    for (auto child : relationship->m_children) {
+        updateTransform(child);
+    }
+
+    ui->m_old_transform = *transform;
 }
 
 void UIComponentManager::handleEvent(Entity) {
@@ -245,11 +317,13 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
 
     if (ui->m_panel) {
         if (theme->m_image) {
+            Region src;
+            src.m_size = theme->m_image->GetSize();
             if (theme->m_image_9grid) {
-                renderer.DrawImage9Grid(*theme->m_image, {}, dst,
+                renderer.DrawImage9Grid(*theme->m_image, src, dst,
                                         theme->m_image_9grid, false);
             } else {
-                renderer.DrawImage(*theme->m_image, {}, dst, 0, {}, Flip::None,
+                renderer.DrawImage(*theme->m_image, src, dst, 0, {}, Flip::None,
                                    false);
             }
         } else {
@@ -280,12 +354,10 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
 
         Image& image = ui->m_text->GetTextImage();
         image.ChangeColorMask(theme->m_foreground_color);
-        renderer.DrawImage(image,
-                           {
-                               {0, 0},
-                               transform->m_size
-                           },
-                           region, 0, Vec2::ZERO, Flip::None, false);
+        Region src;
+        src.m_size = image.GetSize();
+        renderer.DrawImage(image, src, region, 0, Vec2::ZERO, Flip::None,
+                           false);
         image.ChangeColorMask(Color::White);
     }
 

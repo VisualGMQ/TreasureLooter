@@ -449,6 +449,14 @@ struct Transform {
 
     void UpdateMat(const Transform *parent);
 
+    bool operator==(const Transform& o) const noexcept {
+        return m_position == o.m_position && m_rotation == o.m_rotation && m_size == o.m_size;
+    }
+    
+    bool operator!=(const Transform& o) const noexcept {
+        return !(*this == o);
+    }
+
 private:
     Mat33 m_mat;
     Mat33 m_global_mat;
