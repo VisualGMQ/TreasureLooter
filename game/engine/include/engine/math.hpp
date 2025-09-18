@@ -439,9 +439,11 @@ struct Transform {
     Degrees m_rotation;  // UI and tilemap will ignore this
 
     union {
-        Vec2 m_size{1.0, 1.0};  // when entity is UI, use size
+        Vec2 m_size;  // when entity is UI, use size
         Vec2 m_scale;           // otherwise, use scale
     };
+
+    Transform();
 
     const Mat33 &GetLocalMat() const;
 
