@@ -117,6 +117,8 @@ struct UIWidget {
 
     UIState m_state = UIState::Normal;
 
+    UIWidget();
+
 private:
     Transform m_old_transform;
 };

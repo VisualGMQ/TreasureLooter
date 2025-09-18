@@ -152,6 +152,18 @@ void CommonContext::HandleEvents(const SDL_Event& event) {
                event.type == SDL_EVENT_FINGER_MOTION ||
                event.type == SDL_EVENT_FINGER_CANCELED) {
         m_touches->HandleEvent(event.tfinger);
+    } else if (event.type == SDL_EVENT_WINDOW_RESIZED ||
+               event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
+               event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
+        if (m_level_manager && event.window.windowID == m_window->GetID()) {
+            LevelHandle level = m_level_manager->GetCurrentLevel();
+            if (level) {
+                Entity entity = level->GetUIRootEntity();
+                Transform* transform = m_transform_manager->Get(entity);
+                transform->m_size.w = event.window.data1;
+                transform->m_size.h = event.window.data2;
+            }
+        }
     }
     m_gamepad_manager->HandleEvent(event);
     m_mouse->HandleEvent(event);
