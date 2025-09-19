@@ -47,22 +47,23 @@ public:
 
     virtual void UpdateSize(const Transform& old_transform,
                             const Transform& new_transform,
-                            const Relationship& relationship) = 0;
+                            const Relationship& relationship,
+                            const UIWidget& ui) = 0;
     virtual void UpdatePosition(const Transform& old_transform,
                                 const Transform& new_transform,
-                                const Relationship& relationship) = 0;
-
-    Vec2 m_margin;
-    Vec2 m_padding;
+                                const Relationship& relationship,
+                                const UIWidget& ui) = 0;
 };
 
 struct UIPanelComponent : public UILayer {
     void UpdateSize(const Transform& old_transform,
                     const Transform& new_transform,
-                    const Relationship& relationship) override;
+                    const Relationship& relationship,
+                    const UIWidget& ui) override;
     void UpdatePosition(const Transform& old_transform,
                         const Transform& new_transform,
-                        const Relationship& relationship) override;
+                        const Relationship& relationship,
+                        const UIWidget& ui) override;
 };
 
 enum class UIBoxPanelType {
@@ -76,10 +77,12 @@ struct UIBoxPanelComponent : public UIPanelComponent {
 
     void UpdateSize(const Transform& old_transform,
                     const Transform& new_transform,
-                    const Relationship& relationship) override;
+                    const Relationship& relationship,
+                    const UIWidget& ui) override;
     void UpdatePosition(const Transform& old_transform,
                         const Transform& new_transform,
-                        const Relationship& relationship) override;
+                        const Relationship& relationship,
+                        const UIWidget& ui) override;
 };
 
 class UIGridPanelComponent : public UIPanelComponent {
@@ -116,6 +119,8 @@ struct UIWidget {
     std::unique_ptr<UITheme> m_down_theme;
 
     UIState m_state = UIState::Normal;
+    Vec2 m_margin;
+    Vec2 m_padding;
 
     UIWidget();
 

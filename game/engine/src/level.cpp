@@ -25,27 +25,31 @@ void Level::OnEnter() {
     if (!m_inited) {
         m_inited = false;
     }
+    Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(GetUIRootEntity());
+    transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
 
     // Test
-    Entity entity = CURRENT_CONTEXT.CreateEntity();
-    CURRENT_CONTEXT.m_transform_manager->RegisterEntity(entity);
-    Transform& transform = *CURRENT_CONTEXT.m_transform_manager->Get(entity);
-    transform.m_position.y = 100;
-    transform.m_position.x = 200;
-    transform.m_size = {100, 50};
+    {
+        Entity entity = CURRENT_CONTEXT.CreateEntity();
+        CURRENT_CONTEXT.m_transform_manager->RegisterEntity(entity);
+        Transform& transform = *CURRENT_CONTEXT.m_transform_manager->Get(entity);
+        transform.m_position.y = 100;
+        transform.m_position.x = 200;
+        transform.m_size = {100, 50};
 
-    CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity);
-    UIWidget& ui = *CURRENT_CONTEXT.m_ui_manager->Get(entity);
-    ui.m_panel = std::make_unique<UIPanelComponent>();
-    ui.m_anchor = Flags{UIAnchor::Left} | UIAnchor::Right;
-    ui.m_text = std::make_unique<UIText>();
-    ui.m_text->SetFont(CURRENT_CONTEXT.m_assets_manager->GetManager<Font>().Load("assets/fonts/zpix.ttf"));
-    ui.m_text->ChangeText("Hello Button");
-    ui.m_text->ChangeTextPt(20);
-    ui.m_text->SetAlign(UITextAlign::Right);
+        CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity);
+        UIWidget& ui = *CURRENT_CONTEXT.m_ui_manager->Get(entity);
+        ui.m_panel = std::make_unique<UIPanelComponent>();
+        ui.m_anchor = Flags{UIAnchor::Left} | UIAnchor::Right;
+        ui.m_text = std::make_unique<UIText>();
+        ui.m_text->SetFont(CURRENT_CONTEXT.m_assets_manager->GetManager<Font>().Load("assets/fonts/zpix.ttf"));
+        ui.m_text->ChangeText("Hello Button");
+        ui.m_text->ChangeTextPt(20);
+        ui.m_text->SetAlign(UITextAlign::Right);
 
-    Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
-    relationship->m_children.push_back(entity);
+        Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
+        relationship->m_children.push_back(entity);
+    }
 }
 
 void Level::OnQuit() {

@@ -51,7 +51,8 @@ void UIText::regenerateText() {
 
 void UIPanelComponent::UpdateSize(const Transform& old_transform,
                                   const Transform& new_transform,
-                                  const Relationship& relationship) {
+                                  const Relationship& relationship,
+                                  const UIWidget& ui) {
     if (old_transform.m_size == new_transform.m_size) {
         return;
     }
@@ -72,22 +73,27 @@ void UIPanelComponent::UpdateSize(const Transform& old_transform,
         if (child_ui->m_anchor & UIAnchor::Left &&
             child_ui->m_anchor & UIAnchor::Right) {
             assert(new_transform.m_size.w != 0);
-            transform->m_size.w *=
-                new_transform.m_size.w / old_transform.m_size.w;
+            float left = transform->m_position.x - old_transform.m_position.x;
+            float right = old_transform.m_position.x + old_transform.m_size.w -
+                          (transform->m_position.x + transform->m_size.w);
+            transform->m_size.w = new_transform.m_size.w - left - right;
         }
 
         if (child_ui->m_anchor & UIAnchor::Top &&
             child_ui->m_anchor & UIAnchor::Bottom) {
             assert(new_transform.m_size.h != 0);
-            transform->m_size.h *=
-                new_transform.m_size.h / old_transform.m_size.h;
+            float top = transform->m_position.y - old_transform.m_position.y;
+            float bottom = old_transform.m_position.y + old_transform.m_size.h -
+                           (transform->m_position.y + transform->m_size.h);
+            transform->m_size.w = new_transform.m_size.w - top - bottom;
         }
     }
 }
 
 void UIPanelComponent::UpdatePosition(const Transform& old_transform,
                                       const Transform& new_transform,
-                                      const Relationship& relationship) {
+                                      const Relationship& relationship,
+                                      const UIWidget& ui) {
     if (old_transform.m_size == new_transform.m_size) {
         return;
     }
@@ -144,12 +150,13 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
 
 void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
                                      const Transform& new_transform,
-                                     const Relationship& relationship) {
+                                     const Relationship& relationship,
+                                     const UIWidget& ui) {
     if (old_transform == new_transform) {
         return;
     }
 
-    Vec2 ceil_size = new_transform.m_size - m_padding * 2.0;
+    Vec2 ceil_size = new_transform.m_size - ui.m_padding * 2.0;
     float totle_spacing =
         m_spacing * std::max((int)relationship.m_children.size() - 1, 0);
     if (m_type == UIBoxPanelType::Vertical) {
@@ -157,6 +164,7 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
     } else {
         ceil_size.w -= totle_spacing;
     }
+    ceil_size -= ui.m_margin * 2.0;
 
     for (int i = 0; i < relationship.m_children.size(); i++) {
         Entity entity = relationship.m_children[i];
@@ -173,12 +181,13 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
 
 void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
                                          const Transform& new_transform,
-                                         const Relationship& relationship) {
+                                         const Relationship& relationship,
+                                         const UIWidget& ui) {
     if (old_transform == new_transform) {
         return;
     }
 
-    Vec2 start_position = new_transform.m_position + m_padding;
+    Vec2 start_position = new_transform.m_position + ui.m_padding;
 
     for (int i = 0; i < relationship.m_children.size(); i++) {
         Entity entity = relationship.m_children[i];
@@ -198,6 +207,7 @@ void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
                 start_position +
                 (child_transform->m_size + Vec2{m_spacing, 0}) * i;
         }
+        child_transform->m_position += ui->m_margin * 2.0;
     }
 }
 
@@ -212,7 +222,8 @@ void UIComponentManager::Update() {
     }
 
     Entity ui_root_entity = level->GetUIRootEntity();
-    Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(ui_root_entity);
+    Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(
+        ui_root_entity);
     if (transform->m_size == Vec2::ZERO) {
         return;
     }
@@ -248,7 +259,7 @@ void UIComponentManager::updateSize(Entity entity) {
         if (ui->m_old_transform.m_size == Vec2::ZERO) {
             ui->m_old_transform = *transform;
         }
-        ui->m_panel->UpdateSize(ui->m_old_transform, *transform, *relationship);
+        ui->m_panel->UpdateSize(ui->m_old_transform, *transform, *relationship, *ui);
     }
 
     for (auto child : relationship->m_children) {
@@ -274,7 +285,7 @@ void UIComponentManager::updateTransform(Entity entity) {
             ui->m_old_transform = *transform;
         }
         ui->m_panel->UpdatePosition(ui->m_old_transform, *transform,
-                                    *relationship);
+                                    *relationship, *ui);
     }
 
     for (auto child : relationship->m_children) {
@@ -346,11 +357,11 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
 
         switch (ui->m_text->GetAlign()) {
             case UITextAlign::Left:
-                region.m_topleft.x = transform->m_position.x;
+                region.m_topleft.x = transform->m_position.x + ui->m_padding.x;
                 break;
             case UITextAlign::Right:
                 region.m_topleft.x =
-                    transform->m_position.x + transform->m_size.w - text_size.w;
+                    transform->m_position.x + transform->m_size.w - text_size.w - ui->m_padding.x;
                 break;
             case UITextAlign::Center:
                 region.m_topleft.x = transform->m_position.x +
