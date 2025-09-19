@@ -16,11 +16,11 @@ public:
     Flags(const Flags&) = default;
     Flags(Flags&&) = default;
 
-    underlying_type operator|(T o) const {
+    Flags operator|(T o) const {
         return m_value | static_cast<underlying_type>(o);
     }
 
-    underlying_type operator&(T o) const {
+    Flags operator&(T o) const {
         return m_value & static_cast<underlying_type>(o);
     }
 
@@ -48,6 +48,8 @@ public:
     }
 
     operator T() const { return static_cast<T>(m_value); }
+
+    explicit operator bool() const { return static_cast<underlying_type>(m_value) != 0; }
 
     underlying_type Value() const { return m_value; }
 

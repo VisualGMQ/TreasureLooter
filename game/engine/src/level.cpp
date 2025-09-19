@@ -1,8 +1,8 @@
 #include "engine/level.hpp"
 
-#include "engine/context.hpp"
 #include "SDL3/SDL.h"
 #include "engine/asset_manager.hpp"
+#include "engine/context.hpp"
 #include "engine/relationship.hpp"
 #include "engine/sprite.hpp"
 
@@ -25,34 +25,99 @@ void Level::OnEnter() {
     if (!m_inited) {
         m_inited = false;
     }
-    Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(GetUIRootEntity());
+    Transform* transform =
+        CURRENT_CONTEXT.m_transform_manager->Get(GetUIRootEntity());
     transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
+
+    m_window_resize_event_listener_id =
+        CURRENT_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
+            [this](EventListenerID, const SDL_WindowEvent& event) {
+                if (event.type != SDL_EVENT_WINDOW_RESIZED &&
+                    event.type != SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED &&
+                    event.type != SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
+                    return;
+                }
+                Entity entity = this->GetUIRootEntity();
+                Transform* transform =
+                    CURRENT_CONTEXT.m_transform_manager->Get(entity);
+                if (!(event.data1 == 0 && event.data2 == 0)) {
+                    transform->m_size.w = event.data1;
+                    transform->m_size.h = event.data2;
+                }
+            });
 
     // Test
     {
         Entity entity = CURRENT_CONTEXT.CreateEntity();
         CURRENT_CONTEXT.m_transform_manager->RegisterEntity(entity);
-        Transform& transform = *CURRENT_CONTEXT.m_transform_manager->Get(entity);
+        Transform& transform =
+            *CURRENT_CONTEXT.m_transform_manager->Get(entity);
         transform.m_position.y = 100;
         transform.m_position.x = 200;
         transform.m_size = {100, 50};
 
         CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity);
         UIWidget& ui = *CURRENT_CONTEXT.m_ui_manager->Get(entity);
-        ui.m_panel = std::make_unique<UIPanelComponent>();
-        ui.m_anchor = Flags{UIAnchor::Left} | UIAnchor::Right;
-        ui.m_text = std::make_unique<UIText>();
-        ui.m_text->SetFont(CURRENT_CONTEXT.m_assets_manager->GetManager<Font>().Load("assets/fonts/zpix.ttf"));
-        ui.m_text->ChangeText("Hello Button");
-        ui.m_text->ChangeTextPt(20);
-        ui.m_text->SetAlign(UITextAlign::Right);
+        auto panel = std::make_unique<UIBoxPanelComponent>();
+        panel->m_spacing = 0;
+        panel->m_type = UIBoxPanelType::Vertical;
+        ui.m_panel = std::move(panel);
+        ui.m_anchor = Flags{UIAnchor::Top} | UIAnchor::Bottom | UIAnchor::Left |
+                      UIAnchor::Right;
+        ui.m_normal_theme.m_image =
+            CURRENT_CONTEXT.m_assets_manager->GetManager<Image>().Load(
+                "assets/UI/Dialog/ChoiceBox.png");
+        ui.m_normal_theme.m_image_9grid.left = 5;
+        ui.m_normal_theme.m_image_9grid.right = 5;
+        ui.m_normal_theme.m_image_9grid.top = 5;
+        ui.m_normal_theme.m_image_9grid.bottom = 5;
 
-        Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
-        relationship->m_children.push_back(entity);
+        Relationship* root_relationship =
+            CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
+        CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);
+        root_relationship->m_children.push_back(entity);
+
+        Relationship* relationship =
+            CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+
+        for (int i = 0; i < 5; i++) {
+            Entity child_entity = CURRENT_CONTEXT.CreateEntity();
+            CURRENT_CONTEXT.m_transform_manager->RegisterEntity(child_entity);
+            Transform& transform =
+                *CURRENT_CONTEXT.m_transform_manager->Get(child_entity);
+            transform.m_position.y = 100;
+            transform.m_position.x = 200;
+            transform.m_size = {100, 50};
+
+            CURRENT_CONTEXT.m_ui_manager->RegisterEntity(child_entity);
+            UIWidget& ui = *CURRENT_CONTEXT.m_ui_manager->Get(child_entity);
+            ui.m_panel = std::make_unique<UIPanelComponent>();
+            ui.m_anchor = Flags{UIAnchor::Top} | UIAnchor::Bottom |
+                          UIAnchor::Left | UIAnchor::Right;
+            ui.m_text = std::make_unique<UIText>();
+            ui.m_text->SetFont(
+                CURRENT_CONTEXT.m_assets_manager->GetManager<Font>().Load(
+                    "assets/fonts/zpix.ttf"));
+            ui.m_text->ChangeText("Hello Button");
+            ui.m_text->ChangeTextPt(20);
+            ui.m_text->SetAlign(UITextAlign::Center);
+            ui.m_normal_theme.m_image =
+                CURRENT_CONTEXT.m_assets_manager->GetManager<Image>().Load(
+                    "assets/UI/Dialog/ChoiceBox.png");
+            ui.m_normal_theme.m_image_9grid.left = 5;
+            ui.m_normal_theme.m_image_9grid.right = 5;
+            ui.m_normal_theme.m_image_9grid.top = 5;
+            ui.m_normal_theme.m_image_9grid.bottom = 5;
+
+            relationship->m_children.push_back(child_entity);
+        }
     }
 }
 
 void Level::OnQuit() {
+    CURRENT_CONTEXT.m_event_system->RemoveListener<SDL_WindowEvent>(
+        m_window_resize_event_listener_id);
+
     for (auto entity : m_entities) {
         RemoveEntity(entity);
     }
@@ -101,7 +166,8 @@ void Level::initRootEntity() {
     UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(m_ui_root_entity);
     ui->m_anchor = UIAnchor::None;
     ui->m_panel = std::make_unique<UIPanelComponent>();
-    Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(m_ui_root_entity);
+    Transform* transform =
+        CURRENT_CONTEXT.m_transform_manager->Get(m_ui_root_entity);
     transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
 }
 
@@ -131,7 +197,7 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
     }
     if (prefab.m_cct) {
         CURRENT_CONTEXT.m_cct_manager->RegisterEntity(entity, entity,
-                                                   prefab.m_cct.value());
+                                                      prefab.m_cct.value());
         CURRENT_CONTEXT.m_cct_manager->Get(entity)->Teleport(
             prefab.m_transform->m_position);
     }
@@ -147,13 +213,12 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
                 break;
             case MotorType::Enemy:
                 CURRENT_CONTEXT.m_motor_manager
-                    ->RegisterEntityByDerive<EnemyMotorContext>(
-                        entity, entity);
+                    ->RegisterEntityByDerive<EnemyMotorContext>(entity, entity);
                 break;
             case MotorType::Player:
                 CURRENT_CONTEXT.m_motor_manager
-                    ->RegisterEntityByDerive<PlayerMotorContext>(
-                        entity, entity);
+                    ->RegisterEntityByDerive<PlayerMotorContext>(entity,
+                                                                 entity);
                 break;
         }
 

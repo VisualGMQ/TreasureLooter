@@ -48,22 +48,26 @@ public:
     virtual void UpdateSize(const Transform& old_transform,
                             const Transform& new_transform,
                             const Relationship& relationship,
-                            const UIWidget& ui) = 0;
+                            const UIWidget& ui,
+                            bool force) = 0;
     virtual void UpdatePosition(const Transform& old_transform,
                                 const Transform& new_transform,
                                 const Relationship& relationship,
-                                const UIWidget& ui) = 0;
+                                const UIWidget& ui,
+                                bool force) = 0;
 };
 
 struct UIPanelComponent : public UILayer {
     void UpdateSize(const Transform& old_transform,
                     const Transform& new_transform,
                     const Relationship& relationship,
-                    const UIWidget& ui) override;
+                    const UIWidget& ui,
+                    bool force) override;
     void UpdatePosition(const Transform& old_transform,
                         const Transform& new_transform,
                         const Relationship& relationship,
-                        const UIWidget& ui) override;
+                        const UIWidget& ui,
+                        bool force) override;
 };
 
 enum class UIBoxPanelType {
@@ -78,11 +82,13 @@ struct UIBoxPanelComponent : public UIPanelComponent {
     void UpdateSize(const Transform& old_transform,
                     const Transform& new_transform,
                     const Relationship& relationship,
-                    const UIWidget& ui) override;
+                    const UIWidget& ui,
+                    bool force) override;
     void UpdatePosition(const Transform& old_transform,
                         const Transform& new_transform,
                         const Relationship& relationship,
-                        const UIWidget& ui) override;
+                        const UIWidget& ui,
+                        bool force) override;
 };
 
 class UIGridPanelComponent : public UIPanelComponent {
@@ -138,4 +144,6 @@ private:
     void updateTransform(Entity);
     void handleEvent(Entity);
     void render(Renderer&, Entity);
+
+    bool m_is_first_update = true;
 };

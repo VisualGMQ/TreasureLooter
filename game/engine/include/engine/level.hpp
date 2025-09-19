@@ -1,5 +1,6 @@
 #pragma once
 #include "animation.hpp"
+#include "event.hpp"
 #include "image.hpp"
 #include "schema/level_content.hpp"
 #include "timer.hpp"
@@ -42,6 +43,7 @@ private:
     std::unordered_set<Entity> m_entities;
 
     std::vector<Entity> m_pending_delete_entities;
+    EventListenerID m_window_resize_event_listener_id{};
 
     void initRootEntity();
 

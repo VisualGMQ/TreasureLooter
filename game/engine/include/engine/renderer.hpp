@@ -17,7 +17,7 @@ struct Image9Grid {
     float bottom = 0;
 
     operator bool() const noexcept {
-        return (left == 0 && right == 0) || (top == 0 && bottom == 0);
+        return !((left == 0 && right == 0) || (top == 0 && bottom == 0));
     }
 };
 
