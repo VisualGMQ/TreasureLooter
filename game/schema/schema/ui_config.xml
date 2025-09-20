@@ -1,11 +1,8 @@
 <schema>
-    <enum name = "UIType">
-        <item name="Unknown"/>
-        <item name="Text"/>
-        <item name="Button"/>
-        <item name="Panel"/>
-        <item name="Table"/>
-    </enum>
+    <include>math.hpp</include>
+    <include>renderer.hpp</include>
+    <include>image.hpp</include>
+    <include>text.hpp</include>
     
     <enum name="UIAnchor">
         <item name="None" value="0"/>
@@ -15,8 +12,67 @@
         <item name="Top"    value="0x08"/>
         <item name="Bottom" value="0x10"/>
     </enum>
+
+    <enum name="UITextAlign">
+        <item name="Left"/>
+        <item name="Right"/>
+        <item name="Center"/>
+    </enum>
+
+    <enum name="UIBoxPanelType">
+        <item name="Vertical"/>
+        <item name="Horizontal"/>
+    </enum>
+
+    <class name="UITheme">
+        <element name="background_color" type="Color" default="{1, 1, 1 , 1}"/>
+        <element name="border_color" type="Color" default="{0, 0, 0, 1}"/>
+        <element name="foreground_color" type="Color" default="{1, 1, 1, 1}"/>
+        <handle name="image" type="Image"/>
+        <element name="image_9grid" type="Image9Grid"/>
+    </class>
     
+    <enum name="UIState">
+        <item name="Normal"/>
+        <item name="Hover"/>
+        <item name="Down"/>
+    </enum>
+    
+    <class name="TextInfo">
+        <element name="text" type="std::string"/>
+        <handle name="font" type="Font"/>
+        <element name="font_size" type="uint32_t" default="16"/>
+        <element name="color" type="Color" default="Color::Black"/>
+        <element name="align" type="UITextAlign" default="UITextAlign::Center"/>
+        <element name="resize_by_text" type="bool"/>
+    </class>
+    
+    <enum name="UIPanelType">
+        <item name="Panel"/>
+        <item name="Box"/>
+    </enum>
+    
+    <class name="UIPanelInfo">
+        <element name="type" type="UIPanelType" default="UIPanelType::Panel"/>
+
+        <!-- box panel -->
+        <element name="box_panel_type" type="UIBoxPanelType" default="UIBoxPanelType::Vertical"/>
+        <element name="spacing" type="float" default="0"/>
+    </class>
+
     <asset name = "UIWidgetInfo" extension=".ui">
-        <element name="type"  type="UIType" default="UIType::Unknown"/>
+        <flags name="anchor" type="UIAnchor"/>
+        <element name="use_clip" type="bool" default="true"/>
+        <element name="disabled" type="bool" default="false"/>
+        <element name="selected" type="bool" default="false"/>
+        <option name="text" type="TextInfo"/>
+        <element name="normal_theme" type="UITheme"/>
+        <option name="hover_theme" type="UITheme"/>
+        <option name="down_theme" type="UITheme"/>
+        <option name="disabled_theme" type="UITheme"/>
+        <option name="selected_theme" type="UITheme"/>
+        <option name="selected_disabled_theme" type="UITheme"/>
+        <element name="padding" type="Vec2"/>
+        <element name="margin" type="Vec2"/>
     </asset>
 </schema>

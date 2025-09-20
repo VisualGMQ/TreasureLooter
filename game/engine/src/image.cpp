@@ -70,6 +70,9 @@ Image::~Image() {
 
 Vec2 Image::GetSize() const {
     Vec2 size;
+    if (!m_texture) {
+        return {};
+    }
     SDL_CALL(SDL_GetTextureSize(m_texture, &size.w, &size.h));
     return size;
 }

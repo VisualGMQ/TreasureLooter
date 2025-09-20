@@ -15,7 +15,7 @@
         <item name="Normal"/>
         <item name="Player"/>
     </enum>
-
+    
     <enum name="FPSOption">
         <item name="FPS_15"/>
         <item name="FPS_30"/>

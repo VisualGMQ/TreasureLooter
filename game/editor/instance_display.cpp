@@ -295,7 +295,6 @@ void InstanceDisplay(const char* name, const Radians& value) {
 
 template <typename T>
 void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
-#ifdef TL_ENABLE_EDITOR
     std::string button_text = "none";
 
     if (value && value.GetFilename()) {
@@ -335,7 +334,6 @@ void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
         }
     }
     ImGui::PopID();
-#endif
 }
 
 template <typename T>
@@ -853,4 +851,30 @@ void InstanceDisplay(const char* name, const PhysicsActor& actor) {
 
     InstanceDisplay("collision mask", actor.GetCollisionMask());
     InstanceDisplay("collision layer", actor.GetCollisionLayer());
+}
+
+void InstanceDisplay(const char* name, const Color& color) {
+    ImGui::BeginDisabled(true);
+    ImGui::DragFloat4(name, (float*)&color, 0.1, 0, 1);
+    ImGui::EndDisabled();
+}
+
+void InstanceDisplay(const char* name, Color& color) {
+    ImGui::DragFloat4(name, (float*)&color, 0.1, 0, 1);
+}
+
+void InstanceDisplay(const char* name, Image9Grid& grid) {
+    ImGui::DragFloat("left", &grid.left);
+    ImGui::DragFloat("right", &grid.right);
+    ImGui::DragFloat("top", &grid.top);
+    ImGui::DragFloat("bottom", &grid.bottom);
+}
+
+void InstanceDisplay(const char* name, const Image9Grid& grid) {
+    ImGui::BeginDisabled(true);
+    ImGui::DragFloat("left", (float*)&grid.left);
+    ImGui::DragFloat("right", (float*)&grid.right);
+    ImGui::DragFloat("top", (float*)&grid.top);
+    ImGui::DragFloat("bottom", (float*)&grid.bottom);   
+    ImGui::EndDisabled();
 }

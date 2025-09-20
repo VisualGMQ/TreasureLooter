@@ -1,5 +1,11 @@
 <LevelContent>
 	<uuid>e112e8a6-0000-0000-0000-000000000000</uuid>
-	<payload/>
+	<payload>
+		<entities>
+			<elem>
+				<prefab/>
+			</elem>
+		</entities>
+	</payload>
 </LevelContent>
 

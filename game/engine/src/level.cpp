@@ -100,7 +100,7 @@ void Level::OnEnter() {
                     "assets/fonts/zpix.ttf"));
             ui.m_text->ChangeText("Hello Button");
             ui.m_text->ChangeTextPt(20);
-            ui.m_text->SetAlign(UITextAlign::Center);
+            ui.m_text->m_align = UITextAlign::Center;
             ui.m_normal_theme.m_image =
                 CURRENT_CONTEXT.m_assets_manager->GetManager<Image>().Load(
                     "assets/UI/Dialog/ChoiceBox.png");

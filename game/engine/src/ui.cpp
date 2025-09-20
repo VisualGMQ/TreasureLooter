@@ -30,14 +30,6 @@ Image& UIText::GetTextImage() {
     return m_text_image;
 }
 
-void UIText::SetAlign(UITextAlign align) {
-    m_align = align;
-}
-
-UITextAlign UIText::GetAlign() const {
-    return m_align;
-}
-
 void UIText::regenerateText() {
     if (m_text.empty()) {
         return;
@@ -52,8 +44,7 @@ void UIText::regenerateText() {
 void UIPanelComponent::UpdateSize(const Transform& old_transform,
                                   const Transform& new_transform,
                                   const Relationship& relationship,
-                                  const UIWidget& ui,
-                                  bool force) {
+                                  const UIWidget& ui, bool force) {
     if (!force && old_transform.m_size == new_transform.m_size) {
         return;
     }
@@ -94,12 +85,11 @@ void UIPanelComponent::UpdateSize(const Transform& old_transform,
 void UIPanelComponent::UpdatePosition(const Transform& old_transform,
                                       const Transform& new_transform,
                                       const Relationship& relationship,
-                                      const UIWidget& ui,
-                                      bool force) {
+                                      const UIWidget& ui, bool force) {
     if (!force && old_transform.m_size == new_transform.m_size) {
         return;
     }
-    
+
     for (auto child : relationship.m_children) {
         Transform* child_transform =
             CURRENT_CONTEXT.m_transform_manager->Get(child);
@@ -122,10 +112,11 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
             continue;
         }
 
-        if (child_ui->m_anchor & UIAnchor::Left && child_ui->m_anchor & UIAnchor::Right) {
+        if (child_ui->m_anchor & UIAnchor::Left &&
+            child_ui->m_anchor & UIAnchor::Right) {
             float offset =
-               child_transform->m_position.x - old_transform.m_position.x;
-            child_transform->m_position.x = new_transform.m_position.x + offset;           
+                child_transform->m_position.x - old_transform.m_position.x;
+            child_transform->m_position.x = new_transform.m_position.x + offset;
         } else if (child_ui->m_anchor & UIAnchor::Left) {
             float offset =
                 child_transform->m_position.x - old_transform.m_position.x;
@@ -138,10 +129,11 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
                 new_transform.m_position.x + new_transform.m_size.w + offset;
         }
 
-        if (child_ui->m_anchor & UIAnchor::Top && child_ui->m_anchor & UIAnchor::Bottom) {
+        if (child_ui->m_anchor & UIAnchor::Top &&
+            child_ui->m_anchor & UIAnchor::Bottom) {
             float offset =
-               child_transform->m_position.y - old_transform.m_position.y;
-            child_transform->m_position.y = new_transform.m_position.y + offset;           
+                child_transform->m_position.y - old_transform.m_position.y;
+            child_transform->m_position.y = new_transform.m_position.y + offset;
         } else if (child_ui->m_anchor & UIAnchor::Top) {
             float offset =
                 child_transform->m_position.y - old_transform.m_position.y;
@@ -159,8 +151,7 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
 void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
                                      const Transform& new_transform,
                                      const Relationship& relationship,
-                                     const UIWidget& ui,
-                                     bool force) {
+                                     const UIWidget& ui, bool force) {
     if (!force && old_transform == new_transform) {
         return;
     }
@@ -200,8 +191,7 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
 void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
                                          const Transform& new_transform,
                                          const Relationship& relationship,
-                                         const UIWidget& ui,
-                                         bool force) {
+                                         const UIWidget& ui, bool force) {
     if (!force && old_transform == new_transform) {
         return;
     }
@@ -234,6 +224,45 @@ UIWidget::UIWidget() {
     m_old_transform.m_size = Vec2::ZERO;
 }
 
+UIWidget::UIWidget(const UIWidgetInfo info) {
+    m_old_transform.m_size = Vec2::ZERO;
+
+    m_selected = info.m_selected;
+    m_disabled = info.m_disabled;
+    m_anchor = info.m_anchor;
+    m_margin = info.m_margin;
+    m_use_clip = info.m_use_clip;
+    m_normal_theme = info.m_normal_theme;
+
+    if (info.m_hover_theme) {
+        m_hover_theme = std::make_unique<UITheme>(info.m_hover_theme.value());
+    }
+    if (info.m_down_theme) {
+        m_down_theme = std::make_unique<UITheme>(info.m_down_theme.value());
+    }
+    if (info.m_disabled_theme) {
+        m_disabled_theme =
+            std::make_unique<UITheme>(info.m_disabled_theme.value());
+    }
+    if (info.m_selected_theme) {
+        m_selected_theme =
+            std::make_unique<UITheme>(info.m_selected_theme.value());
+    }
+    if (info.m_selected_disabled_theme) {
+        m_selected_disabled_theme =
+            std::make_unique<UITheme>(info.m_selected_disabled_theme.value());
+    }
+
+    if (info.m_text) {
+        m_text = std::make_unique<UIText>();
+        m_text->m_resize_by_text = info.m_text->m_resize_by_text;
+        m_text->m_color = info.m_text->m_color;
+        m_text->m_align = info.m_text->m_align;
+        m_text->SetFont(info.m_text->m_font);
+        m_text->ChangeText(info.m_text->m_text);
+    }
+}
+
 void UIComponentManager::Update() {
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
@@ -241,8 +270,8 @@ void UIComponentManager::Update() {
     }
 
     Entity ui_root_entity = level->GetUIRootEntity();
-    Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(
-        ui_root_entity);
+    Transform* transform =
+        CURRENT_CONTEXT.m_transform_manager->Get(ui_root_entity);
     if (transform->m_size == Vec2::ZERO) {
         return;
     }
@@ -267,6 +296,21 @@ void UIComponentManager::Render() {
     }
 }
 
+void UIComponentManager::HandleEvent() {
+    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    if (!level) {
+        return;
+    }
+
+    Entity ui_root_entity = level->GetUIRootEntity();
+    auto& renderer = CURRENT_CONTEXT.m_renderer;
+    auto relationship =
+        CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
+    for (auto child : relationship->m_children) {
+        handleEvent(child);
+    }
+}
+
 void UIComponentManager::updateSize(Entity entity) {
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
@@ -280,7 +324,8 @@ void UIComponentManager::updateSize(Entity entity) {
         if (ui->m_old_transform.m_size == Vec2::ZERO) {
             ui->m_old_transform = *transform;
         }
-        ui->m_panel->UpdateSize(ui->m_old_transform, *transform, *relationship, *ui, m_is_first_update);
+        ui->m_panel->UpdateSize(ui->m_old_transform, *transform, *relationship,
+                                *ui, m_is_first_update);
     }
 
     for (auto child : relationship->m_children) {
@@ -316,12 +361,88 @@ void UIComponentManager::updateTransform(Entity entity) {
     ui->m_old_transform = *transform;
 }
 
-void UIComponentManager::handleEvent(Entity) {
-    // TODO:
+void UIComponentManager::handleEvent(Entity entity) {
+    auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
+    auto ui = Get(entity);
+
+    if (!transform || !ui) {
+        return;
+    }
+
+    auto& mouse = CURRENT_CONTEXT.m_mouse;
+    auto mouse_position = mouse->GetPosition();
+
+    bool need_handle_event = true;
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    if (relationship) {
+        for (auto child : relationship->m_children) {
+            auto child_transform =
+                CURRENT_CONTEXT.m_transform_manager->Get(child);
+            if (!child_transform) {
+                continue;
+            }
+
+            Rect child_ui_rect;
+            child_ui_rect.m_half_size = child_transform->m_size * 0.5;
+            child_ui_rect.m_center =
+                child_transform->m_position + child_ui_rect.m_half_size;
+            if (IsPointInRect(mouse_position, child_ui_rect)) {
+                need_handle_event = true;
+                break;
+            }
+        }
+    }
+
+    if (!need_handle_event) {
+        if (relationship) {
+            for (auto child : relationship->m_children) {
+                handleEvent(child);
+            }
+        }
+        return;
+    }
+
+    Rect ui_rect;
+    ui_rect.m_half_size = transform->m_size * 0.5;
+    ui_rect.m_center = transform->m_position + ui_rect.m_half_size;
+    if (!IsPointInRect(mouse_position, ui_rect)) {
+        ui->m_state = UIState::Normal;
+        return;
+    }
+
+    auto& left_button = mouse->Get(MouseButtonType::Left);
+    if (!left_button.IsPress()) {
+        UIMouseHoverEvent event;
+        event.m_entity = entity;
+        CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        ui->m_state = UIState::Hover;
+        return;
+    }
+
+    if (left_button.IsPressed()) {
+        UIMouseDownEvent event;
+        event.m_entity = entity;
+        CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        m_focus_entity = entity;
+        ui->m_state = UIState::Down;
+        return;
+    }
+
+    if (left_button.IsReleased()) {
+        if (m_focus_entity == entity) {
+            UIMouseClickedEvent event;
+            event.m_entity = entity;
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        } else {
+            UIMouseUpEvent event;
+            event.m_entity = entity;
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        }
+        ui->m_state = UIState::Normal;
+    }
 }
 
 void UIComponentManager::render(Renderer& renderer, Entity entity) {
-    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
@@ -340,9 +461,16 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     UITheme* theme = &ui->m_normal_theme;
     if (ui->m_state == UIState::Hover && ui->m_hover_theme) {
         theme = ui->m_hover_theme.get();
-    }
-    if (ui->m_state == UIState::Down && ui->m_down_theme) {
+    } else if (ui->m_state == UIState::Down && ui->m_down_theme) {
         theme = ui->m_down_theme.get();
+    } else if (ui->m_selected && ui->m_selected_theme) {
+        theme = ui->m_selected_theme.get();
+    } else if (ui->m_disabled && ui->m_disabled_theme) {
+        if (ui->m_selected) {
+            theme = ui->m_selected_disabled_theme.get();
+        } else {
+            theme = ui->m_disabled_theme.get();
+        }
     }
 
     Rect rect;
@@ -357,7 +485,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         if (theme->m_image) {
             Region src;
             src.m_size = theme->m_image->GetSize();
-            if (theme->m_image_9grid) {
+            if (theme->m_image_9grid.IsValid()) {
                 renderer.DrawImage9Grid(*theme->m_image, src, dst,
                                         theme->m_image_9grid, false);
             } else {
@@ -376,13 +504,14 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
 
         Region region;
 
-        switch (ui->m_text->GetAlign()) {
+        switch (ui->m_text->m_align) {
             case UITextAlign::Left:
                 region.m_topleft.x = transform->m_position.x + ui->m_padding.x;
                 break;
             case UITextAlign::Right:
-                region.m_topleft.x =
-                    transform->m_position.x + transform->m_size.w - text_size.w - ui->m_padding.x;
+                region.m_topleft.x = transform->m_position.x +
+                                     transform->m_size.w - text_size.w -
+                                     ui->m_padding.x;
                 break;
             case UITextAlign::Center:
                 region.m_topleft.x = transform->m_position.x +
@@ -405,6 +534,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         SDL_SetRenderClipRect(renderer.GetRenderer(), NULL);
     }
 
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     if (!relationship) {
         return;
     }

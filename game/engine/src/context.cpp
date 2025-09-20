@@ -294,6 +294,7 @@ void GameContext::logicUpdate(TimeType elapse) {
     m_bind_point_component_manager->Update();
 
     m_animation_player_manager->Update(elapse);
+    m_ui_manager->HandleEvent();
     m_ui_manager->Update();
     m_relationship_manager->Update();
     m_trigger_component_manager->Update();

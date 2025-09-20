@@ -4,15 +4,9 @@
 #include "engine/manager.hpp"
 #include "engine/math.hpp"
 #include "engine/renderer.hpp"
-#include "schema/relationship.hpp"
 #include "engine/text.hpp"
+#include "schema/relationship.hpp"
 #include "schema/ui_config.hpp"
-
-enum class UITextAlign {
-    Left,
-    Right,
-    Center,
-};
 
 struct UIWidget;
 
@@ -28,9 +22,6 @@ public:
     Vec2 GetTextImageSize() const;
     [[nodiscard]] const std::string& GetText() const;
     Image& GetTextImage();
-
-    void SetAlign(UITextAlign align);
-    UITextAlign GetAlign() const;
 
 private:
     FontHandle m_font;
@@ -70,11 +61,6 @@ struct UIPanelComponent : public UILayer {
                         bool force) override;
 };
 
-enum class UIBoxPanelType {
-    Vertical,
-    Horizontal,
-};
-
 struct UIBoxPanelComponent : public UIPanelComponent {
     UIBoxPanelType m_type = UIBoxPanelType::Vertical;
     float m_spacing = 0.0;
@@ -91,31 +77,13 @@ struct UIBoxPanelComponent : public UIPanelComponent {
                         bool force) override;
 };
 
-class UIGridPanelComponent : public UIPanelComponent {
-public:
-    Vec2UI m_grid_count;
-    Vec2 m_spacing;
-};
-
-struct UITheme {
-    Color m_background_color = {1, 1, 1, 1};
-    Color m_border_color = {0, 0, 0, 1};
-    Color m_foreground_color = {1, 1, 1, 1};
-    ImageHandle m_image;
-    Image9Grid m_image_9grid;
-};
-
-enum class UIState {
-    Normal,
-    Hover,
-    Down,
-};
-
 struct UIWidget {
     friend class UIComponentManager;
     
     Flags<UIAnchor> m_anchor = UIAnchor::Center;
     bool m_use_clip = false;
+    bool m_disabled = false;
+    bool m_selected = false;
 
     std::unique_ptr<UIText> m_text;
     std::unique_ptr<UIPanelComponent> m_panel;
@@ -123,21 +91,42 @@ struct UIWidget {
     UITheme m_normal_theme;
     std::unique_ptr<UITheme> m_hover_theme;
     std::unique_ptr<UITheme> m_down_theme;
+    std::unique_ptr<UITheme> m_disabled_theme;
+    std::unique_ptr<UITheme> m_selected_theme;
+    std::unique_ptr<UITheme> m_selected_disabled_theme;
 
     UIState m_state = UIState::Normal;
     Vec2 m_margin;
     Vec2 m_padding;
 
     UIWidget();
+    explicit UIWidget(const UIWidgetInfo);
 
 private:
     Transform m_old_transform;
+};
+
+struct UIMouseHoverEvent {
+    Entity m_entity;
+};
+
+struct UIMouseDownEvent{
+    Entity m_entity;
+};
+
+struct UIMouseUpEvent{
+    Entity m_entity;
+};
+
+struct UIMouseClickedEvent{
+    Entity m_entity;
 };
 
 class UIComponentManager : public ComponentManager<UIWidget> {
 public:
     void Update();
     void Render();
+    void HandleEvent();
 
 private:
     void updateSize(Entity);
@@ -146,4 +135,5 @@ private:
     void render(Renderer&, Entity);
 
     bool m_is_first_update = true;
+    Entity m_focus_entity = null_entity;
 };
