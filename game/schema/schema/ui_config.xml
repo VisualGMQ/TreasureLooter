@@ -65,6 +65,7 @@
         <element name="use_clip" type="bool" default="true"/>
         <element name="disabled" type="bool" default="false"/>
         <element name="selected" type="bool" default="false"/>
+        <element name="can_be_selected" type="bool" default="false"/>
         <option name="text" type="TextInfo"/>
         <element name="normal_theme" type="UITheme"/>
         <option name="hover_theme" type="UITheme"/>

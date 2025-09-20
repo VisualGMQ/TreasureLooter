@@ -224,42 +224,43 @@ UIWidget::UIWidget() {
     m_old_transform.m_size = Vec2::ZERO;
 }
 
-UIWidget::UIWidget(const UIWidgetInfo info) {
+UIWidget::UIWidget(UIWidgetInfoHandle info) {
     m_old_transform.m_size = Vec2::ZERO;
 
-    m_selected = info.m_selected;
-    m_disabled = info.m_disabled;
-    m_anchor = info.m_anchor;
-    m_margin = info.m_margin;
-    m_use_clip = info.m_use_clip;
-    m_normal_theme = info.m_normal_theme;
+    m_selected = info->m_selected;
+    m_disabled = info->m_disabled;
+    m_anchor = info->m_anchor;
+    m_margin = info->m_margin;
+    m_use_clip = info->m_use_clip;
+    m_normal_theme = info->m_normal_theme;
+    m_can_be_selected = info->m_can_be_selected;
 
-    if (info.m_hover_theme) {
-        m_hover_theme = std::make_unique<UITheme>(info.m_hover_theme.value());
+    if (info->m_hover_theme) {
+        m_hover_theme = std::make_unique<UITheme>(info->m_hover_theme.value());
     }
-    if (info.m_down_theme) {
-        m_down_theme = std::make_unique<UITheme>(info.m_down_theme.value());
+    if (info->m_down_theme) {
+        m_down_theme = std::make_unique<UITheme>(info->m_down_theme.value());
     }
-    if (info.m_disabled_theme) {
+    if (info->m_disabled_theme) {
         m_disabled_theme =
-            std::make_unique<UITheme>(info.m_disabled_theme.value());
+            std::make_unique<UITheme>(info->m_disabled_theme.value());
     }
-    if (info.m_selected_theme) {
+    if (info->m_selected_theme) {
         m_selected_theme =
-            std::make_unique<UITheme>(info.m_selected_theme.value());
+            std::make_unique<UITheme>(info->m_selected_theme.value());
     }
-    if (info.m_selected_disabled_theme) {
+    if (info->m_selected_disabled_theme) {
         m_selected_disabled_theme =
-            std::make_unique<UITheme>(info.m_selected_disabled_theme.value());
+            std::make_unique<UITheme>(info->m_selected_disabled_theme.value());
     }
 
-    if (info.m_text) {
+    if (info->m_text) {
         m_text = std::make_unique<UIText>();
-        m_text->m_resize_by_text = info.m_text->m_resize_by_text;
-        m_text->m_color = info.m_text->m_color;
-        m_text->m_align = info.m_text->m_align;
-        m_text->SetFont(info.m_text->m_font);
-        m_text->ChangeText(info.m_text->m_text);
+        m_text->m_resize_by_text = info->m_text->m_resize_by_text;
+        m_text->m_color = info->m_text->m_color;
+        m_text->m_align = info->m_text->m_align;
+        m_text->SetFont(info->m_text->m_font);
+        m_text->ChangeText(info->m_text->m_text);
     }
 }
 
@@ -303,7 +304,6 @@ void UIComponentManager::HandleEvent() {
     }
 
     Entity ui_root_entity = level->GetUIRootEntity();
-    auto& renderer = CURRENT_CONTEXT.m_renderer;
     auto relationship =
         CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
     for (auto child : relationship->m_children) {
@@ -393,6 +393,10 @@ void UIComponentManager::handleEvent(Entity entity) {
         }
     }
 
+    if (ui->m_disabled) {
+        need_handle_event = false;
+    }
+
     if (!need_handle_event) {
         if (relationship) {
             for (auto child : relationship->m_children) {
@@ -425,6 +429,18 @@ void UIComponentManager::handleEvent(Entity entity) {
         CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
         m_focus_entity = entity;
         ui->m_state = UIState::Down;
+
+        if (ui->m_can_be_selected) {
+            ui->m_selected = !ui->m_selected;
+
+            if (ui->m_selected) {
+                UICheckToggledEvent event;
+                event.m_checked = ui->m_selected;
+                event.m_entity = entity;
+                CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+            }
+        }
+
         return;
     }
 
@@ -453,8 +469,8 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         SDL_Rect rect;
         rect.w = transform->m_size.w;
         rect.h = transform->m_size.h;
-        rect.x = transform->m_position.x - rect.w * 0.5;
-        rect.y = transform->m_position.y - rect.h * 0.5;
+        rect.x = transform->m_position.x;
+        rect.y = transform->m_position.y;
         SDL_SetRenderClipRect(renderer.GetRenderer(), &rect);
     }
 
@@ -481,23 +497,21 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     dst.m_size = transform->m_size;
     dst.m_topleft = transform->m_position;
 
-    if (ui->m_panel) {
-        if (theme->m_image) {
-            Region src;
-            src.m_size = theme->m_image->GetSize();
-            if (theme->m_image_9grid.IsValid()) {
-                renderer.DrawImage9Grid(*theme->m_image, src, dst,
-                                        theme->m_image_9grid, false);
-            } else {
-                renderer.DrawImage(*theme->m_image, src, dst, 0, {}, Flip::None,
-                                   false);
-            }
+    if (theme->m_image) {
+        Region src;
+        src.m_size = theme->m_image->GetSize();
+        if (theme->m_image_9grid.IsValid()) {
+            renderer.DrawImage9Grid(*theme->m_image, src, dst,
+                                    theme->m_image_9grid, false);
         } else {
-            renderer.FillRect(rect, theme->m_background_color, false);
+            renderer.DrawImage(*theme->m_image, src, dst, 0, {}, Flip::None,
+                               false);
         }
-
-        renderer.DrawRect(rect, theme->m_border_color, false);
+    } else {
+        renderer.FillRect(rect, theme->m_background_color, false);
     }
+
+    renderer.DrawRect(rect, theme->m_border_color, false);
 
     if (ui->m_text) {
         auto text_size = ui->m_text->GetTextImageSize();

@@ -47,7 +47,7 @@ void Level::OnEnter() {
             });
 
     // Test
-    {
+    if (false) {
         Entity entity = CURRENT_CONTEXT.CreateEntity();
         CURRENT_CONTEXT.m_transform_manager->RegisterEntity(entity);
         Transform& transform =
@@ -205,6 +205,9 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_trigger_component_manager->RegisterEntity(
             entity, entity, prefab.m_trigger.value());
     }
+    if (prefab.m_ui) {
+        CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
+    }
 
     if (prefab.m_motor_config) {
         switch (prefab.m_motor_config->m_type) {
@@ -254,8 +257,12 @@ void Level::initByLevelContent(LevelContentHandle level_content) {
         registerEntity(entity, instance);
         m_entities.insert(entity);
 
-        auto relationship =
+        Relationship* relationship =
             CURRENT_CONTEXT.m_relationship_manager->Get(GetRootEntity());
+        if (CURRENT_CONTEXT.m_ui_manager->Has(entity)) {
+            relationship =
+                CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
+        }
         relationship->m_children.emplace_back(entity);
     }
 }

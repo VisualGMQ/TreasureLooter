@@ -38,12 +38,12 @@ rapidxml::xml_node<>* Serialize(CommonContext&, rapidxml::xml_document<>& doc,
    
     {{#branches}}
     if (static_cast<int>({{type}}::{{enum_item}}) == 0 && payload.Value() == 0) {
-        auto item_node = doc.allocate_node(rapidxml::node_type::node_data);
+        auto item_node = doc.allocate_node(rapidxml::node_type::node_element, doc.allocate_string("item"));
         item_node->value("{{enum_item}}");
         node->append_node(item_node);
     }
     if (payload & {{type}}::{{enum_item}}) {
-        auto item_node = doc.allocate_node(rapidxml::node_type::node_data);
+        auto item_node = doc.allocate_node(rapidxml::node_type::node_element, doc.allocate_string("item"));
         item_node->value("{{enum_item}}");
         node->append_node(item_node);
     }
@@ -52,18 +52,15 @@ rapidxml::xml_node<>* Serialize(CommonContext&, rapidxml::xml_document<>& doc,
 }
 
 void Deserialize(CommonContext&, const rapidxml::xml_node<>& node, Flags<{{type}}>& payload) {
-    std::string_view value = node.value();
-    if (value.empty()) {
-        LOGE("[Deserialize] parse enum {{type}} failed: no value");
-        return;
-    }
+    payload = 0;
 
-    {{#branches}}
-    if (value == "{{enum_item}}") {
-        payload = {{type}}::{{enum_item}};
-        return;
+    auto n = node.first_node("item");
+    while (n) {
+{{#branches}}
+        if (n->value() == std::string_view{"{{enum_item}}"}) {
+            payload |= {{type}}::{{enum_item}};
+        }
+{{/branches}}
+        n = n->next_sibling();
     }
-    {{/branches}}
-
-    LOGE("[Deserialize] parse enum {{type}} failed: no enum item named {}", value);
 }

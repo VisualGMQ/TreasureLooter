@@ -84,6 +84,7 @@ struct UIWidget {
     bool m_use_clip = false;
     bool m_disabled = false;
     bool m_selected = false;
+    bool m_can_be_selected = false;
 
     std::unique_ptr<UIText> m_text;
     std::unique_ptr<UIPanelComponent> m_panel;
@@ -100,7 +101,7 @@ struct UIWidget {
     Vec2 m_padding;
 
     UIWidget();
-    explicit UIWidget(const UIWidgetInfo);
+    explicit UIWidget(UIWidgetInfoHandle);
 
 private:
     Transform m_old_transform;
@@ -120,6 +121,11 @@ struct UIMouseUpEvent{
 
 struct UIMouseClickedEvent{
     Entity m_entity;
+};
+
+struct UICheckToggledEvent{
+    Entity m_entity;
+    bool m_checked = false;
 };
 
 class UIComponentManager : public ComponentManager<UIWidget> {

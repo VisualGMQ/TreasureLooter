@@ -1,12 +1,12 @@
 <UIWidgetInfo>
-	<uuid>66a2361e-0000-0000-0000-000000000000</uuid>
+	<uuid>a3535c1c-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<anchor>
 			<item>Left</item>
 			<item>Top</item>
 		</anchor>
 		<use_clip>true</use_clip>
-		<disabled>false</disabled>
+		<disabled>true</disabled>
 		<selected>false</selected>
 		<text>
 			<value>

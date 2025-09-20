@@ -3,7 +3,34 @@
 	<payload>
 		<entities>
 			<elem>
-				<prefab/>
+				<transform>
+					<value>
+						<position x="100.000000" y="100.000000"/>
+						<scale x="200.000000" y="100.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>assets/gpa/ui/test/button.prefab.xml</prefab>
+			</elem>
+			<elem>
+				<transform>
+					<value>
+						<position x="400.000000" y="100.000000"/>
+						<scale x="200.000000" y="100.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>assets/gpa/ui/test/button_disable.prefab.xml</prefab>
+			</elem>
+			<elem>
+				<transform>
+					<value>
+						<position x="800.000000" y="100.000000"/>
+						<scale x="100.000000" y="50.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>assets/gpa/ui/test/checkbox.prefab.xml</prefab>
 			</elem>
 		</entities>
 	</payload>
