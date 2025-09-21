@@ -505,11 +505,13 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
     auto right_node = Serialize(ctx, doc, payload.right, "right");
     auto top_node = Serialize(ctx, doc, payload.top, "top");
     auto bottom_node = Serialize(ctx, doc, payload.bottom, "bottom");
+    auto scale_node = Serialize(ctx, doc, payload.scale, "scale");
 
     node->append_node(left_node);
     node->append_node(right_node);
     node->append_node(top_node);
     node->append_node(bottom_node);
+    node->append_node(scale_node);
     return node;
 }
 
@@ -519,11 +521,13 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
     auto right_node = node.first_node("right");
     auto top_node = node.first_node("top");
     auto bottom_node = node.first_node("bottom");
+    auto scale_node = node.first_node("scale");
 
     Deserialize(ctx, *left_node, payload.left);
     Deserialize(ctx, *right_node, payload.right);
     Deserialize(ctx, *top_node, payload.top);
     Deserialize(ctx, *bottom_node, payload.bottom);
+    Deserialize(ctx, *scale_node, payload.scale);
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,

@@ -19,6 +19,7 @@
 				<right>0.000000</right>
 				<top>0.000000</top>
 				<bottom>0.000000</bottom>
+				<scale>1.000000</scale>
 			</image_9grid>
 		</normal_theme>
 		<disabled_theme>
@@ -32,6 +33,7 @@
 					<right>0.000000</right>
 					<top>0.000000</top>
 					<bottom>0.000000</bottom>
+					<scale>1.000000</scale>
 				</image_9grid>
 			</value>
 		</disabled_theme>
@@ -46,6 +48,7 @@
 					<right>0.000000</right>
 					<top>0.000000</top>
 					<bottom>0.000000</bottom>
+					<scale>1.000000</scale>
 				</image_9grid>
 			</value>
 		</selected_theme>
@@ -60,6 +63,7 @@
 					<right>0.000000</right>
 					<top>0.000000</top>
 					<bottom>0.000000</bottom>
+					<scale>1.000000</scale>
 				</image_9grid>
 			</value>
 		</selected_disabled_theme>

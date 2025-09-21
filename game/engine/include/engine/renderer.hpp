@@ -15,6 +15,7 @@ struct Image9Grid {
     float right = 0;
     float top = 0;
     float bottom = 0;
+    float scale = 1.0;
 
     bool IsValid() const noexcept {
         return !((left == 0 && right == 0) || (top == 0 && bottom == 0));
@@ -52,7 +53,7 @@ public:
                    bool use_camera = true);
 
     void DrawImage9Grid(const Image&, const Region& src, const Region& dst,
-                        const Image9Grid&, bool use_camera = true);
+                        const Image9Grid&, float border_scale = 1.0, bool use_camera = true);
 
     void DrawRectEx(const Image& image, const Region& src, const Vec2& topleft,
                     const Vec2& topright, const Vec2& bottomleft,

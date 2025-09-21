@@ -502,7 +502,8 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         src.m_size = theme->m_image->GetSize();
         if (theme->m_image_9grid.IsValid()) {
             renderer.DrawImage9Grid(*theme->m_image, src, dst,
-                                    theme->m_image_9grid, false);
+                                    theme->m_image_9grid,
+                                    theme->m_image_9grid.scale, false);
         } else {
             renderer.DrawImage(*theme->m_image, src, dst, 0, {}, Flip::None,
                                false);

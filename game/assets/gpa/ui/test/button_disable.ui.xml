@@ -28,6 +28,7 @@
 				<right>2.000000</right>
 				<top>2.000000</top>
 				<bottom>2.000000</bottom>
+				<scale>10.000000</scale>
 			</image_9grid>
 		</normal_theme>
 		<hover_theme>
@@ -41,6 +42,7 @@
 					<right>2.000000</right>
 					<top>2.000000</top>
 					<bottom>2.000000</bottom>
+					<scale>10.000000</scale>
 				</image_9grid>
 			</value>
 		</hover_theme>
@@ -55,6 +57,7 @@
 					<right>2.000000</right>
 					<top>3.000000</top>
 					<bottom>1.000000</bottom>
+					<scale>10.000000</scale>
 				</image_9grid>
 			</value>
 		</down_theme>
@@ -69,6 +72,7 @@
 					<right>2.000000</right>
 					<top>2.000000</top>
 					<bottom>2.000000</bottom>
+					<scale>10.000000</scale>
 				</image_9grid>
 			</value>
 		</disabled_theme>

@@ -868,6 +868,7 @@ void InstanceDisplay(const char* name, Image9Grid& grid) {
     ImGui::DragFloat("right", &grid.right);
     ImGui::DragFloat("top", &grid.top);
     ImGui::DragFloat("bottom", &grid.bottom);
+    ImGui::DragFloat("scale", &grid.scale);
 }
 
 void InstanceDisplay(const char* name, const Image9Grid& grid) {
