@@ -2,8 +2,8 @@
 	<uuid>66a2361e-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<anchor>
+			<item>Right</item>
 			<item>Left</item>
-			<item>Top</item>
 		</anchor>
 		<use_clip>true</use_clip>
 		<disabled>false</disabled>
