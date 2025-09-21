@@ -40,6 +40,7 @@ void CommonContext::InitSystem() {
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
                       SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+
     SDL_CALL(TTF_Init());
 }
 
@@ -98,6 +99,7 @@ void CommonContext::Initialize() {
         return;
     }
 
+    m_window->Resize(handle->m_logic_size);
     m_game_config = *handle;
     m_camera.ChangeScale(GetGameConfig().m_camera_scale);
     m_assets_manager->GetManager<GameConfig>().Unload(handle);

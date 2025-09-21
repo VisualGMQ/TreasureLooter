@@ -1,4 +1,6 @@
 #include "engine/motor.hpp"
+
+#include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
 #include "engine/enemy_state.hpp"
 #include "engine/relationship.hpp"
@@ -8,7 +10,8 @@ CharacterMotorContext::CharacterMotorContext(Entity entity)
 
 void CharacterMotorContext::Initialize(MotorConfigHandle config) {
     m_transform = CURRENT_CONTEXT.m_transform_manager->Get(m_entity);
-    m_move_animation = CURRENT_CONTEXT.m_animation_player_manager->Get(m_entity);
+    m_move_animation =
+        CURRENT_CONTEXT.m_animation_player_manager->Get(m_entity);
     m_cct = CURRENT_CONTEXT.m_cct_manager->Get(m_entity);
     m_sprite = CURRENT_CONTEXT.m_sprite_manager->Get(m_entity);
     m_faceset_image = config->m_faceset;
@@ -39,8 +42,8 @@ void CharacterMotorContext::Move(const Vec2& dir, TimeType duration) {
             m_move_animation->Stop();
         }
     } else {
-        if (auto weapon_anim =
-                CURRENT_CONTEXT.m_animation_player_manager->Get(m_weapon_entity);
+        if (auto weapon_anim = CURRENT_CONTEXT.m_animation_player_manager->Get(
+                m_weapon_entity);
             weapon_anim && !weapon_anim->IsPlaying()) {
             m_weapon_dir = dir.Normalize();
         }
@@ -113,7 +116,8 @@ void CharacterMotorContext::Update(TimeType) {
     if (auto weapon_anim =
             CURRENT_CONTEXT.m_animation_player_manager->Get(m_weapon_entity);
         weapon_anim && !weapon_anim->IsPlaying()) {
-        auto transform = CURRENT_CONTEXT.m_transform_manager->Get(m_weapon_entity);
+        auto transform =
+            CURRENT_CONTEXT.m_transform_manager->Get(m_weapon_entity);
         transform->m_rotation = GetAngle(m_weapon_dir, Vec2::X_UNIT);
     }
 }
@@ -183,8 +187,61 @@ StateMachine<EnemyMotorContext>& EnemyMotorContext::GetStateMachine() {
     return m_state_machine;
 }
 
+void VirtualButton::Update() {
+    if (!m_button) {
+        return;
+    }
+
+    if (m_button->IsPressing()) {
+        GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+            m_action_name, Action::State::Pressing);
+    }
+
+    if (m_button->IsReleasing()) {
+        GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+            m_action_name, Action::State::Releasing);
+        m_button = nullptr;
+    }
+}
+
 void PlayerMotorContext::Initialize(MotorConfigHandle motor_config) {
     CharacterMotorContext::Initialize(motor_config);
+
+    const GameConfig& game_config = GAME_CONTEXT.GetGameConfig();
+
+    m_virtual_joystick.m_circle.m_radius =
+        game_config.m_virtual_joystick.m_radius;
+    m_virtual_joystick.m_circle.m_center.y =
+        GAME_CONTEXT.GetGameConfig().m_logic_size.h -
+        game_config.m_virtual_joystick.m_offset.y;
+    m_virtual_joystick.m_circle.m_center.x =
+        game_config.m_virtual_joystick.m_offset.x;
+    m_virtual_joystick.m_max_drag_dist =
+        game_config.m_virtual_joystick.m_max_drag_dist;
+
+#ifdef TL_ANDROID
+    LevelHandle level = GAME_CONTEXT.m_level_manager->GetCurrentLevel();
+    if (level) {
+        initVirualJoystick(level);
+        initVirualAttackButton(level);
+
+        // NOTE: when under android, device will change window size after few
+        // frames and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event
+        // after rotate screen. So we must listen this event and change our
+        // button position
+        m_window_resize_event_listener =
+            CURRENT_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
+                [&](EventListenerID, const SDL_WindowEvent& event) {
+                    if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                        int h = event.data2;
+                        m_virtual_joystick.m_circle.m_center.x =
+                            game_config.m_virtual_joystick.m_offset.x;
+                        m_virtual_joystick.m_circle.m_center.y =
+                            h - game_config.m_virtual_joystick.m_offset.y;
+                    }
+                });
+    }
+#endif
 
     CURRENT_CONTEXT.m_event_system->AddListener<TriggerEnterEvent>(
         [](EventListenerID, const TriggerEnterEvent&) { LOGI("entered"); });
@@ -207,31 +264,10 @@ void PlayerMotorContext::Initialize(MotorConfigHandle motor_config) {
                     }
                 }
             });
-
-    // NOTE: when under android, device will change window size after few frames
-    // and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event after rotate
-    // screen. So we must listen this event and change our button position
-    m_window_resize_event_listener =
-        CURRENT_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
-            [&](EventListenerID, const SDL_WindowEvent& event) {
-                if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-                    int w = event.data1;
-                    int h = event.data2;
-                    m_touch_joystick.m_circle.m_radius = 100;
-                    m_touch_joystick.m_circle.m_center.x = 300;
-                    m_touch_joystick.m_circle.m_center.y = h - 300;
-
-                    m_finger_attack_button.m_radius = 50;
-                    m_finger_attack_button.m_center.x = w - 200;
-                    m_finger_attack_button.m_center.y = h - 200;
-                }
-            });
 }
 
 void PlayerMotorContext::Update(TimeType duration) {
     CharacterMotorContext::Update(duration);
-
-    handleFingerTouchJoystick();
 
     Entity entity = GetEntity();
 
@@ -249,86 +285,132 @@ void PlayerMotorContext::Update(TimeType duration) {
 
     CURRENT_CONTEXT.m_camera.MoveTo(transform->m_position);
 
-    // draw touch joystick
-#ifdef SDL_PLATFORM_ANDROID
-    CURRENT_CONTEXT.m_debug_drawer->DrawCircle(m_touch_joystick.m_circle,
-                                            Color::Green, duration, false);
-    CURRENT_CONTEXT.m_debug_drawer->DrawCircle(m_finger_attack_button,
-                                            Color::Purple, duration, false);
-
-    if (m_move_finger_idx) {
-        auto& finger =
-            CURRENT_CONTEXT.m_touches->GetFingers()[m_move_finger_idx.value()];
-        auto position =
-            finger.Position() * CURRENT_CONTEXT.m_window->GetWindowSize();
-        CURRENT_CONTEXT.m_debug_drawer->DrawCircle({position, 5}, Color::Red,
-                                                duration, false);
-    }
-#endif
+    m_virtual_attack_button.Update();
 }
 
-void PlayerMotorContext::handleFingerTouchJoystick() {
-    auto& fingers = CURRENT_CONTEXT.m_touches->GetFingers();
-    for (size_t i = 0; i < fingers.size(); i++) {
-        auto& finger = fingers[i];
+PlayerMotorContext::~PlayerMotorContext() {
+    GAME_CONTEXT.m_event_system->RemoveListener<UIDragEvent>(
+        m_virtual_joystick.m_drag_event);
+    GAME_CONTEXT.m_event_system->RemoveListener<UIMouseUpEvent>(
+        m_virtual_joystick.m_release_event);
+}
 
-        Vec2 position =
-            finger.Position() * CURRENT_CONTEXT.m_window->GetWindowSize();
+void PlayerMotorContext::initVirualJoystick(LevelHandle level) {
+    PrefabHandle joystick_prefab =
+        GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Load(
+            "assets/gpa/ui/android_joystick.prefab.xml");
+    Transform transform;
+    transform.m_size.w = m_virtual_joystick.m_circle.m_radius * 2.0;
+    transform.m_size.h = m_virtual_joystick.m_circle.m_radius * 2.0;
+    transform.m_position = m_virtual_joystick.m_circle.m_center -
+                           Vec2{m_virtual_joystick.m_circle.m_radius,
+                                m_virtual_joystick.m_circle.m_radius};
+    Entity entity = level->Instantiate(joystick_prefab);
+    *GAME_CONTEXT.m_transform_manager->Get(entity) = transform;
 
-        if (finger.IsPressed()) {
-            if (IsPointInCircle(position, m_touch_joystick.m_circle)) {
-                m_move_finger_idx = i;
-            }
-        } else if (m_move_finger_idx && m_move_finger_idx.value() == i &&
-                   finger.IsReleased()) {
-            m_move_finger_idx = std::nullopt;
-        }
+    Relationship* ui_relationship =
+        GAME_CONTEXT.m_relationship_manager->Get(level->GetUIRootEntity());
+    ui_relationship->m_children.push_back(entity);
+    m_virtual_joystick.m_ui_entity = entity;
 
-        if (finger.IsPressed()) {
-            if (IsPointInCircle(position, m_finger_attack_button)) {
-                m_attack_finger_idx = i;
-            }
-        } else if (m_attack_finger_idx && m_attack_finger_idx.value() == i &&
-                   finger.IsReleased()) {
-            m_attack_finger_idx = std::nullopt;
-        }
+    GAME_CONTEXT.m_event_system->AddListener<UIDragEvent>(
+        std::bind(&PlayerMotorContext::handleJoystickDragEvent, this,
+                  std::placeholders::_1, std::placeholders::_2));
+    GAME_CONTEXT.m_event_system->AddListener<UIMouseUpEvent>(
+        std::bind(&PlayerMotorContext::handleJoystickReleaseEvent, this,
+                  std::placeholders::_1, std::placeholders::_2));
+}
+
+void PlayerMotorContext::initVirualAttackButton(LevelHandle level) {
+    PrefabHandle button_prefab =
+        GAME_CONTEXT.m_assets_manager->GetManager<Prefab>().Load(
+            "assets/gpa/ui/attack_button.prefab.xml");
+    Transform transform;
+    auto& game_config = GAME_CONTEXT.GetGameConfig();
+    transform.m_size.w = game_config.m_virtual_joystick.m_radius * 2.0;
+    transform.m_size.h = game_config.m_virtual_joystick.m_radius * 2.0;
+    transform.m_position = GAME_CONTEXT.m_window->GetWindowSize() -
+                           game_config.m_virtual_attack_button.m_offset;
+    Entity entity = level->Instantiate(button_prefab);
+    *GAME_CONTEXT.m_transform_manager->Get(entity) = transform;
+
+    Relationship* ui_relationship =
+        GAME_CONTEXT.m_relationship_manager->Get(level->GetUIRootEntity());
+    ui_relationship->m_children.push_back(entity);
+    m_virtual_attack_button.m_ui_entity = entity;
+    m_virtual_attack_button.m_action_name = "Attack";
+
+    GAME_CONTEXT.m_event_system->AddListener<UIMouseDownEvent>(
+        std::bind(&PlayerMotorContext::handleVirtualAttackButtonPressedEvent,
+                  this, std::placeholders::_1, std::placeholders::_2));
+    GAME_CONTEXT.m_event_system->AddListener<UIMouseUpEvent>(
+        std::bind(&PlayerMotorContext::handleVirtualAttackButtonReleasedEvent,
+                  this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void PlayerMotorContext::handleJoystickDragEvent(EventListenerID id,
+                                                 const UIDragEvent& event) {
+    if (event.m_entity != m_virtual_joystick.m_ui_entity) {
+        return;
     }
 
-    if (!m_move_finger_idx) {
-        CURRENT_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", 0);
-        CURRENT_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", 0);
-    } else {
-        auto& finger = fingers[m_move_finger_idx.value()];
-        Vec2 position =
-            finger.Position() * CURRENT_CONTEXT.m_window->GetWindowSize();
-        Vec2 dir = position - m_touch_joystick.m_circle.m_center;
-        float len =
-            Clamp(dir.Length(), 0.0f, m_touch_joystick.m_circle.m_radius) /
-            m_touch_joystick.m_circle.m_radius;
-        dir = dir.Normalize() * len;
-        CURRENT_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", dir.x);
-        CURRENT_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", dir.y);
+    Transform* transform =
+        GAME_CONTEXT.m_transform_manager->Get(event.m_entity);
+    Vec2 position = GAME_CONTEXT.m_mouse->Position();
+    Vec2 dir = position - m_virtual_joystick.m_circle.m_center;
+    float dir_len = dir.Length();
+    Vec2 offset = Vec2::ZERO;
+    float offset_len = 0;
+    if (!FLT_EQ(dir_len, 0)) {
+        dir /= dir_len;
+        offset = dir;
+    }
+    offset_len = std::min(dir_len, m_virtual_joystick.m_max_drag_dist);
+    transform->m_position = m_virtual_joystick.m_circle.m_center +
+                            offset * offset_len -
+                            Vec2{m_virtual_joystick.m_circle.m_radius,
+                                 m_virtual_joystick.m_circle.m_radius};
+    GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent(
+        "MoveX", dir.x * offset_len / m_virtual_joystick.m_max_drag_dist);
+    GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent(
+        "MoveY", dir.y * offset_len / m_virtual_joystick.m_max_drag_dist);
+}
+
+void PlayerMotorContext::handleJoystickReleaseEvent(
+    EventListenerID id, const UIMouseUpEvent& event) {
+    if (event.m_entity != m_virtual_joystick.m_ui_entity) {
+        return;
     }
 
-    if (!m_attack_finger_idx) {
-        CURRENT_CONTEXT.m_input_manager->AcceptFingerButton(
-            "Attack", Action::State::Releasing);
-    } else {
-        auto& finger = fingers[m_attack_finger_idx.value()];
-        if (finger.IsPressed()) {
-            CURRENT_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Pressed);
-        } else if (finger.IsPressing()) {
-            CURRENT_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Pressing);
-        } else if (finger.IsReleased()) {
-            CURRENT_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Released);
-        } else if (finger.IsReleasing()) {
-            CURRENT_CONTEXT.m_input_manager->AcceptFingerButton(
-                "Attack", Action::State::Releasing);
-        }
+    Transform* transform =
+        GAME_CONTEXT.m_transform_manager->Get(event.m_entity);
+    transform->m_position = m_virtual_joystick.m_circle.m_center -
+                            Vec2{m_virtual_joystick.m_circle.m_radius,
+                                 m_virtual_joystick.m_circle.m_radius};
+    GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveX", 0);
+    GAME_CONTEXT.m_input_manager->AcceptFingerAxisEvent("MoveY", 0);
+}
+
+void PlayerMotorContext::handleVirtualAttackButtonPressedEvent(
+    EventListenerID id, const UIMouseDownEvent& event) {
+    if (event.m_entity != m_virtual_attack_button.m_ui_entity) {
+        return;
     }
+
+    m_virtual_attack_button.m_button = &event.m_button;
+    GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+        m_virtual_attack_button.m_action_name, Action::State::Pressed);
+}
+
+void PlayerMotorContext::handleVirtualAttackButtonReleasedEvent(
+    EventListenerID id, const UIMouseUpEvent& event) {
+    if (event.m_entity != m_virtual_attack_button.m_ui_entity) {
+        return;
+    }
+
+    m_virtual_attack_button.m_button = &event.m_button;
+    GAME_CONTEXT.m_input_manager->AcceptFingerButton(
+        m_virtual_attack_button.m_action_name, Action::State::Released);
 }
 
 void MotorManager::Update(TimeType duration) {

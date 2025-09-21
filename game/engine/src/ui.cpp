@@ -306,9 +306,32 @@ void UIComponentManager::HandleEvent() {
     Entity ui_root_entity = level->GetUIRootEntity();
     auto relationship =
         CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
+
+    auto& mouse = CURRENT_CONTEXT.m_mouse;
+    const Button& left_button = mouse->Get(MouseButtonType::Left);
+
+#ifndef TL_ANDROID
     for (auto child : relationship->m_children) {
-        handleEvent(child);
+        handleEvent(child, -1, left_button, mouse->Position(),
+                    mouse->Offset());
     }
+#else
+    auto& touches = CURRENT_CONTEXT.m_touches;
+    for (size_t i = 0; i < touches->GetFingers().size(); i++) {
+        auto& finger = touches->GetFingers()[i];
+        if (finger.IsReleasing()) {
+            continue;
+        }
+
+        for (auto child : relationship->m_children) {
+            UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
+            if (child_ui->m_focus_index && child_ui->m_focus_index != i) {
+                continue;
+            }
+            handleEvent(child, i, finger, finger.Position(), finger.Offset());
+        }
+    }
+#endif
 }
 
 void UIComponentManager::updateSize(Entity entity) {
@@ -361,7 +384,9 @@ void UIComponentManager::updateTransform(Entity entity) {
     ui->m_old_transform = *transform;
 }
 
-void UIComponentManager::handleEvent(Entity entity) {
+void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
+                                     const Button& button, const Vec2& position,
+                                     const Vec2& offset) {
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
@@ -369,12 +394,9 @@ void UIComponentManager::handleEvent(Entity entity) {
         return;
     }
 
-    auto& mouse = CURRENT_CONTEXT.m_mouse;
-    auto mouse_position = mouse->GetPosition();
-
     bool need_handle_event = true;
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-    if (relationship) {
+    if (!isFocus(*ui, finger_index) && relationship) {
         for (auto child : relationship->m_children) {
             auto child_transform =
                 CURRENT_CONTEXT.m_transform_manager->Get(child);
@@ -386,7 +408,7 @@ void UIComponentManager::handleEvent(Entity entity) {
             child_ui_rect.m_half_size = child_transform->m_size * 0.5;
             child_ui_rect.m_center =
                 child_transform->m_position + child_ui_rect.m_half_size;
-            if (IsPointInRect(mouse_position, child_ui_rect)) {
+            if (IsPointInRect(position, child_ui_rect)) {
                 need_handle_event = true;
                 break;
             }
@@ -400,7 +422,7 @@ void UIComponentManager::handleEvent(Entity entity) {
     if (!need_handle_event) {
         if (relationship) {
             for (auto child : relationship->m_children) {
-                handleEvent(child);
+                handleEvent(child, finger_index, button, position, offset);
             }
         }
         return;
@@ -409,25 +431,37 @@ void UIComponentManager::handleEvent(Entity entity) {
     Rect ui_rect;
     ui_rect.m_half_size = transform->m_size * 0.5;
     ui_rect.m_center = transform->m_position + ui_rect.m_half_size;
-    if (!IsPointInRect(mouse_position, ui_rect)) {
+    if (!isFocus(*ui, finger_index) && !IsPointInRect(position, ui_rect)) {
         ui->m_state = UIState::Normal;
         return;
     }
 
-    auto& left_button = mouse->Get(MouseButtonType::Left);
-    if (!left_button.IsPress()) {
-        UIMouseHoverEvent event;
+    if (button.IsPressing() && isFocus(*ui, finger_index) &&
+        offset != Vec2::ZERO) {
+        UIDragEvent event;
         event.m_entity = entity;
         CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
-        ui->m_state = UIState::Hover;
         return;
     }
 
-    if (left_button.IsPressed()) {
-        UIMouseDownEvent event;
-        event.m_entity = entity;
+    if (button.IsReleased()) {
+        if (isFocus(*ui, finger_index) &&
+            button.GetLastUpTime() - button.GetLastDownTime() <= 0.1) {
+            UIMouseClickedEvent event;
+            event.m_entity = entity;
+            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        }
+        UIMouseUpEvent event{entity, button};
         CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
-        m_focus_entity = entity;
+        ui->m_state = UIState::Normal;
+        ui->m_focus_index.reset();
+        return;
+    }
+
+    if (button.IsPressed()) {
+        UIMouseDownEvent event{entity, button};
+        CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        ui->m_focus_index = finger_index;
         ui->m_state = UIState::Down;
 
         if (ui->m_can_be_selected) {
@@ -440,21 +474,15 @@ void UIComponentManager::handleEvent(Entity entity) {
                 CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
             }
         }
-
         return;
     }
 
-    if (left_button.IsReleased()) {
-        if (m_focus_entity == entity) {
-            UIMouseClickedEvent event;
-            event.m_entity = entity;
-            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
-        } else {
-            UIMouseUpEvent event;
-            event.m_entity = entity;
-            CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
-        }
-        ui->m_state = UIState::Normal;
+    if (!button.IsPress()) {
+        UIMouseHoverEvent event;
+        event.m_entity = entity;
+        CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
+        ui->m_state = UIState::Hover;
+        return;
     }
 }
 
@@ -500,6 +528,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     if (theme->m_image) {
         Region src;
         src.m_size = theme->m_image->GetSize();
+        theme->m_image->ChangeColorMask(theme->m_background_color);
         if (theme->m_image_9grid.IsValid()) {
             renderer.DrawImage9Grid(*theme->m_image, src, dst,
                                     theme->m_image_9grid,
@@ -508,6 +537,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
             renderer.DrawImage(*theme->m_image, src, dst, 0, {}, Flip::None,
                                false);
         }
+        theme->m_image->ChangeColorMask(Color::White);
     } else {
         renderer.FillRect(rect, theme->m_background_color, false);
     }
@@ -557,4 +587,9 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     for (auto child : relationship->m_children) {
         render(renderer, child);
     }
+}
+
+bool UIComponentManager::isFocus(const UIWidget& ui,
+                                 size_t finger_index) const {
+    return ui.m_focus_index && ui.m_focus_index.value() == finger_index;
 }

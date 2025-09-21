@@ -1,4 +1,6 @@
 #include "engine/input/finger_touch.hpp"
+
+#include "engine/context.hpp"
 #include "engine/log.hpp"
 
 bool FingerTouch::IsPressing() const {
@@ -6,7 +8,7 @@ bool FingerTouch::IsPressing() const {
 }
 
 bool FingerTouch::IsReleasing() const {
-    return !(m_is_last_frame_press && m_is_press);
+    return !m_is_last_frame_press && !m_is_press;
 }
 
 bool FingerTouch::IsReleased() const {
@@ -17,8 +19,8 @@ bool FingerTouch::IsPressed() const {
     return !m_is_last_frame_press && m_is_press;
 }
 
-const Vec2& FingerTouch::Position() const {
-    return m_position;
+Vec2 FingerTouch::Position() const {
+    return m_position * CURRENT_CONTEXT.m_window->GetWindowSize();
 }
 
 const Vec2& FingerTouch::Offset() const {
@@ -31,17 +33,18 @@ void FingerTouch::handleEvent(const SDL_TouchFingerEvent& event) {
     m_offset.x = event.dx;
     m_offset.y = event.dy;
 
-    if (event.type == SDL_EVENT_FINGER_DOWN ||
-        event.type == SDL_EVENT_FINGER_UP) {
-        m_is_last_frame_press = m_is_press;
-        if (event.type == SDL_EVENT_FINGER_DOWN) {
-            m_is_press = true;
-        } else {
-            m_is_press = false;
-        }
-
-        m_has_handled_event = true;
+    m_is_last_frame_press = m_is_press;
+    if (event.type == SDL_EVENT_FINGER_DOWN) {
+        m_is_press = true;
+        m_last_down_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
+    } else if (event.type == SDL_EVENT_FINGER_CANCELED || event.type == SDL_EVENT_FINGER_UP) {
+        m_is_press = false;
+        m_last_up_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
+    } else if (event.type == SDL_EVENT_FINGER_MOTION) {
+        // nothing todo
     }
+
+    m_has_handled_event = true;
 }
 
 void FingerTouch::update() {

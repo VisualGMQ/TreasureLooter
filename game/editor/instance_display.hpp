@@ -45,6 +45,8 @@ void InstanceDisplay(const char* name, Radians& value);
 void InstanceDisplay(const char* name, const Radians& value);
 void InstanceDisplay(const char* name, Handle<Image>& value);
 void InstanceDisplay(const char* name, const Handle<Image>& value);
+void InstanceDisplay(const char* name, Handle<Font>& value);
+void InstanceDisplay(const char* name, const Handle<Font>& value);
 void InstanceDisplay(const char* name, Transform& value);
 void InstanceDisplay(const char* name, const Transform& value);
 void InstanceDisplay(const char* name, TilemapHandle& value);

@@ -16,7 +16,7 @@ public:
     bool IsReleased() const override;
     bool IsPressed() const override;
 
-    const Vec2& Position() const;
+    Vec2 Position() const;
     const Vec2& Offset() const;
 
 private:

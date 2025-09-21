@@ -382,6 +382,20 @@ void InstanceDisplay(const char* name, const Handle<Image>& value) {
     ImGui::EndDisabled();
 }
 
+void InstanceDisplay(const char* name, Handle<Font>& value) {
+    ImGui::Text("%s", name);
+
+    showAssetSelectFile(value, {
+                                   {"TTF", "ttf"},
+    });
+}
+
+void InstanceDisplay(const char* name, const Handle<Font>& value) {
+    ImGui::Text("%s", name);
+    displayAssetName(value);
+    ImGui::EndDisabled();
+}
+
 void InstanceDisplay(const char* name, Transform& value) {
     ImGui::PushID(ImGuiIDGenerator::Gen());
 

@@ -3,6 +3,7 @@
 #include "SDL3/SDL.h"
 #include "engine/input/button.hpp"
 #include "engine/math.hpp"
+#include "engine/timer.hpp"
 #include "schema/mouse.hpp"
 
 #include <array>
@@ -36,12 +37,14 @@ public:
     void PostUpdate();
 
     const MouseButton& Get(MouseButtonType) const;
-    const Vec2& GetPosition() const;
-    const Vec2& GetOffset() const;
-    float GetWheel() const;
+    const Vec2& Position() const;
+    const Vec2& Offset() const;
+    float Wheel() const;
+    bool IsTouch() const;
 
 private:
     std::array<MouseButton, 5> m_buttons;
+    bool m_is_touch = false;
     float m_wheel{};
     Vec2 m_cur_position;
     Vec2 m_cur_offset;

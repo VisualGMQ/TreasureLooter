@@ -7,23 +7,29 @@
 #include "engine/sprite.hpp"
 
 Level::Level(LevelContentHandle level_content) {
-    initByLevelContent(level_content);
+    m_pending_init_content = level_content;
 }
 
 Level::Level(const Path& filename) {
     auto handle =
         CURRENT_CONTEXT.m_assets_manager->GetManager<LevelContent>().Load(
             filename, true);
-    initByLevelContent(handle);
+    m_pending_init_content = handle;
 }
 
 Level::~Level() {
     OnQuit();
 }
 
+void Level::Initialize() {
+    initByLevelContent(m_pending_init_content);
+    m_pending_init_content = {};
+}
+
 void Level::OnEnter() {
     if (!m_inited) {
-        m_inited = false;
+        Initialize();
+        m_inited = true;
     }
     Transform* transform =
         CURRENT_CONTEXT.m_transform_manager->Get(GetUIRootEntity());
@@ -142,6 +148,15 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
 
+    if (!prefab.m_children.empty()) {
+        CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);
+        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+        for (auto child : prefab.m_children) {
+            Entity child_entity = Instantiate(child);
+            relationship->m_children.push_back(child_entity);
+        }
+    }
+
     if (prefab.m_motor_config) {
         switch (prefab.m_motor_config->m_type) {
             case MotorType::Unknown:
@@ -162,19 +177,6 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         if (motor) {
             motor->Initialize(prefab.m_motor_config);
         }
-    }
-
-    if (!prefab.m_children.empty()) {
-        CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);
-        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-        for (auto child : prefab.m_children) {
-            Entity child_entity = Instantiate(child);
-            relationship->m_children.push_back(child_entity);
-        }
-    }
-
-    if (auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity)) {
-        motor->Initialize(prefab.m_motor_config);
     }
 }
 
@@ -234,10 +236,10 @@ void LevelManager::Switch(LevelHandle level) {
         m_level->OnQuit();
     }
     Unload(m_level);
+    m_level = level;
     if (level) {
         level->OnEnter();
     }
-    m_level = level;
 }
 
 void LevelManager::PoseUpdate() {

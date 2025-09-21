@@ -1,5 +1,6 @@
 #include "engine/input/gamepad.hpp"
 
+#include "engine/context.hpp"
 #include "engine/log.hpp"
 
 GamepadButton Gamepad::InvalidButton{SDL_GAMEPAD_BUTTON_INVALID};
@@ -67,6 +68,12 @@ void GamepadButton::handleEvent(const SDL_GamepadButtonEvent& event) {
 
     m_is_last_frame_press = m_is_press;
     m_is_press = event.down;
+
+    if (m_is_press) {
+        m_last_down_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
+    } else {
+        m_last_up_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
+    }
 
     m_has_handled_event = true;
 }

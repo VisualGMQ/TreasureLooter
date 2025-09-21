@@ -23,9 +23,10 @@ void Inspector::Update() {
     if (m_hierarchy_window_open &&
         ImGui::Begin("Entity Hierarchy", &m_hierarchy_window_open,
                      ImGuiWindowFlags_MenuBar)) {
-        auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+        auto level = m_context.m_level_manager->GetCurrentLevel();
         if (level) {
             showEntityHierarchy(level->GetRootEntity());
+            showEntityHierarchy(level->GetUIRootEntity());
         }
     }
     if (m_hierarchy_window_open) {
@@ -73,6 +74,10 @@ void Inspector::showEntityDetail(Entity entity) {
         auto value = m_context.m_trigger_component_manager->Get(entity);
         InstanceDisplay("trigger", *value);
     }
+    // if (m_context.m_ui_manager->Has(entity)) {
+    //     auto value = m_context.m_ui_manager->Get(entity);
+    //     InstanceDisplay("ui", *value);
+    // }
 }
 
 void Inspector::showEntityHierarchy(Entity node) {

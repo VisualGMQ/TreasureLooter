@@ -4,7 +4,18 @@
     <include>level.hpp</include>
     <include>path.hpp</include>
     <include>text.hpp</include>
-    
+
+    <class name="VirtualJoystickConfig">
+        <element name="offset" type="Vec2" default="{200, 200}"/>
+        <element name="radius" type="float" default="100"/>
+        <element name="max_drag_dist" type="float" default="400"/>
+    </class>
+
+    <class name="VirtualButtonConfig">
+        <element name="offset" type="Vec2" default="{200, 200}"/>
+        <element name="radius" type="float" default="100"/>
+    </class>
+
     <asset name="GameConfig" extension=".game_config">
         <!-- don't use handle, due to asset rely on GameConfig itself! -->
         <element name="basic_level_asset" type="Path"/>
@@ -12,6 +23,8 @@
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
         <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
         <element name="logic_size" type="Vec2UI" default="{1024, 720}"/>
+        <element name="virtual_joystick" type="VirtualJoystickConfig"/>
+        <element name="virtual_attack_button" type="VirtualButtonConfig"/>
         <handle  name="default_font" type="Font"/>
     </asset>
 </schema>

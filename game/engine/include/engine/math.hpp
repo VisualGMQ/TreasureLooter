@@ -496,3 +496,5 @@ DecompositionResult DecomposeVector(const Vec2 &v, const Vec2 &normal);
 // for spdlog output
 template <>
 struct fmt::formatter<Vec2> : fmt::ostream_formatter {};
+
+#define FLT_EQ(a, b) (std::abs(a - b) <= std::numeric_limits<float>::epsilon())

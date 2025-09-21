@@ -19,6 +19,7 @@ public:
 
     ~Level();
 
+    void Initialize();
     void OnEnter();
 
     void OnQuit();
@@ -27,6 +28,9 @@ public:
 
     bool IsInited() const;
 
+    /**
+     * instantiate entity but don't put into level scene
+     */
     Entity Instantiate(PrefabHandle);
 
     void RemoveEntity(Entity);
@@ -37,6 +41,7 @@ public:
 private:
     bool m_visible = false;
     bool m_inited = false;
+    LevelContentHandle m_pending_init_content;
 
     Entity m_root_entity{};
     Entity m_ui_root_entity{};

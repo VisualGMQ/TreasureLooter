@@ -188,8 +188,8 @@ void EditorContext::handleCamera() {
 
     constexpr float scale_delta = 0.1;
     Vec2 scale = m_camera.GetScale();
-    scale.x += mouse->GetWheel() * scale_delta;
-    scale.y += mouse->GetWheel() * scale_delta;
+    scale.x += mouse->Wheel() * scale_delta;
+    scale.y += mouse->Wheel() * scale_delta;
 
     scale.x = Clamp(scale.x, 0.0001f, 1000.f);
     scale.y = Clamp(scale.x, 0.0001f, 1000.f);
@@ -197,7 +197,7 @@ void EditorContext::handleCamera() {
     m_camera.ChangeScale(scale);
 
     if (mouse->Get(MouseButtonType::Right).IsPressing()) {
-        m_camera.Move(-(mouse->GetOffset() / scale));
+        m_camera.Move(-(mouse->Offset() / scale));
     }
 }
 

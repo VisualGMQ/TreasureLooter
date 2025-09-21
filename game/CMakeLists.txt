@@ -87,6 +87,10 @@ target_compile_definitions(${ENGINE_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
     PRIVATE _CRT_SECURE_NO_WARNINGS)
 
+if (ANDROID)
+    target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ANDROID)
+endif()
+
 ################ build game ################
 set(GAME_NAME ${PROJECT_NAME})
 

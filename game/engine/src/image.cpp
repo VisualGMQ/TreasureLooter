@@ -83,6 +83,7 @@ SDL_Texture* Image::GetTexture() const {
 
 void Image::ChangeColorMask(const Color& color) {
     SDL_SetTextureColorMod(m_texture, color.r * 255, color.g * 255, color.b * 255);
+    SDL_SetTextureAlphaMod(m_texture, color.a * 255);
 }
 
 ImageManager::ImageManager(Renderer& renderer) : m_renderer{renderer} {}

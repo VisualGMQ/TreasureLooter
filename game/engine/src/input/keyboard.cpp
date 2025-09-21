@@ -1,5 +1,7 @@
 #include "engine/input/keyboard.hpp"
 
+#include "engine/context.hpp"
+
 KeyboardButton::KeyboardButton(Key key) : m_key(key) {}
 
 bool KeyboardButton::IsPressing() const {
@@ -26,8 +28,10 @@ void KeyboardButton::handleEvent(const SDL_KeyboardEvent& event) {
     m_is_last_frame_press = m_is_press;
     if (event.type == SDL_EVENT_KEY_DOWN) {
         m_is_press = true;
+        m_last_down_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
     } else {
         m_is_press = false;
+        m_last_up_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
     }
 
     m_has_handled_event = true;

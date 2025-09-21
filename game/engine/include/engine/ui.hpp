@@ -5,8 +5,10 @@
 #include "engine/math.hpp"
 #include "engine/renderer.hpp"
 #include "engine/text.hpp"
+#include "input/button.hpp"
 #include "schema/relationship.hpp"
 #include "schema/ui_config.hpp"
+#include "timer.hpp"
 
 struct UIWidget;
 
@@ -105,6 +107,8 @@ struct UIWidget {
 
 private:
     Transform m_old_transform;
+
+    std::optional<size_t> m_focus_index; // -1 means mouse
 };
 
 struct UIMouseHoverEvent {
@@ -113,10 +117,12 @@ struct UIMouseHoverEvent {
 
 struct UIMouseDownEvent{
     Entity m_entity;
+    const Button& m_button;
 };
 
 struct UIMouseUpEvent{
     Entity m_entity;
+    const Button& m_button;
 };
 
 struct UIMouseClickedEvent{
@@ -128,6 +134,10 @@ struct UICheckToggledEvent{
     bool m_checked = false;
 };
 
+struct UIDragEvent{
+    Entity m_entity;
+};
+
 class UIComponentManager : public ComponentManager<UIWidget> {
 public:
     void Update();
@@ -137,9 +147,12 @@ public:
 private:
     void updateSize(Entity);
     void updateTransform(Entity);
-    void handleEvent(Entity);
+    /**
+     * @param finger_index -1 means mouse
+     */
+    void handleEvent(Entity, size_t finger_index, const Button&, const Vec2& position, const Vec2& offset);
     void render(Renderer&, Entity);
+    bool isFocus(const UIWidget&, size_t finger_index) const;
 
     bool m_is_first_update = true;
-    Entity m_focus_entity = null_entity;
 };

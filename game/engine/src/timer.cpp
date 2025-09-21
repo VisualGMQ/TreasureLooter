@@ -12,10 +12,18 @@ void Time::Update() {
     m_cur_time = cur_time;
     m_elapsed_time =
         std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time)
-        .count() /
+            .count() /
         1000000.0;
 
     m_elapsed_time = std::max(m_elapsed_time, MinElapseTime);
+}
+
+TimeType Time::GetCurrentTime() const {
+    auto cur_time = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+               cur_time.time_since_epoch())
+               .count() /
+           1000000.0;
 }
 
 TimeType Time::GetElapseTime() const {
@@ -23,8 +31,7 @@ TimeType Time::GetElapseTime() const {
 }
 
 TimerEvent::TimerEvent(TimerEventType type, TimerID id)
-    : m_type{type}, m_timer_id{id} {
-}
+    : m_type{type}, m_timer_id{id} {}
 
 TimerEventType TimerEvent::GetType() const {
     return m_type;
@@ -104,9 +111,10 @@ void Timer::SetEventType(TimerEventType type) {
 Timer& TimerManager::Create(TimeType interval, TimerEventType event_type,
                             int loop) {
     auto id = static_cast<TimerID>(++m_cur_id);
-    return *m_timers.emplace(
-            id, std::make_unique<Timer>(id, interval, event_type, loop)).first->
-        second;
+    return *m_timers
+                .emplace(
+                    id, std::make_unique<Timer>(id, interval, event_type, loop))
+                .first->second;
 }
 
 void TimerManager::RemoveTimer(TimerID timer) {

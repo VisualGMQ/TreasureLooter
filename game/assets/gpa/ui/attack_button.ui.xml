@@ -1,0 +1,44 @@
+<UIWidgetInfo>
+	<uuid>4d8ad954-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<anchor>
+			<item>Right</item>
+			<item>Bottom</item>
+		</anchor>
+		<use_clip>true</use_clip>
+		<disabled>false</disabled>
+		<selected>false</selected>
+		<can_be_selected>false</can_be_selected>
+		<normal_theme>
+			<background_color r="1.000000" g="1.000000" b="1.000000" a="0.300000"/>
+			<border_color r="0.000000" g="0.000000" b="0.000000" a="0.000000"/>
+			<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+			<image>assets/UI/Input/Gamepad/ButtonA/Idle.png</image>
+			<image_9grid>
+				<left>0.000000</left>
+				<right>0.000000</right>
+				<top>0.000000</top>
+				<bottom>0.000000</bottom>
+				<scale>1.000000</scale>
+			</image_9grid>
+		</normal_theme>
+		<down_theme>
+			<value>
+				<background_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+				<border_color r="0.000000" g="0.000000" b="0.000000" a="0.000000"/>
+				<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+				<image>assets/UI/Input/Gamepad/ButtonA/Pressed.png</image>
+				<image_9grid>
+					<left>0.000000</left>
+					<right>0.000000</right>
+					<top>0.000000</top>
+					<bottom>0.000000</bottom>
+					<scale>1.000000</scale>
+				</image_9grid>
+			</value>
+		</down_theme>
+		<padding x="0.000000" y="0.000000"/>
+		<margin x="0.000000" y="0.000000"/>
+	</payload>
+</UIWidgetInfo>
+

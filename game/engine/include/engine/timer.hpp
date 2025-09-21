@@ -12,6 +12,7 @@ public:
     Time();
 
     void Update();
+    TimeType GetCurrentTime() const;
 
     /**
      * get elapsed time between two frames

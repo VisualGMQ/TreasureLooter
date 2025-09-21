@@ -3,9 +3,11 @@
 #include "cct.hpp"
 #include "entity.hpp"
 #include "event.hpp"
+#include "level.hpp"
 #include "schema/motor_config.hpp"
 #include "sprite.hpp"
 #include "state_machine.hpp"
+#include "ui.hpp"
 
 enum class CharacterDirection {
     Left,
@@ -50,7 +52,7 @@ public:
     
     ImageHandle m_faceset_image;
     ImageHandle m_sprite_sheet;
-    CharacterDirection m_direction;
+    CharacterDirection m_direction = CharacterDirection::Down;
     AnimationHandle m_move_left_animation;
     AnimationHandle m_move_right_animation;
     AnimationHandle m_move_up_animation;
@@ -87,29 +89,50 @@ private:
     StateMachine<EnemyMotorContext> m_state_machine;
 };
 
+struct VirtualJoystick {
+    Entity m_ui_entity = null_entity;
+    Circle m_circle;
+    float m_max_drag_dist = 400;
+    EventListenerID m_drag_event{};
+    EventListenerID m_release_event{};
+};
+
+struct VirtualButton {
+    Entity m_ui_entity = null_entity;
+    EventListenerID m_press_event{};
+    const Button* m_button{};
+    std::string m_action_name;
+
+    void Update();
+};
+
 class PlayerMotorContext : public CharacterMotorContext {
 public:
     using CharacterMotorContext::CharacterMotorContext;
 
     void Initialize(MotorConfigHandle) override;
     void Update(TimeType) override;
+    ~PlayerMotorContext() override;
 
 private:
-    struct TouchJoystick {
-        Circle m_circle;
-    };
-
     SDL_JoystickID m_gamepad_id = 0;
 
     // finger input related
-    TouchJoystick m_touch_joystick;
-    Circle m_finger_attack_button;
     std::optional<size_t> m_move_finger_idx;
     std::optional<size_t> m_attack_finger_idx;
     EventListenerID m_gamepad_event_listener;
     EventListenerID m_window_resize_event_listener;
 
-    void handleFingerTouchJoystick();
+    VirtualJoystick m_virtual_joystick;
+    VirtualButton m_virtual_attack_button;
+
+    void initVirualJoystick(LevelHandle level);
+    void initVirualAttackButton(LevelHandle level);
+
+    void handleJoystickDragEvent(EventListenerID id, const UIDragEvent&);
+    void handleJoystickReleaseEvent(EventListenerID id, const UIMouseUpEvent&);
+    void handleVirtualAttackButtonPressedEvent(EventListenerID id, const UIMouseDownEvent&);
+    void handleVirtualAttackButtonReleasedEvent(EventListenerID id, const UIMouseUpEvent&);
 };
 
 class MotorManager : public ComponentManager<MotorContext> {
