@@ -14,15 +14,62 @@
             "generator": "Ninja"
         },
         {
-            "name": "CI-Emscripten",
-            "binaryDir": "${sourceDir}/emcmake-build",
-            "generator": "Ninja"
+            "name": "CI-Ubuntu-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Debug",
+                "CMAKE_INSTALL_PREFIX" : "./install/ubuntu"
+            }
+        },
+        {
+            "name": "CI-Ubuntu-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Release",
+                "CMAKE_INSTALL_PREFIX" : "./install/ubuntu"
+            }
+        },
+        {
+            "name": "CI-MacOS-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Debug",
+                "CMAKE_INSTALL_PREFIX" : "./install/macOS"
+            }
+        },
+        {
+            "name": "CI-MacOS-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE" : "Release",
+                "CMAKE_INSTALL_PREFIX" : "./install/macOS"
+            }
         },
         {
             "name": "CI-Windows",
             "binaryDir": "${sourceDir}/cmake-build",
             "cacheVariables": {
                 "CMAKE_SYSTEM_VERSION" : "10.0.26100.0"
+            }
+        },
+        {
+            "name": "CI-Windows-Debug",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0",
+                "CMAKE_INSTALL_PREFIX" : "./install/windows"
+            }
+        },
+        {
+            "name": "CI-Windows-Release",
+            "binaryDir": "${sourceDir}/cmake-build-release",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0",
+                "CMAKE_INSTALL_PREFIX" : "./install/windows"
             }
         }
     ]

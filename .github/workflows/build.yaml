@@ -1,6 +1,6 @@
 name: Build
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build-cmake:
@@ -11,19 +11,15 @@ jobs:
             - name: Windows
               os: windows-latest
               android: false
-              emscripte: false
             - name: Ubuntu
               os: ubuntu-22.04
               android: false
-              emscripte: false
             - name: MacOS
               os: macOS-latest
               android: false
-              emscripte: false
             - name: Android
               os: ubuntu-latest
               android: true
-              emscripte: false
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -47,18 +43,47 @@ jobs:
       if: ${{ !contains(matrix.os, 'windows') && !matrix.android }}
       working-directory: ./game
       run: |
-        ${{ matrix.cmake-path }}cmake --preset=CI-Linux
+        ${{ matrix.cmake-path }}cmake --preset=CI-Ubuntu-Debug
 
-    - name: Config cmake(Windows)
+    - name: Config cmake(MacOS) Debug
+      if: ${{ contains(matrix.os, 'macOS') && !matrix.android }}
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-MacOS-Debug
+
+    - name: Config cmake(Windows) Debug
       if: contains(matrix.os, 'windows')
       working-directory: ./game
       run: |
-        ${{ matrix.cmake-path}}cmake --preset=CI-Windows
+        ${{ matrix.cmake-path }}cmake --preset=CI-Windows-Debug
 
-    - name: Build under PC
-      if: ${{ !matrix.android && !matrix.emscripte }}
+    - name: Build Debug under PC
+      if: ${{ !matrix.android }}
       working-directory: ./game
-      run: ${{ matrix.cmake-path }}cmake --build cmake-build
+      run: ${{ matrix.cmake-path }}cmake --build cmake-build-debug
+
+    - name: Config cmake(Ubuntu) Release
+      if: ${{ contains(matrix.os, 'ubuntu') && !matrix.android }}
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-Ubuntu-Release
+
+    - name: Config cmake(MacOS) Release
+      if: ${{ contains(matrix.os, 'macOS') && !matrix.android }}
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path }}cmake --preset=CI-MacOS-Release
+
+    - name: Config cmake(Windows) Release
+      if: contains(matrix.os, 'windows')
+      working-directory: ./game
+      run: |
+        ${{ matrix.cmake-path}}cmake --preset=CI-Windows-Release
+
+    - name: Build Release under PC
+      if: ${{ !matrix.android }}
+      working-directory: ./game
+      run: ${{ matrix.cmake-path }}cmake --build cmake-build-release
 
     - name: Precompile schema parser
       if: runner.os == 'Linux' && matrix.android
@@ -93,5 +118,47 @@ jobs:
       if: matrix.android
       working-directory: ./android
       run: |
-        ninja --version
         ./gradlew build
+
+    - name: Assemble Release APK
+      if: matrix.android
+      working-directory: ./android
+      run: |
+        ./gradlew assembleRelease
+
+    - name: Package under PC
+      if: ${{ !matrix.android }}
+      working-directory: ./game
+      run: ${{ matrix.cmake-path }}cmake --build cmake-build-release --target install --config Release
+
+    - name: Upload Ubuntu Build Artifact
+      if: ${{ contains(matrix.os, 'ubuntu') && !matrix.android }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: TreasureLooter-${{ matrix.os }}
+        path: game/install/ubuntu
+        retention-days: 7
+
+    - name: Upload Windows Build Artifact
+      if: ${{ contains(matrix.os, 'windows') && !matrix.android }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: TreasureLooter-${{ matrix.os }}
+        path: game/install/windows
+        retention-days: 7
+
+    - name: Upload MacOS Build Artifact
+      if: ${{ contains(matrix.os, 'macOS') && !matrix.android }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: TreasureLooter-${{ matrix.os }}
+        path: game/install/macOS
+        retention-days: 7
+
+    - name: Upload Android Build Artifact
+      if: matrix.android
+      uses: actions/upload-artifact@v4
+      with:
+        name: TreasureLooter-android
+        path: android/app/build/outputs/apk/release/app-release.apk
+        retention-days: 7
