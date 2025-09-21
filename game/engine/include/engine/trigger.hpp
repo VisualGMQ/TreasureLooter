@@ -52,6 +52,7 @@ public:
     [[nodiscard]] TriggerEventType GetEventType() const;
 
     void EnableTriggerEveryFrameWhenTouch(bool);
+    bool IsTriggerEveryFrameWhenTouch() const;
 
     void Update();
 

@@ -30,7 +30,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    GameContext::GetInst().ShutdownSystem();
     GameContext::GetInst().Shutdown();
+    GameContext::GetInst().ShutdownSystem();
     GameContext::Destroy();
 }

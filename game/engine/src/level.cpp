@@ -1,8 +1,8 @@
 #include "engine/level.hpp"
 
-#include "engine/context.hpp"
 #include "SDL3/SDL.h"
 #include "engine/asset_manager.hpp"
+#include "engine/context.hpp"
 #include "engine/relationship.hpp"
 #include "engine/sprite.hpp"
 
@@ -25,9 +25,32 @@ void Level::OnEnter() {
     if (!m_inited) {
         m_inited = false;
     }
+    Transform* transform =
+        CURRENT_CONTEXT.m_transform_manager->Get(GetUIRootEntity());
+    transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
+
+    m_window_resize_event_listener_id =
+        CURRENT_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
+            [this](EventListenerID, const SDL_WindowEvent& event) {
+                if (event.type != SDL_EVENT_WINDOW_RESIZED &&
+                    event.type != SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED &&
+                    event.type != SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
+                    return;
+                }
+                Entity entity = this->GetUIRootEntity();
+                Transform* transform =
+                    CURRENT_CONTEXT.m_transform_manager->Get(entity);
+                if (!(event.data1 == 0 && event.data2 == 0)) {
+                    transform->m_size.w = event.data1;
+                    transform->m_size.h = event.data2;
+                }
+            });
 }
 
 void Level::OnQuit() {
+    CURRENT_CONTEXT.m_event_system->RemoveListener<SDL_WindowEvent>(
+        m_window_resize_event_listener_id);
+
     for (auto entity : m_entities) {
         RemoveEntity(entity);
     }
@@ -58,17 +81,32 @@ Entity Level::GetRootEntity() const {
     return m_root_entity;
 }
 
+Entity Level::GetUIRootEntity() const {
+    return m_ui_root_entity;
+}
+
 void Level::initRootEntity() {
     m_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
+
+    m_ui_root_entity = CURRENT_CONTEXT.CreateEntity();
+    m_entities.insert(m_ui_root_entity);
+    CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_ui_manager->RegisterEntity(m_ui_root_entity);
+    UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(m_ui_root_entity);
+    ui->m_anchor = UIAnchor::None;
+    ui->m_panel = std::make_unique<UIPanelComponent>();
+    Transform* transform =
+        CURRENT_CONTEXT.m_transform_manager->Get(m_ui_root_entity);
+    transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
 }
 
 void Level::registerEntity(Entity entity, const EntityInstance& instance) {
     createEntityByPrefab(
-        entity,
-        instance.m_transform ? &instance.m_transform.value() : nullptr,
+        entity, instance.m_transform ? &instance.m_transform.value() : nullptr,
         *instance.m_prefab);
 }
 
@@ -92,13 +130,16 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
     }
     if (prefab.m_cct) {
         CURRENT_CONTEXT.m_cct_manager->RegisterEntity(entity, entity,
-                                                   prefab.m_cct.value());
+                                                      prefab.m_cct.value());
         CURRENT_CONTEXT.m_cct_manager->Get(entity)->Teleport(
             prefab.m_transform->m_position);
     }
     if (prefab.m_trigger) {
         CURRENT_CONTEXT.m_trigger_component_manager->RegisterEntity(
             entity, entity, prefab.m_trigger.value());
+    }
+    if (prefab.m_ui) {
+        CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
 
     if (prefab.m_motor_config) {
@@ -108,13 +149,12 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
                 break;
             case MotorType::Enemy:
                 CURRENT_CONTEXT.m_motor_manager
-                    ->RegisterEntityByDerive<EnemyMotorContext>(
-                        entity, entity);
+                    ->RegisterEntityByDerive<EnemyMotorContext>(entity, entity);
                 break;
             case MotorType::Player:
                 CURRENT_CONTEXT.m_motor_manager
-                    ->RegisterEntityByDerive<PlayerMotorContext>(
-                        entity, entity);
+                    ->RegisterEntityByDerive<PlayerMotorContext>(entity,
+                                                                 entity);
                 break;
         }
 
@@ -150,8 +190,12 @@ void Level::initByLevelContent(LevelContentHandle level_content) {
         registerEntity(entity, instance);
         m_entities.insert(entity);
 
-        auto relationship =
+        Relationship* relationship =
             CURRENT_CONTEXT.m_relationship_manager->Get(GetRootEntity());
+        if (CURRENT_CONTEXT.m_ui_manager->Has(entity)) {
+            relationship =
+                CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
+        }
         relationship->m_children.emplace_back(entity);
     }
 }
@@ -177,7 +221,7 @@ void Level::doRemoveEntities() {
 }
 
 AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename,
-    bool force) {
+                                                       bool force) {
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }

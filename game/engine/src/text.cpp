@@ -12,6 +12,19 @@ Font::Font(const Path& filename, int pt) {
     }
 }
 
+Font::Font(Font&& o) {
+    m_font = o.m_font;
+    o.m_font = nullptr;
+}
+
+Font& Font::operator=(Font&& o) {
+    if (&o != this) {
+        m_font = o.m_font;
+        o.m_font = nullptr;
+    }
+    return *this;
+}
+
 Font::~Font() {
     TTF_CloseFont(m_font);
 }

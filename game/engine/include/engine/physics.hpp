@@ -49,6 +49,8 @@ struct OverlapResult {
     PhysicsActor *m_dst_actor = nullptr;
 };
 
+Rect RectUnion(const Rect& r1, const Rect& r2);
+
 // nearest point
 Vec2 NearestRectPoint(const Rect &, const Vec2 &);
 

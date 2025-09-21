@@ -134,6 +134,18 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
                                 const std::string& name);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, CollisionGroup& payload);
 
+// Image9Grid
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
+                                const Image9Grid& payload,
+                                const std::string& name);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Image9Grid& payload);
+
+
+// Color
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
+                                const Color& payload,
+                                const std::string& name);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Color& payload);
 
 // optional
 template <typename T>

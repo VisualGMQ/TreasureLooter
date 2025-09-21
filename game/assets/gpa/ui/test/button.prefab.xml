@@ -1,0 +1,16 @@
+<Prefab>
+	<uuid>b5c21399-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<base/>
+		<transform>
+			<value>
+				<position x="100.000000" y="100.000000"/>
+				<scale x="200.000000" y="100.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<motor_config/>
+		<ui>assets/gpa/ui/test/button.ui.xml</ui>
+	</payload>
+</Prefab>
+

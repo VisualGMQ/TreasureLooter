@@ -76,6 +76,10 @@ void Trigger::EnableTriggerEveryFrameWhenTouch(bool enable) {
     m_trig_every_frame_when_touch = enable;
 }
 
+bool Trigger::IsTriggerEveryFrameWhenTouch() const {
+    return m_trig_every_frame_when_touch;
+}
+
 void Trigger::Update() {
     // check has actor leaved
     int i = m_touch_actors.size();

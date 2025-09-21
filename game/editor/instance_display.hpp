@@ -64,6 +64,10 @@ void InstanceDisplay(const char* name, CollisionGroup&);
 void InstanceDisplay(const char* name, const CollisionGroup&);
 void InstanceDisplay(const char* name, const Trigger&);
 void InstanceDisplay(const char* name, const PhysicsActor&);
+void InstanceDisplay(const char* name, const Color&);
+void InstanceDisplay(const char* name, Color&);
+void InstanceDisplay(const char* name, Image9Grid&);
+void InstanceDisplay(const char* name, const Image9Grid&);
 
 template <typename T>
 void InstanceDisplay(const char* name, std::optional<T>& value) {

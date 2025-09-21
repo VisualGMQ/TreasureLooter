@@ -28,14 +28,14 @@ void Window::SetTitle(const std::string& title) {
     SDL_CALL(SDL_SetWindowTitle(m_window, title.c_str()));
 }
 
-void Window::Resize(const Vec2& size) {
-    SDL_CALL(SDL_SetWindowSize(m_window, size.w, size.h));
-}
-
 SDL_WindowID Window::GetID() const {
     return SDL_GetWindowID(m_window);
 }
 
 SDL_Window* Window::GetWindow() {
     return m_window;
+}
+
+void Window::Resize(const Vec2UI& size) {
+    SDL_CALL(SDL_SetWindowSize(m_window, size.x, size.y));
 }

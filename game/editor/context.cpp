@@ -43,6 +43,13 @@ void EditorContext::Initialize() {
 
     m_editor_inspector = std::make_unique<Inspector>(EDITOR_CONTEXT);
     m_game_inspector = std::make_unique<Inspector>(GAME_CONTEXT);
+    m_entity_prefab_component = std::make_unique<EntityPrefabComponent>();
+}
+
+void EditorContext::Shutdown() {
+    m_entity_prefab_component.reset();
+
+    CommonContext::Shutdown();
 }
 
 void EditorContext::HandleEvents(const SDL_Event& event) {

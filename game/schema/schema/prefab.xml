@@ -9,6 +9,7 @@
     <import>common</import>
     <import>tilemap_schema</import>
     <import>motor_config</import>
+    <import>ui_config</import>
 
     <asset name="Prefab" extension=".prefab">
         <handle type="Prefab" name="base"/>
@@ -21,5 +22,6 @@
         <option type="CCT" name="cct"/>
         <option type="TriggerInfo" name="trigger"/>
         <handle type="MotorConfig" name="motor_config"/>
+        <handle type="UIWidgetInfo" name="ui"/>
     </asset>
 </schema>

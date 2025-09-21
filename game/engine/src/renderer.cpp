@@ -1,7 +1,7 @@
 #include "engine/renderer.hpp"
 
-#include "engine/context.hpp"
 #include "engine/camera.hpp"
+#include "engine/context.hpp"
 #include "engine/image.hpp"
 #include "engine/log.hpp"
 #include "engine/sdl_call.hpp"
@@ -48,10 +48,8 @@ void Renderer::DrawRect(const Rect& r, const Color& c, bool use_camera) {
                           &dst.m_half_size);
     }
     Vec2 tl = dst.m_center - dst.m_half_size;
-    SDL_FRect rect{
-        tl.x, tl.y, dst.m_half_size.w * 2.0f,
-        dst.m_half_size.h * 2.0f
-    };
+    SDL_FRect rect{tl.x, tl.y, dst.m_half_size.w * 2.0f,
+                   dst.m_half_size.h * 2.0f};
     SDL_CALL(SDL_RenderRect(m_renderer, &rect));
 }
 
@@ -85,10 +83,8 @@ void Renderer::FillRect(const Rect& r, const Color& c, bool use_camera) {
                           &dst.m_half_size);
     }
     Vec2 tl = dst.m_center - dst.m_half_size;
-    SDL_FRect rect{
-        tl.x, tl.y, dst.m_half_size.w * 2.0f,
-        dst.m_half_size.h * 2.0f
-    };
+    SDL_FRect rect{tl.x, tl.y, dst.m_half_size.w * 2.0f,
+                   dst.m_half_size.h * 2.0f};
     SDL_CALL(SDL_RenderFillRect(m_renderer, &rect));
 }
 
@@ -118,24 +114,201 @@ void Renderer::DrawImage(const Image& image, const Region& src,
     dst_rect.h = dst_region.m_half_size.h * 2.0f;
 
     SDL_FPoint sdl_center;
-    Vec2 rot_center;
+    Vec2 rot_center = center;
     if (use_camera) {
         transformByCamera(CURRENT_CONTEXT.m_camera, &rot_center, nullptr);
     }
     sdl_center.x = rot_center.x;
     sdl_center.y = rot_center.y;
     SDL_CALL(SDL_RenderTextureRotated(m_renderer, image.GetTexture(), &src_rect,
-        &dst_rect, rotation.Value(), &sdl_center,
-        static_cast<SDL_FlipMode>(flip.Value())));
+                                      &dst_rect, rotation.Value(), &sdl_center,
+                                      static_cast<SDL_FlipMode>(flip.Value())));
+}
+
+void Renderer::DrawImage9Grid(const Image& image, const Region& src,
+                              const Region& dst, const Image9Grid& grid,
+                              float border_scale, bool use_camera) {
+    Rect dst_region;
+    dst_region.m_half_size = dst.m_size * 0.5;
+    dst_region.m_center = dst.m_topleft + dst_region.m_half_size;
+
+    if (use_camera) {
+        transformByCamera(GAME_CONTEXT.m_camera, &dst_region.m_center,
+                          &dst_region.m_half_size);
+    }
+
+    SDL_FRect final_rect;
+
+    auto top_left = dst_region.m_center - dst_region.m_half_size;
+    final_rect.x = top_left.x;
+    final_rect.y = top_left.y;
+    final_rect.w = dst_region.m_half_size.w * 2.0f;
+    final_rect.h = dst_region.m_half_size.h * 2.0f;
+
+    float scaled_left = grid.left * border_scale;
+    float scaled_right = grid.right * border_scale;
+    float scaled_top = grid.top * border_scale;
+    float scaled_bottom = grid.bottom * border_scale;
+
+    // top left corner
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x;
+        src_rect.y = src.m_topleft.y;
+        src_rect.w = grid.left;
+        src_rect.h = grid.top;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = top_left.x;
+        dst_rect.y = top_left.y;
+        dst_rect.w = scaled_left;
+        dst_rect.h = scaled_top;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // top border
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x + grid.left;
+        src_rect.y = src.m_topleft.y;
+        src_rect.w = src.m_size.w - grid.left - grid.right;
+        src_rect.h = grid.top;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = top_left.x + scaled_left;
+        dst_rect.y = top_left.y;
+        dst_rect.w = final_rect.w - scaled_left - scaled_right;
+        dst_rect.h = scaled_top;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // top right
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x + src.m_size.w - grid.right;
+        src_rect.y = src.m_topleft.y;
+        src_rect.w = grid.right;
+        src_rect.h = grid.top;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x + final_rect.w - scaled_right;
+        dst_rect.y = top_left.y;
+        dst_rect.w = scaled_right;
+        dst_rect.h = scaled_top;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // middle left
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x;
+        src_rect.y = src.m_topleft.y + grid.top;
+        src_rect.w = grid.left;
+        src_rect.h = src.m_size.h - grid.top - grid.bottom;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x;
+        dst_rect.y = final_rect.y + scaled_top;
+        dst_rect.w = scaled_left;
+        dst_rect.h = final_rect.h - scaled_top - scaled_bottom;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // middle middle
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x + grid.left;
+        src_rect.y = src.m_topleft.y + grid.top;
+        src_rect.w = src.m_size.w - grid.left - grid.right;
+        src_rect.h = src.m_size.h - grid.top - grid.bottom;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x + scaled_left;
+        dst_rect.y = final_rect.y + scaled_top;
+        dst_rect.w = final_rect.w - scaled_left - scaled_bottom;
+        dst_rect.h = final_rect.h - scaled_top - scaled_bottom;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // middle right
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x + src.m_size.w - grid.right;
+        src_rect.y = src.m_topleft.y + grid.top;
+        src_rect.w = grid.right;
+        src_rect.h = src.m_size.h - grid.top - grid.bottom;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x + final_rect.w - scaled_right;
+        dst_rect.y = final_rect.y + scaled_top;
+        dst_rect.w = scaled_right;
+        dst_rect.h = final_rect.h - scaled_top - scaled_bottom;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // bottom left
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x;
+        src_rect.y = src.m_topleft.y + src.m_size.h - grid.bottom;
+        src_rect.w = grid.right;
+        src_rect.h = grid.bottom;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x;
+        dst_rect.y = final_rect.y + final_rect.h - scaled_bottom;
+        dst_rect.w = scaled_left;
+        dst_rect.h = scaled_bottom;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // bottom middle
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x + grid.left;
+        src_rect.y = src.m_topleft.y + src.m_size.h - grid.bottom;
+        src_rect.w = src.m_topleft.x + src.m_size.w - grid.right - grid.left;
+        src_rect.h = grid.bottom;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x + scaled_left;
+        dst_rect.y = final_rect.y + final_rect.h - scaled_bottom;
+        dst_rect.w = final_rect.w - scaled_left - scaled_right;
+        dst_rect.h = scaled_bottom;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
+
+    // bottom right
+    {
+        SDL_FRect src_rect;
+        src_rect.x = src.m_topleft.x + src.m_size.w - grid.right;
+        src_rect.y = src.m_topleft.y + src.m_size.h - grid.bottom;
+        src_rect.w = grid.right;
+        src_rect.h = grid.bottom;
+
+        SDL_FRect dst_rect;
+        dst_rect.x = final_rect.x + final_rect.w - scaled_right;
+        dst_rect.y = final_rect.y + final_rect.h - scaled_bottom;
+        dst_rect.w = scaled_right;
+        dst_rect.h = scaled_bottom;
+        SDL_CALL(SDL_RenderTexture(m_renderer, image.GetTexture(), &src_rect,
+                                   &dst_rect));
+    }
 }
 
 void Renderer::DrawRectEx(const Image& image, const Region& src,
                           const Vec2& topleft, const Vec2& topright,
                           const Vec2& bottomleft, bool use_camera) {
-    SDL_FRect rect = {
-        src.m_topleft.x, src.m_topleft.y, src.m_size.w,
-        src.m_size.h
-    };
+    SDL_FRect rect = {src.m_topleft.x, src.m_topleft.y, src.m_size.w,
+                      src.m_size.h};
     Vec2 tl{topleft.x, topleft.y}, tr{topright.x, topright.y},
         bl{bottomleft.x, bottomleft.y};
     if (use_camera) {
@@ -145,9 +318,8 @@ void Renderer::DrawRectEx(const Image& image, const Region& src,
     }
 
     SDL_FPoint sdl_tl{tl.x, tl.y}, sdl_tr{tr.x, tr.y}, sdl_bl{bl.x, bl.y};
-    SDL_CALL(
-        SDL_RenderTextureAffine(m_renderer, image.GetTexture(), &rect, &sdl_tl,
-            &sdl_tr, &sdl_bl));
+    SDL_CALL(SDL_RenderTextureAffine(m_renderer, image.GetTexture(), &rect,
+                                     &sdl_tl, &sdl_tr, &sdl_bl));
 }
 
 void Renderer::DrawText(const std::string& text, FontHandle font,
@@ -168,10 +340,8 @@ void Renderer::DrawText(const std::string& text, FontHandle font,
     update_region.w = surface->w;
     update_region.h = surface->h;
 
-    SDL_CALL(
-        SDL_UpdateTexture(m_text_texture, &update_region, surface->pixels,
-            surface->
-            pitch));
+    SDL_CALL(SDL_UpdateTexture(m_text_texture, &update_region, surface->pixels,
+                               surface->pitch));
 
     SDL_FRect dst;
     dst.x = position.x;
@@ -189,8 +359,8 @@ void Renderer::DrawText(const std::string& text, FontHandle font,
 
 void Renderer::Clear() {
     SDL_CALL(SDL_SetRenderDrawColor(m_renderer, m_clear_color.r,
-        m_clear_color.g, m_clear_color.b,
-        m_clear_color.a));
+                                    m_clear_color.g, m_clear_color.b,
+                                    m_clear_color.a));
     SDL_CALL(SDL_RenderClear(m_renderer));
 }
 
@@ -204,7 +374,7 @@ SDL_Renderer* Renderer::GetRenderer() const {
 
 void Renderer::setRenderColor(const Color& c) {
     SDL_CALL(SDL_SetRenderDrawColor(m_renderer, c.r * 255, c.g * 255, c.b * 255,
-        c.a * 255));
+                                    c.a * 255));
 }
 
 void Renderer::transformByCamera(const Camera& camera, Vec2* center,
@@ -229,7 +399,7 @@ void Renderer::resizeTexture(const Vec2UI& new_size) {
     if (m_text_texture) {
         SDL_DestroyTexture(m_text_texture);
     }
-    m_text_texture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_ARGB8888,
-                                       SDL_TEXTUREACCESS_STATIC, new_size.w,
-                                       new_size.h);
+    m_text_texture =
+        SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_ARGB8888,
+                          SDL_TEXTUREACCESS_STATIC, new_size.w, new_size.h);
 }

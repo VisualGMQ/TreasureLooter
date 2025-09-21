@@ -13,7 +13,9 @@ public:
     [[nodiscard]] Vec2 GetPosition() const;
 
     void SetSkin(float skin);
+    float GetSkin() const;
     void SetMinDisp(float);
+    float GetMinDisp() const;
     void Teleport(const Vec2& pos);
 
     [[nodiscard]] const PhysicsActor* GetActor() const;

@@ -231,6 +231,10 @@ Vec2 Rotate(const Vec2& p, Degrees d) {
     return {p.x * c - p.y * s, p.x * s + p.y * c};
 }
 
+Transform::Transform()
+    : m_size{1.0, 1.0} {
+}
+
 const Mat33& Transform::GetLocalMat() const {
     return m_mat;
 }

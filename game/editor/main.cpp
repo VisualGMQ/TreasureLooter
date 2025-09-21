@@ -30,7 +30,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    editor::EditorContext::GetInst().ShutdownSystem();
     editor::EditorContext::GetInst().Shutdown();
+    editor::EditorContext::GetInst().ShutdownSystem();
     editor::EditorContext::Destroy();
 }

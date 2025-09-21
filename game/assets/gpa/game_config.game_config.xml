@@ -4,6 +4,9 @@
 		<basic_level_asset>assets/gpa/game.level.xml</basic_level_asset>
 		<input_config_asset>assets/gpa/input_config.input_config.xml</input_config_asset>
 		<tile_in_chunk_size x="10" y="10"/>
-		<camera_scale x="3" y="3"/>
+		<camera_scale x="3.000000" y="3.000000"/>
+		<logic_size x="1920" y="1080"/>
+		<default_font>assets/fonts/zpix.ttf</default_font>
 	</payload>
 </GameConfig>
+

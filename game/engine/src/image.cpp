@@ -5,6 +5,16 @@
 #include "stb_image.h"
 #include "engine/storage.hpp"
 
+Image::Image(Renderer& renderer, SDL_Surface* surface) {
+    m_texture = SDL_CreateTextureFromSurface(
+        renderer.GetRenderer(), surface);
+    if (!surface) {
+        LOGE("create texture from surface failed");
+        return;
+    }
+    SDL_DestroySurface(surface);
+}
+
 Image::Image(Renderer& renderer, const Path& filename) {
     int w, h;
 
@@ -60,12 +70,19 @@ Image::~Image() {
 
 Vec2 Image::GetSize() const {
     Vec2 size;
+    if (!m_texture) {
+        return {};
+    }
     SDL_CALL(SDL_GetTextureSize(m_texture, &size.w, &size.h));
     return size;
 }
 
 SDL_Texture* Image::GetTexture() const {
     return m_texture;
+}
+
+void Image::ChangeColorMask(const Color& color) {
+    SDL_SetTextureColorMod(m_texture, color.r * 255, color.g * 255, color.b * 255);
 }
 
 ImageManager::ImageManager(Renderer& renderer) : m_renderer{renderer} {}

@@ -23,6 +23,7 @@
 #include <memory>
 
 #include "motor.hpp"
+#include "ui.hpp"
 
 struct EntityInstance;
 class RelationshipManager;
@@ -92,6 +93,7 @@ public:
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<TimerManager> m_timer_manager;
     std::unique_ptr<MotorManager> m_motor_manager;
+    std::unique_ptr<UIComponentManager> m_ui_manager;
     std::unique_ptr<BindPointsComponentManager> m_bind_point_component_manager;
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;

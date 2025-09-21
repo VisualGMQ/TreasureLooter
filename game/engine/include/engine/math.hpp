@@ -54,7 +54,7 @@ struct TVec2 final {
 
     float Length() const;
 
-    TVec2 Normalize() const;
+    [[nodiscard]] TVec2 Normalize() const;
 };
 
 template <typename T>
@@ -243,7 +243,7 @@ std::ostream &operator<<(std::ostream &os, const TVec2<T> &p) {
     return os;
 }
 
-Vec2 Reflect(const Vec2& v, const Vec2& n);
+Vec2 Reflect(const Vec2 &v, const Vec2 &n);
 
 struct Color {
     static const Color Red;
@@ -325,7 +325,6 @@ Radians operator/(Radians d1, Radians d2);
 
 inline const Radians PI{3.14159265358979323846f};
 inline const Radians PI_Half{3.14159265358979323846f * 0.5};
-
 
 struct Mat33 {
     static Mat33 CreateTranslation(const Vec2 &);
@@ -437,14 +436,28 @@ struct Transform {
     friend class RelationshipManager;
 
     Vec2 m_position;
-    Degrees m_rotation;
-    Vec2 m_scale{1.0, 1.0};
+    Degrees m_rotation;  // UI and tilemap will ignore this
+
+    union {
+        Vec2 m_size;  // when entity is UI, use size
+        Vec2 m_scale;           // otherwise, use scale
+    };
+
+    Transform();
 
     const Mat33 &GetLocalMat() const;
 
     const Mat33 &GetGlobalMat() const;
 
     void UpdateMat(const Transform *parent);
+
+    bool operator==(const Transform& o) const noexcept {
+        return m_position == o.m_position && m_rotation == o.m_rotation && m_size == o.m_size;
+    }
+    
+    bool operator!=(const Transform& o) const noexcept {
+        return !(*this == o);
+    }
 
 private:
     Mat33 m_mat;

@@ -13,12 +13,13 @@
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
+#include "engine/ui.hpp"
 #include "uuid.h"
-#include "imgui_internal.h"
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -80,6 +81,7 @@ void CommonContext::Initialize() {
         std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
+    m_ui_manager = std::make_unique<UIComponentManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -150,6 +152,12 @@ void CommonContext::HandleEvents(const SDL_Event& event) {
                event.type == SDL_EVENT_FINGER_MOTION ||
                event.type == SDL_EVENT_FINGER_CANCELED) {
         m_touches->HandleEvent(event.tfinger);
+    } else if (event.type == SDL_EVENT_WINDOW_RESIZED ||
+               event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
+               event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
+        if (m_level_manager && event.window.windowID == m_window->GetID()) {
+            m_event_system->EnqueueEvent(event.window);
+        }
     }
     m_gamepad_manager->HandleEvent(event);
     m_mouse->HandleEvent(event);
@@ -286,6 +294,8 @@ void GameContext::logicUpdate(TimeType elapse) {
     m_bind_point_component_manager->Update();
 
     m_animation_player_manager->Update(elapse);
+    m_ui_manager->HandleEvent();
+    m_ui_manager->Update();
     m_relationship_manager->Update();
     m_trigger_component_manager->Update();
     m_event_system->Update();
@@ -303,6 +313,7 @@ void GameContext::renderUpdate(TimeType elapse) {
 
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
+    m_ui_manager->Render();
 
     m_physics_scene->RenderDebug();
 

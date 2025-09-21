@@ -8,7 +8,9 @@ class Renderer;
 
 class Image {
 public:
-    Image(Renderer& Renderer, const Path& filename);
+    Image() = default;
+    Image(Renderer& renderer, SDL_Surface* surface);
+    Image(Renderer& renderer, const Path& filename);
     Image(const Image&) = delete;
     Image& operator=(const Image&) = delete;
     Image(Image&&) noexcept;
@@ -17,7 +19,8 @@ public:
 
     Vec2 GetSize() const;
 
-    SDL_Texture* GetTexture() const;
+    [[nodiscard]] SDL_Texture* GetTexture() const;
+    void ChangeColorMask(const Color& color);
 
 private:
     SDL_Texture* m_texture{};
