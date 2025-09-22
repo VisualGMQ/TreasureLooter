@@ -7,6 +7,8 @@
 #include <cmath>
 #include <limits>
 
+#include "engine/profile.hpp"
+
 HitResult::HitResult(float t, Flags<HitType> f, Vec2 n, bool is_initial_overlap)
     : m_t(t),
       m_flags(f),
@@ -792,6 +794,8 @@ bool PhysicsScene::IsEnableDebugDraw() const {
 }
 
 void PhysicsScene::RenderDebug() const {
+    PROFILE_DEBUG_SECTION(__FUNCTION__);
+    
     if (!IsEnableDebugDraw()) {
         return;
     }

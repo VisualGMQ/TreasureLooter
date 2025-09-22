@@ -1,6 +1,7 @@
 #include "engine/debug_drawer.hpp"
 
 #include "engine/context.hpp"
+#include "engine/profile.hpp"
 
 void DebugDrawer::DrawRect(const Rect& r, const Color& color, TimeType time, bool use_camera) {
     m_rects.push_back({color, r, time, use_camera});
@@ -21,6 +22,8 @@ void DebugDrawer::AddLine(const Vec2& p1, const Vec2& p2, const Color& color,
 }
 
 void DebugDrawer::Update(TimeType elapse) {
+    PROFILE_DEBUG_SECTION(__FUNCTION__);
+    
     auto& renderer = CURRENT_CONTEXT.m_renderer;
 
     size_t i = 0;

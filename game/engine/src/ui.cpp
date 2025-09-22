@@ -1,6 +1,7 @@
 #include "engine/ui.hpp"
 
 #include "engine/context.hpp"
+#include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 
 void UIText::SetFont(FontHandle font) {
@@ -265,6 +266,8 @@ UIWidget::UIWidget(UIWidgetInfoHandle info) {
 }
 
 void UIComponentManager::Update() {
+    PROFILE_UI_SECTION(__FUNCTION__);
+    
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
@@ -283,6 +286,8 @@ void UIComponentManager::Update() {
 }
 
 void UIComponentManager::Render() {
+    PROFILE_UI_SECTION(__FUNCTION__);
+    
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
@@ -298,6 +303,8 @@ void UIComponentManager::Render() {
 }
 
 void UIComponentManager::HandleEvent() {
+    PROFILE_UI_SECTION(__FUNCTION__);
+    
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;

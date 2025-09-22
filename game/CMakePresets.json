@@ -5,7 +5,8 @@
             "name": "default",
             "binaryDir": "${sourceDir}/cmake-build",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX" : "install"
+                "CMAKE_INSTALL_PREFIX" : "install",
+                "TL_ENABLE_PROFILE" : true
             }
         },
         {

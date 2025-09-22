@@ -2,9 +2,12 @@
 
 #include "engine/context.hpp"
 #include "engine/level.hpp"
+#include "engine/profile.hpp"
 #include "engine/transform.hpp"
 
 void RelationshipManager::Update() {
+    PROFILE_GAMELOGIC_SECTION(__FUNCTION__);
+    
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;

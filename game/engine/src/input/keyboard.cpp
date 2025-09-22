@@ -1,6 +1,7 @@
 #include "engine/input/keyboard.hpp"
 
 #include "engine/context.hpp"
+#include "engine/profile.hpp"
 
 KeyboardButton::KeyboardButton(Key key) : m_key(key) {}
 
@@ -58,6 +59,8 @@ void Keyboard::HandleEvent(const SDL_KeyboardEvent& event) {
 }
 
 void Keyboard::Update() {
+    PROFILE_INPUT_SECTION(__FUNCTION__);
+    
     for (auto& [_, button] : m_buttons) {
         button.update();
     }

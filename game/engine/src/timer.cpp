@@ -1,6 +1,7 @@
 #include "engine/timer.hpp"
+
 #include "engine/context.hpp"
-#include "engine/log.hpp"
+#include "engine/profile.hpp"
 
 Time::Time() {
     m_cur_time = std::chrono::steady_clock::now();
@@ -126,6 +127,8 @@ void TimerManager::Clear() {
 }
 
 void TimerManager::Update(TimeType duration) {
+    PROFILE_SECTION();
+    
     for (auto& [_, timer] : m_timers) {
         timer->Update(duration);
     }

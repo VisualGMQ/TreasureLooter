@@ -10,6 +10,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
+################# options #####################
+option(TL_ENABLE_PROFILE "enable profile use optick" OFF)
+
 ################ generate project path config file ################
 configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_path.xml)
 
@@ -83,6 +86,12 @@ target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} $
 target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf)
+
+if (TL_ENABLE_PROFILE)
+    target_link_libraries(${ENGINE_NAME} PUBLIC optick)
+    target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ENABLE_PROFILE)
+endif()
+
 target_compile_definitions(${ENGINE_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
     PRIVATE _CRT_SECURE_NO_WARNINGS)

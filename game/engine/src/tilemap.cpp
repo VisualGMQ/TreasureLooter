@@ -3,6 +3,7 @@
 #include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/log.hpp"
+#include "engine/profile.hpp"
 #include "schema/tilemap_schema.hpp"
 #include "tmxlite/TileLayer.hpp"
 
@@ -239,6 +240,8 @@ const PhysicsScene::TilemapCollision *TilemapComponent::GetTilemapCollision() co
 }
 
 void TilemapComponentManager::Update() {
+    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    
     for (auto &[entity, tilemap]: m_components) {
         if (!tilemap.m_enable) {
             continue;
