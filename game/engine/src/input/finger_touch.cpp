@@ -2,6 +2,7 @@
 
 #include "engine/context.hpp"
 #include "engine/log.hpp"
+#include "engine/profile.hpp"
 
 bool FingerTouch::IsPressing() const {
     return m_is_last_frame_press && m_is_press;
@@ -70,6 +71,8 @@ void Touches::HandleEvent(const SDL_TouchFingerEvent& event) {
 }
 
 void Touches::Update() {
+    PROFILE_INPUT_SECTION(__FUNCTION__);
+    
     for (auto& touch : m_touches) {
         touch.update();
     }

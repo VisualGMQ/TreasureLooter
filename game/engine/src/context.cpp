@@ -19,7 +19,8 @@
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "engine/ui.hpp"
-#include "uuid.h"
+#include "engine/uuid.hpp"
+#include "engine/profile.hpp"
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -264,6 +265,8 @@ GameContext& GameContext::GetInst() {
 }
 
 void GameContext::Initialize() {
+    PROFILE_SECTION();
+    
     CommonContext::Initialize();
 
     m_input_manager->Initialize(
@@ -276,6 +279,8 @@ void GameContext::Initialize() {
 }
 
 void GameContext::Update() {
+    PROFILE_MAIN_FRAME();
+    
     auto elapse_time = m_time->GetElapseTime();
 
     logicUpdate(elapse_time);
@@ -286,6 +291,8 @@ void GameContext::Update() {
 }
 
 void GameContext::logicUpdate(TimeType elapse) {
+    PROFILE_SECTION();
+
     m_time->Update();
     m_gamepad_manager->Update();
     m_keyboard->Update();
@@ -305,11 +312,15 @@ void GameContext::logicUpdate(TimeType elapse) {
 }
 
 void GameContext::logicPostUpdate(TimeType elapse) {
+    PROFILE_SECTION();
+    
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
 }
 
 void GameContext::renderUpdate(TimeType elapse) {
+    PROFILE_RENDERING_SECTION("renderUpdate");
+    
     m_renderer->Clear();
     beginImGui();
 
@@ -325,4 +336,6 @@ void GameContext::renderUpdate(TimeType elapse) {
     m_renderer->Present();
 }
 
-GameContext::~GameContext() {}
+GameContext::~GameContext() {
+    PROFILE_SHUTDOWN();
+}

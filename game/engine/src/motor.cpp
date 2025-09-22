@@ -3,6 +3,7 @@
 #include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
 #include "engine/enemy_state.hpp"
+#include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 
 CharacterMotorContext::CharacterMotorContext(Entity entity)
@@ -414,6 +415,8 @@ void PlayerMotorContext::handleVirtualAttackButtonReleasedEvent(
 }
 
 void MotorManager::Update(TimeType duration) {
+    PROFILE_GAMELOGIC_SECTION(__FUNCTION__);
+    
     for (auto& [_, component] : m_components) {
         if (!component.m_enable) {
             continue;

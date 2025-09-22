@@ -15,6 +15,7 @@ add_3rdlib(RapidXML)
 add_3rdlib(Lyra)
 add_3rdlib(Mustache)
 add_3rdlib(stduuid)
+add_3rdlib(optick)
 
 set(TMXLITE_STATIC_LIB ON)
 set(USE_SDL3_IOSTREAM ON)

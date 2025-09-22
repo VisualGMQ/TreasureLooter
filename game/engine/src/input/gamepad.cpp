@@ -2,6 +2,7 @@
 
 #include "engine/context.hpp"
 #include "engine/log.hpp"
+#include "engine/profile.hpp"
 
 GamepadButton Gamepad::InvalidButton{SDL_GAMEPAD_BUTTON_INVALID};
 GamepadAxis Gamepad::InvalidAxis{SDL_GAMEPAD_AXIS_INVALID};
@@ -126,6 +127,8 @@ void GamepadManager::HandleEvent(const SDL_Event& event) {
 }
 
 void GamepadManager::Update() {
+    PROFILE_INPUT_SECTION(__FUNCTION__);
+    
     for (auto& [_, gamepad] : m_gamepads) {
         gamepad.update();
     }

@@ -3,6 +3,7 @@
 #include "engine/context.hpp"
 #include "imgui.h"
 #include "engine/imgui_id_generator.hpp"
+#include "engine/profile.hpp"
 
 CharacterController::CharacterController(Entity entity, const CCT& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
@@ -24,6 +25,8 @@ bool CharacterController::EnableDebugOutput = false;
     } while (0)
 
 void CharacterController::MoveAndSlide(const Vec2& dir) {
+    PROFILE_PHYSICS_SECTION(__FUNCTION__);
+    
     if (!m_actor) {
         CCT_DEBUG_LOG("actor is nullptr");
         return;

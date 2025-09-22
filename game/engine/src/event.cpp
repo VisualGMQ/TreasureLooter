@@ -1,5 +1,7 @@
 #include "engine/event.hpp"
 
+#include "engine/profile.hpp"
+
 constexpr bool NullEventListenerID::operator==(EventListenerID id) const {
     return static_cast<uint32_t>(id) == 0;
 }
@@ -42,6 +44,8 @@ void EventSystem::HandleEvent(const SDL_Event& event) {
 }
 
 void EventSystem::Update() {
+    PROFILE_SECTION();
+    
     for (auto& [_, sink] : m_sinks) {
         sink->Update();
     }

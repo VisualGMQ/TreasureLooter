@@ -2,6 +2,7 @@
 
 #include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/profile.hpp"
 #include "engine/sprite.hpp"
 
 AnimationPlayer::AnimationPlayer(const AnimationPlayerCreateInfo& create_info) {
@@ -377,6 +378,8 @@ bool AnimationPlayer::IsAutoPlayEnabled() const {
 }
 
 void AnimationPlayerManager::Update(TimeType delta_time) {
+    PROFILE_ANIMATION_SECTION(__FUNCTION__);
+    
     for (auto& [entity, anim] : m_components) {
         if (!anim.m_enable) {
             continue;

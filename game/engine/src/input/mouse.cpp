@@ -1,6 +1,7 @@
 #include "engine/input/mouse.hpp"
 
 #include "engine/context.hpp"
+#include "engine/profile.hpp"
 
 MouseButton::MouseButton(MouseButtonType type) : m_type(type) {}
 
@@ -100,6 +101,8 @@ void Mouse::HandleEvent(const SDL_Event& event) {
 }
 
 void Mouse::Update() {
+    PROFILE_INPUT_SECTION(__FUNCTION__);
+    
     for (auto& button : m_buttons) {
         button.update();
     }

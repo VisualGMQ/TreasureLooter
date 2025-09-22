@@ -6,7 +6,11 @@
 
 #include <array>
 
+#include "engine/profile.hpp"
+
 void SpriteManager::Update() {
+    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    
     auto &renderer = CURRENT_CONTEXT.m_renderer;
     auto &transform_manager = CURRENT_CONTEXT.m_transform_manager;
     for (auto &[entity, component]: m_components) {
