@@ -1,7 +1,5 @@
 #include "engine/timer.hpp"
 
-#include <optick.h>
-
 #include "engine/context.hpp"
 #include "engine/profile.hpp"
 
