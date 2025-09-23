@@ -10,8 +10,9 @@
 
     <asset name="MotorConfig" extension=".motor_config">
         <handle name="sprite_sheet" type="Image"/>
-        <handle name="faceset" type="Image"/>
+        <handle name="avatar" type="Image"/>
         <element name="speed" type="float" default="100"/>
+        <element name="health" type="size_t" default="12"/>
         <element name="type" type="MotorType" default="MotorType::Unknown"/>
 
         <handle name="move_left_animation" type="Animation"/>

@@ -231,6 +231,10 @@ Vec2 Rotate(const Vec2& p, Degrees d) {
     return {p.x * c - p.y * s, p.x * s + p.y * c};
 }
 
+bool Region::IsValid() const {
+    return m_size.w > 0 && m_size.h > 0;
+}
+
 Transform::Transform()
     : m_size{1.0, 1.0} {
 }

@@ -4,6 +4,7 @@
 #include "engine/context.hpp"
 #include "engine/image.hpp"
 #include "engine/log.hpp"
+#include "engine/profile.hpp"
 #include "engine/sdl_call.hpp"
 
 Renderer::Renderer(Window& window) {
@@ -365,6 +366,7 @@ void Renderer::Clear() {
 }
 
 void Renderer::Present() {
+    PROFILE_RENDERING_SECTION(__FUNCTION__);
     SDL_CALL(SDL_RenderPresent(m_renderer));
 }
 

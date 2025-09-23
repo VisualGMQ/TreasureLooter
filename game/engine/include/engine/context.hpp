@@ -67,6 +67,8 @@ public:
     bool IsRunning() const;
 
     Entity CreateEntity();
+    void EnableEntity(Entity) const;
+    void DisableEntity(Entity) const;
 
     bool ShouldExit() const;
     bool IsInited() const;

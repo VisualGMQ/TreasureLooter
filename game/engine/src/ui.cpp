@@ -535,6 +535,9 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     if (theme->m_image) {
         Region src;
         src.m_size = theme->m_image->GetSize();
+        if (theme->m_region.IsValid()) {
+            src = theme->m_region;
+        }
         theme->m_image->ChangeColorMask(theme->m_background_color);
         if (theme->m_image_9grid.IsValid()) {
             renderer.DrawImage9Grid(*theme->m_image, src, dst,

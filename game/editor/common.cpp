@@ -134,13 +134,14 @@ void SaveEntity(Entity entity) {
     if (auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity)) {
         if (auto character_motor = dynamic_cast<CharacterMotorContext*>(motor)) {
             MotorConfig config;
-            config.m_faceset = character_motor->m_faceset_image;
+            config.m_avatar = character_motor->m_avatar_image;
             config.m_move_down_animation = character_motor->m_move_down_animation;
             config.m_move_left_animation = character_motor->m_move_left_animation;
             config.m_move_right_animation = character_motor->m_move_right_animation;
             config.m_move_up_animation = character_motor->m_move_up_animation;
             config.m_speed = character_motor->m_move_speed;
             config.m_sprite_sheet = character_motor->m_sprite_sheet;
+            config.m_health = character_motor->m_health;
             config.m_type = dynamic_cast<PlayerMotorContext*>(character_motor) ? MotorType::Player : MotorType::Enemy;
             config.m_weapon_entity = 0;
 

@@ -29,6 +29,7 @@
         <element name="border_color" type="Color" default="{0, 0, 0, 1}"/>
         <element name="foreground_color" type="Color" default="{1, 1, 1, 1}"/>
         <handle name="image" type="Image"/>
+        <element name="region" type="Region"/>
         <element name="image_9grid" type="Image9Grid"/>
     </class>
     

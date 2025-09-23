@@ -416,6 +416,8 @@ Vec2 Rotate(const Vec2 &, Degrees);
 
 struct Region {
     Vec2 m_topleft, m_size;
+
+    bool IsValid() const;
 };
 
 /**

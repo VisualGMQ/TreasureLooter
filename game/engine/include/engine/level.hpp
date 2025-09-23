@@ -26,17 +26,17 @@ public:
 
     void PoseUpdate();
 
-    bool IsInited() const;
+    [[nodiscard]] bool IsInited() const;
 
     /**
      * instantiate entity but don't put into level scene
      */
-    Entity Instantiate(PrefabHandle);
+    [[nodiscard]] Entity Instantiate(PrefabHandle);
 
     void RemoveEntity(Entity);
 
-    Entity GetRootEntity() const;
-    Entity GetUIRootEntity() const;
+    [[nodiscard]] Entity GetRootEntity() const;
+    [[nodiscard]] Entity GetUIRootEntity() const;
 
 private:
     bool m_visible = false;

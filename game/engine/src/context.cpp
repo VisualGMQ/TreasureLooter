@@ -34,12 +34,13 @@ CommonContext& CommonContext::GetInst() {
     return *m_current_context;
 }
 
-CommonContext::~CommonContext() {}
+CommonContext::~CommonContext() {
+}
 
 void CommonContext::InitSystem() {
     LOGT("system init");
     SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-                      SDL_INIT_GAMEPAD));
+        SDL_INIT_GAMEPAD));
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
     SDL_CALL(TTF_Init());
@@ -176,6 +177,30 @@ Entity CommonContext::CreateEntity() {
     return static_cast<Entity>(m_last_entity++);
 }
 
+void CommonContext::EnableEntity(Entity entity) const {
+    m_transform_manager->Enable(entity);
+    m_tilemap_component_manager->Enable(entity);
+    m_trigger_component_manager->Enable(entity);
+    m_cct_manager->Enable(entity);
+    m_relationship_manager->Enable(entity);
+    m_animation_player_manager->Enable(entity);
+    m_ui_manager->Enable(entity);
+    m_sprite_manager->Enable(entity);
+    m_motor_manager->Enable(entity);
+}
+
+void CommonContext::DisableEntity(Entity entity) const {
+    m_transform_manager->Disable(entity);
+    m_tilemap_component_manager->Disable(entity);
+    m_trigger_component_manager->Disable(entity);
+    m_cct_manager->Disable(entity);
+    m_relationship_manager->Disable(entity);
+    m_animation_player_manager->Disable(entity);
+    m_ui_manager->Disable(entity);
+    m_sprite_manager->Disable(entity);
+    m_motor_manager->Disable(entity);
+}
+
 bool CommonContext::ShouldExit() const {
     return m_should_exit;
 }
@@ -193,6 +218,8 @@ const GameConfig& CommonContext::GetGameConfig() const {
 }
 
 void CommonContext::beginImGui() {
+    PROFILE_RENDERING_SECTION(__FUNCTION__);
+
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
@@ -200,6 +227,8 @@ void CommonContext::beginImGui() {
 }
 
 void CommonContext::endImGui() {
+    PROFILE_RENDERING_SECTION(__FUNCTION__);
+
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui::Render();
     auto& io = ImGui::GetIO();
@@ -217,8 +246,8 @@ void CommonContext::initImGui() {
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
+        ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -226,10 +255,10 @@ void CommonContext::initImGui() {
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(
-        main_scale);  // Bake a fixed style scale. (until we have a solution for
+        main_scale); // Bake a fixed style scale. (until we have a solution for
     // dynamic style scaling, changing this requires resetting
     // Style + calling this again)
-    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
+    style.FontScaleDpi = main_scale; // Set initial font scale. (using
     // io.ConfigDpiScaleFonts=true makes this unnecessary. We
     // leave both here for documentation purpose)
 
@@ -266,7 +295,7 @@ GameContext& GameContext::GetInst() {
 
 void GameContext::Initialize() {
     PROFILE_SECTION();
-    
+
     CommonContext::Initialize();
 
     m_input_manager->Initialize(
@@ -280,7 +309,7 @@ void GameContext::Initialize() {
 
 void GameContext::Update() {
     PROFILE_MAIN_FRAME();
-    
+
     auto elapse_time = m_time->GetElapseTime();
 
     logicUpdate(elapse_time);
@@ -313,14 +342,14 @@ void GameContext::logicUpdate(TimeType elapse) {
 
 void GameContext::logicPostUpdate(TimeType elapse) {
     PROFILE_SECTION();
-    
+
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
 }
 
 void GameContext::renderUpdate(TimeType elapse) {
     PROFILE_RENDERING_SECTION("renderUpdate");
-    
+
     m_renderer->Clear();
     beginImGui();
 

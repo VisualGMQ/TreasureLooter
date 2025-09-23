@@ -7,7 +7,8 @@
 #include "engine/relationship.hpp"
 
 CharacterMotorContext::CharacterMotorContext(Entity entity)
-    : m_entity{entity} {}
+    : m_entity{entity} {
+}
 
 void CharacterMotorContext::Initialize(MotorConfigHandle config) {
     m_transform = CURRENT_CONTEXT.m_transform_manager->Get(m_entity);
@@ -15,7 +16,7 @@ void CharacterMotorContext::Initialize(MotorConfigHandle config) {
         CURRENT_CONTEXT.m_animation_player_manager->Get(m_entity);
     m_cct = CURRENT_CONTEXT.m_cct_manager->Get(m_entity);
     m_sprite = CURRENT_CONTEXT.m_sprite_manager->Get(m_entity);
-    m_faceset_image = config->m_faceset;
+    m_avatar_image = config->m_avatar;
     m_sprite_sheet = config->m_sprite_sheet;
     m_direction = CharacterDirection::Down;
     m_move_speed = config->m_speed;
@@ -24,6 +25,7 @@ void CharacterMotorContext::Initialize(MotorConfigHandle config) {
     m_move_up_animation = config->m_move_up_animation;
     m_move_down_animation = config->m_move_down_animation;
     m_target_position = m_transform->m_position;
+    m_health = config->m_health;
 
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(m_entity);
     if (relationship) {
@@ -205,6 +207,94 @@ void VirtualButton::Update() {
     }
 }
 
+HealthBarUI::HealthBarUI(PrefabHandle heart_preafab, const Vec2& tile_size,
+                         size_t health_capacity)
+    : m_heart_prefab{heart_preafab}, m_tile_size{tile_size},
+      m_container_capacity(health_capacity) {
+    m_health_root_entity = CURRENT_CONTEXT.CreateEntity();
+    CURRENT_CONTEXT.m_relationship_manager->
+                    RegisterEntity(m_health_root_entity);
+    CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_health_root_entity);
+    CURRENT_CONTEXT.m_ui_manager->RegisterEntity(m_health_root_entity);
+
+    UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(m_health_root_entity);
+    ui->m_use_clip = false;
+    ui->m_anchor = Flags{UIAnchor::Left} | UIAnchor::Top;
+    ui->m_panel = std::make_unique<UIPanelComponent>();
+
+    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    if (!level) {
+        return;
+    }
+
+    auto ui_root = level->GetUIRootEntity();
+    Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->
+                                                 Get(ui_root);
+    relationship->m_children.push_back(m_health_root_entity);
+}
+
+size_t HealthBarUI::HealthContainerCount() const {
+    Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(
+        m_health_root_entity);
+    return relationship->m_children.size();
+}
+
+void HealthBarUI::SetHealth(int count) {
+    m_current_health = count;
+
+    int full_health_container_count = count / m_container_capacity;
+    int remain_health = count % m_container_capacity;
+
+    Relationship* relationship = CURRENT_CONTEXT.m_relationship_manager->Get(
+        m_health_root_entity);
+
+    int require_container_count =
+        full_health_container_count + (remain_health ? 1 : 0);
+
+    // create new life ui
+    for (int i = relationship->m_children.size(); i < require_container_count; i
+         ++) {
+        LevelHandle level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+        if (!level) {
+            continue;
+        }
+
+        Entity entity = level->Instantiate(m_heart_prefab);
+
+        Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
+        transform->m_position.x = transform->m_size.w * i;
+        relationship->m_children.push_back(entity);
+    }
+
+    for (int i = 0; i < full_health_container_count; i++) {
+        Entity entity = relationship->m_children[i];
+        CURRENT_CONTEXT.EnableEntity(entity);
+        UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(entity);
+        ui->m_normal_theme.m_region.m_topleft.y = 0;
+        ui->m_normal_theme.m_region.m_topleft.x =
+            m_tile_size.w * m_container_capacity;
+        ui->m_normal_theme.m_region.m_size = m_tile_size;
+    }
+
+    if (remain_health != 0 && full_health_container_count + 1 <= relationship->
+        m_children.size()) {
+        Entity entity = relationship->m_children[
+            full_health_container_count];
+        CURRENT_CONTEXT.EnableEntity(entity);
+        UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(entity);
+        ui->m_normal_theme.m_region.m_topleft.y = 0;
+        ui->m_normal_theme.m_region.m_topleft.x =
+            m_tile_size.w * remain_health;
+        ui->m_normal_theme.m_region.m_size = m_tile_size;
+    }
+
+    for (int i = full_health_container_count + (remain_health != 0);
+         i < relationship->m_children.size(); i++) {
+        Entity entity = relationship->m_children[i];
+        CURRENT_CONTEXT.DisableEntity(entity);
+    }
+}
+
 void PlayerMotorContext::Initialize(MotorConfigHandle motor_config) {
     CharacterMotorContext::Initialize(motor_config);
 
@@ -265,6 +355,14 @@ void PlayerMotorContext::Initialize(MotorConfigHandle motor_config) {
                     }
                 }
             });
+
+    PrefabHandle heart_preafab = CURRENT_CONTEXT.
+                                 m_assets_manager->GetManager<Prefab>().
+                                 Load(
+                                     "assets/gpa/ui/life/heart.prefab.xml");
+    m_health_bar_ui = std::make_unique<HealthBarUI>(
+        heart_preafab, Vec2{16, 16}, 4);
+    m_health_bar_ui->SetHealth(m_health);
 }
 
 void PlayerMotorContext::Update(TimeType duration) {
@@ -275,7 +373,7 @@ void PlayerMotorContext::Update(TimeType duration) {
     Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
 
     Vec2 axises = CURRENT_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY")
-                      .Value(m_gamepad_id);
+                                 .Value(m_gamepad_id);
 
     auto& action = CURRENT_CONTEXT.m_input_manager->GetAction("Attack");
     if (action.IsPressed()) {
@@ -416,7 +514,7 @@ void PlayerMotorContext::handleVirtualAttackButtonReleasedEvent(
 
 void MotorManager::Update(TimeType duration) {
     PROFILE_GAMELOGIC_SECTION(__FUNCTION__);
-    
+
     for (auto& [_, component] : m_components) {
         if (!component.m_enable) {
             continue;

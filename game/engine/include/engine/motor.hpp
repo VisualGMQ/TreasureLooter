@@ -36,27 +36,28 @@ public:
 
     void Update(TimeType) override;
 
-    Entity GetEntity() const;
+    [[nodiscard]] Entity GetEntity() const;
 
-    float GetSpeed() const;
-    const Vec2& GetPosition() const;
+    [[nodiscard]] float GetSpeed() const;
+    [[nodiscard]] const Vec2& GetPosition() const;
 
     Vec2 m_target_position;
 
     AnimationPlayer* GetAnimationPlayer();
-    CharacterDirection GetDirection() const;
-    Sprite* GetSprite() const;
-    Entity GetWeaponEntity() const;
+    [[nodiscard]] CharacterDirection GetDirection() const;
+    [[nodiscard]] Sprite* GetSprite() const;
+    [[nodiscard]] Entity GetWeaponEntity() const;
 
     void Attack();
     
-    ImageHandle m_faceset_image;
+    ImageHandle m_avatar_image;
     ImageHandle m_sprite_sheet;
     CharacterDirection m_direction = CharacterDirection::Down;
     AnimationHandle m_move_left_animation;
     AnimationHandle m_move_right_animation;
     AnimationHandle m_move_up_animation;
     AnimationHandle m_move_down_animation;
+    int m_health{0};
     float m_move_speed{20};
 
 protected:
@@ -106,6 +107,21 @@ struct VirtualButton {
     void Update();
 };
 
+class HealthBarUI {
+public:
+    HealthBarUI(PrefabHandle heart_prefab, const Vec2& tile_size, size_t health_capacity);
+
+    [[nodiscard]] size_t HealthContainerCount() const;
+    void SetHealth(int count);
+
+private:
+    Entity m_health_root_entity = null_entity;
+    PrefabHandle m_heart_prefab;
+    int m_container_capacity;
+    int m_current_health = 0;
+    Vec2 m_tile_size;
+};
+
 class PlayerMotorContext : public CharacterMotorContext {
 public:
     using CharacterMotorContext::CharacterMotorContext;
@@ -125,6 +141,8 @@ private:
 
     VirtualJoystick m_virtual_joystick;
     VirtualButton m_virtual_attack_button;
+
+    std::unique_ptr<HealthBarUI> m_health_bar_ui;
 
     void initVirualJoystick(LevelHandle level);
     void initVirualAttackButton(LevelHandle level);
