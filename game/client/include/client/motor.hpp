@@ -1,13 +1,13 @@
 #pragma once
-#include "animation_player.hpp"
-#include "cct.hpp"
-#include "entity.hpp"
-#include "event.hpp"
-#include "level.hpp"
+#include "engine/animation_player.hpp"
+#include "engine/cct.hpp"
+#include "engine/entity.hpp"
+#include "engine/event.hpp"
+#include "engine/level.hpp"
 #include "schema/motor_config.hpp"
-#include "sprite.hpp"
-#include "state_machine.hpp"
-#include "ui.hpp"
+#include "engine/sprite.hpp"
+#include "engine/state_machine.hpp"
+#include "engine/ui.hpp"
 
 enum class CharacterDirection {
     Left,

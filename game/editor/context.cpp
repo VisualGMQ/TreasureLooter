@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "client/context.hpp"
 
 #include "engine/asset_manager.hpp"
 #include "engine/dialog.hpp"

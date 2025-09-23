@@ -17,6 +17,11 @@ add_3rdlib(Mustache)
 add_3rdlib(stduuid)
 add_3rdlib(optick)
 
+set(QJS_BUILD_COMPILER ON)
+set(QJS_BUILD_REPL ON)
+set(QJS_BUILD_LIBC ON)
+add_3rdlib(quickjs)
+
 set(TMXLITE_STATIC_LIB ON)
 set(USE_SDL3_IOSTREAM ON)
 add_3rdlib(tmxlite/tmxlite)

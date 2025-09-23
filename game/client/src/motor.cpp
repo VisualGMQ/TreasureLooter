@@ -1,8 +1,9 @@
-#include "engine/motor.hpp"
+#include "client/motor.hpp"
 
+#include "client/context.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
-#include "engine/enemy_state.hpp"
+#include "client/enemy_state.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 

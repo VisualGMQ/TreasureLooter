@@ -1,8 +1,11 @@
 #include "common.hpp"
 
 #include "context.hpp"
+#include "client/context.hpp"
+#include "client/motor.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/relationship.hpp"
+#include "engine/sprite.hpp"
 #include "schema/serialize/serialize.hpp"
 
 namespace internal {
@@ -131,22 +134,22 @@ void SaveEntity(Entity entity) {
         prefab_handle->m_trigger = trigger_info;
     }
 
-    if (auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity)) {
-        if (auto character_motor = dynamic_cast<CharacterMotorContext*>(motor)) {
-            MotorConfig config;
-            config.m_faceset = character_motor->m_faceset_image;
-            config.m_move_down_animation = character_motor->m_move_down_animation;
-            config.m_move_left_animation = character_motor->m_move_left_animation;
-            config.m_move_right_animation = character_motor->m_move_right_animation;
-            config.m_move_up_animation = character_motor->m_move_up_animation;
-            config.m_speed = character_motor->m_move_speed;
-            config.m_sprite_sheet = character_motor->m_sprite_sheet;
-            config.m_type = dynamic_cast<PlayerMotorContext*>(character_motor) ? MotorType::Player : MotorType::Enemy;
-            config.m_weapon_entity = 0;
+    // if (auto motor = GAME_CONTEXT.m_motor_manager->Get(entity)) {
+    //     if (auto character_motor = dynamic_cast<CharacterMotorContext*>(motor)) {
+    //         MotorConfig config;
+    //         config.m_faceset = character_motor->m_faceset_image;
+    //         config.m_move_down_animation = character_motor->m_move_down_animation;
+    //         config.m_move_left_animation = character_motor->m_move_left_animation;
+    //         config.m_move_right_animation = character_motor->m_move_right_animation;
+    //         config.m_move_up_animation = character_motor->m_move_up_animation;
+    //         config.m_speed = character_motor->m_move_speed;
+    //         config.m_sprite_sheet = character_motor->m_sprite_sheet;
+    //         config.m_type = dynamic_cast<PlayerMotorContext*>(character_motor) ? MotorType::Player : MotorType::Enemy;
+    //         config.m_weapon_entity = 0;
 
-            *prefab_handle->m_motor_config.Get() = config;
-        }
-    }
+    //         *prefab_handle->m_motor_config.Get() = config;
+    //     }
+    // }
 
     if (auto tilemap = CURRENT_CONTEXT.m_tilemap_component_manager->Get(entity)) {
         TilemapInfo tilemap_info;

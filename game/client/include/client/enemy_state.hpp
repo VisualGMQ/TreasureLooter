@@ -1,6 +1,6 @@
 #pragma once
-#include "state_machine.hpp"
-#include "motor.hpp"
+#include "engine/state_machine.hpp"
+#include "client/motor.hpp"
 
 class EnemyIdleState : public State<EnemyMotorContext> {
 public:

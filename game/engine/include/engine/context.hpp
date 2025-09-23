@@ -22,8 +22,8 @@
 
 #include <memory>
 
-#include "motor.hpp"
 #include "ui.hpp"
+#include "script/script.hpp"
 
 struct EntityInstance;
 class RelationshipManager;
@@ -92,12 +92,12 @@ public:
     std::unique_ptr<LevelManager> m_level_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<TimerManager> m_timer_manager;
-    std::unique_ptr<MotorManager> m_motor_manager;
     std::unique_ptr<UIComponentManager> m_ui_manager;
     std::unique_ptr<BindPointsComponentManager> m_bind_point_component_manager;
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
+    std::unique_ptr<ScriptManager> m_script_manager;
     Camera m_camera;
 
 protected:
@@ -117,31 +117,4 @@ private:
     void shutdownImGui();
 };
 
-class GameContext : public CommonContext {
-public:
-    static void Init();
-    static void Destroy();
-    static GameContext& GetInst();
-
-    GameContext(const GameContext&) = delete;
-    GameContext& operator=(const GameContext&) = delete;
-    GameContext(GameContext&&) = delete;
-    GameContext& operator=(GameContext&&) = delete;
-    ~GameContext() override;
-
-    void Initialize() override;
-
-    void Update() override;
-
-private:
-    static std::unique_ptr<GameContext> instance;
-
-    void logicUpdate(TimeType elapse);
-    void logicPostUpdate(TimeType elapse);
-    void renderUpdate(TimeType elapse);
-
-    GameContext() = default;
-};
-
-#define GAME_CONTEXT ::GameContext::GetInst()
 #define CURRENT_CONTEXT ::CommonContext::GetInst()

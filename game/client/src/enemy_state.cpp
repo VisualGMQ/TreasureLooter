@@ -1,8 +1,8 @@
-#include "engine/enemy_state.hpp"
+#include "client/enemy_state.hpp"
 
 #include <random>
 
-#include "engine/context.hpp"
+#include "client/context.hpp"
 
 void EnemyIdleState::OnEnter(EnemyMotorContext* state) {
     auto sprite = state->GetSprite();

@@ -85,7 +85,7 @@ add_library(${ENGINE_NAME} STATIC)
 target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES})
 target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
-target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf)
+target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf qjs)
 
 if (TL_ENABLE_PROFILE)
     target_link_libraries(${ENGINE_NAME} PUBLIC optick)
@@ -100,9 +100,17 @@ if (ANDROID)
     target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ANDROID)
 endif()
 
-################ build game ################
-set(GAME_NAME ${PROJECT_NAME})
+################ build client lib ################
+set(CLIENT_LIB_NAME client)
+file(GLOB_RECURSE CLIENT_SRC client/src/*.cpp client/src/*.c)
+file(GLOB_RECURSE CLIENT_HEADER client/include/*.hpp client/include/*.h)
+add_library(${CLIENT_LIB_NAME} STATIC)
+target_sources(${CLIENT_LIB_NAME} PRIVATE ${CLIENT_SRC} ${CLIENT_HEADER})
+target_include_directories(${CLIENT_LIB_NAME} PUBLIC client/include)
+target_link_libraries(${CLIENT_LIB_NAME} PUBLIC ${ENGINE_NAME})
 
+################ build client executable ################
+set(GAME_NAME ${PROJECT_NAME})
 if (ANDROID)
     set(GAME_NAME main)
     add_library(${GAME_NAME} SHARED)
@@ -110,15 +118,15 @@ else()
     add_executable(${GAME_NAME})
 endif()
 
-target_sources(${GAME_NAME} PRIVATE main_entry/game_main.cpp)
-target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
+target_sources(${GAME_NAME} PRIVATE client/main.cpp)
+target_link_libraries(${GAME_NAME} PRIVATE ${CLIENT_LIB_NAME})
 
 ################ build editor ################
 if (NOT ANDROID)
     file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
     add_executable(editor)
     target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
-    target_link_libraries(editor PRIVATE ${ENGINE_NAME})
+    target_link_libraries(editor PRIVATE ${CLIENT_LIB_NAME} ${ENGINE_NAME})
 endif()
 
 ################ install #######################

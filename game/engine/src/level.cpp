@@ -157,27 +157,27 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         }
     }
 
-    if (prefab.m_motor_config) {
-        switch (prefab.m_motor_config->m_type) {
-            case MotorType::Unknown:
-                LOGE("unknown motor type");
-                break;
-            case MotorType::Enemy:
-                CURRENT_CONTEXT.m_motor_manager
-                    ->RegisterEntityByDerive<EnemyMotorContext>(entity, entity);
-                break;
-            case MotorType::Player:
-                CURRENT_CONTEXT.m_motor_manager
-                    ->RegisterEntityByDerive<PlayerMotorContext>(entity,
-                                                                 entity);
-                break;
-        }
+    // if (prefab.m_motor_config) {
+    //     switch (prefab.m_motor_config->m_type) {
+    //         case MotorType::Unknown:
+    //             LOGE("unknown motor type");
+    //             break;
+    //         case MotorType::Enemy:
+    //             CURRENT_CONTEXT.m_motor_manager
+    //                 ->RegisterEntityByDerive<EnemyMotorContext>(entity, entity);
+    //             break;
+    //         case MotorType::Player:
+    //             CURRENT_CONTEXT.m_motor_manager
+    //                 ->RegisterEntityByDerive<PlayerMotorContext>(entity,
+    //                                                              entity);
+    //             break;
+    //     }
 
-        auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity);
-        if (motor) {
-            motor->Initialize(prefab.m_motor_config);
-        }
-    }
+    //     auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity);
+    //     if (motor) {
+    //         motor->Initialize(prefab.m_motor_config);
+    //     }
+    // }
 }
 
 void Level::initByLevelContent(LevelContentHandle level_content) {
@@ -213,7 +213,7 @@ void Level::doRemoveEntities() {
         CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
         CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
         CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_motor_manager->RemoveEntity(entity);
+        // CURRENT_CONTEXT.m_motor_manager->RemoveEntity(entity);
         CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
 
         m_entities.erase(entity);

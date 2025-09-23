@@ -133,7 +133,7 @@ void Renderer::DrawImage9Grid(const Image& image, const Region& src,
     dst_region.m_center = dst.m_topleft + dst_region.m_half_size;
 
     if (use_camera) {
-        transformByCamera(GAME_CONTEXT.m_camera, &dst_region.m_center,
+        transformByCamera(CURRENT_CONTEXT.m_camera, &dst_region.m_center,
                           &dst_region.m_half_size);
     }
 

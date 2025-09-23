@@ -1,7 +1,7 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
-#include "engine/context.hpp"
+#include "client/context.hpp"
 #include "engine/sdl_call.hpp"
 #include "spdlog/spdlog.h"
 
