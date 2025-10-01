@@ -1,6 +1,9 @@
 #pragma once
+#include <variant>
+
 #include "SDL3/SDL.h"
 #include "flag.hpp"
+#include "image.hpp"
 #include "math.hpp"
 #include "schema/common.hpp"
 #include "schema/flip.hpp"
@@ -9,6 +12,7 @@
 
 class Camera;
 class Image;
+class Sprite;
 
 struct Image9Grid {
     float left = 0;
@@ -20,6 +24,54 @@ struct Image9Grid {
     bool IsValid() const noexcept {
         return !((left == 0 && right == 0) || (top == 0 && bottom == 0));
     }
+};
+
+struct DrawImageCommand {
+    const Image* m_image;
+    Region m_src;
+    Rect m_dst;
+    Degrees m_rotation;
+    Vec2 m_rot_center;
+    Flags<Flip> m_flip;
+};
+
+struct DrawRectCommand {
+    Rect m_rect{};
+};
+
+struct FillRectCommand {
+    Rect m_rect{};
+};
+
+struct DrawLineCommand {
+    Vec2 m_p1, m_p2;
+};
+
+struct DrawImage9GridCommand {
+    const Image* m_image;
+    Image9Grid m_grid;
+    Region m_src;
+    Rect m_dst;
+    float border_scale;
+};
+
+struct DrawImageExCommand {
+    const Image* m_image;
+    Region m_src;
+    Vec2 m_origin;
+    Vec2 m_right;
+    Vec2 m_down;
+};
+
+struct DrawCommand {
+    std::variant<DrawRectCommand, DrawImageCommand,
+                 DrawImageExCommand,
+                 FillRectCommand,
+                 DrawImage9GridCommand,
+                 DrawLineCommand
+    > m_cmd;
+    float m_z_order{};
+    Color m_color = Color::White;
 };
 
 class Renderer {
@@ -39,28 +91,33 @@ public:
     void SetClearColor(const Color&);
 
     void DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
+                  float z_order = 0,
                   bool use_camera = true);
 
-    void DrawRect(const Rect&, const Color&, bool use_camera = true);
+    void DrawRect(const Rect&, const Color&, float z_order = 0,
+                  bool use_camera = true);
 
     void DrawCircle(const Circle&, const Color&, uint32_t fragment = 20,
+                    float z_order = 0,
                     bool use_camera = true);
 
-    void FillRect(const Rect&, const Color&, bool use_camera = true);
+    void FillRect(const Rect&, const Color&, float z_order = 0,
+                  bool use_camera = true);
 
     void DrawImage(const Image&, const Region& src, const Region& dst,
+                   const Color& color,
                    Degrees rotation, const Vec2& center, Flags<Flip>,
-                   bool use_camera = true);
+                   float z_order = 0, bool use_camera = true);
 
     void DrawImage9Grid(const Image&, const Region& src, const Region& dst,
-                        const Image9Grid&, float border_scale = 1.0, bool use_camera = true);
+                        const Color& color,
+                        const Image9Grid&, float border_scale = 1.0,
+                        float z_order = 0, bool use_camera = true);
 
-    void DrawRectEx(const Image& image, const Region& src, const Vec2& topleft,
-                    const Vec2& topright, const Vec2& bottomleft,
-                    bool use_camera = true);
-
-    void DrawText(const std::string& text, FontHandle font,
-                  const Vec2& position, const Vec2& size, const Color& color);
+    void DrawImageEx(const Image& image, const Region& src, const Vec2& topleft,
+                     const Vec2& topright, const Vec2& bottomleft,
+                     const Color& color,
+                     float z_order = 0, bool use_camera = true);
 
     void Clear();
 
@@ -72,9 +129,12 @@ private:
     SDL_Renderer* m_renderer{};
     SDL_Color m_clear_color;
     SDL_Texture* m_text_texture{};
-
-    void setRenderColor(const Color& color);
+    std::vector<DrawCommand> m_draw_commands;
 
     void transformByCamera(const Camera&, Vec2* center, Vec2* size) const;
     void resizeTexture(const Vec2UI& new_size);
+    void applyDrawCommands();
+    void sortDrawCommands();
 };
+
+float GetZOrderByYSorting(float y, RenderLayer);

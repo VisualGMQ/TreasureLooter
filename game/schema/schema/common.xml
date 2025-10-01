@@ -25,4 +25,13 @@
         <item name="FPS_144"/>
         <item name="NoLimit"/>
     </enum>
+
+    <enum name="RenderLayer">
+        <item name="TilemapLand" value="0"/>
+        <item name="TilemapArch"/>
+        <item name="Default"/>
+        <item name="DebugDraw"/>
+        <item name="UI"/>
+        <item name="RenderLayerCount"/>
+    </enum>
 </schema>

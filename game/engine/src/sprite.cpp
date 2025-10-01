@@ -10,21 +10,21 @@
 
 void SpriteManager::Update() {
     PROFILE_RENDERING_SECTION(__FUNCTION__);
-    
-    auto &renderer = CURRENT_CONTEXT.m_renderer;
-    auto &transform_manager = CURRENT_CONTEXT.m_transform_manager;
-    for (auto &[entity, component]: m_components) {
+
+    auto& renderer = CURRENT_CONTEXT.m_renderer;
+    auto& transform_manager = CURRENT_CONTEXT.m_transform_manager;
+    for (auto& [entity, component] : m_components) {
         if (!component.m_enable) {
             continue;
         }
 
-        auto &sprite = component.m_component;
+        auto& sprite = component.m_component;
 
         if (!sprite->m_image) {
             return;
         }
 
-        const Transform *transform = transform_manager->Get(entity);
+        const Transform* transform = transform_manager->Get(entity);
         if (!transform) {
             continue;
         }
@@ -40,7 +40,7 @@ void SpriteManager::Update() {
         }
 
         std::array<Vec2, 3> pts;
-        pts[0] = -half_size; // top left
+        pts[0] = -half_size;                  // top left
         pts[1] = {half_size.x, -half_size.y}; // top right
         pts[2] = {-half_size.x, half_size.y}; // bottom left
 
@@ -59,18 +59,21 @@ void SpriteManager::Update() {
             pts[2] = -half_size;
         }
 
-        auto &m = transform->GetGlobalMat();
-        for (auto &pt: pts) {
+        auto& m = transform->GetGlobalMat();
+        for (auto& pt : pts) {
             Vec2 pt_with_anchor = pt;
             pt_with_anchor -= component.m_component->m_anchor;
             Vec2 new_pt;
-            new_pt.x = pt_with_anchor.x * m.Get(0, 0) + pt_with_anchor.y * m.Get(1, 0) +
+            new_pt.x = pt_with_anchor.x * m.Get(0, 0) + pt_with_anchor.y * m.
+                       Get(1, 0) +
                        m.Get(2, 0);
-            new_pt.y = pt_with_anchor.x * m.Get(0, 1) + pt_with_anchor.y * m.Get(1, 1) +
+            new_pt.y = pt_with_anchor.x * m.Get(0, 1) + pt_with_anchor.y * m.
+                       Get(1, 1) +
                        m.Get(2, 1);
             pt = new_pt;
         }
 
-        renderer->DrawRectEx(*sprite->m_image, src_region, pts[0], pts[1], pts[2]);
+        renderer->DrawImageEx(*sprite->m_image, src_region, pts[0], pts[1],
+                              pts[2], sprite->m_color, sprite->m_z_order);
     }
 }
