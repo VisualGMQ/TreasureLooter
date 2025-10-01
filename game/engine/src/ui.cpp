@@ -267,7 +267,7 @@ UIWidget::UIWidget(UIWidgetInfoHandle info) {
 
 void UIComponentManager::Update() {
     PROFILE_UI_SECTION(__FUNCTION__);
-    
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
@@ -287,7 +287,7 @@ void UIComponentManager::Update() {
 
 void UIComponentManager::Render() {
     PROFILE_UI_SECTION(__FUNCTION__);
-    
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
@@ -304,7 +304,7 @@ void UIComponentManager::Render() {
 
 void UIComponentManager::HandleEvent() {
     PROFILE_UI_SECTION(__FUNCTION__);
-    
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;
@@ -538,18 +538,20 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         theme->m_image->ChangeColorMask(theme->m_background_color);
         if (theme->m_image_9grid.IsValid()) {
             renderer.DrawImage9Grid(*theme->m_image, src, dst,
+                                    Color::White,
                                     theme->m_image_9grid,
-                                    theme->m_image_9grid.scale, false);
+                                    theme->m_image_9grid.scale, ZOrder, false);
         } else {
-            renderer.DrawImage(*theme->m_image, src, dst, 0, {}, Flip::None,
-                               false);
+            renderer.DrawImage(*theme->m_image, src, dst, Color::White, 0, {},
+                               Flip::None,
+                               ZOrder, false);
         }
         theme->m_image->ChangeColorMask(Color::White);
     } else {
-        renderer.FillRect(rect, theme->m_background_color, false);
+        renderer.FillRect(rect, theme->m_background_color, ZOrder, false);
     }
 
-    renderer.DrawRect(rect, theme->m_border_color, false);
+    renderer.DrawRect(rect, theme->m_border_color, ZOrder, false);
 
     if (ui->m_text) {
         auto text_size = ui->m_text->GetTextImageSize();
@@ -577,8 +579,9 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         image.ChangeColorMask(theme->m_foreground_color);
         Region src;
         src.m_size = image.GetSize();
-        renderer.DrawImage(image, src, region, 0, Vec2::ZERO, Flip::None,
-                           false);
+        renderer.DrawImage(image, src, region, Color::White, 0, Vec2::ZERO,
+                           Flip::None,
+                           ZOrder, false);
         image.ChangeColorMask(Color::White);
     }
 

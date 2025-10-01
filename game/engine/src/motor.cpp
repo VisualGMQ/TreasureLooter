@@ -7,7 +7,8 @@
 #include "engine/relationship.hpp"
 
 CharacterMotorContext::CharacterMotorContext(Entity entity)
-    : m_entity{entity} {}
+    : m_entity{entity} {
+}
 
 void CharacterMotorContext::Initialize(MotorConfigHandle config) {
     m_transform = CURRENT_CONTEXT.m_transform_manager->Get(m_entity);
@@ -15,6 +16,9 @@ void CharacterMotorContext::Initialize(MotorConfigHandle config) {
         CURRENT_CONTEXT.m_animation_player_manager->Get(m_entity);
     m_cct = CURRENT_CONTEXT.m_cct_manager->Get(m_entity);
     m_sprite = CURRENT_CONTEXT.m_sprite_manager->Get(m_entity);
+    m_sprite->m_z_order = GetZOrderByYSorting(
+        m_transform->m_position.y + m_sprite->m_size.y * 0.5f,
+        RenderLayer::TilemapArch);
     m_faceset_image = config->m_faceset;
     m_sprite_sheet = config->m_sprite_sheet;
     m_direction = CharacterDirection::Down;
@@ -105,12 +109,20 @@ void CharacterMotorContext::Move(const Vec2& dir, TimeType duration) {
                 break;
         }
     }
+
+    m_sprite->m_z_order = GetZOrderByYSorting(
+        m_transform->m_position.y + m_sprite->m_size.y * 0.5f,
+        RenderLayer::TilemapArch);
 }
 
 void CharacterMotorContext::Teleport(const Vec2& p) {
     if (m_cct) {
         m_cct->Teleport(p);
     }
+
+    m_sprite->m_z_order = GetZOrderByYSorting(
+        m_transform->m_position.y + m_sprite->m_size.y * 0.5f,
+        RenderLayer::TilemapArch);;
 }
 
 void CharacterMotorContext::Update(TimeType) {
@@ -275,7 +287,7 @@ void PlayerMotorContext::Update(TimeType duration) {
     Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
 
     Vec2 axises = CURRENT_CONTEXT.m_input_manager->MakeAxises("MoveX", "MoveY")
-                      .Value(m_gamepad_id);
+                                 .Value(m_gamepad_id);
 
     auto& action = CURRENT_CONTEXT.m_input_manager->GetAction("Attack");
     if (action.IsPressed()) {
@@ -416,7 +428,7 @@ void PlayerMotorContext::handleVirtualAttackButtonReleasedEvent(
 
 void MotorManager::Update(TimeType duration) {
     PROFILE_GAMELOGIC_SECTION(__FUNCTION__);
-    
+
     for (auto& [_, component] : m_components) {
         if (!component.m_enable) {
             continue;

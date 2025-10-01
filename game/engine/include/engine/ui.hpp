@@ -145,6 +145,8 @@ public:
     void HandleEvent();
 
 private:
+    static constexpr float ZOrder = static_cast<float>(RenderLayer::UI);
+
     void updateSize(Entity);
     void updateTransform(Entity);
     /**

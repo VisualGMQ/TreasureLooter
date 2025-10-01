@@ -13,8 +13,7 @@ void Time::Update() {
     m_cur_time = cur_time;
     m_elapsed_time =
         std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time)
-            .count() /
-        1000000.0;
+            .count() / 1e6;
 
     m_elapsed_time = std::max(m_elapsed_time, MinElapseTime);
 }
@@ -23,8 +22,7 @@ TimeType Time::GetCurrentTime() const {
     auto cur_time = std::chrono::system_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(
                cur_time.time_since_epoch())
-               .count() /
-           1000000.0;
+               .count() / 1e6;
 }
 
 TimeType Time::GetElapseTime() const {

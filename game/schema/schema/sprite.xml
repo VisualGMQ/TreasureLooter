@@ -10,5 +10,7 @@
         <element type="Vec2" name="size"/>
         <element type="Vec2" name="anchor"/>
         <flags type="Flip" name="flip"/>
+        <element type="float" name="z_order" default="0"/>
+        <element type="Color" name="color" default="Color::White"/>
     </class>
 </schema>
