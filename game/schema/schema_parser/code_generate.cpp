@@ -6,10 +6,10 @@
 #include <unordered_set>
 
 // Forward declarations for property handling (defined later in this file)
-static std::string ExtractOptionalInnerType(const std::string& cpp_type);
-static std::string ExtractFlagsInnerType(const std::string& cpp_type);
-static std::string ExtractVectorInnerType(const std::string& cpp_type);
-static std::string ExtractHandleInnerType(const std::string& cpp_type);
+std::string ExtractOptionalInnerType(const std::string& cpp_type);
+std::string ExtractFlagsInnerType(const std::string& cpp_type);
+std::string ExtractVectorInnerType(const std::string& cpp_type);
+std::string ExtractUnorderedMapInnerType(const std::string& cpp_type);
 
 std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
@@ -51,9 +51,8 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
 
     for (auto& include : schema_info.m_includes) {
         include_datas << kainjow::mustache::data{
-            "include",
-            include_mustache.render({"filename",
-                                     "\"engine/" + include + "\""})};
+            "include", include_mustache.render(
+                           {"filename", "\"engine/" + include + "\""})};
     }
 
     if (schema_info.m_include_hints & IncludeHint::Option) {
@@ -68,9 +67,9 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
         include_datas << kainjow::mustache::data{"include",
                                                  include_mustache.render(
                                                      {"filename", "<array>"})}
-            << kainjow::mustache::data{
-                "include",
-                include_mustache.render({"filename", "<vector>"})};
+                      << kainjow::mustache::data{
+                             "include",
+                             include_mustache.render({"filename", "<vector>"})};
     }
     if (schema_info.m_include_hints & IncludeHint::UnorderedMap) {
         include_datas << kainjow::mustache::data{
@@ -79,8 +78,7 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
     }
     if (schema_info.m_include_hints & IncludeHint::Stdint) {
         include_datas << kainjow::mustache::data{
-            "include",
-            include_mustache.render({"filename", "<cstdint>"})};
+            "include", include_mustache.render({"filename", "<cstdint>"})};
     }
     if (schema_info.m_include_hints & IncludeHint::Handle) {
         include_datas << kainjow::mustache::data{
@@ -148,8 +146,8 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema.m_includes) {
-        include_datas << kainjow::mustache::data
-            {"include", "engine/" + include};
+        include_datas << kainjow::mustache::data{"include",
+                                                 "engine/" + include};
     }
 
     auto generate_header_filename = schema.m_pure_filename;
@@ -278,6 +276,8 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
         kainjow::mustache::data property_data;
         property_data.set("property", prop.m_name);
         property_data.set("is_optional", prop.m_optional ? "true" : "false");
+        property_data.set("is_handle", prop.m_is_handle ? "true" : "false");
+        property_data.set("is_array", prop.m_is_array ? "true" : "false");
         properties_data << property_data;
     }
 
@@ -387,9 +387,9 @@ std::string GenerateClassDisplayImplCode(const ClassInfo& info) {
         properties_data << property_data;
     }
 
-    if (info.is_asset) {
-        data.set("has_handle", true);
-    }
+    data.set("has_handle", info.is_asset);
+
+    data.set("type_extension", info.m_asset_extension_var);
 
     data.set("properties", properties_data);
 
@@ -404,8 +404,8 @@ std::string GenerateSchemaDisplayHeaderCode(const SchemaInfo& schema) {
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema.m_includes) {
-        include_datas << kainjow::mustache::data
-            {"include", "engine/" + include};
+        include_datas << kainjow::mustache::data{"include",
+                                                 "engine/" + include};
     }
 
     auto generate_header_filename = schema.m_pure_filename;
@@ -464,11 +464,12 @@ std::string GenerateSchemaDisplayImplCode(const SchemaInfo& schema) {
 std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
     kainjow::mustache::data data;
     kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
-    kainjow::mustache::data extensions_data
-        {kainjow::mustache::data::type::list};
+    kainjow::mustache::data extensions_data{
+        kainjow::mustache::data::type::list};
     kainjow::mustache::data names_data{kainjow::mustache::data::type::list};
     kainjow::mustache::data type_checks_data{
         kainjow::mustache::data::type::list};
+    kainjow::mustache::data extensions_data2{kainjow::mustache::data::type::list};
 
     std::vector<std::string> type_names;
     int asset_num = 0;
@@ -493,11 +494,33 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
             extension_data.set("extension", clazz.m_asset_extension);
             extension_data.set("extension_var", clazz.m_asset_extension_var);
             extensions_data << extension_data;
+            
+            kainjow::mustache::data extension_data2;
+            extension_data2.set("extension_var", clazz.m_asset_extension_var);
+            extensions_data2 << extension_data2;
 
             kainjow::mustache::data type_check_data;
             type_check_data.set("type", clazz.m_name);
             type_check_data.set("extension_var", clazz.m_asset_extension_var);
             type_checks_data << type_check_data;
+        }
+
+        for (auto& cpp_def : info.m_cpp_asset_defs) {
+            auto extension_var = cpp_def.m_asset_name +
+                                 std::string{ClassInfo::ExtensionVarSuffix};
+
+            type_names.push_back(cpp_def.m_asset_name);
+
+            kainjow::mustache::data type_check_data;
+            type_check_data.set("type", cpp_def.m_asset_name);
+            type_check_data.set("extension_var", extension_var);
+            type_checks_data << type_check_data;
+
+            kainjow::mustache::data extension_data;
+            extension_data.set("extension_var", extension_var);
+            extensions_data2 << extension_data;
+
+            asset_num ++;
         }
     }
 
@@ -512,6 +535,7 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
 
     data.set("includes", includes_data);
     data.set("asset_extensions", extensions_data);
+    data.set("extensions", extensions_data2);
     data.set("asset_names", names_data);
     data.set("type_check", type_checks_data);
     data.set("asset_num", std::to_string(asset_num));
@@ -523,40 +547,38 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
 std::string GenerateAssetInfoImplCode(const SchemaInfoManager& manager) {
     auto& mustache = MustacheManager::GetInst().m_asset_info_impl_mustache;
     kainjow::mustache::data data;
-    kainjow::mustache::data type_check_data
-        {kainjow::mustache::data::type::list};
-    kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data type_datas{kainjow::mustache::data::type::list};
 
     for (auto& info : manager.m_infos) {
-        bool included = false;
         for (auto& clazz : info.m_classes) {
             if (!clazz.is_asset) {
                 continue;
             }
 
-            if (!included) {
-                includes_data << kainjow::mustache::data{
-                    "include", info.m_generate_filename.string()};
-                included = true;
-            }
+            kainjow::mustache::data data;
+            data.set("type", clazz.m_name);
+            type_datas << data;
+        }
 
-            kainjow::mustache::data extension_data;
-            extension_data.set("type", clazz.m_name);
-            extension_data.set("extension_var", clazz.m_asset_extension_var);
-            type_check_data << extension_data;
+        for (auto& cpp_def : info.m_cpp_asset_defs) {
+            auto extension_var = cpp_def.m_asset_name +
+                                 std::string{ClassInfo::ExtensionVarSuffix};
+
+            kainjow::mustache::data data;
+            data.set("type", cpp_def.m_asset_name);
+            type_datas << data;
         }
     }
 
-    data.set("type_check", type_check_data);
-    data.set("includes", includes_data);
+    data.set("load_methods", type_datas);
 
     return mustache.render(data);
 }
 
 std::string GenerateAssetSerializeTotleHeaderCode(
     const SchemaInfoManager& manager) {
-    auto& mustache = MustacheManager::GetInst().
-        m_asset_serialize_header_mustache;
+    auto& mustache =
+        MustacheManager::GetInst().m_asset_serialize_header_mustache;
     kainjow::mustache::data data;
     kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
 
@@ -654,6 +676,11 @@ std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
         kainjow::mustache::data prop_data;
         prop_data.set("type", info.m_name);
         prop_data.set("property_name", property_name_with_prefix);
+        if (prop.m_optional) {
+            prop_data.set("is_optional", true);
+            prop_data.set("optional_inner_type",
+                          ExtractOptionalInnerType(prop.m_type));
+        }
         property_entries << prop_data;
     }
 
@@ -762,7 +789,20 @@ std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
     kainjow::mustache::data data;
 
     kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data asset_manager_getters_data{
+        kainjow::mustache::data::type::list};
+    kainjow::mustache::data asset_manager_classes_data{
+        kainjow::mustache::data::type::list};
     std::unordered_set<std::string> seen_bind_names;
+    std::unordered_set<std::string> seen_generic_asset_types;
+    static const std::unordered_set<std::string> specialized_asset_types = {
+        "Image",
+        "Tilemap",
+        "Animation",
+        "Level",
+        "Font",
+        "ScriptBinaryData",
+    };
 
     for (auto& info : manager.m_infos) {
         for (auto& enum_value : info.m_enums) {
@@ -775,30 +815,27 @@ std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
             std::string func_name = "bind" + class_value.m_name + "TypeFromSchema";
             if (seen_bind_names.insert(func_name).second)
                 bindings_data << kainjow::mustache::data{"binding", func_name + "(L);"};
+
+            if (class_value.is_asset &&
+                specialized_asset_types.count(class_value.m_name) == 0 &&
+                seen_generic_asset_types.insert(class_value.m_name).second) {
+                kainjow::mustache::data manager_data;
+                manager_data.set("type", class_value.m_name);
+                asset_manager_getters_data << manager_data;
+                asset_manager_classes_data << manager_data;
+            }
+
         }
     }
 
     data.set("bindings", bindings_data);
+    data.set("asset_manager_getters", asset_manager_getters_data);
+    data.set("asset_manager_classes", asset_manager_classes_data);
 
     return impl_mustache.render(data);
 }
 
-static const std::unordered_map<std::string, std::string> Cpp2AngelScriptTypeMap = {
-    // Integer types
-    {"uint8_t", "uint8"},
-    {"uint16_t", "uint16"},
-    {"uint32_t", "uint32"},
-    {"uint64_t", "uint64"},
-    {"int8_t", "int8"},
-    {"int16_t", "int16"},
-    {"int32_t", "int32"},
-    {"int64_t", "int64"},
-    
-    // Standard types
-    {"std::string", "string"},
-};
-
-static std::string ExtractOptionalInnerType(const std::string& cpp_type) {
+std::string ExtractOptionalInnerType(const std::string& cpp_type) {
     const std::string prefix = "std::optional<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -814,7 +851,7 @@ static std::string ExtractOptionalInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }
 
-static std::string ExtractFlagsInnerType(const std::string& cpp_type) {
+std::string ExtractFlagsInnerType(const std::string& cpp_type) {
     const std::string prefix = "Flags<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -830,39 +867,7 @@ static std::string ExtractFlagsInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }
 
-std::string ConvertCppTypeToAngelScript(const std::string& cpp_type) {
-    auto it = Cpp2AngelScriptTypeMap.find(cpp_type);
-    if (it != Cpp2AngelScriptTypeMap.end()) {
-        return it->second;
-    }
-    std::string inner = ExtractOptionalInnerType(cpp_type);
-    if (!inner.empty()) {
-        return "Optional<" + ConvertCppTypeToAngelScript(inner) + ">";
-    }
-    std::string flags_inner = ExtractFlagsInnerType(cpp_type);
-    if (!flags_inner.empty()) {
-        return "Flags<" + ConvertCppTypeToAngelScript(flags_inner) + ">";
-    }
-    std::string vector_inner = ExtractVectorInnerType(cpp_type);
-    if (!vector_inner.empty()) {
-        return "array<" + ConvertCppTypeToAngelScript(vector_inner) + ">";
-    }
-    std::string handle_inner = ExtractHandleInnerType(cpp_type);
-    if (!handle_inner.empty()) {
-        return "Handle<" + ConvertCppTypeToAngelScript(handle_inner) + ">";
-    }
-    return cpp_type;
-}
-
-static std::string ExtractHandleInnerType(const std::string& cpp_type) {
-    const std::string suffix = "Handle";
-    if (cpp_type.size() > suffix.size() &&
-        cpp_type.compare(cpp_type.size() - suffix.size(), suffix.size(), suffix) == 0)
-        return cpp_type.substr(0, cpp_type.size() - suffix.size());
-    return {};
-}
-
-static std::string ExtractVectorInnerType(const std::string& cpp_type) {
+std::string ExtractVectorInnerType(const std::string& cpp_type) {
     const std::string prefix = "std::vector<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -878,7 +883,15 @@ static std::string ExtractVectorInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }
 
-static std::string ExtractArrayInnerType(const std::string& cpp_type) {
+std::string ExtractUnorderedMapInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::unordered_map<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+std::string ExtractArrayInnerType(const std::string& cpp_type) {
     const std::string prefix = "std::array<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -887,11 +900,11 @@ static std::string ExtractArrayInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), comma - prefix.size());
 }
 
-static bool IsLuauPrimitiveType(const std::string& name) {
+bool IsLuauPrimitiveType(const std::string& name) {
     return name == "number" || name == "string" || name == "boolean";
 }
 
-static std::string EnsureTLPrefixForSchema(
+std::string EnsureTLPrefixForSchema(
     const std::string& luau_type,
     const std::unordered_set<std::string>& schema_defined_type_names) {
     std::string out;
@@ -919,7 +932,7 @@ static std::string EnsureTLPrefixForSchema(
     return out;
 }
 
-static bool IsLuaKeyword(const std::string& name) {
+bool IsLuaKeyword(const std::string& name) {
     static const std::unordered_set<std::string> keywords = {
         "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
         "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return",
@@ -928,7 +941,7 @@ static bool IsLuaKeyword(const std::string& name) {
     return keywords.count(name) != 0;
 }
 
-static std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
+std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     static const std::unordered_map<std::string, std::string> Cpp2Luau = {
         {"float", "number"},
         {"double", "number"},
@@ -958,10 +971,12 @@ static std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     std::string arr_inner = ExtractArrayInnerType(cpp_type);
     if (!arr_inner.empty())
         return "{ " + ConvertCppTypeToLuauType(arr_inner) + " }";
+    if (!ExtractUnorderedMapInnerType(cpp_type).empty())
+        return "{}";
     return cpp_type;
 }
 
-static std::string GenerateClassLuauType(
+std::string GenerateClassLuauType(
     const ClassInfo& info,
     const std::unordered_set<std::string>& schema_defined_type_names,
     bool use_tl_prefix) {
@@ -972,14 +987,14 @@ static std::string GenerateClassLuauType(
             luau_type += "?";
         if (use_tl_prefix)
             luau_type = EnsureTLPrefixForSchema(luau_type, schema_defined_type_names);
-        std::string key = IsLuaKeyword(p.m_name) ? ("[\"" + p.m_name + "\"]") : p.m_name;
+        std::string key = IsLuaKeyword(p.m_name) ? ("[\"" + p.m_name + "\"]") : "m_" + p.m_name;
         out += "\t" + key + ": " + luau_type + ",\n";
     }
-    out += "}\n";
+    out += "} & (() -> " + info.m_name + ")\n";
     return out;
 }
 
-static std::string GenerateEnumLuauType(const EnumInfo& info) {
+std::string GenerateEnumLuauType(const EnumInfo& info) {
     std::string out = "export type " + info.m_name + " = {\n";
     for (const auto& item : info.m_items) {
         std::string key = IsLuaKeyword(item.m_name) ? ("[\"" + item.m_name + "\"]") : item.m_name;
@@ -989,9 +1004,34 @@ static std::string GenerateEnumLuauType(const EnumInfo& info) {
     return out;
 }
 
-static std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
+std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
     std::string handle_name = asset_class_name + "Handle";
-    return "export type " + handle_name + " = { IsValid: (self: " + handle_name + ") -> boolean }\n";
+    return "export type " + handle_name + " = { IsValid: (self: " + handle_name + ") -> boolean } & " + asset_class_name + "\n";
+}
+
+std::string GenerateAssetLoadSaveLuauTypes(const std::string& asset_class_name) {
+    std::string out;
+    out += "export type LoadAsset" + asset_class_name + " = (path: Path) -> " +
+           asset_class_name + "\n";
+    out += "export type SaveAsset" + asset_class_name +
+           " = (handle: " + asset_class_name + "Handle, path: Path) -> ()\n";
+    return out;
+}
+
+std::string GenerateGenericAssetManagerLuauType(const std::string& asset_class_name) {
+    const std::string manager_name = asset_class_name + "AssetManager";
+    const std::string handle_name = asset_class_name + "Handle";
+    std::string out;
+    out += "export type " + manager_name + " = {\n";
+    out += "\tCreate: (self: " + manager_name + ") -> " + handle_name + ",\n";
+    out += "\tLoad: (self: " + manager_name + ", path: string, force: boolean?) -> " +
+           handle_name + ",\n";
+    out += "\tFind: (self: " + manager_name + ", path: string) -> " + handle_name + "?,\n";
+    out += "\tUnload: (self: " + manager_name + ", handle: " + handle_name + ") -> (),\n";
+    out += "\tReload: (self: " + manager_name + ", handle: " + handle_name + ") -> (),\n";
+    out += "\tClear: (self: " + manager_name + ") -> (),\n";
+    out += "}\n";
+    return out;
 }
 
 std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
@@ -1013,13 +1053,23 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
     std::unordered_set<std::string> emitted_classes;
     std::unordered_set<std::string> emitted_enums;
     std::unordered_set<std::string> emitted_handles;
+    std::unordered_set<std::string> emitted_generic_asset_managers;
+    std::vector<std::string> generic_asset_types;
+    
     bool use_tl_prefix = false;
     for (const auto& schema : manager.m_infos) {
         for (const auto& clazz : schema.m_classes) {
             if (emitted_classes.insert(clazz.m_name).second)
                 out += GenerateClassLuauType(clazz, schema_defined_type_names, use_tl_prefix) + "\n";
-            if (clazz.is_asset && emitted_handles.insert(clazz.m_name + "Handle").second)
+            if (clazz.is_asset && emitted_handles.insert(clazz.m_name + "Handle").second) {
                 out += GenerateAssetHandleLuauType(clazz.m_name) + "\n";
+                out += GenerateAssetLoadSaveLuauTypes(clazz.m_name) + "\n";
+            }
+            if (clazz.is_asset &&
+                emitted_generic_asset_managers.insert(clazz.m_name).second) {
+                generic_asset_types.push_back(clazz.m_name);
+                out += GenerateGenericAssetManagerLuauType(clazz.m_name) + "\n";
+            }
         }
         for (const auto& enum_info : schema.m_enums) {
             if (emitted_enums.insert(enum_info.m_name).second)
@@ -1029,4 +1079,30 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
 
     out += "return TL";
     return out;
+}
+std::string GenerateCppAssetExtensionHeaderCode(
+    const SchemaInfoManager& manager) {
+    kainjow::mustache::data extensions{kainjow::mustache::data::type::list};
+
+    for (auto& info : manager.m_infos) {
+        for (auto& def : info.m_cpp_asset_defs) {
+            kainjow::mustache::data def_data;
+            def_data.set("name", def.m_asset_name);
+            def_data.set("extension", def.m_extension);
+
+            extensions << def_data;
+        }
+    }
+
+    kainjow::mustache::data extension_data;
+    extension_data.set("extensions", extensions);
+    std::string extension_content =
+        MustacheManager::GetInst().m_cpp_asset_def_mustache.render(
+            extension_data);
+
+    kainjow::mustache::data header_data;
+    header_data.set("content", extension_content);
+
+    return MustacheManager::GetInst().m_cpp_asset_def_header_mustache.render(
+        header_data);
 }

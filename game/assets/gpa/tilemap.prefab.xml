@@ -14,7 +14,7 @@
 				<tilemap>assets/tilemap/test.tmx</tilemap>
 			</value>
 		</tilemap>
-		<type>Normal</type>
+		<script/>
 	</payload>
 </Prefab>
 

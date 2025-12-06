@@ -100,6 +100,11 @@ Degrees operator*(float k, Degrees d) {
     return d * k;
 }
 
+std::ostream& operator<<(std::ostream& o, const Degrees& d) {
+    o << "Degrees(" << d.Value() << ")";
+    return o;
+}
+
 Mat33 Mat33::CreateTranslation(const Vec2& p) {
     Mat33 result;
     result.Set(2, 0, p.x);
@@ -151,6 +156,10 @@ Mat33& Mat33::operator*=(const Mat33& o) {
 Mat33 operator*(const Mat33& m1, const Mat33& m2) {
     Mat33 m(m1);
     return m *= m2;
+}
+
+Vec2 GetPosition(const Mat33& m) {
+    return Vec2{m.Get(2, 0), m.Get(2, 1)};
 }
 
 float Mat33::Get(size_t x, size_t y) const {
@@ -218,6 +227,11 @@ Radians Radians::operator*(Radians d) const {
 
 Radians operator*(float k, Radians d) {
     return d * k;
+}
+
+std::ostream& operator<<(std::ostream& o, const Radians& r) {
+    o << "Radians(" << r.Value() << ")";
+    return o;
 }
 
 Radians Radians::operator/(Radians d) const {

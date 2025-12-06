@@ -17,10 +17,11 @@ void InstanceDisplay(const char* name, {{type}}& value) {
         {{/items}}
     };
 
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::PushID(&value);
 
     int cur_item = enum_to_idx.at(value);
     ImGui::Combo(name, &cur_item, items, sizeof(items)/sizeof(const char* const));
+
     ImGui::PopID();
 
     value = idx_to_enum.at(cur_item);
@@ -40,10 +41,11 @@ void InstanceDisplay(const char* name, const {{type}}& value) {
         {{/items}}
     };
 
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::PushID(&value);
 
     int cur_item = enum_to_idx.at(value);
     ImGui::Combo(name, &cur_item, items, sizeof(items)/sizeof(const char* const));
+
     ImGui::PopID();
     ImGui::EndDisabled();
 }
@@ -62,12 +64,14 @@ void InstanceDisplay(const char* name, Flags<{{type}}>& value) {
     };
 
     ImGui::Text("%s", name);
+    ImGui::PushID(&value);
 
     for (size_t i = 0; i < sizeof(items) / sizeof({{type}}); i++) {
         auto item = items[i];
         auto name = item_names[i];
 
-        ImGui::PushID(ImGuiIDGenerator::Gen());
+        std::string id = std::to_string((size_t)&value) + "-" + std::to_string(i);
+        ImGui::PushID(id.c_str());
         if (value.Value() == 0) {
             if (static_cast<int>(item) == 0) {
                 ImGui::BeginDisabled(false);
@@ -99,6 +103,7 @@ void InstanceDisplay(const char* name, Flags<{{type}}>& value) {
         ImGui::Text("%s", name);
         ImGui::EndDisabled();
     }
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Flags<{{type}}>& value) {

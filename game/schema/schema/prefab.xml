@@ -8,12 +8,10 @@
     <import>physics_schema</import>
     <import>common</import>
     <import>tilemap_schema</import>
-    <import>gameplay_config</import>
     <import>ui_config</import>
+    <import>bind_point_schema</import>
 
     <asset name="Prefab" extension=".prefab">
-        <handle type="Prefab" name="base"/>
-
         <option type="Transform" name="transform"/>
         <option type="SpriteDefinition" name="sprite"/>
         <array  type="PrefabHandle" name="children"/>
@@ -21,8 +19,8 @@
         <option type="TilemapDefinition" name="tilemap"/>
         <option type="CCTDefinition" name="cct"/>
         <option type="TriggerDefinition" name="trigger"/>
+        <array type="BindPointDefinition" name="bind_points"/>
         <element type="Path" name="script" />
         <handle type="UIWidgetDefinition" name="ui"/>
-        <handle type="GameplayConfig" name="gameplay_config"/>
     </asset>
 </schema>

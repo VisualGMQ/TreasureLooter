@@ -26,14 +26,19 @@ public:
 
     void Update(TimeType delta_time) override {
         auto& keyframes = m_track.GetKeyframes();
-        if (m_cur_frame + 1 >= keyframes.size()) {
+        if (keyframes.empty()) {
+            return;
+        }
+        if (m_cur_frame + 1 >= static_cast<int>(keyframes.size())) {
             return;
         }
 
-        while (m_cur_frame + 1 < keyframes.size()) {
-            auto& next_frame = keyframes[m_cur_frame + 1];
-
-            m_cur_time += delta_time;
+        // One delta per call; then advance across any keyframe boundaries crossed. (The old
+        // loop added delta_time every iteration, so a single large seek step multiplied by the
+        // number of crossed keyframes and jumped to the end of the track.)
+        m_cur_time += delta_time;
+        while (m_cur_frame + 1 < static_cast<int>(keyframes.size())) {
+            const auto& next_frame = keyframes[m_cur_frame + 1];
             if (next_frame.m_time <= m_cur_time) {
                 m_cur_frame++;
             } else {

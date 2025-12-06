@@ -3,8 +3,45 @@
 /////////////////////////////////////////////////////////////////////
 
 #include "schema/binding/binding.hpp"
+#include "engine/asset_manager.hpp"
+#include <string>
+
+void bindSchemaAssetManager(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<AssetsManager>("AssetsManager")
+            {{#asset_manager_getters}}
+                .addFunction("Get{{{type}}}Manager",
+                             +[](AssetsManager* m) -> GenericAssetManager<{{{type}}}>* {
+                                 return &m->GetManager<{{{type}}}>();
+                             })
+            {{/asset_manager_getters}}
+            .endClass()
+            {{#asset_manager_classes}}
+            .beginClass<GenericAssetManager<{{{type}}}>>("{{{type}}}AssetManager")
+                .addFunction("Create", +[](GenericAssetManager<{{{type}}}>* m) {
+                    return m->Create();
+                })
+                .addFunction("Load", +[](GenericAssetManager<{{{type}}}>* m, const std::string& path, bool force) {
+                    return m->Load(Path(path), force);
+                })
+                .addFunction("Find", +[](GenericAssetManager<{{{type}}}>* m, const std::string& path) {
+                    return m->Find(Path(path));
+                })
+                .addFunction("Unload", +[](GenericAssetManager<{{{type}}}>* m, Handle<{{{type}}}> handle) {
+                    m->Unload(handle);
+                })
+                .addFunction("Reload", +[](GenericAssetManager<{{{type}}}>* m, Handle<{{{type}}}> handle) {
+                    m->Reload(handle);
+                })
+                .addFunction("Clear", &GenericAssetManager<{{{type}}}>::Clear)
+            .endClass()
+            {{/asset_manager_classes}}
+        .endNamespace();
+}
 
 void BindSchema(lua_State* L) {
+    bindSchemaAssetManager(L);
     {{#bindings}}
     {{{binding}}}
     {{/bindings}}

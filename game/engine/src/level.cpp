@@ -6,7 +6,6 @@
 #include "engine/bind_point.hpp"
 #include "engine/cct.hpp"
 #include "engine/context.hpp"
-#include "engine/gameplay_config.hpp"
 #include "engine/relationship.hpp"
 #include "engine/sprite.hpp"
 #include "engine/trigger.hpp"
@@ -97,7 +96,7 @@ Entity Level::GetUIRootEntity() const {
     return m_ui_root_entity;
 }
 
-void Level::initRootEntity() {
+void Level::initRootEntity(const Path& script_path) {
     m_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
@@ -114,6 +113,11 @@ void Level::initRootEntity() {
     Transform* transform =
         CURRENT_CONTEXT.m_transform_manager->Get(m_ui_root_entity);
     transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
+    
+    if (!script_path.empty()) {
+        auto handle = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>().Load(script_path);
+        CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(m_root_entity, m_root_entity, handle);
+    }
 }
 
 void Level::registerEntity(Entity entity, const EntityInstance& instance) {
@@ -150,6 +154,9 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_trigger_component_manager->RegisterEntity(
             entity, entity, prefab.m_trigger.value());
     }
+    if (!prefab.m_bind_points.empty()) {
+        CURRENT_CONTEXT.m_bind_point_component_manager->RegisterEntity(entity,prefab.m_bind_points);
+    }
     if (prefab.m_ui) {
         CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
@@ -169,19 +176,15 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
             relationship->m_children.push_back(child_entity);
         }
     }
-
-    if (prefab.m_gameplay_config) {
-        CURRENT_CONTEXT.m_gameplay_config_manager->RegisterEntity(
-            entity, *prefab.m_gameplay_config);
-    }
 }
 
 void Level::initByLevelContent(LevelContentHandle level_content) {
-    initRootEntity();
+    initRootEntity(level_content->m_script_path);
 
     for (auto& instance : level_content->m_entities) {
         if (!instance.m_prefab) {
-            LOGW("prefab {} invalid", *instance.m_prefab.GetFilename());
+            auto filename = instance.m_prefab.GetFilename();
+            LOGW("prefab {} invalid", filename ? *filename : "<embed>");
             continue;
         }
         auto entity = CURRENT_CONTEXT.CreateEntity();
@@ -210,6 +213,8 @@ void Level::doRemoveEntities() {
 
 void Level::doRemoveEntityWithChildren(Entity entity) {
     TL_RETURN_IF_FALSE(entity != null_entity);
+    
+    // TODO: remove entity from parent
 
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     if (relationship) {
@@ -227,7 +232,6 @@ void Level::doRemoveEntityWithChildren(Entity entity) {
     CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_ui_manager->RemoveEntity(entity);
-    CURRENT_CONTEXT.m_gameplay_config_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_script_component_manager->RemoveEntity(entity);
 
     m_entities.erase(entity);

@@ -126,7 +126,7 @@ std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
             count = std::stoll(count_node->value());
         } catch (std::exception const& ex) {
             std::cerr << "Error parsing array, count invalid: "
-                << count_node->value() << std::endl;
+                      << count_node->value() << std::endl;
         }
     }
 
@@ -138,8 +138,28 @@ std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
         property.m_type = "std::array<" + std::string{type->value()} + ", " +
                           std::to_string(count) + ">";
     }
+    property.m_is_array = true;
     schema.m_include_hints = schema.m_include_hints | IncludeHint::Array;
     return property;
+}
+
+std::optional<CppAssetDef> ParseCppAssetDef(rapidxml::xml_node<>* node) {
+    auto name = node->first_attribute("name");
+    if (!name) {
+        std::cerr << "Error parsing CppAssetDef, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    auto extension = node->first_attribute("extension");
+    if (!extension) {
+        std::cerr << "Error parsing element, no extension" << std::endl;
+        return std::nullopt;
+    }
+
+    CppAssetDef def;
+    def.m_asset_name = name->value();
+    def.m_extension = extension->value();
+    return def;
 }
 
 std::optional<PropertyInfo> ParseHandle(SchemaInfo& schema,
@@ -160,6 +180,7 @@ std::optional<PropertyInfo> ParseHandle(SchemaInfo& schema,
     property.m_name = name->value();
     property.m_type = type->value() + std::string{"Handle"};
     property.m_optional = false;
+    property.m_is_handle = true;
     return property;
 }
 
@@ -224,7 +245,7 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
     }
 
     class_info.m_name = name_attr->value();
-    
+
     if (is_asset) {
         auto extension_attr = node->first_attribute("extension");
         if (!extension_attr) {
@@ -232,7 +253,8 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
             return std::nullopt;
         }
         class_info.m_asset_extension = extension_attr->value();
-        class_info.m_asset_extension_var = class_info.m_name + std::string{ClassInfo::ExtensionVarSuffix};
+        class_info.m_asset_extension_var =
+            class_info.m_name + std::string{ClassInfo::ExtensionVarSuffix};
     }
 
     auto element = node->first_node();
@@ -245,7 +267,7 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
             property = ParseOption(schema, element);
         } else if (name == "array") {
             property = ParseArray(schema, element);
-        } else if (name == "unodered_map") {
+        } else if (name == "unordered_map") {
             property = ParseUnorderedMap(schema, element);
         } else if (name == "flags") {
             property = ParseFlags(schema, element);
@@ -253,7 +275,7 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
             property = ParseHandle(schema, element);
         } else {
             std::cerr << "Error parsing class, unknown node " << element->name()
-                << std::endl;
+                      << std::endl;
             return std::nullopt;
         }
 
@@ -319,6 +341,11 @@ std::optional<SchemaInfo> ParseSchema(const std::filesystem::path& filename) {
             auto info = ParseEnum(schema_info, child);
             if (info) {
                 schema_info.m_enums.push_back(info.value());
+            }
+        } else if (name == "cpp_asset_def") {
+            auto info = ParseCppAssetDef(child);
+            if (info) {
+                schema_info.m_cpp_asset_defs.push_back(info.value());
             }
         }
         child = child->next_sibling();

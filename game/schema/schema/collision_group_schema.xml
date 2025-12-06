@@ -3,5 +3,6 @@
         <item name="CCT"/>
         <item name="Obstacle"/>
         <item name="Coin"/>
+        <item name="WeaponAttack"/>
     </enum>
 </schema>

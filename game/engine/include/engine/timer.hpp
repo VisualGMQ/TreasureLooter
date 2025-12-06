@@ -5,7 +5,12 @@
 
 #include "schema/timer_event.hpp"
 
+/**
+ * in seconds
+ */
 using TimeType = double;
+
+constexpr float kNoLimitFPS = 0;
 
 class Time {
 public:
@@ -14,17 +19,25 @@ public:
     void Update();
     TimeType GetCurrentTime() const;
 
-    /**
-     * get elapsed time between two frames
-     * @return time_type in milliseconds
-     */
     [[nodiscard]] TimeType GetElapseTime() const;
+    
+    void SetFPS(float fps);
+    bool IsFPSLimited() const;
+    
+    void Begin();
+    void End();
 
 private:
     static constexpr TimeType MinElapseTime = 0.000001;
 
+    // for whole frame
     TimeType m_elapsed_time{MinElapseTime};
     std::chrono::steady_clock::time_point m_cur_time{};
+    
+    // for fps limit
+    std::chrono::steady_clock::time_point m_cur_frame_begin_time{};
+    float m_limit_fps = kNoLimitFPS;
+    float m_fps_require_time = 0.0; // in ms
 };
 
 enum class TimerID: uint32_t {
@@ -51,7 +64,20 @@ class TimerEvent {
 public:
     TimerEvent(TimerEventType type, TimerID);
 
-    [[nodiscard]] TimerEventType GetType() const;
+    [[nodiscard]] TimerEventType GetEventType() const;
+    TimerID GetID() const;
+
+private:
+    TimerEventType m_type;
+    TimerID m_timer_id = null_timer_id;
+};
+
+class TimerStopEvent {
+public:
+    TimerStopEvent(TimerEventType type, TimerID);
+
+    [[nodiscard]] TimerEventType GetEventType() const;
+    TimerID GetID() const;
 
 private:
     TimerEventType m_type;
@@ -92,6 +118,8 @@ public:
     [[nodiscard]] TimerEventType GetEventType() const;
 
     void SetEventType(TimerEventType);
+    TimerID GetID() const;
+    bool IsRunning() const;
 
 private:
     TimerID m_id = null_timer_id;
@@ -107,7 +135,7 @@ class TimerManager {
 public:
     Timer& Create(TimeType interval, TimerEventType event_type, int loop = 0);
 
-    void RemoveTimer(TimerID);
+    void Remove(TimerID);
 
     void Clear();
 

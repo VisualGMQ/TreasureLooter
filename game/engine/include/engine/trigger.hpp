@@ -6,30 +6,39 @@
 
 class TriggerEnterEvent {
 public:
-    explicit TriggerEnterEvent(TriggerEventType, OverlapResult);
+    explicit TriggerEnterEvent(Entity src_entity, TriggerEventType, OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
+    [[nodiscard]] Entity GetSrcEntity() const;
+    [[nodiscard]] const OverlapResult& GetOverlapResult() const;
 
 private:
+    Entity m_src_entity = null_entity;
     TriggerEventType m_type;
     OverlapResult m_overlap;
 };
 
 class TriggerLeaveEvent {
 public:
-    explicit TriggerLeaveEvent(TriggerEventType, OverlapResult);
+    explicit TriggerLeaveEvent(Entity src_entity, TriggerEventType, OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
+    [[nodiscard]] Entity GetSrcEntity() const;
+    [[nodiscard]] const OverlapResult& GetOverlapResult() const;
 
 private:
+    Entity m_src_entity = null_entity;
     TriggerEventType m_type;
     OverlapResult m_overlap;
 };
 
 class TriggerTouchEvent {
 public:
-    explicit TriggerTouchEvent(TriggerEventType, OverlapResult);
+    explicit TriggerTouchEvent(Entity src_entity, TriggerEventType, OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
+    [[nodiscard]] Entity GetSrcEntity() const;
+    [[nodiscard]] const OverlapResult& GetOverlapResult() const;
 
 private:
+    Entity m_src_entity = null_entity;
     TriggerEventType m_type;
     OverlapResult m_overlap;
 };
@@ -47,6 +56,7 @@ public:
             const CollisionGroup& collision_layer,
             const CollisionGroup& collision_mask);
     [[nodiscard]] const PhysicsActor* GetActor() const;
+    [[nodiscard]] PhysicsActor* GetActor();
     ~Trigger();
 
     void SetEventType(TriggerEventType type);
@@ -54,11 +64,15 @@ public:
 
     void EnableTriggerEveryFrameWhenTouch(bool);
     bool IsTriggerEveryFrameWhenTouch() const;
+    
+    void ChangeBindPointName(const std::string& name);
+    std::string_view GetBindPointName() const;
 
     void Update();
 
 private:
     PhysicsActor* m_actor = nullptr;
+    std::string m_bind_point_name;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 

@@ -21,7 +21,7 @@ void SpriteManager::Update() {
         auto& sprite = component.m_component;
 
         if (!sprite->m_image) {
-            return;
+            continue;
         }
 
         const Transform* transform = transform_manager->Get(entity);

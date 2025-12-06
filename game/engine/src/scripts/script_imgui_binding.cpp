@@ -3,9 +3,11 @@
 #include "engine/macros.hpp"
 #include "imgui.h"
 
+// clang-format off
 #include "lua.h"
 #include "lualib.h"
 #include "LuaBridge/LuaBridge.h"
+// clang-format on
 
 static constexpr size_t kImGuiInputTextBufSize = 4096;
 
@@ -111,6 +113,25 @@ static int ImGui_BeginDisabled(lua_State* L) {
     return 0;
 }
 
+static int ImGui_BeginChild(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+    float w = 0.f;
+    float h = 0.f;
+    if (lua_gettop(L) >= 3) {
+        w = static_cast<float>(luaL_checknumber(L, 2));
+        h = static_cast<float>(luaL_checknumber(L, 3));
+    }
+    ImGuiChildFlags child_flags = ImGuiChildFlags_Borders;
+    if (lua_gettop(L) >= 4) {
+        child_flags = static_cast<ImGuiChildFlags>(
+            static_cast<int>(luaL_checkinteger(L, 4)));
+    }
+    const bool open = ImGui::BeginChild(id, ImVec2(w, h), child_flags,
+                                        ImGuiWindowFlags_None);
+    lua_pushboolean(L, open);
+    return 1;
+}
+
 void bindImGui(lua_State* L) {
     TL_RETURN_IF_NULL_WITH_LOG(L, LOGE, "lua_State* is null!");
 
@@ -119,6 +140,8 @@ void bindImGui(lua_State* L) {
         // Window
         .addFunction("Begin", +[](const char* name) { return ImGui::Begin(name); })
         .addFunction("End", +[]() { ImGui::End(); })
+        .addFunction("BeginChild", &ImGui_BeginChild)
+        .addFunction("EndChild", +[]() { ImGui::EndChild(); })
         // Text
         .addFunction("Text", +[](const char* text) { ImGui::TextUnformatted(text); })
         .addFunction("SeparatorText", +[](const char* label) { ImGui::SeparatorText(label); })

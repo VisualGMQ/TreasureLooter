@@ -42,6 +42,9 @@ void AnimationPlayer::Rewind() {
     for (auto& [_, track] : m_track_players) {
         track->Rewind();
     }
+    for (auto& [_, track] : m_bind_point_track_players) {
+        track->Rewind();
+    }
     m_cur_time = 0.0f;
 }
 
@@ -201,7 +204,8 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
 
 void AnimationPlayer::ChangeAnimation(const Path& filename) {
     auto animation =
-        CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().Find(filename);
+        CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().Find(
+            filename);
     ChangeAnimation(animation);
 }
 
@@ -222,7 +226,8 @@ bool AnimationPlayer::HasAnimation() const {
 void AnimationPlayer::Update(TimeType delta_time) {
     float elapsed_time = delta_time * m_rate;
 
-    if (!m_is_playing || !m_animation || m_track_players.empty()) {
+    if (!m_is_playing || !m_animation ||
+        (m_track_players.empty() && m_bind_point_track_players.empty())) {
         return;
     }
 
@@ -280,6 +285,7 @@ void AnimationPlayer::Update(TimeType delta_time) {
     }
 
 void AnimationPlayer::Sync(Entity entity) {
+    TL_RETURN_IF_FALSE(m_animation);
     auto& ctx = CURRENT_CONTEXT;
 
     if (auto transform = ctx.m_transform_manager->Get(entity)) {
@@ -380,7 +386,7 @@ bool AnimationPlayer::IsAutoPlayEnabled() const {
 
 void AnimationPlayerManager::Update(TimeType delta_time) {
     PROFILE_ANIMATION_SECTION(__FUNCTION__);
-    
+
     for (auto& [entity, anim] : m_components) {
         if (!anim.m_enable) {
             continue;

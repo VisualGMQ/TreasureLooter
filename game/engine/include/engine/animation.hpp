@@ -8,6 +8,8 @@
 #include "schema/anim.hpp"
 #include "schema/bind_point_schema.hpp"
 #include "engine/timer.hpp"
+#include "engine/timer.hpp"
+#include "schema/cpp_asset_def_extension.hpp"
 
 #include <memory>
 #include <vector>
@@ -107,12 +109,17 @@ private:
 
 using AnimationHandle = Handle<Animation>;
 
-constexpr std::string_view Animation_AssetExtension = ".animation.xml";
-
-using AnimationHandle = Handle<Animation>;
+template <>
+class AssetSLInfo<Animation> {
+public:
+    static constexpr bool CanEmbed = true;
+};
 
 template <>
 AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename);
+
+template <>
+AssetLoadResult<Animation> LoadAsset<Animation>(const rapidxml::xml_node<>&);
 
 void SaveAsset(const UUID& uuid, const Animation& payload,
                const Path& filename);
@@ -120,6 +127,4 @@ void SaveAsset(const UUID& uuid, const Animation& payload,
 class AnimationManager : public AssetManagerBase<Animation> {
 public:
     AnimationHandle Load(const Path& filename, bool force = false) override;
-
-    AnimationHandle Create();
 };

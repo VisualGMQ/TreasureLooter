@@ -49,7 +49,7 @@ private:
     std::vector<Entity> m_pending_delete_entities;
     EventListenerID m_window_resize_event_listener_id{};
 
-    void initRootEntity();
+    void initRootEntity(const Path& script_path);
 
     void registerEntity(Entity, const EntityInstance&);
 

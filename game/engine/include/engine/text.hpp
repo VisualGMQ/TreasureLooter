@@ -9,12 +9,17 @@ class Font {
 public:
     explicit Font(const Path& filename, int pt);
 
+    // Font() = default;
     Font(const Font&) = delete;
     Font& operator=(const Font&) = delete;
-    Font(Font&&);
-    Font& operator=(Font&&);
+    Font(Font&&) noexcept;
+    Font& operator=(Font&&) noexcept;
 
     ~Font();
+    
+    operator bool() const noexcept {
+        return m_font;
+    }
 
     [[nodiscard]] SDL_Surface* GenerateText(const std::string& text,
                                             const Color& color) const;
@@ -26,6 +31,13 @@ public:
 private:
     TTF_Font* m_font{};
 };
+
+template <>
+class AssetSLInfo<Font> {
+public:
+    static constexpr bool CanEmbed = false;
+};
+
 
 using FontHandle = Handle<Font>;
 

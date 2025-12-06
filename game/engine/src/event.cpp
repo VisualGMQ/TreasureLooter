@@ -1,6 +1,8 @@
 #include "engine/event.hpp"
 
+#include "engine/context.hpp"
 #include "engine/profile.hpp"
+#include "imgui.h"
 
 constexpr bool NullEventListenerID::operator==(EventListenerID id) const {
     return static_cast<uint32_t>(id) == 0;
@@ -49,4 +51,22 @@ void EventSystem::Update() {
     for (auto& [_, sink] : m_sinks) {
         sink->Update();
     }
+}
+
+EventDebugger::EventDebugger() {
+    m_listener_id = CURRENT_CONTEXT.m_event_system->AddListener<DebugEvent>([&](EventListenerID, const DebugEvent& event) {
+        m_triggered_count++; 
+    });
+}
+
+EventDebugger::~EventDebugger() {
+    CURRENT_CONTEXT.m_event_system->RemoveListener<DebugEvent>(m_listener_id);
+}
+
+void EventDebugger::SendDebugEvent(int value) {
+    CURRENT_CONTEXT.m_event_system->EnqueueEvent(DebugEvent{value});
+}
+
+uint32_t EventDebugger::GetTriggeredCount() const {
+    return m_triggered_count;
 }

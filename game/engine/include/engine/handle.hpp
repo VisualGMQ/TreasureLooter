@@ -42,6 +42,10 @@ public:
         return m_manager ? m_manager->GetFilename(m_uuid) : nullptr;
     }
 
+    bool IsEmbed() const {
+        return static_cast<bool>(*this) && GetFilename() == nullptr;
+    }
+
     T* Get() { return m_data; }
 
     const T* Get() const { return m_data; }

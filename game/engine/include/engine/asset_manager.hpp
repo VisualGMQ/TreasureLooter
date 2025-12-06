@@ -5,7 +5,6 @@
 #include "engine/context.hpp"
 #include "engine/image.hpp"
 #include "engine/level.hpp"
-#include "engine/prefab_manager.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/script/script.hpp"
@@ -26,8 +25,6 @@ public:
             return ensureManager<AnimationManager>(index);
         } else if constexpr (std::is_same_v<T, Level>) {
             return *CURRENT_CONTEXT.m_level_manager;
-        } else if constexpr (std::is_same_v<T, Prefab>) {
-            return ensureManager<PrefabManager>(index);
         } else if constexpr (std::is_same_v<T, Font>) {
             return ensureManager<FontManager>(index);
         } else if constexpr (std::is_same_v<T, ScriptBinaryData>) {

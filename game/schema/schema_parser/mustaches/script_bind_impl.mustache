@@ -1,9 +1,11 @@
 #include "{{header_file}}"
 #include "{{schema_file}}"
+#include "engine/serialize.hpp"
+#include "engine/script/script_handle_binding.hpp"
+
 #include "lua.h"
 #include "lualib.h"
 #include "LuaBridge/LuaBridge.h"
-#include "engine/script/script_handle_binding.hpp"
 
 {{#bindings}}
 {{{binding}}}

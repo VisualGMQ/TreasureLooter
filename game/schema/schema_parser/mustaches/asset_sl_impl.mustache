@@ -1,5 +1,5 @@
 template<>
-AssetLoadResult<{{type}}> LoadAsset<{{type}}>(rapidxml::xml_node<>& node) {
+AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const rapidxml::xml_node<>& node) {
     AssetLoadResult<{{type}}> payload;
     Deserialize(CURRENT_CONTEXT, node, payload);
     return payload;

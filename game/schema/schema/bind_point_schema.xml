@@ -1,7 +1,7 @@
 <schema>
     <include>math.hpp</include>
 
-    <class name="BindPoint">
+    <class name="BindPointDefinition">
         <element name="name" type="std::string"/>
         <element name="position" type="Vec2"/>
     </class>

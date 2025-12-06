@@ -1,21 +1,13 @@
 local TL = require("@game/tl_types")
-local ImGui = require("@game/imgui_types")
-local GenericForwardWeapon = require("@game/generic_forward_weapon")
+local WeaponBehavior = require("@game/weapon_behavior")
+local CharacterBehavior = require("@game/character_behavior")
+local Slime = require("@game/slime")
 
 local Waggo = {}
 Waggo.__index = Waggo
-
-export type CharacterDirection = number
-
-local CharacterDirection = {
-    Left = 0,
-    Right = 1,
-    Down = 2,
-    Up = 3,
-} :: { [string]: CharacterDirection }
+setmetatable(Waggo, { __index = CharacterBehavior })
 
 type WaggoData = {
-	m_entity: TL.Entity,
 	m_sprite: TL.Sprite?,
 	m_cct : TL.CharacterController?,
 	m_transform : TL.Transform?,
@@ -25,45 +17,41 @@ type WaggoData = {
 	m_move_up_anim : TL.AnimationHandle?,
 	m_move_down_anim : TL.AnimationHandle?,
 	m_anim_player : TL.AnimationPlayer?,
-	m_direction : CharacterDirection,
+	m_direction : CharacterBehavior.Direction,
 	m_move_speed : number,
-	m_weapon_script : GenericForwardWeapon.GenericForwardWeapon?,
+	m_weapon_behavior : WeaponBehavior.WeaponBehavior?,
 }
 
-export type Waggo = typeof(setmetatable({}::WaggoData, Waggo))
+export type Waggo = typeof(setmetatable({}::WaggoData, Waggo)) & CharacterBehavior.CharacterBehavior
 
 function Waggo.new(entity: number): Waggo
-	local self = {}::WaggoData
-
-	self.m_entity = entity
-
+	local self = CharacterBehavior.new(entity)
 	return setmetatable(self, Waggo)
 end
 
-function Waggo.OnInit(self: WaggoData)
-	local ctx = TL.GetContext()
+function Waggo.OnInit(self: Waggo)
+	local ctx: TL.GameContext = TL.GetContext()
 
-	self.m_direction = CharacterDirection.Down
-	self.m_move_speed = 100
-	self.m_sprite = ctx:GetSpriteManager():Get(self.m_entity)
-	self.m_cct = ctx:GetCCTManager():Get(self.m_entity)
-	self.m_transform = ctx:GetTransformManager():Get(self.m_entity)
-	self.m_anim_player = ctx:GetAnimationPlayerManager():Get(self.m_entity)
+	local entity = self:GetEntity()
 
-	local config = ctx:GetGameplayConfigManager():Get(self.m_entity)
+	self.m_direction = CharacterBehavior.Direction.Down
+	self.m_sprite = ctx:GetSpriteManager():Get(entity)
+	self.m_cct = ctx:GetCCTManager():Get(entity)
+	self.m_transform = ctx:GetTransformManager():Get(entity)
+	self.m_anim_player = ctx:GetAnimationPlayerManager():Get(entity)
+
+	local config = self:GetCharacterConfig()
+
+	self.m_weapon_behavior = ctx:GetScriptManager():Get(config.m_weapon_entity) :: WeaponBehavior.WeaponBehavior
 	self.m_image_sheet = config.m_sprite_sheet
-	self.m_move_left_anim = config.m_move_left_animation
-	self.m_move_right_anim = config.m_move_right_animation
-	self.m_move_up_anim = config.m_move_up_animation
-	self.m_move_down_anim = config.m_move_down_animation
-	self.m_move_speed = config.m_speed
+	self.m_move_left_anim = config.m_move_left_anim
+	self.m_move_right_anim = config.m_move_right_anim
+	self.m_move_up_anim = config.m_move_up_anim
+	self.m_move_down_anim = config.m_move_down_anim
+	self.m_move_speed = config.m_move_speed
 
-	local relationship = ctx:GetRelationshipManager():Get(self.m_entity)
-
-	if relationship ~= nil and config.m_weapon_entity ~= nil and #relationship.m_children > config.m_weapon_entity then
-		local weapon_entity = relationship.m_children[config.m_weapon_entity + 1]
-		self.m_weapon_script = ctx:GetScriptManager():Get(weapon_entity)
-	end
+	self:SubscribeDebugEvent()
+	self:SubscribeTriggerEnterEvent()
 end
 
 function Waggo.OnUpdate(self: Waggo, elapse_time: number)
@@ -74,13 +62,12 @@ function Waggo.OnUpdate(self: Waggo, elapse_time: number)
 	if (action:IsPressed(0)) then
 		self:attack()
 	end
-
 	self:move(axises, elapse_time)
 	ctx:GetCamera():MoveTo(self.m_transform.m_position)
 end
 
 function Waggo.attack(self: Waggo)
-	self.m_weapon_script:Attack()
+	self.m_weapon_behavior:Attack()
 end
 
 function Waggo.move(self: Waggo, dir, duration: number)
@@ -88,22 +75,22 @@ function Waggo.move(self: Waggo, dir, duration: number)
 		if self.m_anim_player ~= nil then
 			self.m_anim_player:Stop()
 		end
-	elseif not self.m_weapon_script.m_anim_player:IsPlaying() then
-		self.m_weapon_script:ChangeDir(dir:Normalize())
+	elseif not self.m_weapon_behavior.m_anim_player:IsPlaying() then
+		self.m_weapon_behavior:ChangeDir(dir:Normalize())
 	end
 
 	local old_dir = self.m_direction
 	if dir.x < 0 then
-		self.m_direction = CharacterDirection.Left
+		self.m_direction = CharacterBehavior.Direction.Left
 	end
 	if dir.x > 0 then
-		self.m_direction = CharacterDirection.Right
+		self.m_direction = CharacterBehavior.Direction.Right
 	end
 	if dir.y < 0 then
-		self.m_direction = CharacterDirection.Up
+		self.m_direction = CharacterBehavior.Direction.Up
 	end
 	if dir.y > 0 then
-		self.m_direction = CharacterDirection.Down
+		self.m_direction = CharacterBehavior.Direction.Down
 	end
 
 	if self.m_cct ~= nil then
@@ -113,26 +100,26 @@ function Waggo.move(self: Waggo, dir, duration: number)
 	end
 
 	if (not self.m_anim_player:IsPlaying() and dir ~= TL.Vec2.ZERO) or old_dir ~= self.m_direction then
-		if self.m_direction == CharacterDirection.Up then
+		if self.m_direction == CharacterBehavior.Direction.Up then
 			self.m_anim_player:ChangeAnimation(self.m_move_up_anim)
-		elseif self.m_direction == CharacterDirection.Left then
+		elseif self.m_direction == CharacterBehavior.Direction.Left then
 			self.m_anim_player:ChangeAnimation(self.m_move_left_anim)
-		elseif self.m_direction == CharacterDirection.Right then
+		elseif self.m_direction == CharacterBehavior.Direction.Right then
 			self.m_anim_player:ChangeAnimation(self.m_move_right_anim)
-		elseif self.m_direction == CharacterDirection.Down then
+		elseif self.m_direction == CharacterBehavior.Direction.Down then
 			self.m_anim_player:ChangeAnimation(self.m_move_down_anim)
 		end
 		self.m_anim_player:Play()
 	end
 
 	if dir == TL.Vec2.ZERO then
-		if self.m_direction == CharacterDirection.Up then
+		if self.m_direction == CharacterBehavior.Direction.Up then
 			self.m_sprite.m_region.m_topleft = TL.Vec2(16, 0)
-		elseif self.m_direction == CharacterDirection.Left then
+		elseif self.m_direction == CharacterBehavior.Direction.Left then
 			self.m_sprite.m_region.m_topleft = TL.Vec2(32, 0)
-		elseif self.m_direction == CharacterDirection.Right then
+		elseif self.m_direction == CharacterBehavior.Direction.Right then
 			self.m_sprite.m_region.m_topleft = TL.Vec2(48, 0)
-		elseif self.m_direction == CharacterDirection.Down then
+		elseif self.m_direction == CharacterBehavior.Direction.Down then
 			self.m_sprite.m_region.m_topleft = TL.Vec2(0, 0)
 		end
 	end
@@ -143,15 +130,27 @@ function Waggo.move(self: Waggo, dir, duration: number)
 end
 
 function Waggo.OnQuit(self: Waggo)
-	print("OnQuit")
 end
 
 function Waggo.OnRender(self: Waggo)
-	if ImGui.Begin("Hello") then
-		ImGui.Text("this window drawed in script")
-		ImGui.Button("button")
-	end
-	ImGui.End()
 end
+
+function Waggo.OnDebugEvent(self: Waggo, event: TL.DebugEvent)
+	TL.Log("debug event here")
+end
+
+function Waggo.OnTriggerEnterEvent(self: Waggo, event: TL.TriggerEnterEvent)
+	local dst_entity = event:GetOverlapResult().m_dst_entity
+	if dst_entity == TL.null_entity or dst_entity == self:GetEntity() then
+		return
+	end
+
+	local ctx: TL.GameContext = TL.GetContext()
+	local script_mgr = ctx:GetScriptManager()
+	local dst_script = script_mgr:Get(dst_entity) :: Slime.Slime
+
+	dst_script:Hurt(self.m_weapon_behavior:GetDir(), 1)
+end
+
 
 return Waggo

@@ -1,5 +1,11 @@
+template <>
+class AssetSLInfo<{{type}}> {
+public:
+    static constexpr bool CanEmbed = true;
+};
+
 template<>
-AssetLoadResult<{{type}}> LoadAsset<{{type}}>(rapidxml::xml_node<>&);
+AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const rapidxml::xml_node<>&);
 rapidxml::xml_node<>* SaveAsset(const UUID& uuid, rapidxml::xml_document<>& doc, const {{type}}& payload);
 
 template<>

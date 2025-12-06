@@ -1,10 +1,40 @@
 void bind{{{type}}}TypeFromSchema(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
+        {{#is_asset}}
+        .addFunction("LoadAsset{{{type}}}", +[](const Path& path) {
+            return LoadAsset<{{{type}}}>(path).m_payload;
+        })
+        .addFunction("SaveAsset{{{type}}}", +[](const Handle<{{{type}}}>& handle, const Path& path) {
+            if (handle) {
+                SaveAsset(handle.GetUUID(), *handle, path);
+            }
+        })
+        {{/is_asset}}
         .beginClass<{{{type}}}>("{{{type}}}")
+        .template addConstructor<void ()>()
         {{#property_entries}}
+        {{#is_optional}}
+        .addProperty("{{{property_name}}}",
+                     +[](const {{{type}}}* self) -> {{{optional_inner_type}}}* {
+                         auto* mut_self = const_cast<{{{type}}}*>(self);
+                         auto& opt = mut_self->{{{property_name}}};
+                         if (!opt) {
+                             opt.emplace();
+                         }
+                         return &opt.value();
+                     },
+                     +[]({{{type}}}* self, const {{{optional_inner_type}}}& value) {
+                         self->{{{property_name}}} = value;
+                     })
+        {{/is_optional}}
+        {{^is_optional}}
         .addProperty("{{{property_name}}}", &{{{type}}}::{{{property_name}}}, true)
+        {{/is_optional}}
         {{/property_entries}}
         .endClass()
         .endNamespace();
+    {{#is_asset}}
+    BindHandle<{{{type}}}>("{{{type}}}Handle", L, "{{{type}}}");
+    {{/is_asset}}
 }

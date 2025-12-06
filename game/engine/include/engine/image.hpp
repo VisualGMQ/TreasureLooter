@@ -26,6 +26,12 @@ private:
     SDL_Texture* m_texture{};
 };
 
+template <>
+class AssetSLInfo<Image> {
+public:
+    static constexpr bool CanEmbed = false;
+};
+
 using ImageHandle = Handle<Image>;
 
 class ImageManager: public AssetManagerBase<Image> {

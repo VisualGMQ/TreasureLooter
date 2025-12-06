@@ -1,6 +1,9 @@
 export type Begin = (name: string) -> boolean
 export type End = () -> ()
 
+export type BeginChild = (str_id: string, w: number?, h: number?, child_flags: number?) -> boolean
+export type EndChild = () -> ()
+
 export type Text = (text: string) -> ()
 export type SeparatorText = (label: string) -> ()
 

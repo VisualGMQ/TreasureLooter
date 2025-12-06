@@ -2,7 +2,6 @@
 
 #include "engine/context.hpp"
 #include "imgui.h"
-#include "engine/imgui_id_generator.hpp"
 #include "engine/profile.hpp"
 
 CharacterController::CharacterController(Entity entity, const CCTDefinition& create_info)
@@ -144,5 +143,9 @@ void CharacterController::Teleport(const Vec2& pos) {
 }
 
 const PhysicsActor* CharacterController::GetActor() const {
+    return m_actor;
+}
+
+PhysicsActor* CharacterController::GetActor() {
     return m_actor;
 }

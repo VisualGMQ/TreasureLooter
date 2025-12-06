@@ -18,7 +18,7 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, {{type}}&
     {
         auto prop_node = node.first_node("{{{property}}}");
         if (!prop_node) {
-            if (!{{is_optional}}) {
+            if (!{{is_optional}} && !{{is_handle}} && !{{is_array}}) {
                 LOGE("[Deserialize] parse {{{type}}}::m_{{{property}}} failed: no this node");
             }
         } else {
