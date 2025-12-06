@@ -8,6 +8,8 @@
 #include "schema/anim.hpp"
 #include "schema/bind_point_schema.hpp"
 #include "engine/timer.hpp"
+#include "engine/timer.hpp"
+#include "schema/cpp_asset_def_extension.hpp"
 
 #include <memory>
 #include <vector>
@@ -104,10 +106,6 @@ private:
     std::unordered_map<std::string, std::unique_ptr<AnimationTrackBase>>
         m_bind_point_tracks;
 };
-
-using AnimationHandle = Handle<Animation>;
-
-constexpr std::string_view Animation_AssetExtension = ".animation.xml";
 
 using AnimationHandle = Handle<Animation>;
 

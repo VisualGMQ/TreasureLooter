@@ -24,14 +24,13 @@
 #include "engine/transform.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
+#include "engine/uuid.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
-#include <csignal>
-#include <memory>
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -124,6 +123,8 @@ void CommonContext::Initialize() {
     m_game_config = *handle;
     m_camera.ChangeScale(GetGameConfig().m_camera_scale);
     m_assets_manager->GetManager<GameConfig>().Unload(handle);
+
+    parseProjectPath();
 }
 
 void CommonContext::Shutdown() {
@@ -217,6 +218,10 @@ const GameConfig& CommonContext::GetGameConfig() const {
     return m_game_config;
 }
 
+const Path& CommonContext::GetProjectPath() const {
+    return m_project_path;
+}
+
 void CommonContext::beginImGui() {
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
@@ -273,6 +278,24 @@ void CommonContext::shutdownImGui() {
     }
 }
 
+void CommonContext::parseProjectPath() {
+    auto file =
+        IOStream::CreateFromFile("project_path.xml", IOMode::Read, true);
+    if (!file) {
+        return;
+    }
+
+    auto content = file->Read();
+    content.push_back('\0');
+
+    rapidxml::xml_document<> doc;
+    doc.parse<0>(content.data());
+    auto node = doc.first_node("ProjectPath");
+    if (!node) {
+        LOGE("no ProjectPath node in project_path.xml");
+    }
+}
+
 void GameContext::Init() {
     if (!instance) {
         instance = std::unique_ptr<GameContext>(new GameContext());
@@ -297,8 +320,6 @@ void sigintHandler(int signum) {
 
 void GameContext::Initialize() {
     PROFILE_SECTION();
-
-    signal(SIGINT, sigintHandler);
 
     CommonContext::Initialize();
 

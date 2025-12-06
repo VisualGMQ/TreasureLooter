@@ -173,10 +173,11 @@ target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
 
 ################ build editor ################
 if (NOT ANDROID)
-    file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
-    add_executable(editor)
-    target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
-    target_link_libraries(editor PRIVATE ${ENGINE_NAME})
+    add_subdirectory(tools)
+    # file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
+    # add_executable(editor)
+    # target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
+    # target_link_libraries(editor PRIVATE ${ENGINE_NAME})
 endif()
 
 ################ install #######################

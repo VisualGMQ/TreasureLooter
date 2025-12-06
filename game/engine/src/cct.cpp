@@ -146,3 +146,7 @@ void CharacterController::Teleport(const Vec2& pos) {
 const PhysicsActor* CharacterController::GetActor() const {
     return m_actor;
 }
+
+PhysicsActor* CharacterController::GetActor() {
+    return m_actor;
+}

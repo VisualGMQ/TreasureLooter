@@ -61,6 +61,10 @@ const PhysicsActor* Trigger::GetActor() const {
     return m_actor;
 }
 
+PhysicsActor* Trigger::GetActor() {
+    return m_actor;
+}
+
 Trigger::~Trigger() {
     CURRENT_CONTEXT.m_physics_scene->RemoveActor(m_actor);
 }

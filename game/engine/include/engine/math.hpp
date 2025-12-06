@@ -55,6 +55,8 @@ struct TVec2 final {
 
     float Dot(const TVec2 &) const;
 
+    float DistTo(const TVec2&) const;
+
     float Cross(const TVec2 &) const;
 
     float LengthSquared() const;
@@ -143,6 +145,11 @@ TVec2<T> &TVec2<T>::operator-=(const TVec2 &o) {
 template <typename T>
 float TVec2<T>::Dot(const TVec2 &o) const {
     return x * o.x + y * o.y;
+}
+
+template <typename T>
+float TVec2<T>::DistTo(const TVec2& o) const {
+    return (*this - o).Length();
 }
 
 template <typename T>

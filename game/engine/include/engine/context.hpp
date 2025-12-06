@@ -73,6 +73,7 @@ public:
     void Exit();
 
     const GameConfig& GetGameConfig() const;
+    const Path& GetProjectPath() const;
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
@@ -114,9 +115,11 @@ private:
     bool m_is_inited = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
     GameConfig m_game_config;
+    Path m_project_path;
 
     void initImGui();
     void shutdownImGui();
+    void parseProjectPath();
 };
 
 class GameContext : public CommonContext {

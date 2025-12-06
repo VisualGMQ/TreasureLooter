@@ -17,7 +17,7 @@ void InstanceDisplay(const char* name, {{type}}& value) {
         {{/items}}
     };
 
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    IMGUI_PUSHID(value);
 
     int cur_item = enum_to_idx.at(value);
     ImGui::Combo(name, &cur_item, items, sizeof(items)/sizeof(const char* const));

@@ -8,6 +8,7 @@
 #include <type_traits>
 #include "engine/type_index.hpp"
 #include "engine/path.hpp"
+#include "cpp_asset_def_extension.hpp"
 {{#includes}}
 #include "{{include}}"
 {{/includes}}
@@ -20,10 +21,21 @@ using AssetTypeList = TypeList<
     {{{name}}}
     {{/asset_names}}
 >;
+
+namespace internal {
+template <typename... Args>
+std::variant<std::monostate, Handle<Args>...> VariantAssetTypeGenerator(
+    TypeList<Args...>);
+}
+
+using VariantAsset = decltype(internal::VariantAssetTypeGenerator(
+    AssetTypeList{}));
     
 {{#asset_extensions}}
 constexpr std::string_view {{extension_var}} = "{{extension}}.xml";
 {{/asset_extensions}}
+
+class CommonContext;
     
 struct AssetInfoManager {
     template <typename T>
@@ -55,4 +67,24 @@ struct AssetInfoManager {
     static size_t GetNum() {
         return {{asset_num}};
     }
+
+    static VariantAsset LoadAsset(const Path& filename, CommonContext& ctx);
+
+    static constexpr std::array<std::string_view, {{asset_num}}> GetNames() {
+        return {
+            {{#type_check}}
+            "{{type}}",
+            {{/type_check}}
+        };
+    }
+
+    static constexpr std::array<std::string_view, {{asset_num}}> GetExtensions() {
+        return {
+            {{#extensions}}
+            {{extension_var}},
+            {{/extensions}}
+        };
+    }
+
+    static VariantAsset CreateAsset(std::string_view type, CommonContext& ctx);
 };

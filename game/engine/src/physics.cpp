@@ -46,6 +46,38 @@ Vec2 NearestCirclePoint(const Circle &c, const Vec2 &v) {
     return (v - c.m_center).Normalize() * c.m_radius + c.m_center;
 }
 
+Vec2 NearestCapsulePoint(const Vec2 &q, float r, const Vec2 &p1,
+                         const Vec2 &p2) {
+    Vec2 dir1 = q - p1;
+    float dist1 = (q - p1).Length();
+    dir1 = FLT_EQ(dist1, 0) ? Vec2::ZERO : dir1 / dist1;
+    Vec2 dir2 = q - p2;
+    float dist2 = (q - p2).Length();
+    dir2 = FLT_EQ(dist2, 0) ? Vec2::ZERO : dir2 / dist2;
+    Vec2 dir = (p1 - p2).Normalize();
+    float c1 = dir.Dot(dir1);
+    float c2 = dir.Dot(dir2);
+
+    if (c1 * c2 >= 0) {
+        Vec2 on_line_pt_dir = dir1.Dot(dir) * dist1 * dir;
+        Vec2 normal_to_q = dir1 - on_line_pt_dir;
+        float len = normal_to_q.Length();
+        normal_to_q = FLT_EQ(len, 0) ? Vec2::ZERO : normal_to_q / len;
+        return on_line_pt_dir + p2 + std::min(len, r) * normal_to_q;
+    }
+
+    if (c1 < 0 && c2 > 0) {
+        return p1 + dir1 * std::min(r, dist1);
+    }
+
+    if (c1 > 0 && c2 < 0) {
+        return p2 + dir2 * std::min(r, dist2);
+    }
+
+    assert(false);
+    return Vec2::ZERO;
+}
+
 bool IsPointInRect(const Vec2 &p, const Rect &r) {
     return p.x >= r.m_center.x - r.m_half_size.x &&
            p.x <= r.m_center.x + r.m_half_size.x &&
@@ -392,21 +424,17 @@ PhysicsScene::PhysicsScene() {
 }
 
 PhysicsActor *PhysicsScene::CreateActor(Entity entity,
-                                        PhysicsActorInfoHandle info) {
-    if (!info) {
-        return nullptr;
-    }
-
+                                        const PhysicsActorInfo& info) {
     PhysicsActor *actor{};
-    if (info->m_is_rect) {
-        actor = CreateActor(entity, info->m_rect);
+    if (info.m_is_rect) {
+        actor = CreateActor(entity, info.m_rect);
     } else {
-        actor = CreateActor(entity, info->m_circle);
+        actor = CreateActor(entity, info.m_circle);
     }
 
     if (actor) {
-        actor->SetCollisionLayer(info->m_collision_layer);
-        actor->SetCollisionMask(info->m_collision_mask);
+        actor->SetCollisionLayer(info.m_collision_layer);
+        actor->SetCollisionMask(info.m_collision_mask);
         return actor;
     }
 
@@ -795,7 +823,7 @@ bool PhysicsScene::IsEnableDebugDraw() const {
 
 void PhysicsScene::RenderDebug() const {
     PROFILE_DEBUG_SECTION(__FUNCTION__);
-    
+
     if (!IsEnableDebugDraw()) {
         return;
     }

@@ -47,6 +47,7 @@ public:
             const CollisionGroup& collision_layer,
             const CollisionGroup& collision_mask);
     [[nodiscard]] const PhysicsActor* GetActor() const;
+    [[nodiscard]] PhysicsActor* GetActor();
     ~Trigger();
 
     void SetEventType(TriggerEventType type);

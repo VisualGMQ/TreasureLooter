@@ -197,9 +197,9 @@ void Renderer::DrawImageEx(const Image& image, const Region& src,
     Vec2 tl{topleft.x, topleft.y}, tr{topright.x, topright.y},
          bl{bottomleft.x, bottomleft.y};
     if (use_camera) {
-        transformByCamera(CURRENT_CONTEXT.m_camera, &tl, nullptr);
-        transformByCamera(CURRENT_CONTEXT.m_camera, &tr, nullptr);
-        transformByCamera(CURRENT_CONTEXT.m_camera, &bl, nullptr);
+        CURRENT_CONTEXT.m_camera.transform(&tl, nullptr);
+        CURRENT_CONTEXT.m_camera.transform(&tr, nullptr);
+        CURRENT_CONTEXT.m_camera.transform(&bl, nullptr);
     }
 
     DrawCommand cmd;

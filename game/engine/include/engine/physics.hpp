@@ -53,8 +53,8 @@ Rect RectUnion(const Rect& r1, const Rect& r2);
 
 // nearest point
 Vec2 NearestRectPoint(const Rect &, const Vec2 &);
-
 Vec2 NearestCirclePoint(const Circle &, const Vec2 &);
+Vec2 NearestCapsulePoint(const Vec2& q, float r, const Vec2& p1, const Vec2& p2);
 
 // overlap
 bool IsPointInRect(const Vec2 &, const Rect &);
@@ -224,7 +224,7 @@ public:
 
     TilemapCollision *CreateTilemapCollision(const Vec2 &topleft);
 
-    PhysicsActor *CreateActor(Entity, PhysicsActorInfoHandle info);
+    PhysicsActor *CreateActor(Entity, const PhysicsActorInfo& info);
 
     PhysicsActor *CreateActor(Entity, const Circle &);
 

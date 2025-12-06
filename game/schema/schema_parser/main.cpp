@@ -190,6 +190,11 @@ int main(int argc, char** argv) {
         std::ofstream file(output_dir / "schema_types.luau.inc");
         file.write(code.c_str(), code.length());
         std::cout << "generate schema_types.luau.inc to : " << output_dir / "schema_types.luau.inc" << std::endl;
+    // generate cpp_asset_extension.hpp
+    {
+        std::string code = GenerateCppAssetExtensionHeaderCode(manager);
+        std::ofstream file(output_dir / "cpp_asset_def_extension.hpp");
+        file.write(code.c_str(), code.length());
     }
 
     return 0;

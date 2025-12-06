@@ -4,4 +4,31 @@
 
 #include "schema/asset_info.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/context.hpp"
 #include "../../editor/context.hpp"
+
+VariantAsset AssetInfoManager::LoadAsset(const Path& filename, CommonContext& ctx) {
+    std::string filename_str = filename.string();
+    std::string extension =
+        filename_str.substr(filename_str.find_first_of('.'));
+    {{#load_methods}}
+    if (extension == {{type}}_AssetExtension) {
+        return ctx.m_assets_manager->GetManager<{{type}}>().Load(filename);
+    } else
+    {{/load_methods}}
+    {
+        return std::monostate{};
+    }
+}
+
+
+VariantAsset AssetInfoManager::CreateAsset(std::string_view type, CommonContext& ctx) {
+    {{#load_methods}}
+    if (type == "{{type}}") {
+        return ctx.m_assets_manager->GetManager<{{type}}>().Create();
+    } else
+    {{/load_methods}}
+    {
+        return std::monostate{};
+    }
+}

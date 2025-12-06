@@ -1,24 +1,24 @@
 void InstanceDisplay(const char* name, {{type}}& value) {
     ImGui::Text("%s", name);
     {{#properties}}
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    IMGUI_PUSHID(value);
     if (ImGui::TreeNode("{{property}}")) {
         InstanceDisplay("{{{property}}}", value.m_{{{property}}});
         ImGui::TreePop();
     }
-    ImGui::PopID();
+    IMGUI_POPID();
     {{/properties}}
 }
 
 void InstanceDisplay(const char* name, const {{type}}& value) {
     ImGui::BeginDisabled(true);
     {{#properties}}
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    IMGUI_PUSHID(value);
     if (ImGui::TreeNode("{{property}}")) {
         InstanceDisplay("{{{property}}}", value.m_{{{property}}});
         ImGui::TreePop();
     }
-    ImGui::PopID();
+    IMGUI_POPID();
     {{/properties}}
     ImGui::EndDisabled();
 }
