@@ -48,6 +48,11 @@ struct EnumInfo {
     std::vector<Item> m_items;
 };
 
+struct CppAssetDef {
+    std::string m_asset_name;
+    std::string m_extension;
+};
+
 struct SchemaInfo {
     int m_include_hints = None;
     
@@ -58,6 +63,7 @@ struct SchemaInfo {
     std::vector<ClassInfo> m_classes;
     std::vector<EnumInfo> m_enums;
     std::vector<std::string> m_imports;
+    std::vector<CppAssetDef> m_cpp_asset_defs;
 };
 
 struct SchemaInfoManager {
@@ -91,6 +97,9 @@ struct MustacheManager {
     
     kainjow::mustache::mustache m_asset_serialize_header_mustache;
     kainjow::mustache::mustache m_asset_display_header_mustache;
+
+    kainjow::mustache::mustache m_cpp_asset_def_mustache;
+    kainjow::mustache::mustache m_cpp_asset_def_header_mustache;
 
     static MustacheManager& GetInst();
 

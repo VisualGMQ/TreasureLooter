@@ -5,7 +5,6 @@
 #include "engine/relationship.hpp"
 #include "engine/storage.hpp"
 #include "imgui.h"
-#include "imgui_internal.h"
 
 namespace editor {
 std::unique_ptr<EditorContext> EditorContext::instance;

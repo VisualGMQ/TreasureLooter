@@ -144,5 +144,12 @@ int main(int argc, char** argv) {
         file.write(code.c_str(), code.length());
     }
 
+    // generate cpp_asset_extension.hpp
+    {
+        std::string code = GenerateCppAssetExtensionHeaderCode(manager);
+        std::ofstream file(output_dir / "cpp_asset_def_extension.hpp");
+        file.write(code.c_str(), code.length());
+    }
+
     return 0;
 }

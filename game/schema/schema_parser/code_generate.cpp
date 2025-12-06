@@ -41,9 +41,8 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
 
     for (auto& include : schema_info.m_includes) {
         include_datas << kainjow::mustache::data{
-            "include",
-            include_mustache.render({"filename",
-                                     "\"engine/" + include + "\""})};
+            "include", include_mustache.render(
+                           {"filename", "\"engine/" + include + "\""})};
     }
 
     if (schema_info.m_include_hints & IncludeHint::Option) {
@@ -54,9 +53,9 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
         include_datas << kainjow::mustache::data{"include",
                                                  include_mustache.render(
                                                      {"filename", "<array>"})}
-            << kainjow::mustache::data{
-                "include",
-                include_mustache.render({"filename", "<vector>"})};
+                      << kainjow::mustache::data{
+                             "include",
+                             include_mustache.render({"filename", "<vector>"})};
     }
     if (schema_info.m_include_hints & IncludeHint::UnorderedMap) {
         include_datas << kainjow::mustache::data{
@@ -65,8 +64,7 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
     }
     if (schema_info.m_include_hints & IncludeHint::Stdint) {
         include_datas << kainjow::mustache::data{
-            "include",
-            include_mustache.render({"filename", "<cstdint>"})};
+            "include", include_mustache.render({"filename", "<cstdint>"})};
     }
     if (schema_info.m_include_hints & IncludeHint::Handle) {
         include_datas << kainjow::mustache::data{
@@ -131,8 +129,8 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema.m_includes) {
-        include_datas << kainjow::mustache::data
-            {"include", "engine/" + include};
+        include_datas << kainjow::mustache::data{"include",
+                                                 "engine/" + include};
     }
 
     auto generate_header_filename = schema.m_pure_filename;
@@ -387,8 +385,8 @@ std::string GenerateSchemaDisplayHeaderCode(const SchemaInfo& schema) {
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema.m_includes) {
-        include_datas << kainjow::mustache::data
-            {"include", "engine/" + include};
+        include_datas << kainjow::mustache::data{"include",
+                                                 "engine/" + include};
     }
 
     auto generate_header_filename = schema.m_pure_filename;
@@ -447,8 +445,8 @@ std::string GenerateSchemaDisplayImplCode(const SchemaInfo& schema) {
 std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
     kainjow::mustache::data data;
     kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
-    kainjow::mustache::data extensions_data
-        {kainjow::mustache::data::type::list};
+    kainjow::mustache::data extensions_data{
+        kainjow::mustache::data::type::list};
     kainjow::mustache::data names_data{kainjow::mustache::data::type::list};
     kainjow::mustache::data type_checks_data{
         kainjow::mustache::data::type::list};
@@ -482,6 +480,18 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
             type_check_data.set("extension_var", clazz.m_asset_extension_var);
             type_checks_data << type_check_data;
         }
+
+        for (auto& cpp_def : info.m_cpp_asset_defs) {
+            auto extension_var = cpp_def.m_asset_name +
+                                 std::string{ClassInfo::ExtensionVarSuffix};
+
+            type_names.push_back(cpp_def.m_asset_name);
+
+            kainjow::mustache::data type_check_data;
+            type_check_data.set("type", cpp_def.m_asset_name);
+            type_check_data.set("extension_var", extension_var);
+            type_checks_data << type_check_data;
+        }
     }
 
     for (int i = 0; i < type_names.size(); i++) {
@@ -491,6 +501,8 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
         } else {
             names_data << kainjow::mustache::data{"name", name};
         }
+
+        asset_num++;
     }
 
     data.set("includes", includes_data);
@@ -506,8 +518,8 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
 std::string GenerateAssetInfoImplCode(const SchemaInfoManager& manager) {
     auto& mustache = MustacheManager::GetInst().m_asset_info_impl_mustache;
     kainjow::mustache::data data;
-    kainjow::mustache::data type_check_data
-        {kainjow::mustache::data::type::list};
+    kainjow::mustache::data type_check_data{
+        kainjow::mustache::data::type::list};
     kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
 
     for (auto& info : manager.m_infos) {
@@ -538,8 +550,8 @@ std::string GenerateAssetInfoImplCode(const SchemaInfoManager& manager) {
 
 std::string GenerateAssetSerializeTotleHeaderCode(
     const SchemaInfoManager& manager) {
-    auto& mustache = MustacheManager::GetInst().
-        m_asset_serialize_header_mustache;
+    auto& mustache =
+        MustacheManager::GetInst().m_asset_serialize_header_mustache;
     kainjow::mustache::data data;
     kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
 
@@ -567,4 +579,30 @@ std::string GenerateAssetDisplayTotleHeaderCode(
     data.set("includes", includes_data);
 
     return mustache.render(data);
+}
+
+std::string GenerateCppAssetExtensionHeaderCode(
+    const SchemaInfoManager& manager) {
+    kainjow::mustache::data extensions{kainjow::mustache::data::type::list};
+
+    for (auto& info : manager.m_infos) {
+        for (auto& def : info.m_cpp_asset_defs) {
+            kainjow::mustache::data def_data;
+            def_data.set("name", def.m_asset_name);
+            def_data.set("extension", def.m_extension);
+
+            extensions << def_data;
+        }
+    }
+
+    kainjow::mustache::data extension_data;
+    extension_data.set("extensions", extensions);
+    std::string extension_content =
+        MustacheManager::GetInst().m_cpp_asset_def_mustache.render(extension_data);
+
+    kainjow::mustache::data header_data;
+    header_data.set("content", extension_content);
+
+    return MustacheManager::GetInst().m_cpp_asset_def_header_mustache.render(
+        header_data);
 }

@@ -27,3 +27,4 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager&);
 std::string GenerateAssetInfoImplCode(const SchemaInfoManager&);
 std::string GenerateAssetSerializeTotleHeaderCode(const SchemaInfoManager&);
 std::string GenerateAssetDisplayTotleHeaderCode(const SchemaInfoManager&);
+std::string GenerateCppAssetExtensionHeaderCode(const SchemaInfoManager&);

@@ -33,4 +33,6 @@
         <element name="other_dim" type="uint32_t" default="0"/>
         <element name="duration" type="TimeType" default="0"/>
     </class>
+
+    <cpp_asset_def name="Animation" extension=".animation"/>
 </schema>
