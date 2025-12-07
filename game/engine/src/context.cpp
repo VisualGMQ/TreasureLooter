@@ -5,6 +5,7 @@
 #include "engine/asset_manager.hpp"
 #include "engine/level.hpp"
 #include "engine/log.hpp"
+#include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 #include "engine/sdl_call.hpp"
 #include "engine/serialize.hpp"
@@ -12,15 +13,14 @@
 #include "engine/storage.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
+#include "engine/ui.hpp"
+#include "engine/uuid.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
-#include "engine/ui.hpp"
-#include "engine/uuid.hpp"
-#include "engine/profile.hpp"
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -104,6 +104,8 @@ void CommonContext::Initialize() {
     m_game_config = *handle;
     m_camera.ChangeScale(GetGameConfig().m_camera_scale);
     m_assets_manager->GetManager<GameConfig>().Unload(handle);
+
+    parseProjectPath();
 }
 
 void CommonContext::Shutdown() {
@@ -192,6 +194,10 @@ const GameConfig& CommonContext::GetGameConfig() const {
     return m_game_config;
 }
 
+const Path& CommonContext::GetProjectPath() const {
+    return m_project_path;
+}
+
 void CommonContext::beginImGui() {
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
@@ -248,6 +254,24 @@ void CommonContext::shutdownImGui() {
     }
 }
 
+void CommonContext::parseProjectPath() {
+    auto file =
+        IOStream::CreateFromFile("project_path.xml", IOMode::Read, true);
+    if (!file) {
+        return;
+    }
+
+    auto content = file->Read();
+    content.push_back('\0');
+
+    rapidxml::xml_document<> doc;
+    doc.parse<0>(content.data());
+    auto node = doc.first_node("ProjectPath");
+    if (!node) {
+        LOGE("no ProjectPath node in project_path.xml");
+    }
+}
+
 void GameContext::Init() {
     if (!instance) {
         instance = std::unique_ptr<GameContext>(new GameContext());
@@ -266,7 +290,7 @@ GameContext& GameContext::GetInst() {
 
 void GameContext::Initialize() {
     PROFILE_SECTION();
-    
+
     CommonContext::Initialize();
 
     m_input_manager->Initialize(
@@ -280,7 +304,7 @@ void GameContext::Initialize() {
 
 void GameContext::Update() {
     PROFILE_MAIN_FRAME();
-    
+
     auto elapse_time = m_time->GetElapseTime();
 
     logicUpdate(elapse_time);
@@ -313,14 +337,14 @@ void GameContext::logicUpdate(TimeType elapse) {
 
 void GameContext::logicPostUpdate(TimeType elapse) {
     PROFILE_SECTION();
-    
+
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
 }
 
 void GameContext::renderUpdate(TimeType elapse) {
     PROFILE_RENDERING_SECTION("renderUpdate");
-    
+
     m_renderer->Clear();
     beginImGui();
 

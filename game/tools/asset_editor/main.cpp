@@ -8,11 +8,11 @@
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     // TODO: using lyra
-    AssetViewerContext::Init();
+    AssetEditorContext::Init();
     CommonContext::ChangeContext(ASSET_VIEWER_CONTEXT);
-    AssetViewerContext::GetInst().InitSystem();
-    AssetViewerContext::GetInst().Initialize();
-    LOGI("editor start");
+    AssetEditorContext::GetInst().InitSystem();
+    AssetEditorContext::GetInst().Initialize();
+    LOGI("asset viewer start");
 
     return SDL_APP_CONTINUE;
 }
@@ -32,7 +32,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    AssetViewerContext::GetInst().Shutdown();
-    AssetViewerContext::GetInst().ShutdownSystem();
-    AssetViewerContext::Destroy();
+    AssetEditorContext::GetInst().Shutdown();
+    AssetEditorContext::GetInst().ShutdownSystem();
+    AssetEditorContext::Destroy();
 }

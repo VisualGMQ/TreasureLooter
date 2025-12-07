@@ -450,6 +450,7 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
     kainjow::mustache::data names_data{kainjow::mustache::data::type::list};
     kainjow::mustache::data type_checks_data{
         kainjow::mustache::data::type::list};
+    kainjow::mustache::data extensions_data2{kainjow::mustache::data::type::list};
 
     std::vector<std::string> type_names;
     int asset_num = 0;
@@ -474,6 +475,10 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
             extension_data.set("extension", clazz.m_asset_extension);
             extension_data.set("extension_var", clazz.m_asset_extension_var);
             extensions_data << extension_data;
+            
+            kainjow::mustache::data extension_data2;
+            extension_data2.set("extension_var", clazz.m_asset_extension_var);
+            extensions_data2 << extension_data2;
 
             kainjow::mustache::data type_check_data;
             type_check_data.set("type", clazz.m_name);
@@ -491,6 +496,12 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
             type_check_data.set("type", cpp_def.m_asset_name);
             type_check_data.set("extension_var", extension_var);
             type_checks_data << type_check_data;
+
+            kainjow::mustache::data extension_data;
+            extension_data.set("extension_var", extension_var);
+            extensions_data2 << extension_data;
+
+            asset_num ++;
         }
     }
 
@@ -501,12 +512,11 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
         } else {
             names_data << kainjow::mustache::data{"name", name};
         }
-
-        asset_num++;
     }
 
     data.set("includes", includes_data);
     data.set("asset_extensions", extensions_data);
+    data.set("extensions", extensions_data2);
     data.set("asset_names", names_data);
     data.set("type_check", type_checks_data);
     data.set("asset_num", std::to_string(asset_num));
@@ -518,32 +528,30 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
 std::string GenerateAssetInfoImplCode(const SchemaInfoManager& manager) {
     auto& mustache = MustacheManager::GetInst().m_asset_info_impl_mustache;
     kainjow::mustache::data data;
-    kainjow::mustache::data type_check_data{
-        kainjow::mustache::data::type::list};
-    kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data type_datas{kainjow::mustache::data::type::list};
 
     for (auto& info : manager.m_infos) {
-        bool included = false;
         for (auto& clazz : info.m_classes) {
             if (!clazz.is_asset) {
                 continue;
             }
 
-            if (!included) {
-                includes_data << kainjow::mustache::data{
-                    "include", info.m_generate_filename.string()};
-                included = true;
-            }
+            kainjow::mustache::data data;
+            data.set("type", clazz.m_name);
+            type_datas << data;
+        }
 
-            kainjow::mustache::data extension_data;
-            extension_data.set("type", clazz.m_name);
-            extension_data.set("extension_var", clazz.m_asset_extension_var);
-            type_check_data << extension_data;
+        for (auto& cpp_def : info.m_cpp_asset_defs) {
+            auto extension_var = cpp_def.m_asset_name +
+                                 std::string{ClassInfo::ExtensionVarSuffix};
+
+            kainjow::mustache::data data;
+            data.set("type", cpp_def.m_asset_name);
+            type_datas << data;
         }
     }
 
-    data.set("type_check", type_check_data);
-    data.set("includes", includes_data);
+    data.set("load_methods", type_datas);
 
     return mustache.render(data);
 }
@@ -598,7 +606,8 @@ std::string GenerateCppAssetExtensionHeaderCode(
     kainjow::mustache::data extension_data;
     extension_data.set("extensions", extensions);
     std::string extension_content =
-        MustacheManager::GetInst().m_cpp_asset_def_mustache.render(extension_data);
+        MustacheManager::GetInst().m_cpp_asset_def_mustache.render(
+            extension_data);
 
     kainjow::mustache::data header_data;
     header_data.set("content", extension_content);

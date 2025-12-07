@@ -31,5 +31,3 @@ private:
 };
 
 class CCTManager : public ComponentManager<CharacterController> {};
-
-void InstanceDisplay(const char*, CharacterController&);
