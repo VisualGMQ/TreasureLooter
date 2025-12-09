@@ -11,7 +11,6 @@ VariantAsset LoadVariantAsset(const Path& filename) {
 }
 
 struct AssetSaver {
-public:
     AssetSaver() = default;
 
     AssetSaver(const Path& save_as_path)
@@ -23,8 +22,6 @@ public:
 
     template <typename T, typename = std::enable_if_t<is_handle_v<T>>>
     void operator()(const T& handle) {
-        using payload_type = typename T::underlying_type;
-
         if (m_is_save_as) {
             SaveAsset(handle.GetUUID(), *handle, m_save_as_path);
         } else {
@@ -55,6 +52,7 @@ Filter GetAssetFilterByType(const VariantAsset& asset) {
             } else {
                 using payload_type = typename type::underlying_type;
                 auto extension = AssetInfoManager::GetExtension<payload_type>();
+                extension = extension.substr(extension.find_first_of('.') + 1);
                 auto name = AssetInfoManager::GetName<payload_type>();
                 return Filter{name.data(), extension.data()};
             }
@@ -86,9 +84,17 @@ std::vector<Filter> GetAssetFilters() {
         std::string_view type_name = AssetInfoManager::GetNames()[i];
 
         Filter filter;
-        filter.name = type_name;
-        filter.pattern = extension;
+        filter.name =
+            std::string{type_name} + "(" + std::string{extension} + ")";
+        filter.pattern = extension.substr(extension.find_first_of('.') + 1);
         filters.push_back(filter);
     }
+    Filter arbitrary_filter;
+    arbitrary_filter.name = "all(.*)";
+    for (int i = 0; i < filters.size(); i++) {
+        arbitrary_filter.pattern +=
+            filters[i].pattern + (i + 1 >= filters.size() ? "" : ";");
+    }
+    filters.insert(filters.begin(), std::move(arbitrary_filter));
     return filters;
 }
