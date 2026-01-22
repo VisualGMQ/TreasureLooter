@@ -17,6 +17,8 @@ cmake --preset=default
 cmake --build cmake-build
 ```
 
+**WARNING:** due to AngelScript cmake config, currently can't use clang++ with msvc backend compile under Windows
+
 ### Build For Android
 
 First we must build `schema_parser` under PC and run `run_schema_parser` target:

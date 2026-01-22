@@ -85,7 +85,16 @@ add_library(${ENGINE_NAME} STATIC)
 target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS} ${SCHEMA_DECLARE_OUTPUT_FILES} ${SCHEMA_SERD_OUTPUT_FILES} ${SCHEMA_ASSET_INFO_FILES})
 target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
-target_link_libraries(${ENGINE_NAME} PUBLIC SDL3::SDL3 spdlog::spdlog stb_image imgui RapidXML stduuid tmxlite SDL3_ttf::SDL3_ttf)
+target_link_libraries(${ENGINE_NAME}
+    PUBLIC
+    SDL3::SDL3 SDL3_ttf::SDL3_ttf
+    spdlog::spdlog
+    stb_image
+    imgui
+    RapidXML
+    stduuid
+    tmxlite
+    angelscript::angelscript angelscript::all_addon)
 
 if (TL_ENABLE_PROFILE)
     target_link_libraries(${ENGINE_NAME} PUBLIC optick)

@@ -6,6 +6,7 @@
 #include "engine/level.hpp"
 #include "engine/log.hpp"
 #include "engine/relationship.hpp"
+#include "engine/script.hpp"
 #include "engine/sdl_call.hpp"
 #include "engine/serialize.hpp"
 #include "engine/sprite.hpp"
@@ -276,6 +277,9 @@ void GameContext::Initialize() {
 
     m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
         GetGameConfig().m_basic_level_asset));
+
+    ScriptManager script_mgr;
+    script_mgr.testRun();
 }
 
 void GameContext::Update() {
