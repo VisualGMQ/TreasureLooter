@@ -4,6 +4,7 @@
 #include "camera.hpp"
 #include "cct.hpp"
 #include "debug_drawer.hpp"
+#include "engine/script.hpp"
 #include "entity.hpp"
 #include "event.hpp"
 #include "input/finger_touch.hpp"
@@ -98,6 +99,7 @@ public:
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
+    std::unique_ptr<ScriptComponentManager> m_script_component_manager;
     Camera m_camera;
 
 protected:

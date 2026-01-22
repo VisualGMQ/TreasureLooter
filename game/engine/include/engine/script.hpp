@@ -1,15 +1,54 @@
 #pragma once
 
 #include "angelscript.h"
-#include "scriptbuilder/scriptbuilder.h"
-#include "scriptstdstring/scriptstdstring.h"
+#include "engine/asset_manager_interface.hpp"
+#include "engine/manager.hpp"
 
-class Script {
-    // TODO:
+class ScriptBinaryData {
+public:
+    explicit ScriptBinaryData(const Path&);
+    ~ScriptBinaryData();
+
+    const std::vector<char>& GetContent() const;
+
+private:
+    std::vector<char> m_content;
 };
 
-class ScriptManager {
+using ScriptBinaryDataHandle = Handle<ScriptBinaryData>;
+
+class ScriptBinaryDataManager : public AssetManagerBase<ScriptBinaryData> {
 public:
-    void testRun();
+    ScriptBinaryDataManager();
+    ~ScriptBinaryDataManager();
+
+    ScriptBinaryDataHandle Load(const Path& filename, bool force = false) override;
+    asIScriptEngine* GetUnderlyingEngine();
+
 private:
+    asIScriptEngine* m_engine{};
+
+    void bindModule();
+};
+
+class Script {
+public:
+    explicit Script(ScriptBinaryDataHandle);
+    ~Script();
+    void Update();
+
+private:
+    asIScriptContext* m_ctx{};
+    asIScriptFunction* m_init_fn{};
+    asIScriptFunction* m_update_fn{};
+    asIScriptFunction* m_quit_fn{};
+    asIScriptObject* m_class_instance{};
+};
+
+class ScriptComponentManager : public ComponentManager<Script> {
+public:
+    ScriptComponentManager();
+    ~ScriptComponentManager();
+
+    void Update();
 };

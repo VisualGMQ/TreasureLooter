@@ -22,6 +22,7 @@
 #include "engine/ui.hpp"
 #include "engine/uuid.hpp"
 #include "engine/profile.hpp"
+#include <memory>
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -85,6 +86,7 @@ void CommonContext::Initialize() {
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
     m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
     m_ui_manager = std::make_unique<UIComponentManager>();
+    m_script_component_manager = std::make_unique<ScriptComponentManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::make_unique<DebugDrawer>();
@@ -135,6 +137,7 @@ void CommonContext::Shutdown() {
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_animation_player_manager.reset();
+    m_script_component_manager.reset();
     m_assets_manager.reset();
     shutdownImGui();
     m_renderer.reset();
@@ -277,13 +280,23 @@ void GameContext::Initialize() {
 
     m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
         GetGameConfig().m_basic_level_asset));
-
-    ScriptManager script_mgr;
-    script_mgr.testRun();
 }
 
 void GameContext::Update() {
     PROFILE_MAIN_FRAME();
+
+    {
+        static bool first_execute = false;
+
+        if (!first_execute) {
+            ScriptBinaryDataHandle handle =
+                m_assets_manager->GetManager<ScriptBinaryData>().Load(
+                    "script/test.as");
+            m_script_component_manager->RegisterEntity(
+                m_level_manager->GetCurrentLevel()->GetRootEntity(), handle);
+            first_execute = true;
+        }
+    }
     
     auto elapse_time = m_time->GetElapseTime();
 
@@ -303,6 +316,7 @@ void GameContext::logicUpdate(TimeType elapse) {
     m_mouse->Update();
     m_touches->Update();
 
+    m_script_component_manager->Update();
     m_motor_manager->Update(elapse);
     m_bind_point_component_manager->Update();
 

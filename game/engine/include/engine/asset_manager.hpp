@@ -26,6 +26,8 @@ public:
             return ensureManager<PrefabManager>(index);
         } else if constexpr (std::is_same_v<T, Font>) {
             return ensureManager<FontManager>(index);
+        } else if constexpr (std::is_same_v<T, ScriptBinaryData>) {
+            return ensureManager<ScriptBinaryDataManager>(index);
         } else {
             return ensureManager<GenericAssetManager<T>>(index);
         }
