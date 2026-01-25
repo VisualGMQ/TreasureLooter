@@ -127,7 +127,6 @@ void CommonContext::Shutdown() {
     m_physics_scene.reset();
     m_time.reset();
     m_input_manager.reset();
-    m_assets_manager.reset();
     m_gamepad_manager.reset();
 
     m_touches.reset();

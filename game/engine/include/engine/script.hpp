@@ -6,7 +6,7 @@
 
 class ScriptBinaryData {
 public:
-    explicit ScriptBinaryData(const Path&);
+    explicit ScriptBinaryData(const Path&, asIScriptEngine*);
     ~ScriptBinaryData();
 
     const std::vector<char>& GetContent() const;
@@ -35,6 +35,7 @@ class Script {
 public:
     explicit Script(ScriptBinaryDataHandle);
     ~Script();
+
     void Update();
 
 private:
@@ -43,6 +44,10 @@ private:
     asIScriptFunction* m_update_fn{};
     asIScriptFunction* m_quit_fn{};
     asIScriptObject* m_class_instance{};
+
+    bool m_inited = false;
+
+    void callMethod(asIScriptFunction*);
 };
 
 class ScriptComponentManager : public ComponentManager<Script> {

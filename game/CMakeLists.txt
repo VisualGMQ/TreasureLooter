@@ -119,7 +119,9 @@ else()
     add_executable(${GAME_NAME})
 endif()
 
-target_sources(${GAME_NAME} PRIVATE main_entry/game_main.cpp)
+file(GLOB_RECURSE GAME_SCRIPTS script/*.as)
+
+target_sources(${GAME_NAME} PRIVATE main_entry/game_main.cpp ${GAME_SCRIPTS})
 target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
 
 ################ build editor ################

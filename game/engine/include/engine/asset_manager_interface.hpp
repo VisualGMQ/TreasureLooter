@@ -89,6 +89,12 @@ public:
         return nullptr;
     }
 
+    void Clear() {
+        m_payloads.clear();
+        m_paths_uuid_map.clear();
+        m_uuid_path_map.clear();
+    }
+
 protected:
     HandleType store(const Path* filename, UUID uuid,
                      std::unique_ptr<T>&& payload) {

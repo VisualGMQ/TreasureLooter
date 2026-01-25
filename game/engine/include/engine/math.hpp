@@ -46,6 +46,13 @@ struct TVec2 final {
 
     bool operator!=(const TVec2 &o) const { return !(*this == o); }
 
+    TVec2 operator-(const TVec2 &) const;
+    TVec2 operator+(const TVec2 &) const;
+    TVec2 operator*(const TVec2 &) const;
+    TVec2 operator*(float) const;
+    TVec2 operator/(const TVec2 &) const;
+    TVec2 operator/(float) const;
+
     float Dot(const TVec2 &) const;
 
     float Cross(const TVec2 &) const;
@@ -68,24 +75,6 @@ TVec2<T> TVec2<T>::Y_UNIT{0, 1};
 
 template <typename T>
 TVec2<T> operator*(float, const TVec2<T> &);
-
-template <typename T>
-TVec2<T> operator*(const TVec2<T> &, float);
-
-template <typename T>
-TVec2<T> operator*(const TVec2<T> &, const TVec2<T> &);
-
-template <typename T>
-TVec2<T> operator/(const TVec2<T> &, float);
-
-template <typename T>
-TVec2<T> operator/(const TVec2<T> &, const TVec2<T> &);
-
-template <typename T>
-TVec2<T> operator+(const TVec2<T> &, const TVec2<T> &);
-
-template <typename T>
-TVec2<T> operator-(const TVec2<T> &, const TVec2<T> &);
 
 template <typename T>
 float Dot(const TVec2<T> &, const TVec2<T> &);
@@ -187,39 +176,39 @@ TVec2<T> operator*(float x, const TVec2<T> &v) {
 }
 
 template <typename T>
-TVec2<T> operator*(const TVec2<T> &v, float x) {
-    TVec2<T> o = v;
+TVec2<T> TVec2<T>::operator*(float x) const {
+    TVec2<T> o = *this;
     return o *= x;
 }
 
 template <typename T>
-TVec2<T> operator*(const TVec2<T> &v1, const TVec2<T> &v2) {
-    TVec2<T> v3 = v1;
-    return v3 *= v2;
+TVec2<T> TVec2<T>::operator*(const TVec2<T> &v) const {
+    TVec2<T> v2 = *this;
+    return v2 *= v;
 }
 
 template <typename T>
-TVec2<T> operator/(const TVec2<T> &v, float x) {
-    TVec2<T> o = v;
+TVec2<T> TVec2<T>::operator/(float x) const {
+    TVec2<T> o = *this;
     return o /= x;
 }
 
 template <typename T>
-TVec2<T> operator/(const TVec2<T> &v1, const TVec2<T> &v2) {
-    TVec2<T> v3 = v1;
-    return v3 /= v2;
+TVec2<T> TVec2<T>::operator/(const TVec2<T> &v) const {
+    TVec2<T> v2 = *this;
+    return v2 /= v;
 }
 
 template <typename T>
-TVec2<T> operator+(const TVec2<T> &v1, const TVec2<T> &v2) {
-    TVec2<T> v3 = v1;
-    return v3 += v2;
+TVec2<T> TVec2<T>::operator+(const TVec2<T> &v) const {
+    TVec2<T> v2 = *this;
+    return v2 += v;
 }
 
 template <typename T>
-TVec2<T> operator-(const TVec2<T> &v1, const TVec2<T> &v2) {
-    TVec2<T> v3 = v1;
-    return v3 -= v2;
+TVec2<T> TVec2<T>::operator-(const TVec2<T> &v) const {
+    TVec2<T> v2 = *this;
+    return v2 -= v;
 }
 
 template <typename T>
@@ -254,6 +243,10 @@ struct Color {
     static const Color Black;
     static const Color White;
 
+    Color() = default;
+
+    Color(float r, float g, float b, float a = 1) : r{r}, g{g}, b{b}, a{a} {}
+
     float r{}, g{}, b{}, a = 1;
 };
 
@@ -273,6 +266,13 @@ struct Degrees {
     Degrees &operator*=(Degrees);
     Degrees &operator/=(Degrees);
 
+    Degrees operator+(Degrees) const;
+    Degrees operator-(Degrees) const;
+    Degrees operator*(Degrees) const;
+    Degrees operator/(Degrees) const;
+    Degrees operator*(float) const;
+    Degrees operator/(float) const;
+
     bool operator>(Degrees) const;
     bool operator<(Degrees) const;
     bool operator>=(Degrees) const;
@@ -286,10 +286,7 @@ private:
     float m_value{};
 };
 
-Degrees operator+(Degrees d1, Degrees d2);
-Degrees operator-(Degrees d1, Degrees d2);
-Degrees operator*(Degrees d1, Degrees d2);
-Degrees operator/(Degrees d1, Degrees d2);
+Degrees operator*(float k, Degrees d);
 
 struct Radians {
     Radians() = default;
@@ -305,6 +302,13 @@ struct Radians {
     Radians &operator*=(Radians);
     Radians &operator/=(Radians);
 
+    Radians operator+(Radians) const;
+    Radians operator-(Radians) const;
+    Radians operator*(Radians) const;
+    Radians operator/(Radians) const;
+    Radians operator*(float) const;
+    Radians operator/(float) const;
+
     bool operator>(Radians) const;
     bool operator<(Radians) const;
     bool operator>=(Radians) const;
@@ -318,10 +322,7 @@ private:
     float m_value{};
 };
 
-Radians operator+(Radians d1, Radians d2);
-Radians operator-(Radians d1, Radians d2);
-Radians operator*(Radians d1, Radians d2);
-Radians operator/(Radians d1, Radians d2);
+Radians operator*(float k, Radians d);
 
 inline const Radians PI{3.14159265358979323846f};
 inline const Radians PI_Half{3.14159265358979323846f * 0.5};
@@ -439,8 +440,8 @@ struct Transform {
     Degrees m_rotation;  // UI and tilemap will ignore this
 
     union {
-        Vec2 m_size;  // when entity is UI, use size
-        Vec2 m_scale;           // otherwise, use scale
+        Vec2 m_size;   // when entity is UI, use size
+        Vec2 m_scale;  // otherwise, use scale
     };
 
     Transform();
@@ -451,13 +452,12 @@ struct Transform {
 
     void UpdateMat(const Transform *parent);
 
-    bool operator==(const Transform& o) const noexcept {
-        return m_position == o.m_position && m_rotation == o.m_rotation && m_size == o.m_size;
+    bool operator==(const Transform &o) const noexcept {
+        return m_position == o.m_position && m_rotation == o.m_rotation &&
+               m_size == o.m_size;
     }
-    
-    bool operator!=(const Transform& o) const noexcept {
-        return !(*this == o);
-    }
+
+    bool operator!=(const Transform &o) const noexcept { return !(*this == o); }
 
 private:
     Mat33 m_mat;

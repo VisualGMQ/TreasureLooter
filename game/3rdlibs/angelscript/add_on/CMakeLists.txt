@@ -25,8 +25,13 @@ add_addon(contextmgr)
 add_addon(datetime)
 add_addon(debugger)
 
+add_library(angel_script_auto_wrapper INTERFACE)
+target_include_directories(angel_script_auto_wrapper INTERFACE .)
+add_library(angelscript::auto_wrapper ALIAS angel_script_auto_wrapper)
+
 add_library(angel_script_all_addon INTERFACE)
 target_link_libraries(angel_script_all_addon INTERFACE
+    angelscript::auto_wrapper
     angelscript::contextmgr
     angelscript::datetime
     angelscript::debugger

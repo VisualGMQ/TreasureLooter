@@ -9,12 +9,30 @@
 #include "scriptarray/scriptarray.h"
 #include "scriptbuilder/scriptbuilder.h"
 #include "scriptdictionary/scriptdictionary.h"
+#include "scripthandle/scripthandle.h"
+#include "scriptmath/scriptmath.h"
+#include "scriptmath/scriptmathcomplex.h"
 #include "scriptstdstring/scriptstdstring.h"
+#include "weakref/weakref.h"
+#include "engine/script_macros.hpp"
+#include "engine/script_binding.hpp"
 #include <cassert>
 
-ScriptBinaryData::ScriptBinaryData(const Path& filename) {
-    auto io = IOStream::CreateFromFile(filename, IOMode::Read, false);
+ScriptBinaryData::ScriptBinaryData(const Path& filename,
+                                   asIScriptEngine* engine) {
+    auto io = IOStream::CreateFromFile(filename, IOMode::Read, true);
     m_content = io->Read();
+
+    CScriptBuilder builder;
+    AS_CALL_WITH_RETURN(builder.StartNewModule(engine, "module"));
+
+    std::string filename_str = filename.string();
+    AS_CALL_WITH_RETURN_AND_MSG(
+        builder.AddSectionFromMemory(filename_str.c_str(), m_content.data(),
+                                     m_content.size()),
+        "load script failed");
+
+    AS_CALL_WITH_RETURN_AND_MSG(builder.BuildModule(), "build module failed");
 }
 
 const std::vector<char>& ScriptBinaryData::GetContent() const {
@@ -46,23 +64,20 @@ ScriptBinaryDataManager::ScriptBinaryDataManager() {
     RegisterScriptAny(m_engine);
     RegisterScriptArray(m_engine, false);
     RegisterScriptDictionary(m_engine);
+    RegisterScriptHandle(m_engine);
+    RegisterScriptWeakRef(m_engine);
+    RegisterScriptMath(m_engine);
+    RegisterScriptMathComplex(m_engine);
 
     bindModule();
 }
 
-// test function
-void Print(const std::string& msg) {
-    LOGI("[AngelScript]: {}", msg);
-}
-
 void ScriptBinaryDataManager::bindModule() {
-    TL_RETURN_IF_NULL_WITH_LOG(m_engine, LOGE, "angel script engine is null!");
-    int r = m_engine->RegisterGlobalFunction("void print(const string)", asFUNCTION(Print),
-                                           asCALL_CDECL);
-    TL_RETURN_IF_FALSE_WITH_LOG(r >= 0, LOGE, "register function failed");
+    BindTLModule(m_engine);
 }
 
 ScriptBinaryDataManager::~ScriptBinaryDataManager() {
+    AssetManagerBase<ScriptBinaryData>::Clear();
     m_engine->ShutDownAndRelease();
 }
 
@@ -74,7 +89,7 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
     }
 
     return store(&filename, UUID::CreateV4(),
-                 std::make_unique<ScriptBinaryData>(filename));
+                 std::make_unique<ScriptBinaryData>(filename, m_engine));
 }
 
 asIScriptEngine* ScriptBinaryDataManager::GetUnderlyingEngine() {
@@ -98,49 +113,43 @@ Script::Script(ScriptBinaryDataHandle handle) {
         CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>()
             .GetUnderlyingEngine();
 
-    CScriptBuilder builder;
-     int r = builder.StartNewModule(engine, "module");
-     if (r < 0) {
-         LOGE("angelscript start module failed");
-         return;
-     }
-
-    auto filename = handle.GetFilename();
-     std::string filename_str = filename ? filename->string() : "<anonymouse>";
-    r = builder.AddSectionFromMemory(
-        filename_str.c_str(),
-        handle->GetContent().data(), handle->GetContent().size());
-    TL_RETURN_IF_FALSE_WITH_LOG(r >= 0, LOGE, "angelscript load script failed");
-
-    r = builder.BuildModule();
-    if (r < 0) {
-        LOGE("angelscript build module failed");
-        return;
-    }
-
     asIScriptModule* mod = engine->GetModule("module");
     asITypeInfo* type = mod->GetTypeInfoByDecl("MyClass");
 
-    TL_RETURN_IF_NULL_WITH_LOG(type, LOGE, "script {} don't has MyClass",
-                               filename_str);
+    TL_RETURN_IF_NULL_WITH_LOG(
+        type, LOGE, "[AngelScript]: script {} don't has MyClass",
+        handle.GetFilename() ? handle.GetFilename()->string() : "<anonymouse>");
 
     m_init_fn = type->GetMethodByDecl("void OnInit()");
     m_update_fn = type->GetMethodByDecl("void OnUpdate(float)");
     m_quit_fn = type->GetMethodByDecl("void OnQuit()");
 
     m_ctx = engine->CreateContext();
-    if (!m_ctx) {
-        LOGE("script context create failed");
-    }
+    TL_RETURN_IF_NULL_WITH_LOG(m_ctx, LOGE,
+                               "[AngelScript]: script context create failed");
 
     m_class_instance = (asIScriptObject*)engine->CreateScriptObject(type);
+    TL_RETURN_IF_NULL_WITH_LOG(m_class_instance, LOGE,
+                               "[AngelScript]: class {} can't instantiate",
+                               "MyClass");
     m_class_instance->AddRef();
 }
 
 void Script::Update() {
-    TL_RETURN_IF_FALSE(m_update_fn && m_ctx);
+    TL_RETURN_IF_FALSE(m_ctx);
 
-    m_ctx->Prepare(m_update_fn);
+    if (!m_inited) {
+        callMethod(m_init_fn);
+        m_inited = true;
+    }
+
+    callMethod(m_update_fn);
+}
+
+void Script::callMethod(asIScriptFunction* fn) {
+    TL_RETURN_IF_NULL(fn);
+
+    m_ctx->Prepare(fn);
     m_ctx->SetObject(m_class_instance);
     int r = m_ctx->Execute();
     if (r != asEXECUTION_FINISHED) {
@@ -152,6 +161,14 @@ void Script::Update() {
 }
 
 Script::~Script() {
-    m_class_instance->Release();
-    m_ctx->Release();
+    if (m_inited) {
+        callMethod(m_quit_fn);
+    }
+
+    if (m_class_instance) {
+        AS_CALL(m_class_instance->Release());
+    }
+    if (m_ctx) {
+        AS_CALL(m_ctx->Release());
+    }
 }
