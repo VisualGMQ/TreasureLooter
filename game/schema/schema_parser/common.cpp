@@ -67,7 +67,23 @@ MustacheManager::MustacheManager()
       m_asset_serialize_header_mustache{readMustache(
           "schema/schema_parser/mustaches/serialize_header.mustache")},
       m_asset_display_header_mustache{readMustache(
-          "schema/schema_parser/mustaches/display_header.mustache")} {
+          "schema/schema_parser/mustaches/display_header.mustache")},
+      m_enum_script_bind_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/enum_script_bind_header.mustache")},
+      m_enum_script_bind_impl_mustache{readMustache(
+          "schema/schema_parser/mustaches/enum_script_bind_impl.mustache")},
+      m_class_script_bind_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/class_script_bind_header.mustache")},
+      m_class_script_bind_impl_mustache{readMustache(
+          "schema/schema_parser/mustaches/class_script_bind_impl.mustache")},
+      m_script_bind_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/script_bind_header.mustache")},
+      m_script_bind_impl_mustache{readMustache(
+          "schema/schema_parser/mustaches/script_bind_impl.mustache")},
+      m_binding_header_mustache{readMustache(
+          "schema/schema_parser/mustaches/binding_header.mustache")},
+      m_binding_impl_mustache{readMustache(
+          "schema/schema_parser/mustaches/binding_impl.mustache")} {
 }
 
 kainjow::mustache::mustache MustacheManager::readMustache(

@@ -1,6 +1,7 @@
 #include "code_generate.hpp"
 #include "common.hpp"
 #include "mustache.hpp"
+#include <unordered_map>
 
 std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
@@ -567,4 +568,218 @@ std::string GenerateAssetDisplayTotleHeaderCode(
     data.set("includes", includes_data);
 
     return mustache.render(data);
+}
+
+std::string GenerateEnumScriptBindHeaderCode(const EnumInfo& enum_info) {
+    auto& mustache = MustacheManager::GetInst().m_enum_script_bind_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", enum_info.m_name);
+
+    return mustache.render(data);
+}
+
+std::string GenerateEnumScriptBindImplCode(const EnumInfo& enum_info) {
+    auto& mustache = MustacheManager::GetInst().m_enum_script_bind_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", enum_info.m_name);
+    data.set("enum_name", enum_info.m_name);
+
+    kainjow::mustache::data enum_values_data{kainjow::mustache::data::type::list};
+    for (auto& item : enum_info.m_items) {
+        kainjow::mustache::data enum_value_data;
+        enum_value_data.set("enum_name", enum_info.m_name);
+        enum_value_data.set("enum_value", item.m_name);
+        enum_value_data.set("enum_item", enum_info.m_name + "::" + item.m_name);
+        enum_values_data << enum_value_data;
+    }
+    data.set("enum_values", enum_values_data);
+
+    return mustache.render(data);
+}
+
+std::string GenerateClassScriptBindHeaderCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_class_script_bind_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    return mustache.render(data);
+}
+
+std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_class_script_bind_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    if (info.is_asset) {
+        data.set("is_asset", true);
+    }
+
+    kainjow::mustache::data classes_data{kainjow::mustache::data::type::list};
+    
+    for (auto& prop : info.m_properties) {
+        kainjow::mustache::data prop_data;
+        prop_data.set("type", info.m_name);
+        std::string angelscript_type = ConvertCppTypeToAngelScript(prop.m_type);
+        prop_data.set("property_type", angelscript_type);
+        std::string property_name_with_prefix = "m_" + prop.m_name;
+        prop_data.set("property_name", property_name_with_prefix);
+        classes_data << prop_data;
+    }
+    
+    if (info.m_properties.empty()) {
+        kainjow::mustache::data class_data;
+        class_data.set("type", info.m_name);
+        classes_data << class_data;
+    }
+    
+    data.set("classes", classes_data);
+
+    return mustache.render(data);
+}
+
+std::string GenerateSchemaScriptBindHeaderCode(const SchemaInfo& schema) {
+    auto& header_mustache = MustacheManager::GetInst().m_script_bind_header_mustache;
+
+    kainjow::mustache::data data;
+
+    kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+
+    for (auto& enum_value : schema.m_enums) {
+        auto code = GenerateEnumScriptBindHeaderCode(enum_value);
+        registers_data << kainjow::mustache::data{"register", code};
+        bindings_data << kainjow::mustache::data{"binding", code};
+    }
+
+    for (auto& class_value : schema.m_classes) {
+        auto code = GenerateClassScriptBindHeaderCode(class_value);
+        registers_data << kainjow::mustache::data{"register", code};
+        bindings_data << kainjow::mustache::data{"binding", code};
+    }
+
+    data.set("registers", registers_data);
+    data.set("bindings", bindings_data);
+
+    return header_mustache.render(data);
+}
+
+std::string GenerateSchemaScriptBindImplCode(const SchemaInfo& schema) {
+    auto& impl_mustache = MustacheManager::GetInst().m_script_bind_impl_mustache;
+
+    kainjow::mustache::data data;
+    
+    auto header_filename = schema.m_pure_filename;
+    header_filename.replace_extension(".hpp");
+    auto header_file = "schema/binding/" + header_filename.string();
+    data.set("header_file", header_file);
+    
+    // Include the schema header file (generated in schema/ directory)
+    auto schema_file = "schema/" + header_filename.string();
+    data.set("schema_file", schema_file);
+
+    kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+
+    for (auto& enum_value : schema.m_enums) {
+        auto register_code = GenerateEnumScriptBindHeaderCode(enum_value);
+        auto bind_code = GenerateEnumScriptBindImplCode(enum_value);
+        registers_data << kainjow::mustache::data{"register", register_code};
+        bindings_data << kainjow::mustache::data{"binding", bind_code};
+    }
+
+    for (auto& class_value : schema.m_classes) {
+        auto register_code = GenerateClassScriptBindHeaderCode(class_value);
+        auto bind_code = GenerateClassScriptBindImplCode(class_value);
+        registers_data << kainjow::mustache::data{"register", register_code};
+        bindings_data << kainjow::mustache::data{"binding", bind_code};
+    }
+
+    data.set("registers", registers_data);
+    data.set("bindings", bindings_data);
+
+    return impl_mustache.render(data);
+}
+
+std::string GenerateBindingHeaderCode(const SchemaInfoManager& manager) {
+    auto& header_mustache = MustacheManager::GetInst().m_binding_header_mustache;
+
+    kainjow::mustache::data data;
+    kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
+
+    for (auto& info : manager.m_infos) {
+        auto header_filename = info.m_pure_filename;
+        header_filename.replace_extension(".hpp");
+        auto include_path = "schema/binding/" + header_filename.string();
+        includes_data << kainjow::mustache::data{"include", include_path};
+    }
+
+    data.set("includes", includes_data);
+
+    return header_mustache.render(data);
+}
+
+std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
+    auto& impl_mustache = MustacheManager::GetInst().m_binding_impl_mustache;
+
+    kainjow::mustache::data data;
+
+    kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+
+    for (auto& info : manager.m_infos) {
+        // Collect all register function calls
+        for (auto& enum_value : info.m_enums) {
+            std::string func_name = "register" + enum_value.m_name + "TypeFromSchema";
+            registers_data << kainjow::mustache::data{"register", func_name + "(engine);"};
+        }
+
+        for (auto& class_value : info.m_classes) {
+            std::string func_name = "register" + class_value.m_name + "TypeFromSchema";
+            registers_data << kainjow::mustache::data{"register", func_name + "(engine);"};
+        }
+
+        // Collect all bind function calls
+        for (auto& enum_value : info.m_enums) {
+            std::string func_name = "bind" + enum_value.m_name + "TypeFromSchema";
+            bindings_data << kainjow::mustache::data{"binding", func_name + "(engine);"};
+        }
+
+        for (auto& class_value : info.m_classes) {
+            std::string func_name = "bind" + class_value.m_name + "TypeFromSchema";
+            bindings_data << kainjow::mustache::data{"binding", func_name + "(engine);"};
+        }
+    }
+
+    data.set("registers", registers_data);
+    data.set("bindings", bindings_data);
+
+    return impl_mustache.render(data);
+}
+
+static const std::unordered_map<std::string, std::string> Cpp2AngelScriptTypeMap = {
+    // Integer types
+    {"uint8_t", "uint8"},
+    {"uint16_t", "uint16"},
+    {"uint32_t", "uint32"},
+    {"uint64_t", "uint64"},
+    {"int8_t", "int8"},
+    {"int16_t", "int16"},
+    {"int32_t", "int32"},
+    {"int64_t", "int64"},
+    
+    // Standard types
+    {"std::string", "string"},
+};
+
+std::string ConvertCppTypeToAngelScript(const std::string& cpp_type) {
+    auto it = Cpp2AngelScriptTypeMap.find(cpp_type);
+    if (it != Cpp2AngelScriptTypeMap.end()) {
+        return it->second;
+    }
+    
+    return cpp_type;
 }

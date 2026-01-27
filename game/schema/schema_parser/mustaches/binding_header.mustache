@@ -1,0 +1,9 @@
+#pragma once
+#include "angelscript.h"
+
+{{#includes}}
+#include "{{include}}"
+{{/includes}}
+
+void RegisterSchemaType(asIScriptEngine* engine);
+void BindSchema(asIScriptEngine* engine);

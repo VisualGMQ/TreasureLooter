@@ -3,6 +3,8 @@
 #include "angelscript.h"
 #include "autowrapper/aswrappedcall.h"
 #include "engine/asset_manager.hpp"
+#include "engine/camera.hpp"
+#include "engine/collision_group.hpp"
 #include "engine/context.hpp"
 #include "engine/entity.hpp"
 #include "engine/flag.hpp"
@@ -13,75 +15,30 @@
 #include "engine/relationship.hpp"
 #include "engine/renderer.hpp"
 #include "engine/script_macros.hpp"
+#include "engine/script_template_binding.hpp"
+#include "engine/script.hpp"
 #include "engine/sprite.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
+#include "engine/path.hpp"
 #include "engine/timer.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
 #include "engine/window.hpp"
 #include "schema/prefab.hpp"
+#include "schema/binding/binding.hpp"
 
 template <typename T>
 void AngelScriptLog(T msg) {
     LOGI("[Script]: {}", msg);
 }
 
-// Template function to register Flags type
-template <typename EnumType>
-void registerFlagsType(asIScriptEngine* engine, const char* typeName) {
-    AS_CALL(engine->RegisterObjectType(typeName, sizeof(Flags<EnumType>),
-                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Flags<EnumType>>()));
-}
-
-// Template function to bind Flags type methods
-template <typename EnumType>
-void bindFlagsType(asIScriptEngine* engine, const char* typeName) {
-    // Constructors
-    AS_CALL(engine->RegisterObjectBehaviour(typeName, asBEHAVE_CONSTRUCT,
-                                            "void f()", WRAP_CON(Flags<EnumType>, ()),
-                                            asCALL_GENERIC));
-    AS_CALL(engine->RegisterObjectBehaviour(typeName, asBEHAVE_CONSTRUCT,
-                                            "void f(int)",
-                                            asFUNCTION(+[](void* mem, int value) {
-                                                new(mem) Flags<EnumType>(static_cast<typename Flags<EnumType>::underlying_type>(value));
-                                            }),
-                                            asCALL_CDECL_OBJFIRST));
-    
-    // Value() method
-    AS_CALL(engine->RegisterObjectMethod(typeName, "int Value() const",
-                                         asMETHOD(Flags<EnumType>, Value),
-                                         asCALL_THISCALL));
-    
-    // Operator |=
-    AS_CALL(engine->RegisterObjectMethod(typeName, "void opOrAssign(int)",
-                                         asFUNCTION(+[](Flags<EnumType>* f, typename Flags<EnumType>::underlying_type v) {
-                                             *f |= static_cast<EnumType>(v);
-                                         }),
-                                         asCALL_CDECL_OBJFIRST));
-    
-    // Operator &=
-    AS_CALL(engine->RegisterObjectMethod(typeName, "void opAndAssign(int)",
-                                         asFUNCTION(+[](Flags<EnumType>* f, typename Flags<EnumType>::underlying_type v) {
-                                             *f &= static_cast<EnumType>(v);
-                                         }),
-                                         asCALL_CDECL_OBJFIRST));
-    
-    // Remove method
-    AS_CALL(engine->RegisterObjectMethod(typeName, "void Remove(int)",
-                                         asFUNCTION(+[](Flags<EnumType>* f, typename Flags<EnumType>::underlying_type v) {
-                                             f->Remove(static_cast<EnumType>(v));
-                                         }),
-                                         asCALL_CDECL_OBJFIRST));
-}
-
 // Forward binding: register all types
 void registerAllTypes(asIScriptEngine* engine) {
+    // reigster schema generate types
+    RegisterSchemaType(engine);
     // Math types
-    AS_CALL(engine->RegisterObjectType("Vec2", sizeof(Vec2),
-                                       asOBJ_VALUE | asOBJ_POD |
-                                           asOBJ_APP_CLASS_ALLFLOATS |
-                                           asGetTypeTraits<Vec2>()));
+    registerTVec2Type<float>(engine, "Vec2");
     AS_CALL(engine->RegisterObjectType("Degrees", sizeof(Degrees),
                                        asOBJ_VALUE | asOBJ_POD |
                                            asOBJ_APP_CLASS_ALLFLOATS |
@@ -96,6 +53,13 @@ void registerAllTypes(asIScriptEngine* engine) {
                                            asGetTypeTraits<Color>()));
     AS_CALL(engine->RegisterObjectType("Transform", sizeof(Transform),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Transform>()));
+    AS_CALL(engine->RegisterObjectType("Region", sizeof(Region),
+                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Region>()));
+    registerTVec2Type<uint32_t>(engine, "Vec2UI");
+    
+    // Path
+    AS_CALL(engine->RegisterObjectType("Path", sizeof(Path),
+                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Path>()));
     
     // Entity and Level
     AS_CALL(engine->RegisterObjectType("Entity", sizeof(Entity),
@@ -104,15 +68,31 @@ void registerAllTypes(asIScriptEngine* engine) {
     
     // Image
     AS_CALL(engine->RegisterObjectType("Image", 0, asOBJ_REF));
-    AS_CALL(engine->RegisterObjectType("ImageHandle", sizeof(ImageHandle),
-                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<ImageHandle>()));
+    registerHandleType<Image>(engine, "ImageHandle");
     AS_CALL(engine->RegisterObjectType("ImageManager", 0, asOBJ_REF));
     
     // Font
     AS_CALL(engine->RegisterObjectType("Font", 0, asOBJ_REF));
-    AS_CALL(engine->RegisterObjectType("FontHandle", sizeof(FontHandle),
-                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<FontHandle>()));
+    registerHandleType<Font>(engine, "FontHandle");
     AS_CALL(engine->RegisterObjectType("FontManager", 0, asOBJ_REF));
+    
+    // Animation
+    AS_CALL(engine->RegisterObjectType("Animation", 0, asOBJ_REF));
+    registerHandleType<Animation>(engine, "AnimationHandle");
+    AS_CALL(engine->RegisterObjectType("AnimationManager", 0, asOBJ_REF));
+    
+    // Level
+    AS_CALL(engine->RegisterObjectType("LevelManager", 0, asOBJ_REF));
+    registerHandleType<Level>(engine, "LevelHandle");
+    
+    // Prefab
+    AS_CALL(engine->RegisterObjectType("PrefabManager", 0, asOBJ_REF));
+    registerHandleType<Prefab>(engine, "PrefabHandle");
+    
+    // Script
+    AS_CALL(engine->RegisterObjectType("ScriptBinaryData", 0, asOBJ_REF));
+    registerHandleType<ScriptBinaryData>(engine, "ScriptBinaryDataHandle");
+    AS_CALL(engine->RegisterObjectType("ScriptBinaryDataManager", 0, asOBJ_REF));
     
     // Sprite
     AS_CALL(engine->RegisterObjectType("SpriteManager", 0, asOBJ_REF));
@@ -121,8 +101,7 @@ void registerAllTypes(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectType("Tile", sizeof(Tile),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Tile>()));
     AS_CALL(engine->RegisterObjectType("Tilemap", 0, asOBJ_REF));
-    AS_CALL(engine->RegisterObjectType("TilemapHandle", sizeof(TilemapHandle),
-                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<TilemapHandle>()));
+    registerHandleType<Tilemap>(engine, "TilemapHandle");
     AS_CALL(engine->RegisterObjectType("TilemapManager", 0, asOBJ_REF));
     AS_CALL(engine->RegisterObjectType("TilemapComponent", sizeof(TilemapComponent),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<TilemapComponent>()));
@@ -145,6 +124,8 @@ void registerAllTypes(asIScriptEngine* engine) {
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<PhysicsShape>()));
     AS_CALL(engine->RegisterObjectType("PhysicsActor", 0, asOBJ_REF));
     AS_CALL(engine->RegisterObjectType("PhysicsScene", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("CollisionGroup", sizeof(CollisionGroup),
+                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<CollisionGroup>()));
     
     // Relationship
     AS_CALL(engine->RegisterObjectType("RelationshipManager", 0, asOBJ_REF));
@@ -160,6 +141,8 @@ void registerAllTypes(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectType("Timer", sizeof(Timer),
                                        asOBJ_VALUE | asGetTypeTraits<Timer>()));
     AS_CALL(engine->RegisterObjectType("TimerManager", 0, asOBJ_REF));
+    // TimeType is an alias for double
+    AS_CALL(engine->RegisterTypedef("TimeType", "double"));
     
     // Trigger
     AS_CALL(engine->RegisterObjectType("TriggerEnterEvent", sizeof(TriggerEnterEvent),
@@ -174,6 +157,8 @@ void registerAllTypes(asIScriptEngine* engine) {
     
     // Context
     AS_CALL(engine->RegisterObjectType("GameContext", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Camera", sizeof(Camera),
+                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Camera>()));
     
     // AssetsManager
     AS_CALL(engine->RegisterObjectType("AssetsManager", 0, asOBJ_REF));
@@ -182,67 +167,22 @@ void registerAllTypes(asIScriptEngine* engine) {
     registerFlagsType<HitType>(engine, "HitTypeFlags");
     registerFlagsType<UIAnchor>(engine, "UIAnchorFlags");
     registerFlagsType<Flip>(engine, "FlipFlags");
-}
-
-void bindVec2(asIScriptEngine* engine) {
-    AS_CALL(engine->RegisterObjectBehaviour(
-        "Vec2", asBEHAVE_CONSTRUCT, "void f(float x, float y)",
-        WRAP_CON(Vec2, (float, float)), asCALL_GENERIC));
-    AS_CALL(engine->RegisterObjectMethod("Vec2",
-                                         "float Dot(const Vec2& in) const",
-                                         asMETHOD(Vec2, Dot), asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Vec2", "float Length() const",
-                                         asMETHOD(Vec2, Length),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Vec2", "float LengthSquared() const",
-                                         asMETHOD(Vec2, LengthSquared),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Vec2", "Vec2 Normalize() const",
-                                         asMETHOD(Vec2, Normalize),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "bool opEquals(const Vec2&in) const",
-        asMETHODPR(Vec2, operator==, (const Vec2&) const, bool),
-        asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2& opAddAssign(const Vec2& in)",
-        asMETHODPR(Vec2, operator+=, (const Vec2&), Vec2&), asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2& opSubAssign(const Vec2& in)",
-        asMETHODPR(Vec2, operator-=, (const Vec2&), Vec2&), asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2& opMulAssign(const Vec2& in)",
-        asMETHODPR(Vec2, operator*=, (const Vec2&), Vec2&), asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2& opDivAssign(const Vec2& in)",
-        asMETHODPR(Vec2, operator/=, (const Vec2&), Vec2&), asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Vec2", "Vec2 opAdd(const Vec2& in)",
-                                         asMETHOD(Vec2, operator+),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Vec2", "Vec2 opSub(const Vec2& in)",
-                                         asMETHOD(Vec2, operator-),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2 opMul(const Vec2& in)",
-        asMETHODPR_CONST(Vec2, operator*, (const Vec2&), Vec2),
-        asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2 opDiv(const Vec2& in)",
-        asMETHODPR_CONST(Vec2, operator/, (const Vec2&), Vec2),
-        asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod(
-        "Vec2", "Vec2 opMul_r(float)",
-        asFUNCTIONPR(operator*, (float, const Vec2&), Vec2),
-        asCALL_CDECL_OBJLAST));
-
-    AS_CALL(
-        engine->RegisterObjectProperty("Vec2", "float x", asOFFSET(Vec2, x)));
-    AS_CALL(
-        engine->RegisterObjectProperty("Vec2", "float y", asOFFSET(Vec2, y)));
-    AS_CALL(
-        engine->RegisterObjectProperty("Vec2", "float w", asOFFSET(Vec2, w)));
-    AS_CALL(
-        engine->RegisterObjectProperty("Vec2", "float h", asOFFSET(Vec2, h)));
+    
+    // Enum types
+    AS_CALL(engine->RegisterEnum("HitType"));
+    AS_CALL(engine->RegisterEnumValue("HitType", "None", static_cast<int>(HitType::None)));
+    AS_CALL(engine->RegisterEnumValue("HitType", "Left", static_cast<int>(HitType::Left)));
+    AS_CALL(engine->RegisterEnumValue("HitType", "Right", static_cast<int>(HitType::Right)));
+    AS_CALL(engine->RegisterEnumValue("HitType", "Top", static_cast<int>(HitType::Top)));
+    AS_CALL(engine->RegisterEnumValue("HitType", "Bottom", static_cast<int>(HitType::Bottom)));
+    
+    AS_CALL(engine->RegisterEnum("PhysicsShapeType"));
+    AS_CALL(engine->RegisterEnumValue("PhysicsShapeType", "Unknown", static_cast<int>(PhysicsShapeType::Unknown)));
+    AS_CALL(engine->RegisterEnumValue("PhysicsShapeType", "Rect", static_cast<int>(PhysicsShapeType::Rect)));
+    AS_CALL(engine->RegisterEnumValue("PhysicsShapeType", "Circle", static_cast<int>(PhysicsShapeType::Circle)));
+    
+    AS_CALL(engine->RegisterObjectType("TimerID", sizeof(TimerID),
+                                       asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE));
 }
 
 void bindDegrees(asIScriptEngine* engine) {
@@ -408,6 +348,84 @@ void bindOtherMath(asIScriptEngine* engine) {
     engine->RegisterGlobalFunction(
         "Radians GetAngle(const Vec2& in norm_a, const Vec2& in norm_b)",
         asFUNCTION(GetAngle), asCALL_CDECL);
+    
+    // Region
+    AS_CALL(engine->RegisterObjectProperty("Region", "Vec2 m_topleft",
+                                          asOFFSET(Region, m_topleft)));
+    AS_CALL(engine->RegisterObjectProperty("Region", "Vec2 m_size",
+                                          asOFFSET(Region, m_size)));
+}
+
+void bindPath(asIScriptEngine* engine) {
+    // Constructors
+    AS_CALL(engine->RegisterObjectBehaviour("Path", asBEHAVE_CONSTRUCT,
+                                            "void f()", WRAP_CON(Path, ()),
+                                            asCALL_GENERIC));
+    AS_CALL(engine->RegisterObjectBehaviour("Path", asBEHAVE_CONSTRUCT,
+                                            "void f(const string& in)",
+                                            WRAP_CON(Path, (const std::string&)),
+                                            asCALL_GENERIC));
+    
+    // String conversion
+    AS_CALL(engine->RegisterObjectMethod("Path", "string string() const",
+                                         asMETHODPR(Path, string, () const, std::string),
+                                         asCALL_THISCALL));
+    
+    // Path operations
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path parent_path() const",
+                                         asMETHOD(Path, parent_path),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path filename() const",
+                                         asMETHOD(Path, filename),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path extension() const",
+                                         asMETHOD(Path, extension),
+                                         asCALL_THISCALL));
+    
+    // Path queries
+    AS_CALL(engine->RegisterObjectMethod("Path", "bool has_extension() const",
+                                         asMETHOD(Path, has_extension),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Path", "bool is_absolute() const",
+                                         asMETHOD(Path, is_absolute),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Path", "bool is_relative() const",
+                                         asMETHOD(Path, is_relative),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Path", "bool empty() const",
+                                         asMETHOD(Path, empty),
+                                         asCALL_THISCALL));
+    
+    // Operators
+    AS_CALL(engine->RegisterObjectMethod("Path", "bool opEquals(const Path& in) const",
+                                         asFUNCTION(+[](const Path& a, const Path& b) -> bool {
+                                             return a == b;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("Path", "bool opNotEquals(const Path& in) const",
+                                         asFUNCTION(+[](const Path& a, const Path& b) -> bool {
+                                             return a != b;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path opDiv(const Path& in) const",
+                                         asFUNCTION(+[](const Path& a, const Path& b) -> Path {
+                                             return a / b;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path opDiv(const string& in) const",
+                                         asFUNCTION(+[](const Path& p, const std::string& s) -> Path {
+                                             return p / s;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path& opDivAssign(const Path& in)",
+                                         asMETHODPR(Path, operator/=, (const Path&), Path&),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Path", "Path& opDivAssign(const string& in)",
+                                         asFUNCTION(+[](Path& p, const std::string& s) -> Path& {
+                                             p /= s;
+                                             return p;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
 }
 
 void bindEntity(asIScriptEngine* engine) {
@@ -418,21 +436,6 @@ void bindEntity(asIScriptEngine* engine) {
 }
 
 void bindLevel(asIScriptEngine* engine) {
-    AS_CALL(engine->RegisterObjectMethod("Level", "void Initialize()",
-                                         asMETHOD(Level, Initialize),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Level", "void OnEnter()",
-                                         asMETHOD(Level, OnEnter),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Level", "void OnQuit()",
-                                         asMETHOD(Level, OnQuit),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Level", "void PoseUpdate()",
-                                         asMETHOD(Level, PoseUpdate),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Level", "bool IsInited() const",
-                                         asMETHOD(Level, IsInited),
-                                         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod("Level", "Entity Instantiate(PrefabHandle@)",
                                          asMETHOD(Level, Instantiate),
                                          asCALL_THISCALL));
@@ -457,25 +460,17 @@ void bindImage(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     
     // ImageHandle
-    AS_CALL(engine->RegisterObjectBehaviour("ImageHandle", asBEHAVE_CONSTRUCT,
-                                            "void f()", WRAP_CON(ImageHandle, ()),
-                                            asCALL_GENERIC));
-    AS_CALL(engine->RegisterObjectMethod("ImageHandle", "bool opEquals(const ImageHandle&in)",
-                                         asMETHODPR(ImageHandle, operator==, (const ImageHandle&), bool),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("ImageHandle", "bool opNotEquals(const ImageHandle&in)",
-                                         asMETHODPR(ImageHandle, operator!=, (const ImageHandle&), bool),
-                                         asCALL_THISCALL));
-    // Common Handle methods
-    AS_CALL(engine->RegisterObjectMethod("ImageHandle", "Image@ opImplCast()",
-                                         asFUNCTION(+[](ImageHandle& h) -> Image* { return h.Get(); }),
-                                         asCALL_CDECL_OBJLAST));
+    bindHandleType<Image>(engine, "ImageHandle", "Image");
     
     // ImageManager
-    // Wrapper function: convert string to Path
     AS_CALL(engine->RegisterObjectMethod("ImageManager", "ImageHandle Load(const string& in, bool)",
                                          asFUNCTION(+[](ImageManager* mgr, const std::string& filename, bool force) -> ImageHandle {
                                              return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("ImageManager", "ImageHandle Find(const string& in)",
+                                         asFUNCTION(+[](ImageManager* mgr, const std::string& filename) -> ImageHandle {
+                                             return mgr->Find(Path(filename));
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
@@ -495,23 +490,91 @@ void bindFont(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     
     // FontHandle
-    AS_CALL(engine->RegisterObjectBehaviour("FontHandle", asBEHAVE_CONSTRUCT,
-                                            "void f()", WRAP_CON(FontHandle, ()),
-                                            asCALL_GENERIC));
-    AS_CALL(engine->RegisterObjectMethod("FontHandle", "bool opEquals(const FontHandle&in)",
-                                         asMETHODPR(FontHandle, operator==, (const FontHandle&), bool),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("FontHandle", "bool opNotEquals(const FontHandle&in)",
-                                         asMETHODPR(FontHandle, operator!=, (const FontHandle&), bool),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("FontHandle", "Font@ opImplCast()",
-                                         asFUNCTION(+[](FontHandle& h) -> Font* { return h.Get(); }),
-                                         asCALL_CDECL_OBJLAST));
+    bindHandleType<Font>(engine, "FontHandle", "Font");
     
     // FontManager
     AS_CALL(engine->RegisterObjectMethod("FontManager", "FontHandle Load(const string& in, bool)",
                                          asFUNCTION(+[](FontManager* mgr, const std::string& filename, bool force) -> FontHandle {
                                              return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("FontManager", "FontHandle Find(const string& in)",
+                                         asFUNCTION(+[](FontManager* mgr, const std::string& filename) -> FontHandle {
+                                             return mgr->Find(Path(filename));
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+}
+
+void bindAnimationManager(asIScriptEngine* engine) {
+    // AnimationHandle
+    bindHandleType<Animation>(engine, "AnimationHandle", "Animation");
+    
+    // AnimationManager
+    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "AnimationHandle Load(const string& in, bool)",
+                                         asFUNCTION(+[](AnimationManager* mgr, const std::string& filename, bool force) -> AnimationHandle {
+                                             return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "AnimationHandle Create()",
+                                         asMETHOD(AnimationManager, Create),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "AnimationHandle Find(const string& in)",
+                                         asFUNCTION(+[](AnimationManager* mgr, const std::string& filename) -> AnimationHandle {
+                                             return mgr->Find(Path(filename));
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+}
+
+void bindLevelManager(asIScriptEngine* engine) {
+    // LevelHandle
+    bindHandleType<Level>(engine, "LevelHandle", "Level");
+    
+    // LevelManager
+    AS_CALL(engine->RegisterObjectMethod("LevelManager", "LevelHandle Load(const string& in, bool)",
+                                         asFUNCTION(+[](LevelManager* mgr, const std::string& filename, bool force) -> LevelHandle {
+                                             return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("LevelManager", "LevelHandle Find(const string& in)",
+                                         asFUNCTION(+[](LevelManager* mgr, const std::string& filename) -> LevelHandle {
+                                             return mgr->Find(Path(filename));
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+}
+
+void bindPrefabManager(asIScriptEngine* engine) {
+    // PrefabHandle
+    bindHandleType<Prefab>(engine, "PrefabHandle", "Prefab");
+    
+    // PrefabManager
+    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "PrefabHandle Load(const string& in, bool)",
+                                         asFUNCTION(+[](PrefabManager* mgr, const std::string& filename, bool force) -> PrefabHandle {
+                                             return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "PrefabHandle Create()",
+                                         asMETHODPR(PrefabManager, Create, (), PrefabManager::HandleType),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "PrefabHandle Find(const string& in)",
+                                         asFUNCTION(+[](PrefabManager* mgr, const std::string& filename) -> PrefabHandle {
+                                             return mgr->Find(Path(filename));
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+}
+
+void bindScriptBinaryDataManager(asIScriptEngine* engine) {
+    // ScriptBinaryDataHandle
+    bindHandleType<ScriptBinaryData>(engine, "ScriptBinaryDataHandle", "ScriptBinaryData");
+    
+    // ScriptBinaryDataManager
+    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "ScriptBinaryDataHandle Load(const string& in, bool)",
+                                         asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename, bool force) -> ScriptBinaryDataHandle {
+                                             return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "ScriptBinaryDataHandle Find(const string& in)",
+                                         asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename) -> ScriptBinaryDataHandle {
+                                             return mgr->Find(Path(filename));
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
@@ -537,23 +600,17 @@ void bindTilemap(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     
     // TilemapHandle
-    AS_CALL(engine->RegisterObjectBehaviour("TilemapHandle", asBEHAVE_CONSTRUCT,
-                                            "void f()", WRAP_CON(TilemapHandle, ()),
-                                            asCALL_GENERIC));
-    AS_CALL(engine->RegisterObjectMethod("TilemapHandle", "bool opEquals(const TilemapHandle&in)",
-                                         asMETHODPR(TilemapHandle, operator==, (const TilemapHandle&), bool),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("TilemapHandle", "bool opNotEquals(const TilemapHandle&in)",
-                                         asMETHODPR(TilemapHandle, operator!=, (const TilemapHandle&), bool),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("TilemapHandle", "Tilemap@ opImplCast()",
-                                         asFUNCTION(+[](TilemapHandle& h) -> Tilemap* { return h.Get(); }),
-                                         asCALL_CDECL_OBJLAST));
+    bindHandleType<Tilemap>(engine, "TilemapHandle", "Tilemap");
     
     // TilemapManager
     AS_CALL(engine->RegisterObjectMethod("TilemapManager", "TilemapHandle Load(const string& in, bool)",
                                          asFUNCTION(+[](TilemapManager* mgr, const std::string& filename, bool force) -> TilemapHandle {
                                              return mgr->Load(Path(filename), force);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("TilemapManager", "TilemapHandle Find(const string& in)",
+                                         asFUNCTION(+[](TilemapManager* mgr, const std::string& filename) -> TilemapHandle {
+                                             return mgr->Find(Path(filename));
                                          }),
                                          asCALL_CDECL_OBJFIRST));
     
@@ -621,21 +678,51 @@ void bindUI(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
 }
 
+void bindCamera(asIScriptEngine* engine) {
+    // Camera
+    AS_CALL(engine->RegisterObjectMethod("Camera", "void ChangeScale(const Vec2& in)",
+                                         asMETHOD(Camera, ChangeScale),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Camera", "void MoveTo(const Vec2& in)",
+                                         asMETHOD(Camera, MoveTo),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Camera", "void Move(const Vec2& in)",
+                                         asMETHOD(Camera, Move),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Camera", "const Vec2& GetScale() const",
+                                         asMETHOD(Camera, GetScale),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Camera", "const Vec2& GetPosition() const",
+                                         asMETHOD(Camera, GetPosition),
+                                         asCALL_THISCALL));
+}
+
+void bindCollisionGroup(asIScriptEngine* engine) {
+    // CollisionGroup
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "void Add(CollisionGroupType)",
+                                         asMETHOD(CollisionGroup, Add),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "void Remove(CollisionGroupType)",
+                                         asMETHOD(CollisionGroup, Remove),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "bool Has(CollisionGroupType) const",
+                                         asMETHOD(CollisionGroup, Has),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "void Clear()",
+                                         asMETHOD(CollisionGroup, Clear),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "bool CanCollision(const CollisionGroup& in) const",
+                                         asMETHOD(CollisionGroup, CanCollision),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "uint32 GetUnderlying() const",
+                                         asMETHOD(CollisionGroup, GetUnderlying),
+                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("CollisionGroup", "void SetUnderlying(uint32)",
+                                         asMETHOD(CollisionGroup, SetUnderlying),
+                                         asCALL_THISCALL));
+}
+
 void bindPhysics(asIScriptEngine* engine) {
-    // HitType enum
-    AS_CALL(engine->RegisterEnum("HitType"));
-    AS_CALL(engine->RegisterEnumValue("HitType", "None", static_cast<int>(HitType::None)));
-    AS_CALL(engine->RegisterEnumValue("HitType", "Left", static_cast<int>(HitType::Left)));
-    AS_CALL(engine->RegisterEnumValue("HitType", "Right", static_cast<int>(HitType::Right)));
-    AS_CALL(engine->RegisterEnumValue("HitType", "Top", static_cast<int>(HitType::Top)));
-    AS_CALL(engine->RegisterEnumValue("HitType", "Bottom", static_cast<int>(HitType::Bottom)));
-    
-    // PhysicsShapeType enum
-    AS_CALL(engine->RegisterEnum("PhysicsShapeType"));
-    AS_CALL(engine->RegisterEnumValue("PhysicsShapeType", "Unknown", static_cast<int>(PhysicsShapeType::Unknown)));
-    AS_CALL(engine->RegisterEnumValue("PhysicsShapeType", "Rect", static_cast<int>(PhysicsShapeType::Rect)));
-    AS_CALL(engine->RegisterEnumValue("PhysicsShapeType", "Circle", static_cast<int>(PhysicsShapeType::Circle)));
-    
     // HitResult
     AS_CALL(engine->RegisterObjectProperty("HitResult", "float m_t",
                                           asOFFSET(HitResult, m_t)));
@@ -788,9 +875,6 @@ void bindRenderer(asIScriptEngine* engine) {
 }
 
 void bindTimer(asIScriptEngine* engine) {
-    // TimerID enum
-    AS_CALL(engine->RegisterEnum("TimerID"));
-    
     // Time
     AS_CALL(engine->RegisterObjectMethod("Time", "void Update()",
                                          asMETHOD(Time, Update),
@@ -803,6 +887,9 @@ void bindTimer(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     
     // Timer
+    AS_CALL(engine->RegisterObjectBehaviour("TimerID", asBEHAVE_CONSTRUCT,
+        "void f()", WRAP_CON(TimerID, ()),
+        asCALL_GENERIC));
     AS_CALL(engine->RegisterObjectMethod("Timer", "void SetInterval(TimeType)",
                                          asMETHOD(Timer, SetInterval),
                                          asCALL_THISCALL));
@@ -835,7 +922,7 @@ void bindTimer(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     
     // TimerManager
-    AS_CALL(engine->RegisterObjectMethod("TimerManager", "Timer& Create(TimeType, TimerEventType, int)",
+    AS_CALL(engine->RegisterObjectMethod("TimerManager", "Timer@ Create(TimeType, TimerEventType, int)",
                                          asMETHOD(TimerManager, Create),
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod("TimerManager", "void RemoveTimer(TimerID)",
@@ -992,46 +1079,38 @@ void bindAssetsManager(asIScriptEngine* engine) {
 }
 
 void bindMath(asIScriptEngine* engine) {
-    bindVec2(engine);
+    bindTVec2Type<float>(engine, "Vec2", "float");
+    bindTVec2Type<uint32_t>(engine, "Vec2UI", "uint32");
     bindDegrees(engine);
     bindRadians(engine);
     bindColor(engine);
     bindTransform(engine);
     bindOtherMath(engine);
+    bindPath(engine);
 }
 
-void BindTLModule(asIScriptEngine* engine) {
-    TL_RETURN_IF_NULL_WITH_LOG(engine, LOGE, "angel script engine is null!");
-
-    AS_CALL(engine->SetDefaultNamespace("TL"));
-
-    TL_RETURN_IF_NULL_WITH_LOG(engine, LOGE, "angel script engine is null!");
-
-    AS_CALL(engine->SetDefaultNamespace("TL"));
-    AS_CALL(engine->RegisterGlobalFunction(
-        "void Log(const string)", asFUNCTION(AngelScriptLog<std::string>),
-        asCALL_CDECL));
-    AS_CALL(engine->RegisterGlobalFunction(
-        "void Log(int)", asFUNCTION(AngelScriptLog<int>), asCALL_CDECL));
-    AS_CALL(engine->RegisterGlobalFunction(
-        "void Log(float)", asFUNCTION(AngelScriptLog<float>), asCALL_CDECL));
-
-    // Register all types first (forward binding)
-    registerAllTypes(engine);
-    
+void bindAllTypes(asIScriptEngine* engine) {
+    // bind schema generate types
+    BindSchema(engine);
     // Then register all methods, properties, etc. (actual binding)
     bindMath(engine);
     bindEntity(engine);
     bindLevel(engine);
     bindImage(engine);
     bindFont(engine);
+    bindAnimationManager(engine);
+    bindLevelManager(engine);
+    bindPrefabManager(engine);
+    bindScriptBinaryDataManager(engine);
     bindSprite(engine);
     bindTilemap(engine);
     bindUI(engine);
     bindPhysics(engine);
+    bindCollisionGroup(engine);
     bindRelationship(engine);
     bindWindow(engine);
     bindRenderer(engine);
+    bindCamera(engine);
     bindTimer(engine);
     bindTrigger(engine);
     bindContext(engine);
@@ -1046,6 +1125,24 @@ void BindTLModule(asIScriptEngine* engine) {
     // AS_CALL(engine->RegisterGlobalFunction("ImageManager@ GetImageManager()",
     //                                        asFUNCTION(GetImageManager),
     //                                        asCALL_CDECL));
+}
+
+void BindTLModule(asIScriptEngine* engine) {
+    TL_RETURN_IF_NULL_WITH_LOG(engine, LOGE, "angel script engine is null!");
+
+    AS_CALL(engine->SetDefaultNamespace("TL"));
+
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Log(const string)", asFUNCTION(AngelScriptLog<std::string>),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Log(int)", asFUNCTION(AngelScriptLog<int>), asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Log(float)", asFUNCTION(AngelScriptLog<float>), asCALL_CDECL));
+
+    // Register all types first (forward binding)
+    registerAllTypes(engine);
+    bindAllTypes(engine);
 
     AS_CALL(engine->SetDefaultNamespace(""));
 }

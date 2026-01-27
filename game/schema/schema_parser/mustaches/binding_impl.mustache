@@ -1,0 +1,13 @@
+#include "schema/binding/binding.hpp"
+
+void RegisterSchemaType(asIScriptEngine* engine) {
+    {{#registers}}
+    {{{register}}}
+    {{/registers}}
+}
+
+void BindSchema(asIScriptEngine* engine) {
+    {{#bindings}}
+    {{{binding}}}
+    {{/bindings}}
+}

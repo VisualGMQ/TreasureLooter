@@ -23,6 +23,7 @@
 #include "engine/uuid.hpp"
 #include "engine/profile.hpp"
 #include <memory>
+#include <csignal>
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -267,8 +268,16 @@ GameContext& GameContext::GetInst() {
     return *instance;
 }
 
+void sigintHandler(int signum) {
+    if (signum == SIGINT) {
+        GAME_CONTEXT.Exit();
+    }
+}
+
 void GameContext::Initialize() {
     PROFILE_SECTION();
+
+    signal(SIGINT, sigintHandler);
     
     CommonContext::Initialize();
 

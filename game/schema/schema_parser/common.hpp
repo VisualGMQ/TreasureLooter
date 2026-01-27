@@ -91,6 +91,15 @@ struct MustacheManager {
     
     kainjow::mustache::mustache m_asset_serialize_header_mustache;
     kainjow::mustache::mustache m_asset_display_header_mustache;
+    
+    kainjow::mustache::mustache m_enum_script_bind_header_mustache;
+    kainjow::mustache::mustache m_enum_script_bind_impl_mustache;
+    kainjow::mustache::mustache m_class_script_bind_header_mustache;
+    kainjow::mustache::mustache m_class_script_bind_impl_mustache;
+    kainjow::mustache::mustache m_script_bind_header_mustache;
+    kainjow::mustache::mustache m_script_bind_impl_mustache;
+    kainjow::mustache::mustache m_binding_header_mustache;
+    kainjow::mustache::mustache m_binding_impl_mustache;
 
     static MustacheManager& GetInst();
 

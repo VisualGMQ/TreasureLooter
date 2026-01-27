@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
 
     std::filesystem::path serd_output_dir = output_dir / "serialize";
     std::filesystem::path display_output_dir = output_dir / "display";
+    std::filesystem::path binding_output_dir = output_dir / "binding";
 
     if (!std::filesystem::exists(parse_dir)) {
         std::cerr << "invalid parse directory: " << parse_dir << std::endl;
@@ -64,6 +65,7 @@ int main(int argc, char** argv) {
     std::filesystem::create_directories(output_dir);
     std::filesystem::create_directories(serd_output_dir);
     std::filesystem::create_directories(display_output_dir);
+    std::filesystem::create_directories(binding_output_dir);
 
     for (auto& info : manager.m_infos) {
         // generate class declare codes
@@ -114,6 +116,28 @@ int main(int argc, char** argv) {
                 file.write(impl_code.c_str(), impl_code.length());
             }
         }
+
+        // generate script binding codes
+        {
+            {
+                std::string header_code =
+                    GenerateSchemaScriptBindHeaderCode(info);
+                auto header_filename = info.m_pure_filename;
+                header_filename.replace_extension(".hpp");
+                std::ofstream file(binding_output_dir / header_filename);
+                file.write(header_code.c_str(), header_code.length());
+                std::cout << "generate script bind header to : " << binding_output_dir / header_filename << std::endl;
+            }
+
+            {
+                std::string impl_code = GenerateSchemaScriptBindImplCode(info);
+                auto impl_filename = info.m_pure_filename;
+                impl_filename.replace_extension(".cpp");
+                std::ofstream file(binding_output_dir / impl_filename);
+                file.write(impl_code.c_str(), impl_code.length());
+                std::cout << "generate script bind impl to : " << binding_output_dir / impl_filename << std::endl;
+            }
+        }
     }
 
     // generate asset_info.hpp
@@ -142,6 +166,22 @@ int main(int argc, char** argv) {
         std::string code = GenerateAssetDisplayTotleHeaderCode(manager);
         std::ofstream file(display_output_dir / "display.hpp");
         file.write(code.c_str(), code.length());
+    }
+
+    // generate binding/binding.hpp
+    {
+        std::string code = GenerateBindingHeaderCode(manager);
+        std::ofstream file(binding_output_dir / "binding.hpp");
+        file.write(code.c_str(), code.length());
+        std::cout << "generate binding header to : " << binding_output_dir / "binding.hpp" << std::endl;
+    }
+
+    // generate binding/binding.cpp
+    {
+        std::string code = GenerateBindingImplCode(manager);
+        std::ofstream file(binding_output_dir / "binding.cpp");
+        file.write(code.c_str(), code.length());
+        std::cout << "generate binding impl to : " << binding_output_dir / "binding.cpp" << std::endl;
     }
 
     return 0;
