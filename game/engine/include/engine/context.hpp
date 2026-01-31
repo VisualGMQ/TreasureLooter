@@ -4,7 +4,7 @@
 #include "camera.hpp"
 #include "cct.hpp"
 #include "debug_drawer.hpp"
-#include "engine/script.hpp"
+#include "engine/script/script.hpp"
 #include "entity.hpp"
 #include "event.hpp"
 #include "input/finger_touch.hpp"

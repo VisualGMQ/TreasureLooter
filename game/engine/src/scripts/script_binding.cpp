@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/script_binding.hpp"
+#include "engine/script/script_binding.hpp"
 #include "angelscript.h"
 #include "autowrapper/aswrappedcall.h"
 #include "engine/asset_manager.hpp"
@@ -14,9 +14,13 @@
 #include "engine/physics.hpp"
 #include "engine/relationship.hpp"
 #include "engine/renderer.hpp"
-#include "engine/script_macros.hpp"
-#include "engine/script_template_binding.hpp"
-#include "engine/script.hpp"
+#include "engine/script/script_macros.hpp"
+#include "engine/script/script_array_binding.hpp"
+#include "engine/script/script_flags_binding.hpp"
+#include "engine/script/script_handle_binding.hpp"
+#include "engine/script/script_option_binding.hpp"
+#include "engine/script/script_template_binding.hpp"
+#include "engine/script/script.hpp"
 #include "engine/sprite.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
@@ -35,6 +39,12 @@ void AngelScriptLog(T msg) {
 
 // Forward binding: register all types
 void registerAllTypes(asIScriptEngine* engine) {
+    // Optional<T> (CppOptional)
+    registerOptionalType(engine);
+    // Flags<T> (CppFlags) template for schema-generated types
+    registerFlagsType(engine);
+    // Handle<T> (CppHandle) template for schema-generated types and engine
+    registerHandleType(engine);
     // reigster schema generate types
     RegisterSchemaType(engine);
     // Math types
@@ -64,54 +74,47 @@ void registerAllTypes(asIScriptEngine* engine) {
     // Entity and Level
     AS_CALL(engine->RegisterObjectType("Entity", sizeof(Entity),
                                        asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE));
-    AS_CALL(engine->RegisterObjectType("Level", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Level", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Image
-    AS_CALL(engine->RegisterObjectType("Image", 0, asOBJ_REF));
-    registerHandleType<Image>(engine, "ImageHandle");
-    AS_CALL(engine->RegisterObjectType("ImageManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("ImageManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Font
-    AS_CALL(engine->RegisterObjectType("Font", 0, asOBJ_REF));
-    registerHandleType<Font>(engine, "FontHandle");
-    AS_CALL(engine->RegisterObjectType("FontManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Font", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("FontManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Animation
-    AS_CALL(engine->RegisterObjectType("Animation", 0, asOBJ_REF));
-    registerHandleType<Animation>(engine, "AnimationHandle");
-    AS_CALL(engine->RegisterObjectType("AnimationManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Animation", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("AnimationManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Level
-    AS_CALL(engine->RegisterObjectType("LevelManager", 0, asOBJ_REF));
-    registerHandleType<Level>(engine, "LevelHandle");
+    AS_CALL(engine->RegisterObjectType("LevelManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Prefab
-    AS_CALL(engine->RegisterObjectType("PrefabManager", 0, asOBJ_REF));
-    registerHandleType<Prefab>(engine, "PrefabHandle");
+    AS_CALL(engine->RegisterObjectType("PrefabManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Script
-    AS_CALL(engine->RegisterObjectType("ScriptBinaryData", 0, asOBJ_REF));
-    registerHandleType<ScriptBinaryData>(engine, "ScriptBinaryDataHandle");
-    AS_CALL(engine->RegisterObjectType("ScriptBinaryDataManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("ScriptBinaryData", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("ScriptBinaryDataManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Sprite
-    AS_CALL(engine->RegisterObjectType("SpriteManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("SpriteManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Tilemap
     AS_CALL(engine->RegisterObjectType("Tile", sizeof(Tile),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Tile>()));
-    AS_CALL(engine->RegisterObjectType("Tilemap", 0, asOBJ_REF));
-    registerHandleType<Tilemap>(engine, "TilemapHandle");
-    AS_CALL(engine->RegisterObjectType("TilemapManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Tilemap", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("TilemapManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("TilemapComponent", sizeof(TilemapComponent),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<TilemapComponent>()));
-    AS_CALL(engine->RegisterObjectType("TilemapComponentManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("TilemapComponentManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // UI
-    AS_CALL(engine->RegisterObjectType("UIText", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("UIText", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("UIWidget", sizeof(UIWidget),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<UIWidget>()));
-    AS_CALL(engine->RegisterObjectType("UIComponentManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("UIComponentManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Physics
     AS_CALL(engine->RegisterObjectType("HitResult", sizeof(HitResult),
@@ -122,25 +125,25 @@ void registerAllTypes(asIScriptEngine* engine) {
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<OverlapResult>()));
     AS_CALL(engine->RegisterObjectType("PhysicsShape", sizeof(PhysicsShape),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<PhysicsShape>()));
-    AS_CALL(engine->RegisterObjectType("PhysicsActor", 0, asOBJ_REF));
-    AS_CALL(engine->RegisterObjectType("PhysicsScene", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("PhysicsActor", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("PhysicsScene", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("CollisionGroup", sizeof(CollisionGroup),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<CollisionGroup>()));
     
     // Relationship
-    AS_CALL(engine->RegisterObjectType("RelationshipManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("RelationshipManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Window and Renderer
-    AS_CALL(engine->RegisterObjectType("Window", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Window", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("Image9Grid", sizeof(Image9Grid),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Image9Grid>()));
-    AS_CALL(engine->RegisterObjectType("Renderer", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Renderer", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Timer
-    AS_CALL(engine->RegisterObjectType("Time", 0, asOBJ_REF));
-    AS_CALL(engine->RegisterObjectType("Timer", sizeof(Timer),
-                                       asOBJ_VALUE | asGetTypeTraits<Timer>()));
-    AS_CALL(engine->RegisterObjectType("TimerManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("Time", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("Timer", 0,
+                                       asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("TimerManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     // TimeType is an alias for double
     AS_CALL(engine->RegisterTypedef("TimeType", "double"));
     
@@ -153,20 +156,22 @@ void registerAllTypes(asIScriptEngine* engine) {
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<TriggerTouchEvent>()));
     AS_CALL(engine->RegisterObjectType("Trigger", sizeof(Trigger),
                                        asOBJ_VALUE | asGetTypeTraits<Trigger>()));
-    AS_CALL(engine->RegisterObjectType("TriggerComponentManager", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectBehaviour("Trigger", asBEHAVE_CONSTRUCT,
+                                           "void f()", WRAP_CON(Trigger, ()),
+                                           asCALL_GENERIC));
+    AS_CALL(engine->RegisterObjectBehaviour("Trigger", asBEHAVE_DESTRUCT,
+                                           "void f()",
+                                           asFUNCTION(+[](Trigger* obj) { obj->~Trigger(); }),
+                                           asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectType("TriggerComponentManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Context
-    AS_CALL(engine->RegisterObjectType("GameContext", 0, asOBJ_REF));
+    AS_CALL(engine->RegisterObjectType("GameContext", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("Camera", sizeof(Camera),
                                        asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Camera>()));
     
     // AssetsManager
-    AS_CALL(engine->RegisterObjectType("AssetsManager", 0, asOBJ_REF));
-    
-    // Flags types (concrete types for template Flags<T>)
-    registerFlagsType<HitType>(engine, "HitTypeFlags");
-    registerFlagsType<UIAnchor>(engine, "UIAnchorFlags");
-    registerFlagsType<Flip>(engine, "FlipFlags");
+    AS_CALL(engine->RegisterObjectType("AssetsManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Enum types
     AS_CALL(engine->RegisterEnum("HitType"));
@@ -436,9 +441,13 @@ void bindEntity(asIScriptEngine* engine) {
 }
 
 void bindLevel(asIScriptEngine* engine) {
-    AS_CALL(engine->RegisterObjectMethod("Level", "Entity Instantiate(PrefabHandle@)",
-                                         asMETHOD(Level, Instantiate),
-                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("Level", "Entity Instantiate(Handle<Prefab>)",
+                                         asFUNCTION(+[](Level* level, const CppHandle& h) -> Entity {
+                                             Handle<Prefab> prefab;
+                                             HandleFromCppHandle<Prefab>(&h, prefab);
+                                             return level->Instantiate(prefab);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod("Level", "void RemoveEntity(Entity)",
                                          asMETHOD(Level, RemoveEntity),
                                          asCALL_THISCALL));
@@ -459,18 +468,19 @@ void bindImage(asIScriptEngine* engine) {
                                          asMETHOD(Image, ChangeColorMask),
                                          asCALL_THISCALL));
     
-    // ImageHandle
-    bindHandleType<Image>(engine, "ImageHandle", "Image");
-    
     // ImageManager
-    AS_CALL(engine->RegisterObjectMethod("ImageManager", "ImageHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](ImageManager* mgr, const std::string& filename, bool force) -> ImageHandle {
-                                             return mgr->Load(Path(filename), force);
+    AS_CALL(engine->RegisterObjectMethod("ImageManager", "Handle<Image> Load(const string& in, bool)",
+                                         asFUNCTION(+[](ImageManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Image>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<Image>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("ImageManager", "ImageHandle Find(const string& in)",
-                                         asFUNCTION(+[](ImageManager* mgr, const std::string& filename) -> ImageHandle {
-                                             return mgr->Find(Path(filename));
+    AS_CALL(engine->RegisterObjectMethod("ImageManager", "Handle<Image> Find(const string& in)",
+                                         asFUNCTION(+[](ImageManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Image>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<Image>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
@@ -489,92 +499,118 @@ void bindFont(asIScriptEngine* engine) {
                                          asMETHOD(Font, SetFontSize),
                                          asCALL_THISCALL));
     
-    // FontHandle
-    bindHandleType<Font>(engine, "FontHandle", "Font");
-    
     // FontManager
-    AS_CALL(engine->RegisterObjectMethod("FontManager", "FontHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](FontManager* mgr, const std::string& filename, bool force) -> FontHandle {
-                                             return mgr->Load(Path(filename), force);
+    AS_CALL(engine->RegisterObjectMethod("FontManager", "Handle<Font> Load(const string& in, bool)",
+                                         asFUNCTION(+[](FontManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Font>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<Font>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("FontManager", "FontHandle Find(const string& in)",
-                                         asFUNCTION(+[](FontManager* mgr, const std::string& filename) -> FontHandle {
-                                             return mgr->Find(Path(filename));
+    AS_CALL(engine->RegisterObjectMethod("FontManager", "Handle<Font> Find(const string& in)",
+                                         asFUNCTION(+[](FontManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Font>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<Font>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
 
 void bindAnimationManager(asIScriptEngine* engine) {
-    // AnimationHandle
-    bindHandleType<Animation>(engine, "AnimationHandle", "Animation");
-    
     // AnimationManager
-    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "AnimationHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](AnimationManager* mgr, const std::string& filename, bool force) -> AnimationHandle {
-                                             return mgr->Load(Path(filename), force);
+    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "Handle<Animation> Load(const string& in, bool)",
+                                         asFUNCTION(+[](AnimationManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Animation>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<Animation>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "AnimationHandle Create()",
-                                         asMETHOD(AnimationManager, Create),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "AnimationHandle Find(const string& in)",
-                                         asFUNCTION(+[](AnimationManager* mgr, const std::string& filename) -> AnimationHandle {
-                                             return mgr->Find(Path(filename));
+    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "Handle<Animation> Create()",
+                                         asFUNCTION(+[](AnimationManager* mgr) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Animation>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Create(), "Handle<Animation>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("AnimationManager", "Handle<Animation> Find(const string& in)",
+                                         asFUNCTION(+[](AnimationManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Animation>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<Animation>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
 
 void bindLevelManager(asIScriptEngine* engine) {
-    // LevelHandle
-    bindHandleType<Level>(engine, "LevelHandle", "Level");
-    
     // LevelManager
-    AS_CALL(engine->RegisterObjectMethod("LevelManager", "LevelHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](LevelManager* mgr, const std::string& filename, bool force) -> LevelHandle {
-                                             return mgr->Load(Path(filename), force);
+    AS_CALL(engine->RegisterObjectMethod("LevelManager", "Handle<Level> Load(const string& in, bool)",
+                                         asFUNCTION(+[](LevelManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Level>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<Level>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("LevelManager", "LevelHandle Find(const string& in)",
-                                         asFUNCTION(+[](LevelManager* mgr, const std::string& filename) -> LevelHandle {
-                                             return mgr->Find(Path(filename));
+    AS_CALL(engine->RegisterObjectMethod("LevelManager", "Handle<Level> Find(const string& in)",
+                                         asFUNCTION(+[](LevelManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Level>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<Level>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
 
 void bindPrefabManager(asIScriptEngine* engine) {
-    // PrefabHandle
-    bindHandleType<Prefab>(engine, "PrefabHandle", "Prefab");
-    
     // PrefabManager
-    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "PrefabHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](PrefabManager* mgr, const std::string& filename, bool force) -> PrefabHandle {
-                                             return mgr->Load(Path(filename), force);
+    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "Handle<Prefab> Load(const string& in, bool)",
+                                         asFUNCTION(+[](PrefabManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Prefab>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<Prefab>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "PrefabHandle Create()",
-                                         asMETHODPR(PrefabManager, Create, (), PrefabManager::HandleType),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "PrefabHandle Find(const string& in)",
-                                         asFUNCTION(+[](PrefabManager* mgr, const std::string& filename) -> PrefabHandle {
-                                             return mgr->Find(Path(filename));
+    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "Handle<Prefab> Create()",
+                                         asFUNCTION(+[](PrefabManager* mgr) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Prefab>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Create(), "Handle<Prefab>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("PrefabManager", "Handle<Prefab> Find(const string& in)",
+                                         asFUNCTION(+[](PrefabManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Prefab>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<Prefab>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
 
 void bindScriptBinaryDataManager(asIScriptEngine* engine) {
-    // ScriptBinaryDataHandle
-    bindHandleType<ScriptBinaryData>(engine, "ScriptBinaryDataHandle", "ScriptBinaryData");
-    
-    // ScriptBinaryDataManager
-    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "ScriptBinaryDataHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename, bool force) -> ScriptBinaryDataHandle {
-                                             return mgr->Load(Path(filename), force);
+    // ScriptBinaryData: GetContent() returns a copy as array<uint8>@ (C++ returns const vector<char>&;
+    // we copy into a new CScriptArray so script gets by-value semantics.)
+    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryData", "array<uint8>@ GetContent() const",
+                                         asFUNCTION(+[](const ScriptBinaryData* data) -> CScriptArray* {
+                                             const std::vector<char>& vec = data->GetContent();
+                                             std::vector<uint8_t> tmp(vec.size());
+                                             for (size_t i = 0; i < vec.size(); ++i)
+                                                 tmp[i] = static_cast<uint8_t>(static_cast<unsigned char>(vec[i]));
+                                             return VectorToScriptArray<uint8_t>(
+                                                 asGetActiveContext()->GetEngine(), tmp, "array<uint8>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "ScriptBinaryDataHandle Find(const string& in)",
-                                         asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename) -> ScriptBinaryDataHandle {
-                                             return mgr->Find(Path(filename));
+    
+    // ScriptBinaryDataManager
+    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "Handle<ScriptBinaryData> Load(const string& in, bool)",
+                                         asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<ScriptBinaryData>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<ScriptBinaryData>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "Handle<ScriptBinaryData> Find(const string& in)",
+                                         asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<ScriptBinaryData>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<ScriptBinaryData>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
 }
@@ -587,8 +623,17 @@ void bindSprite(asIScriptEngine* engine) {
 
 void bindTilemap(asIScriptEngine* engine) {
     // Tile structure
-    AS_CALL(engine->RegisterObjectProperty("Tile", "ImageHandle m_image",
-                                          asOFFSET(Tile, m_image)));
+    AS_CALL(engine->RegisterObjectMethod("Tile", "Handle<Image> get_image() const property",
+                                         asFUNCTION(+[](Tile* t) {
+                                             return CppHandleFromHandle<Image>(
+                                                 asGetActiveContext()->GetEngine(), t->m_image, "Handle<Image>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("Tile", "void set_image(Handle<Image>) property",
+                                         asFUNCTION(+[](Tile* t, const CppHandle& o) {
+                                             HandleFromCppHandle<Image>(&o, t->m_image);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectProperty("Tile", "Region m_region",
                                           asOFFSET(Tile, m_region)));
     AS_CALL(engine->RegisterObjectProperty("Tile", "uint32 m_id",
@@ -599,25 +644,29 @@ void bindTilemap(asIScriptEngine* engine) {
                                          asMETHOD(Tilemap, GetTileSize),
                                          asCALL_THISCALL));
     
-    // TilemapHandle
-    bindHandleType<Tilemap>(engine, "TilemapHandle", "Tilemap");
-    
     // TilemapManager
-    AS_CALL(engine->RegisterObjectMethod("TilemapManager", "TilemapHandle Load(const string& in, bool)",
-                                         asFUNCTION(+[](TilemapManager* mgr, const std::string& filename, bool force) -> TilemapHandle {
-                                             return mgr->Load(Path(filename), force);
+    AS_CALL(engine->RegisterObjectMethod("TilemapManager", "Handle<Tilemap> Load(const string& in, bool)",
+                                         asFUNCTION(+[](TilemapManager* mgr, const std::string& filename, bool force) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Tilemap>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Load(Path(filename), force), "Handle<Tilemap>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("TilemapManager", "TilemapHandle Find(const string& in)",
-                                         asFUNCTION(+[](TilemapManager* mgr, const std::string& filename) -> TilemapHandle {
-                                             return mgr->Find(Path(filename));
+    AS_CALL(engine->RegisterObjectMethod("TilemapManager", "Handle<Tilemap> Find(const string& in)",
+                                         asFUNCTION(+[](TilemapManager* mgr, const std::string& filename) -> CppHandle {
+                                             return CppHandleFromHandleCopy<Tilemap>(
+                                                 asGetActiveContext()->GetEngine(),
+                                                 mgr->Find(Path(filename)), "Handle<Tilemap>");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
     
     // TilemapComponent
-    AS_CALL(engine->RegisterObjectMethod("TilemapComponent", "TilemapHandle GetHandle() const",
-                                         asMETHOD(TilemapComponent, GetHandle),
-                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("TilemapComponent", "Handle<Tilemap> get_handle() const property",
+                                         asFUNCTION(+[](TilemapComponent* c) {
+                                             return CppHandleFromHandle<Tilemap>(
+                                                 asGetActiveContext()->GetEngine(), c->GetHandle(), "Handle<Tilemap>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     
     // TilemapComponentManager
     AS_CALL(engine->RegisterObjectMethod("TilemapComponentManager", "void Update()",
@@ -632,9 +681,13 @@ void bindUI(asIScriptEngine* engine) {
                                           asOFFSET(UIText, m_resize_by_text)));
     AS_CALL(engine->RegisterObjectProperty("UIText", "Color m_color",
                                           asOFFSET(UIText, m_color)));
-    AS_CALL(engine->RegisterObjectMethod("UIText", "void SetFont(FontHandle)",
-                                         asMETHOD(UIText, SetFont),
-                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("UIText", "void SetFont(Handle<Font>)",
+                                         asFUNCTION(+[](UIText* text, const CppHandle& h) {
+                                             Handle<Font> font;
+                                             HandleFromCppHandle<Font>(&h, font);
+                                             text->SetFont(font);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod("UIText", "void ChangeText(const string& in)",
                                          asMETHOD(UIText, ChangeText),
                                          asCALL_THISCALL));
@@ -649,8 +702,18 @@ void bindUI(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     
     // UIWidget
-    AS_CALL(engine->RegisterObjectProperty("UIWidget", "UIAnchorFlags m_anchor",
-                                          asOFFSET(UIWidget, m_anchor)));
+    AS_CALL(engine->RegisterObjectMethod("UIWidget", "Flags<UIAnchor> get_anchor() const property",
+                                         asFUNCTION(+[](UIWidget* w) {
+                                             return CppFlagsFromFlags<UIAnchor>(
+                                                 asGetActiveContext()->GetEngine(), w->m_anchor,
+                                                 "Flags<UIAnchor>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("UIWidget", "void set_anchor(const Flags<UIAnchor>& in) property",
+                                         asFUNCTION(+[](UIWidget* w, const CppFlags& o) {
+                                             FlagsFromCppFlags<UIAnchor>(&o, w->m_anchor);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectProperty("UIWidget", "bool m_use_clip",
                                           asOFFSET(UIWidget, m_use_clip)));
     AS_CALL(engine->RegisterObjectProperty("UIWidget", "bool m_disabled",
@@ -726,8 +789,18 @@ void bindPhysics(asIScriptEngine* engine) {
     // HitResult
     AS_CALL(engine->RegisterObjectProperty("HitResult", "float m_t",
                                           asOFFSET(HitResult, m_t)));
-    AS_CALL(engine->RegisterObjectProperty("HitResult", "HitTypeFlags m_flags",
-                                          asOFFSET(HitResult, m_flags)));
+    AS_CALL(engine->RegisterObjectMethod("HitResult", "Flags<HitType> get_flags() const property",
+                                         asFUNCTION(+[](HitResult* h) {
+                                             return CppFlagsFromFlags<HitType>(
+                                                 asGetActiveContext()->GetEngine(), h->m_flags,
+                                                 "Flags<HitType>");
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("HitResult", "void set_flags(const Flags<HitType>& in) property",
+                                         asFUNCTION(+[](HitResult* h, const CppFlags& o) {
+                                             FlagsFromCppFlags<HitType>(&o, h->m_flags);
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectProperty("HitResult", "Vec2 m_normal",
                                           asOFFSET(HitResult, m_normal)));
     AS_CALL(engine->RegisterObjectProperty("HitResult", "bool m_is_initial_overlap",
@@ -742,12 +815,20 @@ void bindPhysics(asIScriptEngine* engine) {
                                           asOFFSET(OverlapResult, m_dst_entity)));
     
     // PhysicsShape
-    AS_CALL(engine->RegisterObjectMethod("PhysicsShape", "const Rect@ AsRect() const",
-                                         asMETHOD(PhysicsShape, AsRect),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("PhysicsShape", "const Circle@ AsCircle() const",
-                                         asMETHOD(PhysicsShape, AsCircle),
-                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("PhysicsShape", "const Rect& AsRect() const",
+                                         asFUNCTION(+[](const PhysicsShape* shape) -> const Rect& {
+                                             static Rect empty_rect{};
+                                             const Rect* rect = shape->AsRect();
+                                             return rect ? *rect : empty_rect;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("PhysicsShape", "const Circle& AsCircle() const",
+                                         asFUNCTION(+[](const PhysicsShape* shape) -> const Circle& {
+                                             static Circle empty_circle{};
+                                             const Circle* circle = shape->AsCircle();
+                                             return circle ? *circle : empty_circle;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod("PhysicsShape", "PhysicsShapeType GetType() const",
                                          asMETHOD(PhysicsShape, GetType),
                                          asCALL_THISCALL));
@@ -788,12 +869,26 @@ void bindPhysics(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectMethod("PhysicsScene", "void RemoveActor(PhysicsActor@)",
                                          asMETHOD(PhysicsScene, RemoveActor),
                                          asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("PhysicsScene", "uint32 Sweep(const PhysicsActor& in, const Vec2& in, float, SweepResult[]& out, uint32)",
-                                         asMETHODPR(PhysicsScene, Sweep, (const PhysicsActor&, const Vec2&, float, SweepResult*, size_t), uint32_t),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("PhysicsScene", "uint32 Overlap(const PhysicsActor& in, OverlapResult[]& out, uint32)",
-                                         asMETHODPR(PhysicsScene, Overlap, (const PhysicsActor&, OverlapResult*, size_t), uint32_t),
-                                         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("PhysicsScene", "uint32 Sweep(const PhysicsActor& in, const Vec2& in, float, array<SweepResult>@)",
+                                         asFUNCTION(+[](PhysicsScene* scene, const PhysicsActor& actor, const Vec2& dir, float dist, CScriptArray* arr) -> asUINT {
+                                             if (!arr) return 0;
+                                             uint32_t cnt = scene->Sweep(actor, dir, dist,
+                                                                        static_cast<SweepResult*>(arr->GetBuffer()),
+                                                                        static_cast<size_t>(arr->GetSize()));
+                                             arr->Resize(cnt);
+                                             return cnt;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("PhysicsScene", "uint32 Overlap(const PhysicsActor& in, array<OverlapResult>@)",
+                                         asFUNCTION(+[](PhysicsScene* scene, const PhysicsActor& actor, CScriptArray* arr) -> asUINT {
+                                             if (!arr) return 0;
+                                             uint32_t cnt = scene->Overlap(actor,
+                                                                          static_cast<OverlapResult*>(arr->GetBuffer()),
+                                                                          static_cast<size_t>(arr->GetSize()));
+                                             arr->Resize(cnt);
+                                             return cnt;
+                                         }),
+                                         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod("PhysicsScene", "bool Overlap(const PhysicsActor& in, const PhysicsActor& in) const",
                                          asMETHODPR(PhysicsScene, Overlap, (const PhysicsActor&, const PhysicsActor&) const, bool),
                                          asCALL_THISCALL));
@@ -858,9 +953,11 @@ void bindRenderer(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectMethod("Renderer", "void FillRect(const Rect& in, const Color& in, float, bool)",
                                          asMETHODPR(Renderer, FillRect, (const Rect&, const Color&, float, bool), void),
                                          asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Renderer", "void DrawImage(const Image& in, const Region& in, const Region& in, const Color& in, Degrees, const Vec2& in, FlipFlags, float, bool)",
-                                         asFUNCTION(+[](Renderer* r, const Image& img, const Region& src, const Region& dst, const Color& color, Degrees rot, const Vec2& center, Flags<Flip> flip, float z_order, bool use_camera) {
-                                             r->DrawImage(img, src, dst, color, rot, center, flip, z_order, use_camera);
+    AS_CALL(engine->RegisterObjectMethod("Renderer", "void DrawImage(const Image& in, const Region& in, const Region& in, const Color& in, Degrees, const Vec2& in, const Flags<Flip>& in, float, bool)",
+                                         asFUNCTION(+[](Renderer* r, const Image& img, const Region& src, const Region& dst, const Color& color, Degrees rot, const Vec2& center, const CppFlags& flip, float z_order, bool use_camera) {
+                                             Flags<Flip> cpp_flip;
+                                             FlagsFromCppFlags<Flip>(&flip, cpp_flip);
+                                             r->DrawImage(img, src, dst, color, rot, center, cpp_flip, z_order, use_camera);
                                          }),
                                          asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod("Renderer", "void DrawImage9Grid(const Image& in, const Region& in, const Region& in, const Color& in, const Image9Grid& in, float, float, bool)",
@@ -1081,6 +1178,15 @@ void bindAssetsManager(asIScriptEngine* engine) {
 void bindMath(asIScriptEngine* engine) {
     bindTVec2Type<float>(engine, "Vec2", "float");
     bindTVec2Type<uint32_t>(engine, "Vec2UI", "uint32");
+    AS_CALL(engine->SetDefaultNamespace("TL::Vec2"));
+    AS_CALL(engine->RegisterGlobalProperty("const Vec2 ZERO", &TVec2<float>::ZERO));
+    AS_CALL(engine->RegisterGlobalProperty("const Vec2 UNIT_X", &TVec2<float>::X_UNIT));
+    AS_CALL(engine->RegisterGlobalProperty("const Vec2 UNIT_Y", &TVec2<float>::Y_UNIT));
+    AS_CALL(engine->SetDefaultNamespace("TL::Vec2UI"));
+    AS_CALL(engine->RegisterGlobalProperty("const Vec2UI ZERO", &TVec2<uint32_t>::ZERO));
+    AS_CALL(engine->RegisterGlobalProperty("const Vec2UI UNIT_X", &TVec2<uint32_t>::X_UNIT));
+    AS_CALL(engine->RegisterGlobalProperty("const Vec2UI UNIT_Y", &TVec2<uint32_t>::Y_UNIT));
+    AS_CALL(engine->SetDefaultNamespace("TL"));
     bindDegrees(engine);
     bindRadians(engine);
     bindColor(engine);
@@ -1090,6 +1196,12 @@ void bindMath(asIScriptEngine* engine) {
 }
 
 void bindAllTypes(asIScriptEngine* engine) {
+    // Optional<T> (CppOptional) methods
+    bindOptionalType(engine);
+    // Flags<T> (CppFlags) template methods
+    bindFlagsType(engine);
+    // Handle<T> (CppHandle) template methods
+    bindHandleType(engine);
     // bind schema generate types
     BindSchema(engine);
     // Then register all methods, properties, etc. (actual binding)
@@ -1115,16 +1227,7 @@ void bindAllTypes(asIScriptEngine* engine) {
     bindTrigger(engine);
     bindContext(engine);
     bindAssetsManager(engine);
-    
-    // Bind Flags types
-    bindFlagsType<HitType>(engine, "HitTypeFlags");
-    bindFlagsType<UIAnchor>(engine, "UIAnchorFlags");
-    bindFlagsType<Flip>(engine, "FlipFlags");
-    
-    // Register global function to access ImageManager
-    // AS_CALL(engine->RegisterGlobalFunction("ImageManager@ GetImageManager()",
-    //                                        asFUNCTION(GetImageManager),
-    //                                        asCALL_CDECL));
+    // Handle<T> opImplCast is registered generically in bindHandleType
 }
 
 void BindTLModule(asIScriptEngine* engine) {

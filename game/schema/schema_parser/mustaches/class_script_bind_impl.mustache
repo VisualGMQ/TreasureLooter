@@ -1,9 +1,7 @@
 void register{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
     {{#is_asset}}
     // Register asset type as reference type
-    AS_CALL(engine->RegisterObjectType("{{type}}", 0, asOBJ_REF));
-    // Register Handle type for asset
-    registerHandleType<{{type}}>(engine, "{{type}}Handle");
+    AS_CALL(engine->RegisterObjectType("{{type}}", 0, asOBJ_REF | asOBJ_NOCOUNT));
     {{/is_asset}}
     {{^is_asset}}
     {
@@ -11,16 +9,35 @@ void register{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
         AS_CALL(engine->RegisterObjectType("{{type}}",
                                            sizeof({{type}}),
                                            (is_pod ? asOBJ_POD : 0) | asOBJ_VALUE | asGetTypeTraits<{{type}}>()));
+        AS_CALL(engine->RegisterObjectBehaviour("{{type}}", asBEHAVE_CONSTRUCT,
+                                               "void f()", WRAP_CON({{type}}, ()),
+                                               asCALL_GENERIC));
+        AS_CALL(engine->RegisterObjectBehaviour("{{type}}", asBEHAVE_DESTRUCT,
+                                               "void f()",
+                                               asFUNCTION(+[]({{type}}* obj) { obj->~{{type}}(); }),
+                                               asCALL_CDECL_OBJFIRST));
     }
     {{/is_asset}}
 }
 
 void bind{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
-    {{#classes}}
+    {{#property_entries}}
     AS_CALL(engine->RegisterObjectProperty("{{{type}}}", "{{{property_type}}} {{{property_name}}}", asOFFSET({{{type}}}, {{{property_name}}})));
-    {{/classes}}
-    {{#is_asset}}
-    // Bind Handle methods
-    bindHandleType<{{type}}>(engine, "{{type}}Handle", "{{type}}");
-    {{/is_asset}}
+    {{/property_entries}}
+    {{#optional_entries}}
+    {{{getter_reg}}}
+    {{{setter_reg}}}
+    {{/optional_entries}}
+    {{#flags_entries}}
+    {{{getter_reg}}}
+    {{{setter_reg}}}
+    {{/flags_entries}}
+    {{#array_entries}}
+    {{{getter_reg}}}
+    {{{setter_reg}}}
+    {{/array_entries}}
+    {{#handle_entries}}
+    {{{getter_reg}}}
+    {{{setter_reg}}}
+    {{/handle_entries}}
 }

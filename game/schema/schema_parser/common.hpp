@@ -18,6 +18,7 @@ enum IncludeHint {
     // game related
     Handle = 0x10,
     Asset = 0x20,
+    Flags = 0x40,
 };
 
 struct PropertyInfo {

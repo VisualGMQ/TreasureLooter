@@ -1,4 +1,4 @@
-#include "engine/script.hpp"
+#include "engine/script/script.hpp"
 #include "angelscript.h"
 #include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
@@ -14,8 +14,8 @@
 #include "scriptmath/scriptmathcomplex.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include "weakref/weakref.h"
-#include "engine/script_macros.hpp"
-#include "engine/script_binding.hpp"
+#include "engine/script/script_macros.hpp"
+#include "engine/script/script_binding.hpp"
 #include <cassert>
 
 ScriptBinaryData::ScriptBinaryData(const Path& filename,
@@ -132,7 +132,6 @@ Script::Script(ScriptBinaryDataHandle handle) {
     TL_RETURN_IF_NULL_WITH_LOG(m_class_instance, LOGE,
                                "[AngelScript]: class {} can't instantiate",
                                "MyClass");
-    m_class_instance->AddRef();
 }
 
 void Script::Update() {

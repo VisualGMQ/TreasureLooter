@@ -6,7 +6,7 @@
 #include "engine/level.hpp"
 #include "engine/log.hpp"
 #include "engine/relationship.hpp"
-#include "engine/script.hpp"
+#include "engine/script/script.hpp"
 #include "engine/sdl_call.hpp"
 #include "engine/serialize.hpp"
 #include "engine/sprite.hpp"

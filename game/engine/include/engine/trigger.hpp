@@ -38,6 +38,7 @@ class Trigger {
 public:
     friend class TriggerComponentManager;
 
+    Trigger() = default;
     Trigger(Entity, const TriggerInfo&);
     Trigger(Entity, const Circle&, TriggerEventType event_type,
             const CollisionGroup& collision_layer,
@@ -57,7 +58,7 @@ public:
     void Update();
 
 private:
-    PhysicsActor* m_actor;
+    PhysicsActor* m_actor = nullptr;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 

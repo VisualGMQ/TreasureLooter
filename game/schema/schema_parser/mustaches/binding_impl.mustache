@@ -6,6 +6,12 @@ void RegisterSchemaType(asIScriptEngine* engine) {
     {{/registers}}
 }
 
+void BindSchemaHandleTypeOpImplCast(asIScriptEngine* engine) {
+    {{#handle_casts}}
+    {{{handle_cast}}}
+    {{/handle_casts}}
+}
+
 void BindSchema(asIScriptEngine* engine) {
     {{#bindings}}
     {{{binding}}}
