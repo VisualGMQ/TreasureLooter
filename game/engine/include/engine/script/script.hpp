@@ -6,7 +6,7 @@
 
 class ScriptBinaryData {
 public:
-    explicit ScriptBinaryData(const Path&, asIScriptEngine*);
+    ScriptBinaryData(const Path&, asIScriptEngine*);
     ~ScriptBinaryData();
 
     const std::vector<char>& GetContent() const;
@@ -29,11 +29,12 @@ private:
     asIScriptEngine* m_engine{};
 
     void bindModule();
+    void buildSharedModule();
 };
 
 class Script {
 public:
-    explicit Script(ScriptBinaryDataHandle);
+    Script(Entity entity, ScriptBinaryDataHandle);
     ~Script();
 
     void Update();

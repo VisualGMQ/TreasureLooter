@@ -17,6 +17,7 @@
 #include "engine/script/script_macros.hpp"
 #include "engine/script/script_binding.hpp"
 #include <cassert>
+#include <cstring>
 
 ScriptBinaryData::ScriptBinaryData(const Path& filename,
                                    asIScriptEngine* engine) {
@@ -27,6 +28,12 @@ ScriptBinaryData::ScriptBinaryData(const Path& filename,
     AS_CALL_WITH_RETURN(builder.StartNewModule(engine, "module"));
 
     std::string filename_str = filename.string();
+    static constexpr const char* kTLBehaviorExternal =
+        "namespace TL { external shared class Behavior; }";
+    AS_CALL_WITH_RETURN_AND_MSG(
+        builder.AddSectionFromMemory("tl_behavior_external", kTLBehaviorExternal,
+                                     std::strlen(kTLBehaviorExternal)),
+        "load tl behavior external script failed");
     AS_CALL_WITH_RETURN_AND_MSG(
         builder.AddSectionFromMemory(filename_str.c_str(), m_content.data(),
                                      m_content.size()),
@@ -70,6 +77,8 @@ ScriptBinaryDataManager::ScriptBinaryDataManager() {
     RegisterScriptMathComplex(m_engine);
 
     bindModule();
+
+    buildSharedModule();
 }
 
 void ScriptBinaryDataManager::bindModule() {
@@ -92,6 +101,23 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
                  std::make_unique<ScriptBinaryData>(filename, m_engine));
 }
 
+void ScriptBinaryDataManager::buildSharedModule() {
+    auto behavior_io =
+        IOStream::CreateFromFile(Path("script/TLBehavior.as"), IOMode::Read, true);
+    TL_RETURN_IF_NULL_WITH_LOG(behavior_io, LOGE,
+                               "script/TLBehavior.as not found");
+    std::vector<char> behavior_content = behavior_io->Read();
+
+    CScriptBuilder builder;
+    AS_CALL_WITH_RETURN(builder.StartNewModule(m_engine, "shared"));
+    AS_CALL_WITH_RETURN_AND_MSG(
+        builder.AddSectionFromMemory("tl_behavior", behavior_content.data(),
+                                     behavior_content.size()),
+        "load tl behavior shared script failed");
+    AS_CALL_WITH_RETURN_AND_MSG(builder.BuildModule(),
+                                "build shared module failed");
+}
+
 asIScriptEngine* ScriptBinaryDataManager::GetUnderlyingEngine() {
     return m_engine;
 }
@@ -106,7 +132,7 @@ void ScriptComponentManager::Update() {
     }
 }
 
-Script::Script(ScriptBinaryDataHandle handle) {
+Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
     TL_RETURN_IF_FALSE(handle);
 
     auto engine =
@@ -128,7 +154,29 @@ Script::Script(ScriptBinaryDataHandle handle) {
     TL_RETURN_IF_NULL_WITH_LOG(m_ctx, LOGE,
                                "[AngelScript]: script context create failed");
 
-    m_class_instance = (asIScriptObject*)engine->CreateScriptObject(type);
+    asIScriptFunction* factory =
+        type->GetFactoryByDecl("MyClass@ f(TL::Entity)");
+    TL_RETURN_IF_NULL_WITH_LOG(factory, LOGE,
+                               "[AngelScript]: class {} missing ctor(Entity)",
+                               "MyClass");
+
+    m_ctx->Prepare(factory);
+    m_ctx->SetArgObject(0, &entity);
+    int ctor_r = m_ctx->Execute();
+    if (ctor_r != asEXECUTION_FINISHED) {
+        if (ctor_r == asEXECUTION_EXCEPTION) {
+            LOGE("[AngelScript Execute] An exception '{}' occurred",
+                 m_ctx->GetExceptionString());
+        }
+        return;
+    }
+
+    m_class_instance =
+        *static_cast<asIScriptObject**>(m_ctx->GetAddressOfReturnValue());
+    if (m_class_instance) {
+        AS_CALL(m_class_instance->AddRef());
+    }
+
     TL_RETURN_IF_NULL_WITH_LOG(m_class_instance, LOGE,
                                "[AngelScript]: class {} can't instantiate",
                                "MyClass");
@@ -147,6 +195,7 @@ void Script::Update() {
 
 void Script::callMethod(asIScriptFunction* fn) {
     TL_RETURN_IF_NULL(fn);
+    TL_RETURN_IF_NULL(m_class_instance);
 
     m_ctx->Prepare(fn);
     m_ctx->SetObject(m_class_instance);

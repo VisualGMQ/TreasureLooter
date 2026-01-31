@@ -37,6 +37,7 @@ Copy `game/assets` folder to `android/app/src/main/assets`.
 ```bash
 cp -r game android/app/jni
 cp -r game/assets android/app/src/main/assets/
+cp -r game/script android/app/src/main/assets/
 ```
 
 Then use `gradle` to build (or use AndroidStudio)

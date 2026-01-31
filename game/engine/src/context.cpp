@@ -300,8 +300,8 @@ void GameContext::Update() {
             ScriptBinaryDataHandle handle =
                 m_assets_manager->GetManager<ScriptBinaryData>().Load(
                     "script/test.as");
-            m_script_component_manager->RegisterEntity(
-                m_level_manager->GetCurrentLevel()->GetRootEntity(), handle);
+            Entity entity = m_level_manager->GetCurrentLevel()->GetRootEntity();
+            m_script_component_manager->RegisterEntity(entity, entity, handle);
             first_execute = true;
         }
     }
