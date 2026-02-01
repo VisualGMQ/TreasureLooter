@@ -15,6 +15,11 @@ public:
     Handle(UUID uuid, T* data, IAssetManager* manager)
         : m_data{data}, m_uuid{uuid}, m_manager{manager} {}
 
+    Handle(const Handle&) = default;
+    Handle& operator=(const Handle&) = default;
+    Handle(Handle&&) = default;
+    Handle& operator=(Handle&&) = default;
+
     operator bool() const { return m_data; }
 
     T* operator->() { return m_data; }

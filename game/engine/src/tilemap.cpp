@@ -205,7 +205,7 @@ TilemapHandle TilemapManager::Load(const Path& filename, bool force) {
 }
 
 TilemapComponent::TilemapComponent(Entity entity,
-                                   const TilemapInfo& create_info)
+                                   const TilemapDefinition& create_info)
     : m_handle{create_info.m_tilemap} {
     if (!m_handle) {
         return;

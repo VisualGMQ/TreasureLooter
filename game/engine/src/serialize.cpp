@@ -868,7 +868,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 rapidxml::xml_document<>& doc,
                                 const AnimationPlayer& payload,
                                 const std::string& name) {
-    AnimationPlayerCreateInfo create_info;
+    AnimationPlayerDefinition create_info;
     create_info.m_auto_play = payload.IsAutoPlayEnabled();
     create_info.m_animation = payload.GetAnimation();
     create_info.m_loop = payload.GetLoopCount();
@@ -879,7 +879,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  AnimationPlayer& payload) {
-    AnimationPlayerCreateInfo create_info;
+    AnimationPlayerDefinition create_info;
     Deserialize(ctx, node, create_info);
 
     payload.SetLoop(create_info.m_loop);

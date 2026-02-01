@@ -1,4 +1,4 @@
-<MotorConfig>
+<GameplayConfig>
 	<uuid>f6ec0bbb-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<sprite_sheet>assets/Characters/Slime2/Slime2.png</sprite_sheet>
@@ -10,5 +10,4 @@
 		<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
 		<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
 	</payload>
-</MotorConfig>
-
+</GameplayConfig>

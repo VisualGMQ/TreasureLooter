@@ -5,7 +5,7 @@
 #include "engine/profile.hpp"
 #include "engine/sprite.hpp"
 
-AnimationPlayer::AnimationPlayer(const AnimationPlayerCreateInfo& create_info) {
+AnimationPlayer::AnimationPlayer(const AnimationPlayerDefinition& create_info) {
     EnableAutoPlay(create_info.m_auto_play);
     SetLoop(create_info.m_loop);
     SetRate(create_info.m_rate);

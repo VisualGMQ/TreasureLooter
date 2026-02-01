@@ -4,6 +4,7 @@
 
 #include "engine/context.hpp"
 
+/*
 void EnemyIdleState::OnEnter(EnemyMotorContext* state) {
     auto sprite = state->GetSprite();
     switch (state->GetDirection()) {
@@ -63,3 +64,4 @@ void EnemyMoveState::OnUpdate(EnemyMotorContext* state) {
         state->Move(dir, CURRENT_CONTEXT.m_time->GetElapseTime());
     }
 }
+*/

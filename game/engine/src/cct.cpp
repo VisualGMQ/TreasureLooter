@@ -5,7 +5,7 @@
 #include "engine/imgui_id_generator.hpp"
 #include "engine/profile.hpp"
 
-CharacterController::CharacterController(Entity entity, const CCT& create_info)
+CharacterController::CharacterController(Entity entity, const CCTDefinition& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
     m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(
         entity, create_info.m_physics_actor);

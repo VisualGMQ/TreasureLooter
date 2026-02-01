@@ -12,7 +12,6 @@
 
 class Camera;
 class Image;
-class Sprite;
 
 struct Image9Grid {
     float left = 0;

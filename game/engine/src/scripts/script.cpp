@@ -69,7 +69,7 @@ ScriptBinaryDataManager::ScriptBinaryDataManager() {
 
     RegisterStdString(m_engine);
     RegisterScriptAny(m_engine);
-    RegisterScriptArray(m_engine, false);
+    RegisterScriptArray(m_engine, true);
     RegisterScriptDictionary(m_engine);
     RegisterScriptHandle(m_engine);
     RegisterScriptWeakRef(m_engine);

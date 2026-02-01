@@ -103,7 +103,7 @@ void SaveEntity(Entity entity) {
     }
 
     if (auto animator = CURRENT_CONTEXT.m_animation_player_manager->Get(entity)) {
-        AnimationPlayerCreateInfo create_info;
+        AnimationPlayerDefinition create_info;
         create_info.m_auto_play = animator->IsAutoPlayEnabled();
         create_info.m_loop = animator->GetLoopCount();
         create_info.m_rate = animator->GetRate();
@@ -113,7 +113,7 @@ void SaveEntity(Entity entity) {
     }
 
     if (auto cct = CURRENT_CONTEXT.m_cct_manager->Get(entity)) {
-        CCT prefab_cct;
+        CCTDefinition prefab_cct;
         prefab_cct.m_min_disp = cct->GetMinDisp();
         prefab_cct.m_skin = cct->GetSkin();
         
@@ -124,35 +124,23 @@ void SaveEntity(Entity entity) {
     }
 
     if (auto trigger = CURRENT_CONTEXT.m_trigger_component_manager->Get(entity)) {
-        TriggerInfo trigger_info;
+        TriggerDefinition trigger_info;
         trigger_info.m_event_type = trigger->GetEventType();
         trigger_info.m_trig_every_frame_when_touch = trigger->IsTriggerEveryFrameWhenTouch();
         trigger_info.m_physics_actor = prefab_handle->m_cct->m_physics_actor;
         prefab_handle->m_trigger = trigger_info;
     }
 
-    if (auto motor = CURRENT_CONTEXT.m_motor_manager->Get(entity)) {
-        if (auto character_motor = dynamic_cast<CharacterMotorContext*>(motor)) {
-            MotorConfig config;
-            config.m_faceset = character_motor->m_faceset_image;
-            config.m_move_down_animation = character_motor->m_move_down_animation;
-            config.m_move_left_animation = character_motor->m_move_left_animation;
-            config.m_move_right_animation = character_motor->m_move_right_animation;
-            config.m_move_up_animation = character_motor->m_move_up_animation;
-            config.m_speed = character_motor->m_move_speed;
-            config.m_sprite_sheet = character_motor->m_sprite_sheet;
-            config.m_type = dynamic_cast<PlayerMotorContext*>(character_motor) ? MotorType::Player : MotorType::Enemy;
-            config.m_weapon_entity = 0;
-
-            *prefab_handle->m_motor_config.Get() = config;
-        }
+    if (auto motor = CURRENT_CONTEXT.m_gameplay_config_manager->Get(entity)) {
+        GameplayConfig config;
+        *prefab_handle->m_gameplay_config.Get() = config;
     }
 
     if (auto tilemap = CURRENT_CONTEXT.m_tilemap_component_manager->Get(entity)) {
-        TilemapInfo tilemap_info;
-        tilemap_info.m_tilemap = tilemap->GetHandle();
-        tilemap_info.m_position = {}; // TODO
-        prefab_handle->m_tilemap = tilemap_info;
+        TilemapDefinition tilemap_def;
+        tilemap_def.m_tilemap = tilemap->GetHandle();
+        tilemap_def.m_position = {}; // TODO
+        prefab_handle->m_tilemap = tilemap_def;
     }
 
     SaveVariantAsset(prefab_handle);

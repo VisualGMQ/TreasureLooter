@@ -225,7 +225,7 @@ UIWidget::UIWidget() {
     m_old_transform.m_size = Vec2::ZERO;
 }
 
-UIWidget::UIWidget(UIWidgetInfoHandle info) {
+UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
     m_old_transform.m_size = Vec2::ZERO;
 
     m_selected = info->m_selected;

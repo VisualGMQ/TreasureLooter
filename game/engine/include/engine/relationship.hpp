@@ -5,6 +5,8 @@
 
 class Transform;
 
+using Relationship = RelationshipDefinition;
+
 class RelationshipManager : public ComponentManager<Relationship> {
 public:
     void Update();

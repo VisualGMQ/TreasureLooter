@@ -1,7 +1,9 @@
 #include "engine/script/script_handle_binding.hpp"
+#include "angelscript.h"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <string_view>
 
 static_assert(sizeof(Handle<uint8_t>) <= kCppHandleStorageSize,
@@ -15,19 +17,29 @@ static_assert(sizeof(Handle<uint8_t>) <= kCppHandleStorageSize,
     } while (0)
 
 CppHandle::CppHandle(asITypeInfo* type_info) : m_type_info{type_info} {
-    AS_INNER_CALL(type_info->AddRef(), "type_info add ref failed");
-    assert(type_info->GetName() == std::string_view{"Handle"});
+    if (type_info) {
+        AS_INNER_CALL(type_info->AddRef(), "type_info add ref failed");
+        assert(type_info->GetName() == std::string_view{"Handle"});
+    }
     std::memset(m_storage, 0, kCppHandleStorageSize);
 }
 
 CppHandle::CppHandle(asITypeInfo* type_info, void* handle_ptr)
     : m_type_info{type_info} {
-    AS_INNER_CALL(type_info->AddRef(), "type_info add ref failed");
-    assert(type_info->GetName() == std::string_view{"Handle"});
+    if (type_info) {
+        AS_INNER_CALL(type_info->AddRef(), "type_info add ref failed");
+        assert(type_info->GetName() == std::string_view{"Handle"});
+    }
     std::memset(m_storage, 0, kCppHandleStorageSize);
     if (handle_ptr) {
         std::memcpy(m_storage, handle_ptr, sizeof(Handle<uint8_t>));
     }
+}
+
+CppHandle::CppHandle(const CppHandle& other) : m_type_info{other.m_type_info} {
+    if (m_type_info)
+        m_type_info->AddRef();
+    std::memcpy(m_storage, other.m_storage, kCppHandleStorageSize);
 }
 
 CppHandle::~CppHandle() {
@@ -41,6 +53,13 @@ void* CppHandle::Get() const {
 
 void* CppHandle::GetHandlePtr() const {
     return const_cast<char*>(m_storage);
+}
+
+CppHandle& CppHandle::opAssign(const CppHandle& other) {
+    if (this != &other)
+        std::memcpy(GetHandlePtr(), other.GetHandlePtr(),
+                    sizeof(kCppHandleStorageSize));
+    return *this;
 }
 
 bool CppHandle::opEquals(const CppHandle& other) const {
@@ -87,6 +106,9 @@ void registerHandleType(asIScriptEngine* engine) {
 }
 
 void bindHandleType(asIScriptEngine* engine) {
+    AS_CALL(engine->RegisterObjectMethod(
+        "Handle<T>", "Handle<T>& opAssign(const Handle<T>& in)",
+        asMETHOD(CppHandle, opAssign), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "Handle<T>", "bool opEquals(const Handle<T>&in) const",
         asMETHOD(CppHandle, opEquals), asCALL_THISCALL));

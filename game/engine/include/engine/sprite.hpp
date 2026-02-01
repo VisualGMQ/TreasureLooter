@@ -5,6 +5,8 @@
 #include "renderer.hpp"
 #include "schema/sprite.hpp"
 
+using Sprite = SpriteDefinition;
+
 class SpriteManager : public ComponentManager<Sprite> {
 public:
     void Update();

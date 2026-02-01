@@ -81,7 +81,7 @@ void CommonContext::Initialize() {
     m_level_manager = std::make_unique<LevelManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
-    m_motor_manager = std::make_unique<MotorManager>();
+    m_gameplay_config_manager = std::make_unique<GameplayConfigManager>();
     m_bind_point_component_manager =
         std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
@@ -121,7 +121,7 @@ void CommonContext::Shutdown() {
     m_trigger_component_manager.reset();
     m_bind_point_component_manager.reset();
     m_timer_manager.reset();
-    m_motor_manager.reset();
+    m_gameplay_config_manager.reset();
     m_debug_drawer.reset();
     m_event_system.reset();
     m_cct_manager.reset();
@@ -311,7 +311,6 @@ void GameContext::logicUpdate(TimeType elapse) {
     m_touches->Update();
 
     m_script_component_manager->Update();
-    m_motor_manager->Update(elapse);
     m_bind_point_component_manager->Update();
 
     m_animation_player_manager->Update(elapse);

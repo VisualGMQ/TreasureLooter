@@ -10,16 +10,18 @@ class CppHandle {
 public:
     explicit CppHandle(asITypeInfo* type_info);
     CppHandle(asITypeInfo* type_info, void* handle_ptr);
+    CppHandle(const CppHandle& other);
     ~CppHandle();
     void* Get() const;  // returns T* (first member of Handle<T>)
     void* GetHandlePtr() const;  // returns address of Handle<T> (for copy)
+    CppHandle& opAssign(const CppHandle& other);
     bool opEquals(const CppHandle& other) const;
     bool opNotEquals(const CppHandle& other) const;
 
     // Set from a copy of Handle<T> (for return values / set from script).
     template <typename T>
     void SetFromCopy(const Handle<T>& h) {
-        *reinterpret_cast<Handle<T>*>(m_storage) = h;
+        *(Handle<T>*)(m_storage) = h;
     }
 
 private:
@@ -52,19 +54,8 @@ void bindHandleTypeOpImplCast(asIScriptEngine* engine,
 
 template <typename T>
 CppHandle CppHandleFromHandle(asIScriptEngine* engine,
-                              const Handle<T>& h,
-                              const char* handle_type_decl) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl(handle_type_decl);
-    CppHandle cpp(ti);
-    cpp.SetFromCopy(h);
-    return cpp;
-}
-
-template <typename T>
-CppHandle CppHandleFromHandleCopy(asIScriptEngine* engine,
-                                         const Handle<T>& h,
-                                         const char* handle_type_decl) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl(handle_type_decl);
+                              const Handle<T>& h) {
+    asITypeInfo* ti = engine->GetTypeInfoByName("TL::Handle");
     CppHandle cpp(ti);
     cpp.SetFromCopy(h);
     return cpp;

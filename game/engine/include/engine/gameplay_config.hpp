@@ -4,26 +4,12 @@
 #include "entity.hpp"
 #include "event.hpp"
 #include "level.hpp"
-#include "schema/motor_config.hpp"
+#include "schema/gameplay_config.hpp"
 #include "sprite.hpp"
 #include "state_machine.hpp"
 #include "ui.hpp"
 
-enum class CharacterDirection {
-    Left,
-    Right,
-    Down,
-    Up,
-};
-
-class MotorContext {
-public:
-    virtual ~MotorContext() = default;
-
-    virtual void Initialize(MotorConfigHandle) = 0;
-    virtual void Update(TimeType) = 0;
-};
-
+/*
 class CharacterMotorContext : public MotorContext {
 public:
     explicit CharacterMotorContext(Entity entity);
@@ -45,7 +31,7 @@ public:
 
     AnimationPlayer* GetAnimationPlayer();
     CharacterDirection GetDirection() const;
-    Sprite* GetSprite() const;
+    SpriteDefinition* GetSprite() const;
     Entity GetWeaponEntity() const;
 
     void Attack();
@@ -66,7 +52,7 @@ protected:
     Transform* m_transform{};
     AnimationPlayer* m_move_animation{};
     CharacterController* m_cct{};
-    Sprite* m_sprite{};
+    SpriteDefinition* m_sprite{};
     Vec2 m_weapon_dir = Vec2::X_UNIT;
 };
 
@@ -88,6 +74,7 @@ public:
 private:
     StateMachine<EnemyMotorContext> m_state_machine;
 };
+*/
 
 struct VirtualJoystick {
     Entity m_ui_entity = null_entity;
@@ -106,6 +93,7 @@ struct VirtualButton {
     void Update();
 };
 
+/*
 class PlayerMotorContext : public CharacterMotorContext {
 public:
     using CharacterMotorContext::CharacterMotorContext;
@@ -134,8 +122,9 @@ private:
     void handleVirtualAttackButtonPressedEvent(EventListenerID id, const UIMouseDownEvent&);
     void handleVirtualAttackButtonReleasedEvent(EventListenerID id, const UIMouseUpEvent&);
 };
+*/
 
-class MotorManager : public ComponentManager<MotorContext> {
+class GameplayConfigManager: public ComponentManager<GameplayConfig> {
 public:
-    void Update(TimeType);
+    void Update(TimeType) {}
 };

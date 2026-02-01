@@ -9,9 +9,8 @@
 
 template <typename T>
 inline CScriptArray* VectorToScriptArray(asIScriptEngine* engine,
-                                        const std::vector<T>& vec,
-                                        const char* array_type_decl) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl(array_type_decl);
+                                        const std::vector<T>& vec) {
+    asITypeInfo* ti = engine->GetTypeInfoByDecl("array<T>");
     if (!ti)
         return nullptr;
     CScriptArray* arr = CScriptArray::Create(ti, static_cast<asUINT>(vec.size()));

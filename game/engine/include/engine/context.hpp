@@ -20,10 +20,10 @@
 #include "timer.hpp"
 #include "trigger.hpp"
 #include "window.hpp"
+#include "gameplay_config.hpp"
 
 #include <memory>
 
-#include "motor.hpp"
 #include "ui.hpp"
 
 struct EntityInstance;
@@ -93,13 +93,13 @@ public:
     std::unique_ptr<LevelManager> m_level_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<TimerManager> m_timer_manager;
-    std::unique_ptr<MotorManager> m_motor_manager;
     std::unique_ptr<UIComponentManager> m_ui_manager;
     std::unique_ptr<BindPointsComponentManager> m_bind_point_component_manager;
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
     std::unique_ptr<ScriptComponentManager> m_script_component_manager;
+    std::unique_ptr<GameplayConfigManager> m_gameplay_config_manager;
     Camera m_camera;
 
 protected:

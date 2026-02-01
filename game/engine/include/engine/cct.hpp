@@ -6,7 +6,7 @@
 
 class CharacterController {
 public:
-    explicit CharacterController(Entity entity, const CCT& create_info);
+    explicit CharacterController(Entity entity, const CCTDefinition& create_info);
     ~CharacterController();
 
     void MoveAndSlide(const Vec2& dir);

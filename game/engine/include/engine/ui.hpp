@@ -6,8 +6,8 @@
 #include "engine/renderer.hpp"
 #include "engine/text.hpp"
 #include "input/button.hpp"
-#include "schema/relationship.hpp"
 #include "schema/ui_config.hpp"
+#include "engine/relationship.hpp"
 #include "timer.hpp"
 
 struct UIWidget;
@@ -103,7 +103,7 @@ struct UIWidget {
     Vec2 m_padding;
 
     UIWidget();
-    explicit UIWidget(UIWidgetInfoHandle);
+    explicit UIWidget(UIWidgetDefinitionHandle);
 
 private:
     Transform m_old_transform;

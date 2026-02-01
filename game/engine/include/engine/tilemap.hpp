@@ -10,7 +10,7 @@
 #include "tmxlite/Map.hpp"
 
 class TilemapTileLayer;
-class TilemapInfo;
+class TilemapDefinition;
 
 constexpr std::string_view TilemapPropertyName_EnableYSort = "enable_y_sort";
 
@@ -131,7 +131,7 @@ public:
 
 class TilemapComponent {
 public:
-    TilemapComponent(Entity, const TilemapInfo&);
+    TilemapComponent(Entity, const TilemapDefinition&);
 
     [[nodiscard]] TilemapHandle GetHandle() const;
 

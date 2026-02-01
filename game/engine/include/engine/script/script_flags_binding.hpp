@@ -32,9 +32,8 @@ void bindFlagsType(asIScriptEngine* engine);
 // Convert between Flags<EnumType> and CppFlags (for schema-generated bindings).
 template <typename EnumType>
 inline CppFlags CppFlagsFromFlags(asIScriptEngine* engine,
-                                 const Flags<EnumType>& flags,
-                                 const char* flags_type_decl) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl(flags_type_decl);
+                                 const Flags<EnumType>& flags) {
+    asITypeInfo* ti = engine->GetTypeInfoByDecl("TL::Flags");
     return CppFlags(ti, static_cast<int>(flags.Value()));
 }
 

@@ -8,6 +8,7 @@
 class CppOptional {
 public:
     explicit CppOptional(asITypeInfo* type_info);
+    CppOptional(const CppOptional& other);
     ~CppOptional();
     void SetValue(void* value);
     bool Has() const;
@@ -41,9 +42,8 @@ void bindOptionalType(asIScriptEngine* engine);
 // Convert between std::optional<T> and CppOptional (for schema-generated bindings).
 template <typename T>
 inline CppOptional OptionalFromStdOptional(asIScriptEngine* engine,
-                                           const std::optional<T>& opt,
-                                           const char* optional_type_decl) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl(optional_type_decl);
+                                           const std::optional<T>& opt) {
+    asITypeInfo* ti = engine->GetTypeInfoByDecl("TL::Optional<T>");
     CppOptional cpp_opt(ti);
     if (opt.has_value())
         cpp_opt.SetValue(const_cast<T*>(&opt.value()));

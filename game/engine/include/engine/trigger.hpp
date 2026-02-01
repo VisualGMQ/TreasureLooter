@@ -39,7 +39,7 @@ public:
     friend class TriggerComponentManager;
 
     Trigger() = default;
-    Trigger(Entity, const TriggerInfo&);
+    Trigger(Entity, const TriggerDefinition&);
     Trigger(Entity, const Circle&, TriggerEventType event_type,
             const CollisionGroup& collision_layer,
             const CollisionGroup& collision_mask);

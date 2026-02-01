@@ -60,7 +60,7 @@
         <element name="spacing" type="float" default="0"/>
     </class>
 
-    <asset name = "UIWidgetInfo" extension=".ui">
+    <asset name = "UIWidgetDefinition" extension=".ui">
         <flags name="anchor" type="UIAnchor"/>
         <element name="use_clip" type="bool" default="true"/>
         <element name="disabled" type="bool" default="false"/>

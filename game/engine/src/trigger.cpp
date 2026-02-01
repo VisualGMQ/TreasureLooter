@@ -27,7 +27,7 @@ TriggerEventType TriggerTouchEvent::GetType() const {
     return m_type;
 }
 
-Trigger::Trigger(Entity entity, const TriggerInfo& info)
+Trigger::Trigger(Entity entity, const TriggerDefinition& info)
     : m_event_type{info.m_event_type},
       m_trig_every_frame_when_touch{info.m_trig_every_frame_when_touch} {
     m_actor =

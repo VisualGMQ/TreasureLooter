@@ -1,4 +1,4 @@
-<MotorConfig>
+<GameplayConfig>
 	<uuid>20501351-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<sprite_sheet>assets/Characters/Statue/SpriteSheet.png</sprite_sheet>
@@ -14,5 +14,4 @@
 			<value>0</value>
 		</weapon_entity>
 	</payload>
-</MotorConfig>
-
+</GameplayConfig>

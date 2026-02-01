@@ -1,7 +1,7 @@
 #pragma once
 #include "state_machine.hpp"
-#include "motor.hpp"
 
+/*
 class EnemyIdleState : public State<EnemyMotorContext> {
 public:
     void OnEnter(EnemyMotorContext* state) override;
@@ -19,3 +19,4 @@ public:
 
     void OnUpdate(EnemyMotorContext* state) override;
 };
+*/

@@ -16,7 +16,6 @@
 
 class Image;
 class Tilemap;
-class Relationship;
 class CollisionGroup;
 
 // integral
