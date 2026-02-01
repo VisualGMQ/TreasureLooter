@@ -292,20 +292,6 @@ void GameContext::Initialize() {
 
 void GameContext::Update() {
     PROFILE_MAIN_FRAME();
-
-    {
-        static bool first_execute = false;
-
-        if (!first_execute) {
-            ScriptBinaryDataHandle handle =
-                m_assets_manager->GetManager<ScriptBinaryData>().Load(
-                    "script/test.as");
-            Entity entity = m_level_manager->GetCurrentLevel()->GetRootEntity();
-            m_script_component_manager->RegisterEntity(entity, entity, handle);
-            first_execute = true;
-        }
-    }
-    
     auto elapse_time = m_time->GetElapseTime();
 
     logicUpdate(elapse_time);

@@ -147,6 +147,11 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
     if (prefab.m_ui) {
         CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
+    if (!prefab.m_script.empty()) {
+        auto& mgr = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_script);
+        CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(entity, entity, handle);
+    }
 
     if (!prefab.m_children.empty()) {
         CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);

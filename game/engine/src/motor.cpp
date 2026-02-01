@@ -294,7 +294,7 @@ void PlayerMotorContext::Update(TimeType duration) {
         Attack();
     }
 
-    Move(axises, duration);
+    // Move(axises, duration);
 
     CURRENT_CONTEXT.m_camera.MoveTo(transform->m_position);
 

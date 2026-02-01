@@ -10,6 +10,11 @@ public:
         std::conditional_t<is_handle_v<T>, T, std::unique_ptr<T>>;
     using expose_type = std::conditional_t<is_handle_v<T>, T, T*>;
 
+    ComponentManager() = default;
+    ComponentManager(const ComponentManager&) = delete;
+    ComponentManager& operator=(const ComponentManager&) = delete;
+
+
     template <typename... Args>
     void RegisterEntity(Entity entity, Args&&... args) {
         if (auto it = m_components.find(entity); it != m_components.end()) {

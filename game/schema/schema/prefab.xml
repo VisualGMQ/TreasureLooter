@@ -21,6 +21,7 @@
         <option type="TilemapInfo" name="tilemap"/>
         <option type="CCT" name="cct"/>
         <option type="TriggerInfo" name="trigger"/>
+        <element type="Path" name="script" />
         <handle type="MotorConfig" name="motor_config"/>
         <handle type="UIWidgetInfo" name="ui"/>
     </asset>

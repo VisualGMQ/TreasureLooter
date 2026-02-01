@@ -31,6 +31,7 @@
 				<animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</animation>
 			</value>
 		</animation>
+		<script>script/waggo.as</script>
 		<cct>
 			<value>
 				<skin>0.100000</skin>

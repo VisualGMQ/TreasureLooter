@@ -94,13 +94,14 @@ private:
 
 class Axises {
 public:
+    Axises() = default;
     Axises(const Axis& x_axis, const Axis& y_axis);
 
     Vec2 Value(SDL_JoystickID id = 0) const;
 
 private:
-    const Axis& m_x_axis;
-    const Axis& m_y_axis;
+    const Axis* m_x_axis = nullptr;
+    const Axis* m_y_axis = nullptr;
 };
 
 class InputManager {

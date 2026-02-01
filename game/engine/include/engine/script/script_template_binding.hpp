@@ -109,16 +109,36 @@ void bindTVec2Type(asIScriptEngine* engine, const std::string& type_name,
             asMETHODPR(TVec2<T>, operator/=, (const TVec2<T>&), TVec2<T>&),
             asCALL_THISCALL));
         AS_CALL(engine->RegisterObjectMethod(
-            type_name.c_str(), "Vec2 opMul(const Vec2& in)",
+            type_name.c_str(), "Vec2 opMul(const Vec2& in) const",
             asMETHODPR_CONST(TVec2<T>, operator*, (const TVec2<T>&), TVec2<T>),
             asCALL_THISCALL));
         AS_CALL(engine->RegisterObjectMethod(
-            type_name.c_str(), "Vec2 opDiv(const Vec2& in)",
+            type_name.c_str(), "Vec2 opMul(float) const",
+            asMETHODPR_CONST(TVec2<T>, operator*, (float), TVec2<T>),
+            asCALL_THISCALL));
+        AS_CALL(engine->RegisterObjectMethod(
+            type_name.c_str(), "Vec2 opMul(double) const",
+            asFUNCTION(+[](const TVec2<T>* v, double s) -> TVec2<T> {
+                return (*v) * static_cast<float>(s);
+            }),
+            asCALL_CDECL_OBJFIRST));
+        AS_CALL(engine->RegisterObjectMethod(
+            type_name.c_str(), "Vec2 opDiv(const Vec2& in) const",
             asMETHODPR_CONST(TVec2<T>, operator/, (const TVec2<T>&), TVec2<T>),
             asCALL_THISCALL));
         AS_CALL(engine->RegisterObjectMethod(
-            type_name.c_str(), "Vec2 opMul_r(float)",
+            type_name.c_str(), "Vec2 opDiv(float) const",
+            asMETHODPR_CONST(TVec2<T>, operator/, (float), TVec2<T>),
+            asCALL_THISCALL));
+        AS_CALL(engine->RegisterObjectMethod(
+            type_name.c_str(), "Vec2 opMul_r(float) const",
             asFUNCTIONPR(operator*, (float, const TVec2<T>&), TVec2<T>),
+            asCALL_CDECL_OBJLAST));
+        AS_CALL(engine->RegisterObjectMethod(
+            type_name.c_str(), "Vec2 opMul_r(double) const",
+            asFUNCTION(+[](double s, const TVec2<T>* v) -> TVec2<T> {
+                return static_cast<float>(s) * (*v);
+            }),
             asCALL_CDECL_OBJLAST));
     }
 }

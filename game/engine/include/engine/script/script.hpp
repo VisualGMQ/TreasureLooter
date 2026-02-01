@@ -3,6 +3,7 @@
 #include "angelscript.h"
 #include "engine/asset_manager_interface.hpp"
 #include "engine/manager.hpp"
+#include "engine/timer.hpp"
 
 class ScriptBinaryData {
 public:
@@ -48,7 +49,8 @@ private:
 
     bool m_inited = false;
 
-    void callMethod(asIScriptFunction*);
+    void callNoArgMethod(asIScriptFunction*);
+    void callUpdateMethod(asIScriptFunction*, TimeType);
 };
 
 class ScriptComponentManager : public ComponentManager<Script> {

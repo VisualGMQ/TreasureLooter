@@ -147,7 +147,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
         handle.GetFilename() ? handle.GetFilename()->string() : "<anonymouse>");
 
     m_init_fn = type->GetMethodByDecl("void OnInit()");
-    m_update_fn = type->GetMethodByDecl("void OnUpdate(float)");
+    m_update_fn = type->GetMethodByDecl("void OnUpdate(TL::TimeType)");
     m_quit_fn = type->GetMethodByDecl("void OnQuit()");
 
     m_ctx = engine->CreateContext();
@@ -186,14 +186,14 @@ void Script::Update() {
     TL_RETURN_IF_FALSE(m_ctx);
 
     if (!m_inited) {
-        callMethod(m_init_fn);
+        callNoArgMethod(m_init_fn);
         m_inited = true;
     }
 
-    callMethod(m_update_fn);
+    callUpdateMethod(m_update_fn, CURRENT_CONTEXT.m_time->GetElapseTime());
 }
 
-void Script::callMethod(asIScriptFunction* fn) {
+void Script::callNoArgMethod(asIScriptFunction* fn) {
     TL_RETURN_IF_NULL(fn);
     TL_RETURN_IF_NULL(m_class_instance);
 
@@ -208,9 +208,25 @@ void Script::callMethod(asIScriptFunction* fn) {
     }
 }
 
+void Script::callUpdateMethod(asIScriptFunction* fn, TimeType delta_time) {
+    TL_RETURN_IF_NULL(fn);
+    TL_RETURN_IF_NULL(m_class_instance);
+
+    m_ctx->Prepare(fn);
+    m_ctx->SetObject(m_class_instance);
+    m_ctx->SetArgDouble(0, delta_time);
+    int r = m_ctx->Execute();
+    if (r != asEXECUTION_FINISHED) {
+        if (r == asEXECUTION_EXCEPTION) {
+            LOGE("[AngelScript Execute] An exception '{}' occurred",
+                 m_ctx->GetExceptionString());
+        }
+    }
+}
+
 Script::~Script() {
     if (m_inited) {
-        callMethod(m_quit_fn);
+        callNoArgMethod(m_quit_fn);
     }
 
     if (m_class_instance) {
