@@ -120,13 +120,13 @@ void registerAllTypes(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectType("Tilemap", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("TilemapManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("TilemapComponent", sizeof(TilemapComponent),
-                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<TilemapComponent>()));
+                                       asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("TilemapComponentManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // UI
     AS_CALL(engine->RegisterObjectType("UIText", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("UIWidget", sizeof(UIWidget),
-                                       asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<UIWidget>()));
+                                       asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("UIComponentManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Physics
@@ -218,45 +218,45 @@ void bindDegrees(asIScriptEngine* engine) {
         "Degrees", asBEHAVE_CONSTRUCT, "void f(float)",
         WRAP_CON(Degrees, (float)), asCALL_GENERIC));
     AS_CALL(engine->RegisterObjectBehaviour(
-        "Degrees", asBEHAVE_CONSTRUCT, "void f(const Radians& in)",
+        "Degrees", asBEHAVE_CONSTRUCT, "void f(Radians)",
         WRAP_CON(Degrees, (Radians)), asCALL_GENERIC));
     AS_CALL(engine->RegisterObjectMethod("Degrees", "float Value() const",
                                          asMETHOD(Degrees, Value),
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "bool opEquals(const Degrees&in) const",
+        "Degrees", "bool opEquals(Degrees) const",
         asMETHODPR(Degrees, operator==, (Degrees) const, bool),
         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "int opCmp(const Degrees&in) const",
+        "Degrees", "int opCmp(Degrees) const",
         asFUNCTION(+[](Degrees a, Degrees b) {
             return a.Value() < b.Value() ? -1 : a.Value() > b.Value() ? 1 : 0;
         }),
         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees& opAddAssign(const Degrees& in)",
+        "Degrees", "Degrees& opAddAssign(Degrees)",
         asMETHODPR(Degrees, operator+=, (Degrees), Degrees&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees& opSubAssign(const Degrees& in)",
+        "Degrees", "Degrees& opSubAssign(Degrees)",
         asMETHODPR(Degrees, operator-=, (Degrees), Degrees&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees& opMulAssign(const Degrees& in)",
+        "Degrees", "Degrees& opMulAssign(Degrees)",
         asMETHODPR(Degrees, operator*=, (Degrees), Degrees&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees& opDivAssign(const Degrees& in)",
+        "Degrees", "Degrees& opDivAssign(Degrees)",
         asMETHODPR(Degrees, operator/=, (Degrees), Degrees&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees opAdd(const Degrees& in)",
+        "Degrees", "Degrees opAdd(Degrees)",
         asMETHOD(Degrees, operator+), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees opSub(const Degrees& in)",
+        "Degrees", "Degrees opSub(Degrees)",
         asMETHOD(Degrees, operator-), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees opMul(const Degrees& in)",
+        "Degrees", "Degrees opMul(Degrees)",
         asMETHODPR_CONST(Degrees, operator*, (Degrees), Degrees),
         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Degrees", "Degrees opDiv(const Degrees& in)",
+        "Degrees", "Degrees opDiv(Degrees)",
         asMETHODPR_CONST(Degrees, operator/, (Degrees), Degrees),
         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
@@ -273,45 +273,45 @@ void bindRadians(asIScriptEngine* engine) {
         "Radians", asBEHAVE_CONSTRUCT, "void f(float)",
         WRAP_CON(Radians, (float)), asCALL_GENERIC));
     AS_CALL(engine->RegisterObjectBehaviour(
-        "Radians", asBEHAVE_CONSTRUCT, "void f(const Degrees& in)",
+        "Radians", asBEHAVE_CONSTRUCT, "void f(Degrees)",
         WRAP_CON(Radians, (Degrees)), asCALL_GENERIC));
     AS_CALL(engine->RegisterObjectMethod("Radians", "float Value() const",
                                          asMETHOD(Radians, Value),
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "bool opEquals(const Radians&in) const",
+        "Radians", "bool opEquals(Radians) const",
         asMETHODPR(Radians, operator==, (Radians) const, bool),
         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "int opCmp(const Radians&in) const",
+        "Radians", "int opCmp(Radians) const",
         asFUNCTION(+[](Radians a, Radians b) {
             return a.Value() < b.Value() ? -1 : a.Value() > b.Value() ? 1 : 0;
         }),
         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians& opAddAssign(const Radians& in)",
+        "Radians", "Radians& opAddAssign(Radians)",
         asMETHODPR(Radians, operator+=, (Radians), Radians&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians& opSubAssign(const Radians& in)",
+        "Radians", "Radians& opSubAssign(Radians)",
         asMETHODPR(Radians, operator-=, (Radians), Radians&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians& opMulAssign(const Radians& in)",
+        "Radians", "Radians& opMulAssign(Radians)",
         asMETHODPR(Radians, operator*=, (Radians), Radians&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians& opDivAssign(const Radians& in)",
+        "Radians", "Radians& opDivAssign(Radians)",
         asMETHODPR(Radians, operator/=, (Radians), Radians&), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians opAdd(const Radians& in)",
+        "Radians", "Radians opAdd(Radians)",
         asMETHOD(Radians, operator+), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians opSub(const Radians& in)",
+        "Radians", "Radians opSub(Radians)",
         asMETHOD(Radians, operator-), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians opMul(const Radians& in)",
+        "Radians", "Radians opMul(Radians)",
         asMETHODPR_CONST(Radians, operator*, (Radians), Radians),
         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Radians", "Radians opDiv(const Radians& in)",
+        "Radians", "Radians opDiv(Radians)",
         asMETHODPR_CONST(Radians, operator/, (Radians), Radians),
         asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
@@ -823,6 +823,9 @@ void bindTilemap(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectMethod("TilemapComponentManager", "void Update()",
                                          asMETHOD(TilemapComponentManager, Update),
                                          asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("TilemapComponentManager", "TilemapComponent@ Get(Entity)",
+                                         asMETHODPR(TilemapComponentManager, Get, (Entity), TilemapComponent*),
+                                         asCALL_THISCALL));
 }
 
 void bindUI(asIScriptEngine* engine) {
@@ -880,14 +883,8 @@ void bindUI(asIScriptEngine* engine) {
                                           asOFFSET(UIWidget, m_padding)));
     
     // UIComponentManager
-    AS_CALL(engine->RegisterObjectMethod("UIComponentManager", "void Update()",
-                                         asMETHOD(UIComponentManager, Update),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("UIComponentManager", "void Render()",
-                                         asMETHOD(UIComponentManager, Render),
-                                         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("UIComponentManager", "void HandleEvent()",
-                                         asMETHOD(UIComponentManager, HandleEvent),
+    AS_CALL(engine->RegisterObjectMethod("UIComponentManager", "UIWidget@ Get(Entity)",
+                                         asMETHODPR(UIComponentManager, Get, (Entity), UIWidget*),
                                          asCALL_THISCALL));
 }
 

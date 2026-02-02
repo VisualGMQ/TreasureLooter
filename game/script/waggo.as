@@ -11,15 +11,12 @@ class MyClass : TL::Behavior {
     }
 
     void OnInit() {
-        TL::Entity entity = GetEntity();
-        TL::GameContext@ ctx = TL::GetGameContext();
+        @m_anim_player = GetAnimationPlayerComponent();
+        @m_cct = GetCCTComponent();
+        @m_transform = GetTransformComponent();
+        @m_sprite = GetSpriteComponent();
 
-        TL::GameplayConfig@ config = ctx.m_gameplay_config_manager.Get(entity);
-
-        @m_anim_player = ctx.m_animation_player_manager.Get(entity);
-        @m_cct = ctx.m_cct_manager.Get(entity);
-        @m_transform = ctx.m_transform_manager.Get(entity);
-        @m_sprite = ctx.m_sprite_manager.Get(entity);
+        TL::GameplayConfig@ config = GetGameplayConfigComponent();
         m_image_sheet = config.m_sprite_sheet;
         m_move_speed = config.m_speed;
         m_move_left_anim = config.m_move_left_animation;
@@ -27,7 +24,7 @@ class MyClass : TL::Behavior {
         m_move_up_anim = config.m_move_up_animation;
         m_move_down_anim = config.m_move_down_animation;
 
-        TL::Relationship@ relationship = ctx.m_relationship_manager.Get(entity);
+        TL::Relationship@ relationship = GetRelationshipComponent();
         if (relationship !is null && !relationship.m_children.isEmpty()) {
             if (config.m_weapon_entity.HasValue()) {
                 uint32 idx = config.m_weapon_entity.Value();
@@ -39,6 +36,14 @@ class MyClass : TL::Behavior {
     }
 
     void OnUpdate(TL::TimeType delta_time) {
+		TL::AnimationPlayer@ weapon_anim = GetAnimationPlayerComponentFrom(m_weapon_entity);
+
+		if (weapon_anim !is null && !weapon_anim.IsPlaying()) {
+			TL::Transform@ transform = GetTransformComponentFrom(m_weapon_entity);
+			transform.m_rotation = TL::GetAngle(m_weapon_dir, TL::Vec2::X_UNIT);
+		}
+
+
         TL::Vec2 axises = TL::GetGameContext().m_input_manager.MakeAxises("MoveX", "MoveY")
                                     // TODO: use gamepad ID
                                     .Value(0);
@@ -64,9 +69,8 @@ class MyClass : TL::Behavior {
         }
 
         TL::AnimationPlayer@ weapon_attack_animator =
-            TL::GetGameContext().m_animation_player_manager.Get(m_weapon_entity);
-        TL::Transform@ weapon_transform =
-            TL::GetGameContext().m_transform_manager.Get(m_weapon_entity);
+            GetAnimationPlayerComponentFrom(m_weapon_entity);
+        TL::Transform@ weapon_transform = GetTransformComponentFrom(m_weapon_entity);
         if ((weapon_attack_animator !is null) && !weapon_attack_animator.IsPlaying()) {
             weapon_attack_animator.Stop();
             weapon_attack_animator.Play();
@@ -83,7 +87,7 @@ class MyClass : TL::Behavior {
                 m_anim_player.Stop();
             }
         } else {
-            TL::AnimationPlayer@ weapon_anim = TL::GetGameContext().m_animation_player_manager.Get(m_weapon_entity);
+            TL::AnimationPlayer@ weapon_anim = GetAnimationPlayerComponentFrom(m_weapon_entity);
             if ((weapon_anim !is null) && !weapon_anim.IsPlaying()) {
                 m_weapon_dir = dir.Normalize();
             }
