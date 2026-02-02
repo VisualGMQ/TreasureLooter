@@ -29,49 +29,28 @@ CppOptional::CppOptional(asITypeInfo* type_info) : m_type_info{type_info} {
 
 CppOptional::CppOptional(const CppOptional& other)
     : m_type_info{other.m_type_info},
-      m_elem_size{other.m_elem_size},
-      m_has_value{false},
-      m_owns_buffer{false} {
+      m_elem_size{other.m_elem_size} {
     m_value = nullptr;
-    if (m_type_info) m_type_info->AddRef();
-    if (!other.m_has_value) return;
-
-    int subtype_id = m_type_info->GetSubTypeId();
-    asITypeInfo* subtype = m_type_info->GetSubType();
-
-    if (subtype_id & asTYPEID_OBJHANDLE) {
-        SetValue(const_cast<void*>(static_cast<const void*>(&other.m_value)));
-    } else if ((subtype_id & ~asTYPEID_MASK_SEQNBR) &&
-               !(subtype_id & asTYPEID_OBJHANDLE)) {
-        if (subtype->GetFlags() & asOBJ_ASHANDLE) {
-            SetValue(const_cast<void*>(static_cast<const void*>(&other.m_value)));
-        } else {
-            SetValue(other.m_value);
-        }
-    } else {
-        // 基本类型：值在 other.m_value 指向的缓冲区
-        SetValue(other.m_value);
-    }
+    TL_RETURN_IF_NULL(m_type_info);
+    if (m_type_info) AS_CALL(m_type_info->AddRef());
+    TL_RETURN_IF_FALSE(other.m_has_value);
+    SetValue((void*)&other.m_value);
 }
 
 CppOptional::~CppOptional() {
     Reset();
-    if (m_type_info) m_type_info->Release();
+    if (m_type_info) AS_CALL(m_type_info->Release());
 }
 
 void CppOptional::SetValue(void* value) {
-    TL_RETURN_IF_NULL(value);
     auto subtype_id = m_type_info->GetSubTypeId();
     asIScriptEngine* engine = m_type_info->GetEngine();
-    void* storage = reinterpret_cast<void*>(&m_value);
+    void* storage = (void*)(&m_value);
 
-    if ((subtype_id & ~asTYPEID_MASK_SEQNBR) &&
-        !(subtype_id & asTYPEID_OBJHANDLE)) {
+    if ((subtype_id & ~asTYPEID_MASK_SEQNBR) && !(subtype_id & asTYPEID_OBJHANDLE)) {
         asITypeInfo* subtype = m_type_info->GetSubType();
         if (subtype->GetFlags() & asOBJ_ASHANDLE) {
-            std::string decl = std::string(subtype->GetName()) +
-                               "& opHndlAssign(const " +
-                               std::string(subtype->GetName()) + "&in)";
+            std::string decl = std::string(subtype->GetName()) + "& opHndlAssign(const " + std::string(subtype->GetName()) + "&in)";
             asIScriptFunction* func = subtype->GetMethodByDecl(decl.c_str());
             if (func) {
                 asIScriptContext* ctx = engine->RequestContext();
@@ -84,14 +63,12 @@ void CppOptional::SetValue(void* value) {
                 engine->AssignScriptObject(storage, value, subtype);
             }
         } else {
-            if (!m_has_value || !m_value) {
-                if (m_owns_buffer && m_value) {
-                    destructValueType(engine, m_value, subtype);
-                    asFreeMem(m_value);
-                }
-				m_value = asAllocMem(subtype->GetSize());
-				m_owns_buffer = true;
+            if (m_owns_buffer && m_value) {
+                destructValueType(engine, m_value, subtype);
+                asFreeMem(m_value);
             }
+            m_value = asAllocMem(subtype->GetSize());
+            m_owns_buffer = true;
             engine->AssignScriptObject(m_value, value, subtype);
         }
         m_has_value = true;
@@ -103,39 +80,38 @@ void CppOptional::SetValue(void* value) {
             engine->ReleaseScriptObject(old_ptr, m_type_info->GetSubType());
         m_has_value = true;
     } else {
-        // 基本类型：也存到堆缓冲区，使 Value() 始终返回 m_value，脚本读到的地址稳定
-        size_t prim_size =
-            engine->GetSizeOfPrimitiveType(subtype_id);
-        if (!m_has_value || !m_value) {
-            if (m_owns_buffer && m_value) {
-                asFreeMem(m_value);
-            }
-            m_value = asAllocMem(static_cast<size_t>(prim_size));
-            m_owns_buffer = true;
+        if (m_owns_buffer && m_value) {
+            asFreeMem(m_value);
         }
-        std::memcpy(m_value, value, prim_size);
+        _ = 0;
+        size_t primtype_size = engine->GetSizeOfPrimitiveType(subtype_id);
+        memcpy(&m_value, value, primtype_size);
+        m_owns_buffer = false;
         m_has_value = true;
     }
 }
 
-bool CppOptional::Has() const {
+bool CppOptional::HasValue() const {
     return m_has_value;
 }
 
 void* CppOptional::Value() const {
-    if (!m_has_value) return nullptr;
-    if (m_owns_buffer)
+    TL_RETURN_DEFAULT_IF_FALSE(m_has_value);
+    if (m_owns_buffer) {
         return m_value;
-    return const_cast<void*>(static_cast<const void*>(&m_value));
+    }
+    return (void*)&m_value;
 }
 
 void CppOptional::Reset() {
-    if (!m_has_value) return;
+    TL_RETURN_IF_FALSE(m_has_value);
     int subtype_id = m_type_info->GetSubTypeId();
     asIScriptEngine* engine = m_type_info->GetEngine();
     if (subtype_id & asTYPEID_OBJHANDLE) {
-        if (m_value)
+        if (m_value) {
             engine->ReleaseScriptObject(m_value, m_type_info->GetSubType());
+            m_value = nullptr;
+        }
     } else if ((subtype_id & ~asTYPEID_MASK_SEQNBR) &&
                !(subtype_id & asTYPEID_OBJHANDLE)) {
         asITypeInfo* subtype = m_type_info->GetSubType();
@@ -144,13 +120,11 @@ void CppOptional::Reset() {
         } else if (m_owns_buffer && m_value) {
             destructValueType(engine, m_value, subtype);
             asFreeMem(m_value);
+            m_value = nullptr;
         }
     } else {
-        // 基本类型：堆缓冲区由我们分配，需要释放
-        if (m_owns_buffer && m_value)
-            asFreeMem(m_value);
+        _ = 0;
     }
-    m_value = nullptr;
     m_has_value = false;
     m_owns_buffer = false;
 }
@@ -158,7 +132,7 @@ void CppOptional::Reset() {
 void CppOptional::destructValueType(asIScriptEngine* engine, void* ptr,
                                     asITypeInfo* subtype) {
     for (asUINT i = 0; i < subtype->GetBehaviourCount(); ++i) {
-        asEBehaviours beh = asBEHAVE_CONSTRUCT;
+        asEBehaviours beh = asBEHAVE_DESTRUCT;
         asIScriptFunction* func = subtype->GetBehaviourByIndex(i, &beh);
         if (beh != asBEHAVE_DESTRUCT || !func) continue;
         asIScriptContext* ctx = engine->RequestContext();
@@ -211,8 +185,8 @@ void registerOptionalType(asIScriptEngine* engine) {
 }
 
 void bindOptionalType(asIScriptEngine* engine) {
-    AS_CALL(engine->RegisterObjectMethod("Optional<T>", "bool Has() const",
-                                         asMETHOD(CppOptional, Has),
+    AS_CALL(engine->RegisterObjectMethod("Optional<T>", "bool HasValue() const",
+                                         asMETHOD(CppOptional, HasValue),
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "Optional<T>", "T& Value() const",

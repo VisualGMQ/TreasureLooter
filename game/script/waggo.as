@@ -28,8 +28,8 @@ class MyClass : TL::Behavior {
         m_move_down_anim = config.m_move_down_animation;
 
         TL::Relationship@ relationship = ctx.m_relationship_manager.Get(entity);
-        if (!relationship.m_children.isEmpty()) {
-            if (config.m_weapon_entity.Has()) {
+        if (relationship !is null && !relationship.m_children.isEmpty()) {
+            if (config.m_weapon_entity.HasValue()) {
                 uint32 idx = config.m_weapon_entity.Value();
                 if (idx < relationship.m_children.length()) {
                     m_weapon_entity = relationship.m_children[idx];

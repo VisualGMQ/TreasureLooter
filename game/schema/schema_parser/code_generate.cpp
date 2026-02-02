@@ -654,7 +654,7 @@ std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
             std::string optional_script_type = "Optional<" + inner_script + ">";
             std::string member = "m_" + prop.m_name;
 
-            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + optional_script_type + " get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return OptionalFromStdOptional<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + optional_script_type + " get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return OptionalFromStdOptional<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + ", \"" + inner_script + "\"); }), asCALL_CDECL_OBJFIRST));";
             std::string setter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"void set_" + property_name_with_prefix + "(const " + optional_script_type + "& in) property\", asFUNCTION(+[](" + info.m_name + "* p, const CppOptional& o) { StdOptionalFromOptional<" + inner_cpp + ">(&o, p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
 
             kainjow::mustache::data opt_data;
@@ -680,7 +680,7 @@ std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
             std::string array_script_type = "array<" + inner_script + ">";
             std::string member = "m_" + prop.m_name;
 
-            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + array_script_type + "@ get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return VectorToScriptArray<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + array_script_type + "@ get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return VectorToScriptArray<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + ", \"" + inner_script +"\"); }), asCALL_CDECL_OBJFIRST));";
             std::string setter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"void set_" + property_name_with_prefix + "(" + array_script_type + "@) property\", asFUNCTION(+[](" + info.m_name + "* p, CScriptArray* arr) { ScriptArrayToVector<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), arr, p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
 
             kainjow::mustache::data arr_data;

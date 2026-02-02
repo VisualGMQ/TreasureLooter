@@ -728,7 +728,7 @@ void bindScriptBinaryDataManager(asIScriptEngine* engine) {
                                              for (size_t i = 0; i < vec.size(); ++i)
                                                  tmp[i] = static_cast<uint8_t>(static_cast<unsigned char>(vec[i]));
                                              return VectorToScriptArray<uint8_t>(
-                                                 asGetActiveContext()->GetEngine(), tmp);
+                                             asGetActiveContext()->GetEngine(), tmp, "uint8");
                                          }),
                                          asCALL_CDECL_OBJFIRST));
     
@@ -1090,7 +1090,7 @@ void bindRelationship(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectMethod( "Relationship", "array<Entity>@ get_m_children() const property",
         asFUNCTION(+[](const Relationship* p) {
             return VectorToScriptArray<Entity>(
-                asGetActiveContext()->GetEngine(), p->m_children);
+                asGetActiveContext()->GetEngine(), p->m_children, "Entity");
         }),
         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod( "Relationship", "void set_m_children(array<Entity>@) property",

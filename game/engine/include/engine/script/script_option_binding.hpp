@@ -11,7 +11,7 @@ public:
     CppOptional(const CppOptional& other);
     ~CppOptional();
     void SetValue(void* value);
-    bool Has() const;
+    bool HasValue() const;
     void* Value() const;
     void Reset();
 
@@ -41,9 +41,14 @@ void bindOptionalType(asIScriptEngine* engine);
 
 // Convert between std::optional<T> and CppOptional (for schema-generated bindings).
 template <typename T>
-inline CppOptional OptionalFromStdOptional(asIScriptEngine* engine,
-                                           const std::optional<T>& opt) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl("TL::Optional<T>");
+CppOptional OptionalFromStdOptional(asIScriptEngine* engine,
+                                    const std::optional<T>& opt,
+                                    const std::string& subtype_name) {
+    std::string final_subtype_name = std::is_class_v<T> || std::is_enum_v<T>
+                             ? "TL::" + subtype_name
+                             : subtype_name;
+    std::string decl = "TL::Optional<" + final_subtype_name + ">";
+    asITypeInfo* ti = engine->GetTypeInfoByDecl(decl.c_str());
     CppOptional cpp_opt(ti);
     if (opt.has_value())
         cpp_opt.SetValue(const_cast<T*>(&opt.value()));
@@ -51,8 +56,8 @@ inline CppOptional OptionalFromStdOptional(asIScriptEngine* engine,
 }
 
 template <typename T>
-inline void StdOptionalFromOptional(const CppOptional* o, std::optional<T>& out) {
-    if (o->Has())
+void StdOptionalFromOptional(const CppOptional* o, std::optional<T>& out) {
+    if (o->HasValue())
         out = *reinterpret_cast<const T*>(o->Value());
     else
         out = std::nullopt;
