@@ -17,7 +17,6 @@
 #include "engine/script/script_macros.hpp"
 #include "engine/script/script_binding.hpp"
 #include <cassert>
-#include <cstring>
 
 ScriptBinaryData::ScriptBinaryData(const Path& filename,
                                    asIScriptEngine* engine) {
@@ -28,13 +27,6 @@ ScriptBinaryData::ScriptBinaryData(const Path& filename,
     AS_CALL_WITH_RETURN(builder.StartNewModule(engine, "module"));
 
     std::string filename_str = filename.string();
-    static constexpr const char* kTLBehaviorExternal =
-        "namespace TL { external shared class Behavior; }";
-    AS_CALL_WITH_RETURN_AND_MSG(
-        builder.AddSectionFromMemory("tl_behavior_external", kTLBehaviorExternal
-            ,
-            std::strlen(kTLBehaviorExternal)),
-        "load tl behavior external script failed");
     AS_CALL_WITH_RETURN_AND_MSG(
         builder.AddSectionFromMemory(filename_str.c_str(), m_content.data(),
             m_content.size()),
@@ -118,7 +110,6 @@ ScriptBinaryDataManager::ScriptBinaryDataManager() {
     RegisterScriptMathComplex(m_engine);
 
     bindModule();
-    buildSharedModule();
 }
 
 void ScriptBinaryDataManager::bindModule() {
@@ -138,24 +129,6 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
 
     return store(&filename, UUID::CreateV4(),
                  std::make_unique<ScriptBinaryData>(filename, m_engine));
-}
-
-void ScriptBinaryDataManager::buildSharedModule() {
-    auto behavior_io =
-        IOStream::CreateFromFile(Path("script/TLBehavior.as"), IOMode::Read,
-                                 true);
-    TL_RETURN_IF_NULL_WITH_LOG(behavior_io, LOGE,
-                               "script/TLBehavior.as not found");
-    std::vector<char> behavior_content = behavior_io->Read();
-
-    CScriptBuilder builder;
-    AS_CALL_WITH_RETURN(builder.StartNewModule(m_engine, "shared"));
-    AS_CALL_WITH_RETURN_AND_MSG(
-        builder.AddSectionFromMemory("tl_behavior", behavior_content.data(),
-            behavior_content.size()),
-        "load tl behavior shared script failed");
-    AS_CALL_WITH_RETURN_AND_MSG(builder.BuildModule(),
-                                "build shared module failed");
 }
 
 asIScriptEngine* ScriptBinaryDataManager::GetUnderlyingEngine() {

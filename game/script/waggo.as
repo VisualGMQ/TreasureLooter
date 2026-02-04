@@ -1,3 +1,5 @@
+#include "TLBehavior.as"
+
 enum CharacterDirection {
     Left,
     Right,

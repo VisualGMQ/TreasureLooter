@@ -32,7 +32,6 @@ private:
     asIScriptEngine* m_engine{};
 
     void bindModule();
-    void buildSharedModule();
 };
 
 class Script {
