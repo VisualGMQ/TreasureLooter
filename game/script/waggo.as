@@ -1,4 +1,5 @@
-#include "TLBehavior.as"
+#include "behavior.as"
+#include "generic_forward_weapon.as"
 
 enum CharacterDirection {
     Left,
@@ -7,8 +8,8 @@ enum CharacterDirection {
     Up,
 }
 
-class MyClass : TL::Behavior {
-    MyClass(TL::Entity entity) {
+class Waggo: TL::Behavior {
+    Waggo(TL::Entity entity) {
         super(entity);
     }
 
@@ -35,16 +36,19 @@ class MyClass : TL::Behavior {
                 }
             }
         }
+
+        if (!m_weapon_entity.IsNull()) {
+            TL::Behavior@ behavior = GetBehavior(m_weapon_entity);
+            @m_weapon_script = cast<GenericForwardWeapon>(@behavior);
+
+            if (m_weapon_script is null) {
+                TL::Log("can't get weapon script");
+            }
+        }
     }
 
     void OnUpdate(TL::TimeType delta_time) override {
 		TL::AnimationPlayer@ weapon_anim = GetAnimationPlayerComponentFrom(m_weapon_entity);
-
-		if (weapon_anim !is null && !weapon_anim.IsPlaying()) {
-			TL::Transform@ transform = GetTransformComponentFrom(m_weapon_entity);
-			transform.m_rotation = TL::GetAngle(m_weapon_dir, TL::Vec2::X_UNIT);
-		}
-
 
         TL::Vec2 axises = TL::GetGameContext().m_input_manager.MakeAxises("MoveX", "MoveY")
                                     // TODO: use gamepad ID
@@ -66,21 +70,7 @@ class MyClass : TL::Behavior {
     }
 
     private void attack() {
-        if (m_weapon_entity.IsNull()) {
-            return;
-        }
-
-        TL::AnimationPlayer@ weapon_attack_animator =
-            GetAnimationPlayerComponentFrom(m_weapon_entity);
-        TL::Transform@ weapon_transform = GetTransformComponentFrom(m_weapon_entity);
-        if ((weapon_attack_animator !is null) && !weapon_attack_animator.IsPlaying()) {
-            weapon_attack_animator.Stop();
-            weapon_attack_animator.Play();
-        }
-        if (weapon_transform !is null) {
-            TL::Radians angle = TL::GetAngle(m_weapon_dir, TL::Vec2::X_UNIT);
-            weapon_transform.m_rotation = angle;
-        }
+        m_weapon_script.Attack();
     }
 
     private void move(const TL::Vec2& in dir, TL::TimeType duration) {
@@ -89,9 +79,8 @@ class MyClass : TL::Behavior {
                 m_anim_player.Stop();
             }
         } else {
-            TL::AnimationPlayer@ weapon_anim = GetAnimationPlayerComponentFrom(m_weapon_entity);
-            if ((weapon_anim !is null) && !weapon_anim.IsPlaying()) {
-                m_weapon_dir = dir.Normalize();
+            if (!m_weapon_script.m_anim_player.IsPlaying()) {
+                m_weapon_script.ChangeDir(dir.Normalize());
             }
         }
 
@@ -168,6 +157,8 @@ class MyClass : TL::Behavior {
     private TL::Handle<TL::Animation> m_move_up_anim;
     private TL::Handle<TL::Animation> m_move_down_anim;
 
-    private TL::Vec2 m_weapon_dir = TL::Vec2::X_UNIT;
+    // weapon script instance
+    private GenericForwardWeapon@ m_weapon_script;
+
     private TL::Entity m_weapon_entity;
 }

@@ -83,10 +83,9 @@ shared class Behavior: IBehavior {
 		return GetRelationshipComponentFrom(m_entity);
     }
 	
-    Behavior@ GetBehaviour(Entity entity) {
+    Behavior@ GetBehavior(Entity entity) {
         IBehavior@ a = GetGameContext().m_script_manager.Get(entity);
-        if (a is null) return null;
-        return cast<Behavior@>(a);
+        return cast<Behavior>(a);
     }
 
     private Entity m_entity;

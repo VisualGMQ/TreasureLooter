@@ -4,6 +4,8 @@
 #include "engine/context.hpp"
 #include "engine/log.hpp"
 #include "engine/macros.hpp"
+#include "engine/script/script_binding.hpp"
+#include "engine/script/script_macros.hpp"
 #include "engine/storage.hpp"
 #include "scriptany/scriptany.h"
 #include "scriptarray/scriptarray.h"
@@ -14,8 +16,6 @@
 #include "scriptmath/scriptmathcomplex.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include "weakref/weakref.h"
-#include "engine/script/script_macros.hpp"
-#include "engine/script/script_binding.hpp"
 #include <cassert>
 
 ScriptBinaryData::ScriptBinaryData(const Path& filename,
@@ -23,13 +23,16 @@ ScriptBinaryData::ScriptBinaryData(const Path& filename,
     auto io = IOStream::CreateFromFile(filename, IOMode::Read, true);
     m_content = io->Read();
 
+    TL_RETURN_IF_FALSE_WITH_LOG(!m_content.empty(), LOGE,
+                                "read script {} failed", filename);
+
     CScriptBuilder builder;
     AS_CALL_WITH_RETURN(builder.StartNewModule(engine, "module"));
 
     std::string filename_str = filename.string();
     AS_CALL_WITH_RETURN_AND_MSG(
         builder.AddSectionFromMemory(filename_str.c_str(), m_content.data(),
-            m_content.size()),
+                                     m_content.size()),
         "load script failed");
 
     AS_CALL_WITH_RETURN_AND_MSG(builder.BuildModule(), "build module failed");
@@ -37,37 +40,24 @@ ScriptBinaryData::ScriptBinaryData(const Path& filename,
     auto module = builder.GetModule();
     TL_RETURN_IF_FALSE(module);
 
-    asUINT first_match_class_index = -1;
-    asUINT match_class_count = 0;
-    for (asUINT i = 0; i < module->GetObjectTypeCount(); i++) {
-        asITypeInfo* typeinfo = module->GetObjectTypeByIndex(i);
-        TL_CONTINUE_IF_NULL(typeinfo);
+    // firstly, using reflection to get class name
+    // failed, due to #include may include multiple class inherit from
+    // TL::Behavior so finally we use filename(no - & _, first character
+    // uppercase) as class name
+    TL_RETURN_IF_TRUE(filename_str.empty());
 
-        asITypeInfo* base_type = typeinfo->GetBaseType();
-        while (base_type) {
-            if (base_type->GetNamespace() == std::string_view{"TL"} &&
-                base_type->GetName() == std::string_view{"Behavior"} &&
-                base_type->GetBaseType() == nullptr) {
-                if (first_match_class_index == -1) {
-                    first_match_class_index = i;
-                }
-                match_class_count++;
-
-                TL_RETURN_IF_TRUE_WITH_LOG(match_class_count > 1, LOGE,
-                                           "found multiple class inherit from TL::Behavior!");
+    m_class_name = filename.filename().replace_extension("").string();
+    m_class_name[0] = std::toupper(m_class_name[0]);
+    size_t i = 1;
+    while (i < m_class_name.size()) {
+        if ((m_class_name[i] == '-' || m_class_name[i] == '_')) {
+            if (i + 1 < m_class_name.size()) {
+                m_class_name[i + 1] = std::toupper(m_class_name[i + 1]);
             }
-            base_type = base_type->GetBaseType();
+            m_class_name.erase(m_class_name.begin() + i);
         }
+        i++;
     }
-
-    TL_RETURN_IF_TRUE_WITH_LOG(match_class_count == 0, LOGE,
-                               "no class inherit from TL::Behavior");
-    TL_ASSERT(first_match_class_index != -1);
-
-    asITypeInfo* typeinfo = module->GetObjectTypeByIndex(
-        first_match_class_index);
-    TL_RETURN_IF_NULL_WITH_LOG(typeinfo, LOGE, "invalid typeinfo");
-    m_class_name = typeinfo->GetName();
 }
 
 const std::vector<char>& ScriptBinaryData::GetContent() const {
@@ -78,8 +68,7 @@ const std::string& ScriptBinaryData::GetClassName() const {
     return m_class_name;
 }
 
-ScriptBinaryData::~ScriptBinaryData() {
-}
+ScriptBinaryData::~ScriptBinaryData() {}
 
 void AngelScriptMessageCallback(const asSMessageInfo* msg, void* param) {
     const char* type = "ERR ";
@@ -121,7 +110,7 @@ ScriptBinaryDataManager::~ScriptBinaryDataManager() {
 }
 
 ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
-    bool force) {
+                                                     bool force) {
     if (auto it = Find(filename); it && !force) {
         LOGW("script binary data {} already loaded", filename);
         return it;
@@ -135,11 +124,9 @@ asIScriptEngine* ScriptBinaryDataManager::GetUnderlyingEngine() {
     return m_engine;
 }
 
-ScriptComponentManager::ScriptComponentManager() {
-}
+ScriptComponentManager::ScriptComponentManager() {}
 
-ScriptComponentManager::~ScriptComponentManager() {
-}
+ScriptComponentManager::~ScriptComponentManager() {}
 
 void ScriptComponentManager::Update() {
     for (auto&& [entity, component] : m_components) {
@@ -152,11 +139,13 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
 
     auto engine =
         CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>()
-                       .GetUnderlyingEngine();
+            .GetUnderlyingEngine();
 
     asIScriptModule* mod = engine->GetModule("module");
 
     auto& class_name = handle->GetClassName();
+
+    LOGI("class name: {}", class_name);
     asITypeInfo* type = mod->GetTypeInfoByDecl(class_name.c_str());
 
     TL_ASSERT(!class_name.empty());
@@ -171,11 +160,11 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
                                "[AngelScript]: script context create failed");
 
     std::string factory_method_name = class_name + "@ f(TL::Entity)";
-    asIScriptFunction* factory = type->GetFactoryByDecl(
-        factory_method_name.c_str());
-    TL_RETURN_IF_NULL_WITH_LOG(factory, LOGE,
-                               "[AngelScript]: class {} missing ctor(Entity) {}",
-                               class_name);
+    asIScriptFunction* factory =
+        type->GetFactoryByDecl(factory_method_name.c_str());
+    TL_RETURN_IF_NULL_WITH_LOG(
+        factory, LOGE, "[AngelScript]: class {} missing ctor(Entity) {}",
+        class_name);
 
     m_ctx->Prepare(factory);
     m_ctx->SetArgObject(0, &entity);
