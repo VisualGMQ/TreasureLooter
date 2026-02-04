@@ -1,17 +1,17 @@
 namespace TL {
 
-shared class Behavior {
+shared class Behavior: IBehavior {
     Behavior(Entity entity) {
         m_entity = entity;
     }
 
-    Entity GetEntity() const {
+    Entity GetEntity() const override {
         return m_entity;
     }
 
-    void OnInit() {}
-    void OnUpdate(float) {}
-    void OnQuit() {}
+    void OnInit() override {}
+    void OnUpdate(TimeType) override {}
+    void OnQuit() override {}
 
     // get other component
 
@@ -46,7 +46,7 @@ shared class Behavior {
 
     Relationship@ GetRelationshipComponentFrom(Entity entity) {
 		return GetGameContext().m_relationship_manager.Get(entity);
-	}
+    }
 
     // get myself components
 
@@ -81,7 +81,13 @@ shared class Behavior {
 
     Relationship@ GetRelationshipComponent() {
 		return GetRelationshipComponentFrom(m_entity);
-	}
+    }
+	
+    Behavior@ GetBehaviour(Entity entity) {
+        IBehavior@ a = GetGameContext().m_script_manager.Get(entity);
+        if (a is null) return null;
+        return cast<Behavior@>(a);
+    }
 
     private Entity m_entity;
 }

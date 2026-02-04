@@ -10,7 +10,7 @@ class MyClass : TL::Behavior {
         super(entity);
     }
 
-    void OnInit() {
+    void OnInit() override {
         @m_anim_player = GetAnimationPlayerComponent();
         @m_cct = GetCCTComponent();
         @m_transform = GetTransformComponent();
@@ -35,7 +35,7 @@ class MyClass : TL::Behavior {
         }
     }
 
-    void OnUpdate(TL::TimeType delta_time) {
+    void OnUpdate(TL::TimeType delta_time) override {
 		TL::AnimationPlayer@ weapon_anim = GetAnimationPlayerComponentFrom(m_weapon_entity);
 
 		if (weapon_anim !is null && !weapon_anim.IsPlaying()) {
@@ -59,7 +59,7 @@ class MyClass : TL::Behavior {
         // m_virtual_attack_button.Update();
     }
 
-    void OnQuit() {
+    void OnQuit() override {
         TL::Log("Quit");
     }
 

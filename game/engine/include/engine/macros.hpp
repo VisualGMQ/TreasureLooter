@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 
 #define TL_RETURN_IF_NULL(expr)        \
     do {                               \
@@ -17,6 +18,11 @@
 
 #define TL_CONTINUE_IF_FALSE(expr) \
     if (!(expr)) {                 \
+        continue;                  \
+    }
+
+#define TL_CONTINUE_IF_NULL(expr) \
+    if ((expr) == nullptr) {      \
         continue;                  \
     }
 
@@ -107,3 +113,5 @@
             return {};                                             \
         }                                                          \
     } while (0)
+
+#define TL_ASSERT(expr) assert(expr)

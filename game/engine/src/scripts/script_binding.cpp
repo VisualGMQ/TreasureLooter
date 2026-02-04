@@ -2,6 +2,7 @@
 #include "engine/script/script_binding.hpp"
 #include "angelscript.h"
 #include "autowrapper/aswrappedcall.h"
+#include "scriptany/scriptany.h"
 #include "engine/asset_manager.hpp"
 #include "engine/animation_player.hpp"
 #include "engine/camera.hpp"
@@ -25,6 +26,7 @@
 #include "engine/script/script_option_binding.hpp"
 #include "engine/script/script_template_binding.hpp"
 #include "engine/script/script.hpp"
+#include "scriptany/scriptany.h"
 #include "engine/sprite.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
@@ -109,6 +111,7 @@ void registerAllTypes(asIScriptEngine* engine) {
     // Script
     AS_CALL(engine->RegisterObjectType("ScriptBinaryData", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType("ScriptBinaryDataManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("ScriptComponentManager", 0, asOBJ_REF | asOBJ_NOCOUNT));
     
     // Sprite
 	AS_CALL(engine->RegisterObjectType("Sprite", sizeof(Sprite), asOBJ_REF | asOBJ_NOCOUNT));
@@ -208,6 +211,13 @@ void registerAllTypes(asIScriptEngine* engine) {
     
     AS_CALL(engine->RegisterObjectType("TimerID", sizeof(TimerID),
                                        asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE));
+
+    // script inner usage types
+    AS_CALL(engine->RegisterInterface("IBehavior"));
+    AS_CALL(engine->RegisterInterfaceMethod("IBehavior", "Entity GetEntity() const"));
+    AS_CALL(engine->RegisterInterfaceMethod("IBehavior", "void OnInit()"));
+    AS_CALL(engine->RegisterInterfaceMethod("IBehavior", "void OnUpdate(TimeType)"));
+    AS_CALL(engine->RegisterInterfaceMethod("IBehavior", "void OnQuit()"));
 }
 
 void bindDegrees(asIScriptEngine* engine) {
@@ -719,8 +729,6 @@ void bindPrefabManager(asIScriptEngine* engine) {
 }
 
 void bindScriptBinaryDataManager(asIScriptEngine* engine) {
-    // ScriptBinaryData: GetContent() returns a copy as array<uint8>@ (C++ returns const vector<char>&;
-    // we copy into a new CScriptArray so script gets by-value semantics.)
     AS_CALL(engine->RegisterObjectMethod("ScriptBinaryData", "array<uint8>@ GetContent() const",
                                          asFUNCTION(+[](const ScriptBinaryData* data) -> CScriptArray* {
                                              const std::vector<char>& vec = data->GetContent();
@@ -732,7 +740,6 @@ void bindScriptBinaryDataManager(asIScriptEngine* engine) {
                                          }),
                                          asCALL_CDECL_OBJFIRST));
     
-    // ScriptBinaryDataManager
     AS_CALL(engine->RegisterObjectMethod("ScriptBinaryDataManager", "Handle<ScriptBinaryData> Load(const string& in, bool)",
                                          asFUNCTION(+[](ScriptBinaryDataManager* mgr, const std::string& filename, bool force) -> CppHandle {
                                              return CppHandleFromHandle<ScriptBinaryData>(
@@ -747,6 +754,18 @@ void bindScriptBinaryDataManager(asIScriptEngine* engine) {
                                                  mgr->Find(Path(filename)));
                                          }),
                                          asCALL_CDECL_OBJFIRST));
+
+    AS_CALL(
+        engine->RegisterObjectMethod("ScriptComponentManager",
+            "IBehavior@ Get(Entity)",
+            asFUNCTION(+[](ScriptComponentManager* mgr, Entity entity) ->
+                asIScriptObject* {
+                Script* s = mgr->Get(entity);
+                asIScriptObject* obj = s ? s->GetScriptObject() : nullptr;
+                return obj;
+                }),
+            asCALL_CDECL_OBJFIRST));
+
 }
 
 void bindSprite(asIScriptEngine* engine) {
@@ -1391,6 +1410,11 @@ void bindContext(asIScriptEngine* engine) {
                                          asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod("GameContext", "TilemapComponentManager@ get_m_tilemap_component_manager() property",
                                          asFUNCTION(+[](GameContext* ctx) -> TilemapComponentManager* { return ctx->m_tilemap_component_manager.get(); }),
+                                         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod("GameContext", "ScriptComponentManager@ get_m_script_manager() property",
+                                         asFUNCTION(+[](GameContext* ctx) -> ScriptComponentManager* {
+                                             return ctx->m_script_component_manager.get();
+                                         }),
                                          asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectProperty("GameContext", "Camera m_camera",
                                           asOFFSET(CommonContext, m_camera)));

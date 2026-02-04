@@ -11,9 +11,11 @@ public:
     ~ScriptBinaryData();
 
     const std::vector<char>& GetContent() const;
+    const std::string& GetClassName() const;
 
 private:
     std::vector<char> m_content;
+    std::string m_class_name;
 };
 
 using ScriptBinaryDataHandle = Handle<ScriptBinaryData>;
@@ -39,6 +41,8 @@ public:
     ~Script();
 
     void Update();
+
+    asIScriptObject* GetScriptObject() const { return m_class_instance; }
 
 private:
     asIScriptContext* m_ctx{};
