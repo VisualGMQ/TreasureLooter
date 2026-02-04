@@ -1,4 +1,3 @@
-#pragma once
 #include "engine/script/script_binding.hpp"
 #include "angelscript.h"
 #include "autowrapper/aswrappedcall.h"
