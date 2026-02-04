@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(TreasureLooter
-    VERSION 0.0.1)
+    VERSION 0.1.0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -150,6 +150,7 @@ endif()
 ################ install #######################
 install(TARGETS ${GAME_NAME} DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
+install(DIRECTORY scripts DESTINATION .)
 
 ################ package ##################
 # include(InstallRequiredSystemLibraries)

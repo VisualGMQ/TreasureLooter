@@ -11,6 +11,9 @@
 
 class AssetsManager {
 public:
+    AssetsManager();
+    ~AssetsManager();
+
     template <typename T>
     auto& GetManager() {
         TypeIndex index = TypeIndexGenerator::Get<T>();
@@ -35,6 +38,9 @@ public:
 
 private:
     std::vector<std::unique_ptr<IAssetManager>> m_managers;
+
+    // script binary data manager must release at least, so extra declare it
+    std::unique_ptr<ScriptBinaryDataManager> m_script_binary_data_manager;
 
     template <typename T, typename... Args>
     T& ensureManager(TypeIndex index, Args&&... args) {
