@@ -1,6 +1,7 @@
 #include "engine/ui.hpp"
 
 #include "engine/context.hpp"
+#include "engine/input/mouse.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 

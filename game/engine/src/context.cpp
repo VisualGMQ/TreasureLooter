@@ -3,8 +3,17 @@
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
 #include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/cct.hpp"
+#include "engine/controller.hpp"
+#include "engine/debug_drawer.hpp"
+#include "engine/gameplay_config.hpp"
+#include "engine/input/finger_touch.hpp"
+#include "engine/input/keyboard.hpp"
+#include "engine/input/mouse.hpp"
 #include "engine/level.hpp"
 #include "engine/log.hpp"
+#include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 #include "engine/script/script.hpp"
 #include "engine/sdl_call.hpp"
@@ -13,17 +22,16 @@
 #include "engine/storage.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
+#include "engine/trigger.hpp"
+#include "engine/ui.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
-#include "engine/ui.hpp"
-#include "engine/uuid.hpp"
-#include "engine/profile.hpp"
-#include <memory>
 #include <csignal>
+#include <memory>
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -67,17 +75,25 @@ void CommonContext::Initialize() {
     m_transform_manager = std::make_unique<TransformManager>();
     m_sprite_manager = std::make_unique<SpriteManager>();
     m_relationship_manager = std::make_unique<RelationshipManager>();
+
+    // device input relate
     m_keyboard = std::make_unique<Keyboard>();
     m_mouse = std::make_unique<Mouse>();
     m_touches = std::make_unique<Touches>();
     m_gamepad_manager = std::make_unique<GamepadManager>();
 
+    // event relative
+    m_event_system = std::make_unique<EventSystem>();
+
+    // input relate
     m_input_manager = std::make_unique<InputManager>();
+    m_player_controller = std::make_unique<PlayerController>(
+        *m_input_manager, *m_event_system, *m_assets_manager,
+        *m_transform_manager, *m_relationship_manager);
 
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();
     m_cct_manager = std::make_unique<CCTManager>();
-    m_event_system = std::make_unique<EventSystem>();
     m_level_manager = std::make_unique<LevelManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
@@ -113,31 +129,36 @@ void CommonContext::Initialize() {
 void CommonContext::Shutdown() {
     m_should_exit = true;
     m_is_inited = false;
+
     if (m_level_manager) {
         m_level_manager->Switch({});
     }
     m_level_manager.reset();
+
+    m_script_component_manager.reset();
 
     m_trigger_component_manager.reset();
     m_bind_point_component_manager.reset();
     m_timer_manager.reset();
     m_gameplay_config_manager.reset();
     m_debug_drawer.reset();
-    m_event_system.reset();
     m_cct_manager.reset();
     m_physics_scene.reset();
     m_time.reset();
+
+    m_player_controller.reset();
     m_input_manager.reset();
     m_gamepad_manager.reset();
+    m_event_system.reset();
 
     m_touches.reset();
     m_mouse.reset();
     m_keyboard.reset();
+
     m_tilemap_component_manager.reset();
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_animation_player_manager.reset();
-    m_script_component_manager.reset();
     m_assets_manager.reset();
     shutdownImGui();
     m_renderer.reset();
@@ -278,7 +299,7 @@ void GameContext::Initialize() {
     PROFILE_SECTION();
 
     signal(SIGINT, sigintHandler);
-    
+
     CommonContext::Initialize();
 
     m_input_manager->Initialize(
@@ -286,8 +307,11 @@ void GameContext::Initialize() {
             GetGameConfig().m_input_config_asset),
         *this);
 
-    m_level_manager->Switch(m_assets_manager->GetManager<Level>().Load(
-        GetGameConfig().m_basic_level_asset));
+    LevelHandle level = m_assets_manager->GetManager<Level>().Load(
+        GetGameConfig().m_basic_level_asset);
+    m_level_manager->Switch(level);
+
+    m_player_controller->RegisterVirtualController(level);
 }
 
 void GameContext::Update() {
@@ -324,14 +348,14 @@ void GameContext::logicUpdate(TimeType elapse) {
 
 void GameContext::logicPostUpdate(TimeType elapse) {
     PROFILE_SECTION();
-    
+
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
 }
 
 void GameContext::renderUpdate(TimeType elapse) {
     PROFILE_RENDERING_SECTION("renderUpdate");
-    
+
     m_renderer->Clear();
     beginImGui();
 

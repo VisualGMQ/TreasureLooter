@@ -1,7 +1,7 @@
 #pragma once
 #include "SDL3/SDL.h"
-#include "log.hpp"
-#include "type_index.hpp"
+#include "engine/log.hpp"
+#include "engine/type_index.hpp"
 
 #include <algorithm>
 #include <functional>

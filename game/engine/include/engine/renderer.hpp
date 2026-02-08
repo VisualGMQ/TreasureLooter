@@ -2,13 +2,13 @@
 #include <variant>
 
 #include "SDL3/SDL.h"
-#include "flag.hpp"
-#include "image.hpp"
-#include "math.hpp"
+#include "engine/flag.hpp"
+#include "engine/image.hpp"
+#include "engine/math.hpp"
 #include "schema/common.hpp"
 #include "schema/flip.hpp"
-#include "text.hpp"
-#include "window.hpp"
+#include "engine/text.hpp"
+#include "engine/window.hpp"
 
 class Camera;
 class Image;

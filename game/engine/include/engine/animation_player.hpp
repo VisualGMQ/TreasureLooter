@@ -1,5 +1,5 @@
 #pragma once
-#include "animation.hpp"
+#include "engine/animation.hpp"
 #include "schema/anim_player.hpp"
 
 class AnimationTrackPlayerBase {

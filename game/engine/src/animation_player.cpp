@@ -1,7 +1,8 @@
 #include "engine/animation_player.hpp"
 
-#include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/context.hpp"
 #include "engine/profile.hpp"
 #include "engine/sprite.hpp"
 

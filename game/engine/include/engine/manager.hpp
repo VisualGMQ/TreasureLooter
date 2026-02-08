@@ -1,7 +1,7 @@
 #pragma once
-#include "entity.hpp"
-#include "handle.hpp"
-#include "log.hpp"
+#include "engine/entity.hpp"
+#include "engine/handle.hpp"
+#include "engine/log.hpp"
 
 template <typename T>
 class ComponentManager {

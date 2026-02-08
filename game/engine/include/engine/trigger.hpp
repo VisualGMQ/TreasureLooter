@@ -1,7 +1,7 @@
 #pragma once
 
-#include "manager.hpp"
-#include "physics.hpp"
+#include "engine/manager.hpp"
+#include "engine/physics.hpp"
 #include "schema/physics_schema.hpp"
 
 class TriggerEnterEvent {

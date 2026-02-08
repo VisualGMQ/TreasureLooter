@@ -2,7 +2,11 @@
 
 #include "context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/cct.hpp"
+#include "engine/gameplay_config.hpp"
 #include "engine/relationship.hpp"
+#include "engine/sprite.hpp"
+#include "engine/trigger.hpp"
 #include "schema/serialize/serialize.hpp"
 
 namespace internal {

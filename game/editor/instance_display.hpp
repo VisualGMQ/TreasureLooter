@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <vector>
 
+class Trigger;
+class CharacterController;
 class Image;
 
 void InstanceDisplay(const char* name, int& value);

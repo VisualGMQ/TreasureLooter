@@ -1,8 +1,8 @@
 #pragma once
-#include "collision_group.hpp"
-#include "entity.hpp"
-#include "flag.hpp"
-#include "math.hpp"
+#include "engine/collision_group.hpp"
+#include "engine/entity.hpp"
+#include "engine/flag.hpp"
+#include "engine/math.hpp"
 #include "schema/common.hpp"
 #include "schema/physics_schema.hpp"
 

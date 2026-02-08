@@ -1,11 +1,26 @@
 #include "context.hpp"
 
-#include "engine/asset_manager.hpp"
-#include "engine/dialog.hpp"
-#include "engine/relationship.hpp"
-#include "engine/storage.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "engine/asset_manager.hpp"
+#include "engine/dialog.hpp"
+#include "engine/input/keyboard.hpp"
+#include "engine/input/mouse.hpp"
+#include "engine/input/gamepad.hpp"
+#include "engine/input/finger_touch.hpp"
+#include "engine/relationship.hpp"
+#include "engine/sprite.hpp"
+#include "engine/storage.hpp"
+#include "engine/gameplay_config.hpp"
+#include "engine/trigger.hpp"
+#include "engine/physics.hpp"
+#include "engine/transform.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/debug_drawer.hpp"
+#include "engine/ui.hpp"
+#include "engine/script/script.hpp"
+#include "engine/cct.hpp"
+#include "engine/controller.hpp"
 
 namespace editor {
 std::unique_ptr<EditorContext> EditorContext::instance;
@@ -192,7 +207,7 @@ void EditorContext::handleCamera() {
     scale.y += mouse->Wheel() * scale_delta;
 
     scale.x = Clamp(scale.x, 0.0001f, 1000.f);
-    scale.y = Clamp(scale.x, 0.0001f, 1000.f);
+    scale.y = Clamp(scale.y, 0.0001f, 1000.f);
 
     m_camera.ChangeScale(scale);
 

@@ -1,13 +1,13 @@
 ﻿#pragma once
-#include "asset.hpp"
-#include "asset_manager_interface.hpp"
-#include "entity.hpp"
-#include "manager.hpp"
-#include "math.hpp"
+#include "engine/asset.hpp"
+#include "engine/asset_manager_interface.hpp"
+#include "engine/entity.hpp"
+#include "engine/manager.hpp"
+#include "engine/math.hpp"
 
 #include "schema/anim.hpp"
 #include "schema/bind_point_schema.hpp"
-#include "timer.hpp"
+#include "engine/timer.hpp"
 
 #include <memory>
 #include <vector>

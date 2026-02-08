@@ -1,31 +1,17 @@
 #pragma once
-#include "animation_player.hpp"
-#include "bind_point.hpp"
-#include "camera.hpp"
-#include "cct.hpp"
-#include "debug_drawer.hpp"
-#include "engine/script/script.hpp"
-#include "entity.hpp"
-#include "event.hpp"
-#include "input/finger_touch.hpp"
-#include "input/gamepad.hpp"
-#include "input/input.hpp"
-#include "input/keyboard.hpp"
-#include "input/mouse.hpp"
-#include "level.hpp"
-#include "physics.hpp"
-#include "renderer.hpp"
+#include "engine/entity.hpp"
 #include "schema/config.hpp"
-#include "tilemap.hpp"
-#include "timer.hpp"
-#include "trigger.hpp"
-#include "window.hpp"
-#include "gameplay_config.hpp"
-
+#include "engine/camera.hpp"
 #include <memory>
 
-#include "ui.hpp"
-
+class TriggerComponentManager;
+class BindPointsComponentManager;
+class IDebugDrawer;
+class CCTManager;
+class GamepadManager;
+class Touches;
+class Mouse;
+class Keyboard;
 struct EntityInstance;
 class RelationshipManager;
 class TransformManager;
@@ -33,6 +19,19 @@ class SpriteManager;
 class AssetsManager;
 class Level;
 struct GameConfig;
+class PlayerController;
+class UIComponentManager;
+class ScriptComponentManager;
+class AnimationManager;
+class AnimationPlayerManager;
+class InputManager;
+class Window;
+class Renderer;
+class PhysicsScene;
+class GameplayConfigManager;
+class TilemapComponent;
+class TilemapComponentManager;
+class LevelManager;
 
 class CommonContext {
 public:
@@ -79,6 +78,7 @@ public:
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<EventSystem> m_event_system;
     std::unique_ptr<InputManager> m_input_manager;
+    std::unique_ptr<PlayerController> m_player_controller;
     std::unique_ptr<Keyboard> m_keyboard;
     std::unique_ptr<Mouse> m_mouse;
     std::unique_ptr<Touches> m_touches;

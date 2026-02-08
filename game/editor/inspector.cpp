@@ -11,7 +11,9 @@
 #include "engine/window.hpp"
 #include "imgui.h"
 
+#include "engine/cct.hpp"
 #include "engine/dialog.hpp"
+#include "engine/trigger.hpp"
 #include "instance_display.hpp"
 #include "schema/display/display.hpp"
 #include "schema/prefab.hpp"

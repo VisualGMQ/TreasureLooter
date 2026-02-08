@@ -2,9 +2,14 @@
 
 #include "SDL3/SDL.h"
 #include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/cct.hpp"
 #include "engine/context.hpp"
+#include "engine/gameplay_config.hpp"
 #include "engine/relationship.hpp"
 #include "engine/sprite.hpp"
+#include "engine/trigger.hpp"
+#include "engine/ui.hpp"
 
 Level::Level(LevelContentHandle level_content) {
     m_pending_init_content = level_content;
@@ -148,9 +153,11 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
     if (!prefab.m_script.empty()) {
-        auto& mgr = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+        auto& mgr =
+            CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
         ScriptBinaryDataHandle handle = mgr.Load(prefab.m_script);
-        CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(entity, entity, handle);
+        CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(
+            entity, entity, handle);
     }
 
     if (!prefab.m_children.empty()) {
@@ -194,19 +201,35 @@ void Level::doRemoveEntities() {
     std::vector<PrefabHandle> remove_prefabs;
 
     for (auto entity : m_pending_delete_entities) {
-        CURRENT_CONTEXT.m_sprite_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_transform_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_relationship_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
-        CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
-
-        m_entities.erase(entity);
+        doRemoveEntityWithChildren(entity);
     }
 
     m_pending_delete_entities.clear();
+}
+
+void Level::doRemoveEntityWithChildren(Entity entity) {
+    TL_RETURN_IF_FALSE(entity != null_entity);
+
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    if (relationship) {
+        for (auto child : relationship->m_children) {
+            doRemoveEntityWithChildren(child);
+        }
+    }
+
+    CURRENT_CONTEXT.m_sprite_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_transform_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_relationship_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_ui_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_gameplay_config_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_script_component_manager->RemoveEntity(entity);
+
+    m_entities.erase(entity);
 }
 
 AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename,

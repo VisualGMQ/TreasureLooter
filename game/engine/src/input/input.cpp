@@ -3,6 +3,8 @@
 #include "engine/input/gamepad.hpp"
 #include "schema/serialize/input.hpp"
 
+#include "engine/input/keyboard.hpp"
+
 void Action::AddButton(const Button& button) {
     m_buttons.push_back(&button);
 }

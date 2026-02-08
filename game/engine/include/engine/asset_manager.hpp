@@ -1,13 +1,14 @@
 #pragma once
 
-#include "context.hpp"
-#include "animation.hpp"
-#include "asset_manager_interface.hpp"
-#include "image.hpp"
-#include "level.hpp"
-#include "prefab_manager.hpp"
-#include "text.hpp"
-#include "tilemap.hpp"
+#include "engine/animation.hpp"
+#include "engine/asset_manager_interface.hpp"
+#include "engine/context.hpp"
+#include "engine/image.hpp"
+#include "engine/level.hpp"
+#include "engine/prefab_manager.hpp"
+#include "engine/text.hpp"
+#include "engine/tilemap.hpp"
+#include "engine/script/script.hpp"
 
 class AssetsManager {
 public:
@@ -30,7 +31,7 @@ public:
         } else if constexpr (std::is_same_v<T, Font>) {
             return ensureManager<FontManager>(index);
         } else if constexpr (std::is_same_v<T, ScriptBinaryData>) {
-            return ensureManager<ScriptBinaryDataManager>(index);
+            return *m_script_binary_data_manager;
         } else {
             return ensureManager<GenericAssetManager<T>>(index);
         }

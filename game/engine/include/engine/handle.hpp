@@ -1,7 +1,7 @@
 #pragma once
-#include "asset.hpp"
-#include "path.hpp"
-#include "uuid.hpp"
+#include "engine/asset.hpp"
+#include "engine/path.hpp"
+#include "engine/uuid.hpp"
 
 template <typename T>
 class Handle {

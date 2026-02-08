@@ -1,8 +1,8 @@
 #pragma once
 #include "SDL3/SDL.h"
-#include "asset_manager_interface.hpp"
-#include "math.hpp"
-#include "path.hpp"
+#include "engine/asset_manager_interface.hpp"
+#include "engine/math.hpp"
+#include "engine/path.hpp"
 
 class Renderer;
 

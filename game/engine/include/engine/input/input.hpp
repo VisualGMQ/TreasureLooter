@@ -1,6 +1,6 @@
 #pragma once
-#include "button.hpp"
-#include "gamepad.hpp"
+#include "engine/input/button.hpp"
+#include "engine/input/gamepad.hpp"
 #include "engine/math.hpp"
 #include "engine/path.hpp"
 #include "schema/input.hpp"
