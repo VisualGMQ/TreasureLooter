@@ -18,6 +18,44 @@
 #include "weakref/weakref.h"
 #include <cassert>
 
+static int AngelScriptIncludeCallback(const char* include, const char* from,
+                                      CScriptBuilder* builder, void* userParam) {
+    const Path* basePath = static_cast<const Path*>(userParam);
+    Path include_path =
+        basePath ? (basePath->parent_path() / include)
+                 : (Path(from).parent_path() / include);
+    auto io = IOStream::CreateFromFile(include_path, IOMode::Read, true);
+    if (!io || !*io) {
+        LOGE("AngelScript include failed: {} (from {})", include_path, from);
+        return -1;
+    }
+    std::vector<char> content = io->Read();
+    if (content.empty()) {
+        LOGE("AngelScript include empty or read failed: {}", include_path);
+        return -1;
+    }
+    int r = builder->AddSectionFromMemory(include, content.data(),
+                                         content.size());
+    if (r < 0) {
+        LOGE("AngelScript AddSectionFromMemory failed for include: {}", include);
+        return r;
+    }
+    return 0;
+}
+
+// 每个脚本文件使用独立模块名，避免后加载的脚本用 StartNewModule 覆盖先前的 module，
+// 导致已创建的脚本实例变成“来自已废弃模块”的悬空引用（Android 上易崩溃）。
+static std::string pathToModuleName(const std::string& path_str) {
+    std::string name = path_str;
+    for (char& c : name) {
+        if (c == '/' || c == '\\' || c == '.')
+            c = '_';
+    }
+    if (name.empty())
+        name = "module";
+    return name;
+}
+
 ScriptBinaryData::ScriptBinaryData(const Path& filename,
                                    asIScriptEngine* engine) {
     auto io = IOStream::CreateFromFile(filename, IOMode::Read, true);
@@ -26,10 +64,16 @@ ScriptBinaryData::ScriptBinaryData(const Path& filename,
     TL_RETURN_IF_FALSE_WITH_LOG(!m_content.empty(), LOGE,
                                 "read script {} failed", filename);
 
-    CScriptBuilder builder;
-    AS_CALL_WITH_RETURN(builder.StartNewModule(engine, "module"));
-
     std::string filename_str = filename.string();
+    m_module_name = pathToModuleName(filename_str);
+
+    CScriptBuilder builder;
+    AS_CALL_WITH_RETURN(builder.StartNewModule(engine, m_module_name.c_str()));
+
+    builder.SetIncludeCallback(
+        AngelScriptIncludeCallback,
+        const_cast<void*>(static_cast<const void*>(&filename)));
+
     AS_CALL_WITH_RETURN_AND_MSG(
         builder.AddSectionFromMemory(filename_str.c_str(), m_content.data(),
                                      m_content.size()),
@@ -66,6 +110,10 @@ const std::vector<char>& ScriptBinaryData::GetContent() const {
 
 const std::string& ScriptBinaryData::GetClassName() const {
     return m_class_name;
+}
+
+const std::string& ScriptBinaryData::GetModuleName() const {
+    return m_module_name;
 }
 
 ScriptBinaryData::~ScriptBinaryData() {}
@@ -141,7 +189,8 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
         CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>()
             .GetUnderlyingEngine();
 
-    asIScriptModule* mod = engine->GetModule("module");
+    asIScriptModule* mod =
+        engine->GetModule(handle->GetModuleName().c_str());
 
     auto& class_name = handle->GetClassName();
 

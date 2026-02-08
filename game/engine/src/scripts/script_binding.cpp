@@ -1520,9 +1520,13 @@ void bindContext(asIScriptEngine* engine) {
     //                                        &GAME_CONTEXT));
     AS_CALL(engine->RegisterGlobalProperty(
         "const NullEntity null_entity", const_cast<NullEntity*>(&null_entity)));
-    AS_CALL(engine->RegisterGlobalFunction("GameContext@ GetGameContext()",
-                                           asFUNCTION(GameContext::GetInst),
-                                           asCALL_CDECL));
+    // 必须返回 GameContext*，不能直接绑 GetInst()（返回 GameContext&）。
+    // 在 ARM/Android 上“返回引用”与“返回指针”的 ABI 可能不同，会导致脚本拿到的
+    // handle 指向错误地址，进而 m_input_manager 等野指针崩溃。
+    AS_CALL(engine->RegisterGlobalFunction(
+        "GameContext@ GetGameContext()",
+        asFUNCTION(+[]() -> GameContext* { return &GameContext::GetInst(); }),
+        asCALL_CDECL));
 
     // Methods inherited from CommonContext
     AS_CALL(engine->RegisterObjectMethod("GameContext", "Entity CreateEntity()",

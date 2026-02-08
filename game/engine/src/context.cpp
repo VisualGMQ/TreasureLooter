@@ -311,7 +311,7 @@ void GameContext::Initialize() {
         GetGameConfig().m_basic_level_asset);
     m_level_manager->Switch(level);
 
-    m_player_controller->RegisterVirtualController(level);
+    m_player_controller->RegisterVirtualController(level, GetGameConfig());
 }
 
 void GameContext::Update() {

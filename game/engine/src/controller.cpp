@@ -90,11 +90,11 @@ ControllerAxises PlayerController::MakeAxises(const std::string& x_name,
                             m_input_mgr.MakeAxises(x_name, y_name));
 }
 
-void PlayerController::RegisterVirtualController(LevelHandle level) {
+void PlayerController::RegisterVirtualController(LevelHandle level, const GameConfig& game_config) {
 #ifdef TL_ANDROID
     if (level) {
         initVirualJoystick(level);
-        initVirualAttackButton(level);
+        initVirualAttackButton(level, game_config);
 
         // NOTE: when under android, device will change window size after few
         // frames and send multiple SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED event

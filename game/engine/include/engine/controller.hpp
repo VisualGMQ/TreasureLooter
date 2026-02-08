@@ -78,7 +78,7 @@ public:
     ControllerAxises MakeAxises(const std::string& x_name,
                                 const std::string& y_name);
 
-    void RegisterVirtualController(LevelHandle level);
+    void RegisterVirtualController(LevelHandle level, const GameConfig&);
     void DestroyVirtualController(LevelHandle level);
 
 private:

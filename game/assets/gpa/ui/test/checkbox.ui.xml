@@ -1,4 +1,4 @@
-<UIWidgetInfo>
+<UIWidgetDefinition>
 	<uuid>28ff3df1-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<anchor>
@@ -70,5 +70,4 @@
 		<padding x="0.000000" y="0.000000"/>
 		<margin x="0.000000" y="0.000000"/>
 	</payload>
-</UIWidgetInfo>
-
+</UIWidgetDefinition>

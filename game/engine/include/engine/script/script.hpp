@@ -12,10 +12,12 @@ public:
 
     const std::vector<char>& GetContent() const;
     const std::string& GetClassName() const;
+    const std::string& GetModuleName() const;
 
 private:
     std::vector<char> m_content;
     std::string m_class_name;
+    std::string m_module_name;
 };
 
 using ScriptBinaryDataHandle = Handle<ScriptBinaryData>;
