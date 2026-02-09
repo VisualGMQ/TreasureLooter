@@ -1340,9 +1340,6 @@ void bindInputManager(asIScriptEngine* engine) {
                                          asMETHOD(Axises, Value),
                                          asCALL_THISCALL));
     // InputManager
-    // AS_CALL(engine->RegisterObjectMethod(
-    //     "InputManager", "Axises MakeAxises(const string& in, const string& in)",
-    //     asMETHOD(InputManager, MakeAxises), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "InputManager", "Action@ GetAction(const string& in)",
         asFUNCTION(+[](InputManager* mgr, const std::string& name) -> Action* {
