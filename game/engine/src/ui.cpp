@@ -4,6 +4,7 @@
 #include "engine/input/mouse.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
+#include "engine/input/finger_touch.hpp"
 
 void UIText::SetFont(FontHandle font) {
     m_font = font;

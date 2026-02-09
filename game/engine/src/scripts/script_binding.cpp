@@ -7,6 +7,7 @@
 #include "engine/cct.hpp"
 #include "engine/collision_group.hpp"
 #include "engine/context.hpp"
+#include "engine/debug_drawer.hpp"
 #include "engine/entity.hpp"
 #include "engine/flag.hpp"
 #include "engine/gameplay_config.hpp"
@@ -194,6 +195,8 @@ void registerAllTypes(asIScriptEngine* engine) {
         asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Image9Grid>()));
     AS_CALL(
         engine->RegisterObjectType("Renderer", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("DebugDrawer", 0,
+                                       asOBJ_REF | asOBJ_NOCOUNT));
 
     // Timer
     AS_CALL(engine->RegisterObjectType("Time", 0, asOBJ_REF | asOBJ_NOCOUNT));
@@ -205,6 +208,7 @@ void registerAllTypes(asIScriptEngine* engine) {
 
     // Input
     AS_CALL(engine->RegisterObjectType("Action", 0, asOBJ_REF | asOBJ_NOCOUNT));
+    AS_CALL(engine->RegisterObjectType("Axis", 0, asOBJ_REF | asOBJ_NOCOUNT));
     AS_CALL(engine->RegisterObjectType(
         "Axises", sizeof(Axises), asOBJ_VALUE | asGetTypeTraits<Axises>()));
     AS_CALL(engine->RegisterObjectType("InputManager", 0,
@@ -446,10 +450,12 @@ void bindTransform(asIScriptEngine* engine) {
 
     AS_CALL(engine->RegisterObjectMethod(
         "TransformManager", "Transform@ Get(Entity)",
-        asFUNCTION(+[](TransformManager* mgr, Entity entity) -> Transform* {
-            return mgr->Get(entity);
-        }),
-        asCALL_CDECL_OBJFIRST));
+        asMETHODPR(TransformManager, Get, (Entity), Transform*),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "TransformManager", "const Transform@ Get(Entity) const",
+            asMETHODPR_CONST(TransformManager, Get, (Entity), Transform* const),
+            asCALL_THISCALL));
 }
 
 void bindOtherMath(asIScriptEngine* engine) {
@@ -740,9 +746,12 @@ void bindAnimationPlayer(asIScriptEngine* engine) {
     // AnimationPlayerManager
     AS_CALL(engine->RegisterObjectMethod(
         "AnimationPlayerManager", "AnimationPlayer@ Get(Entity)",
-        asFUNCTION(+[](AnimationPlayerManager* mgr, Entity entity)
-                       -> AnimationPlayer* { return mgr->Get(entity); }),
-        asCALL_CDECL_OBJFIRST));
+        asMETHODPR(AnimationPlayerManager, Get, (Entity), AnimationPlayer*),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "AnimationPlayerManager", "const AnimationPlayer@ Get(Entity) const",
+            asMETHODPR_CONST(AnimationPlayerManager, Get, (Entity), AnimationPlayer* const),
+            asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "AnimationPlayerManager", "void Update(TimeType)",
         asMETHOD(AnimationPlayerManager, Update), asCALL_THISCALL));
@@ -751,9 +760,12 @@ void bindAnimationPlayer(asIScriptEngine* engine) {
 void bindGameplayConfigManager(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectMethod(
         "GameplayConfigManager", "GameplayConfig@ Get(Entity)",
-        asFUNCTION(+[](GameplayConfigManager* mgr, Entity entity)
-                       -> GameplayConfig* { return mgr->Get(entity); }),
-        asCALL_CDECL_OBJFIRST));
+        asMETHODPR(GameplayConfigManager, Get, (Entity), GameplayConfig*),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "GameplayConfigManager", "const GameplayConfig@ Get(Entity) const",
+            asMETHODPR_CONST(GameplayConfigManager, Get, (Entity), GameplayConfig* const),
+            asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "GameplayConfigManager", "void Update(TimeType)",
         asMETHOD(GameplayConfigManager, Update), asCALL_THISCALL));
@@ -809,19 +821,6 @@ void bindPrefabManager(asIScriptEngine* engine) {
 
 void bindScriptBinaryDataManager(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterObjectMethod(
-        "ScriptBinaryData", "array<uint8>@ GetContent() const",
-        asFUNCTION(+[](const ScriptBinaryData* data) -> CScriptArray* {
-            const std::vector<char>& vec = data->GetContent();
-            std::vector<uint8_t> tmp(vec.size());
-            for (size_t i = 0; i < vec.size(); ++i)
-                tmp[i] =
-                    static_cast<uint8_t>(static_cast<unsigned char>(vec[i]));
-            return VectorToScriptArray<uint8_t>(
-                asGetActiveContext()->GetEngine(), tmp, "uint8");
-        }),
-        asCALL_CDECL_OBJFIRST));
-
-    AS_CALL(engine->RegisterObjectMethod(
         "ScriptBinaryDataManager",
         "Handle<ScriptBinaryData> Load(const string& in, bool)",
         asFUNCTION(+[](ScriptBinaryDataManager* mgr,
@@ -853,6 +852,20 @@ void bindScriptBinaryDataManager(asIScriptEngine* engine) {
             return obj;
         }),
         asCALL_CDECL_OBJFIRST));
+
+
+    AS_CALL(engine->RegisterObjectMethod(
+            "ScriptComponentManager", "const IBehavior@ Get(Entity) const",
+            asFUNCTION(+[](ScriptComponentManager* mgr,
+                           Entity entity) -> const asIScriptObject* {
+                Script* s = mgr->Get(entity);
+                asIScriptObject* obj = s ? s->GetScriptObject() : nullptr;
+                if (obj) {
+                    obj->AddRef();
+                }
+                return obj;
+            }),
+            asCALL_CDECL_OBJFIRST));
 }
 
 void bindSprite(asIScriptEngine* engine) {
@@ -897,10 +910,12 @@ void bindSprite(asIScriptEngine* engine) {
 
     AS_CALL(engine->RegisterObjectMethod(
         "SpriteManager", "Sprite@ Get(Entity)",
-        asFUNCTION(+[](SpriteManager* mgr, Entity entity) -> Sprite* {
-            return mgr->Get(entity);
-        }),
-        asCALL_CDECL_OBJFIRST));
+        asMETHODPR(SpriteManager, Get, (Entity), Sprite*),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "SpriteManager", "const Sprite@ Get(Entity) const",
+            asMETHODPR_CONST(SpriteManager, Get, (Entity), Sprite* const),
+            asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod("SpriteManager", "void Update()",
                                          asMETHOD(SpriteManager, Update),
                                          asCALL_THISCALL));
@@ -967,6 +982,10 @@ void bindTilemap(asIScriptEngine* engine) {
         "TilemapComponentManager", "TilemapComponent@ Get(Entity)",
         asMETHODPR(TilemapComponentManager, Get, (Entity), TilemapComponent*),
         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "TilemapComponentManager", "const TilemapComponent@ Get(Entity) const",
+            asMETHODPR_CONST(TilemapComponentManager, Get, (Entity), TilemapComponent* const),
+            asCALL_THISCALL));
 }
 
 void bindUI(asIScriptEngine* engine) {
@@ -1032,6 +1051,10 @@ void bindUI(asIScriptEngine* engine) {
         "UIComponentManager", "UIWidget@ Get(Entity)",
         asMETHODPR(UIComponentManager, Get, (Entity), UIWidget*),
         asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "UIComponentManager", "const UIWidget@ Get(Entity) const",
+            asMETHODPR_CONST(UIComponentManager, Get, (Entity), UIWidget* const),
+            asCALL_THISCALL));
 }
 
 void bindCamera(asIScriptEngine* engine) {
@@ -1245,10 +1268,12 @@ void bindCharacterController(asIScriptEngine* engine) {
     // CCTManager
     AS_CALL(engine->RegisterObjectMethod(
         "CCTManager", "CharacterController@ Get(Entity)",
-        asFUNCTION(+[](CCTManager* mgr, Entity entity) -> CharacterController* {
-            return mgr->Get(entity);
-        }),
-        asCALL_CDECL_OBJFIRST));
+        asMETHODPR(CCTManager, Get, (Entity), CharacterController*),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "CCTManager", "const CharacterController@ Get(Entity) const",
+            asMETHODPR_CONST(CCTManager, Get, (Entity), CharacterController* const),
+            asCALL_THISCALL));
 }
 
 void bindRelationship(asIScriptEngine* engine) {
@@ -1272,30 +1297,37 @@ void bindRelationship(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "RelationshipManager", "Relationship@ Get(Entity)",
-        asFUNCTION(+[](RelationshipManager* mgr, Entity entity)
-                       -> Relationship* { return mgr->Get(entity); }),
-        asCALL_CDECL_OBJFIRST));
+        asMETHODPR(RelationshipManager, Get, (Entity), Relationship*),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+            "RelationshipManager", "const Relationship@ Get(Entity) const",
+            asMETHODPR_CONST(RelationshipManager, Get, (Entity), Relationship* const),
+            asCALL_THISCALL));
 }
 
 void bindInputManager(asIScriptEngine* engine) {
     // Action
-    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsPressed(int) const",
+    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsPressed(uint32) const",
                                          asMETHOD(Action, IsPressed),
                                          asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsPressing(int) const",
+    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsPressing(uint32) const",
                                          asMETHOD(Action, IsPressing),
                                          asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsReleased(int) const",
+    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsReleased(uint32) const",
                                          asMETHOD(Action, IsReleased),
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
-        "Action", "bool IsReleasing(int) const", asMETHOD(Action, IsReleasing),
+        "Action", "bool IsReleasing(uint32) const", asMETHOD(Action, IsReleasing),
         asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsPress(int) const",
+    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsPress(uint32) const",
                                          asMETHOD(Action, IsPress),
                                          asCALL_THISCALL));
-    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsRelease(int) const",
+    AS_CALL(engine->RegisterObjectMethod("Action", "bool IsRelease(uint32) const",
                                          asMETHOD(Action, IsRelease),
+                                         asCALL_THISCALL));
+    // Axis
+    AS_CALL(engine->RegisterObjectMethod("Axis", "float Value(uint32) const",
+                                         asMETHOD(Axis, Value),
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectBehaviour("Axises", asBEHAVE_CONSTRUCT,
                                             "void f()", WRAP_CON(Axises, ()),
@@ -1304,17 +1336,23 @@ void bindInputManager(asIScriptEngine* engine) {
         "Axises", asBEHAVE_DESTRUCT, "void f()",
         asFUNCTION(+[](Axises* obj) { obj->~Axises(); }),
         asCALL_CDECL_OBJFIRST));
-    AS_CALL(engine->RegisterObjectMethod("Axises", "Vec2 Value(int) const",
+    AS_CALL(engine->RegisterObjectMethod("Axises", "Vec2 Value(uint32) const",
                                          asMETHOD(Axises, Value),
                                          asCALL_THISCALL));
     // InputManager
-    AS_CALL(engine->RegisterObjectMethod(
-        "InputManager", "Axises MakeAxises(const string& in, const string& in)",
-        asMETHOD(InputManager, MakeAxises), asCALL_THISCALL));
+    // AS_CALL(engine->RegisterObjectMethod(
+    //     "InputManager", "Axises MakeAxises(const string& in, const string& in)",
+    //     asMETHOD(InputManager, MakeAxises), asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod(
         "InputManager", "Action@ GetAction(const string& in)",
         asFUNCTION(+[](InputManager* mgr, const std::string& name) -> Action* {
             return const_cast<Action*>(&mgr->GetAction(name));
+        }),
+        asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod(
+        "InputManager", "const Axis@ GetAxis(const string& in) const",
+        asFUNCTION(+[](const InputManager* mgr, const std::string& name) -> const Axis* {
+            return &mgr->GetAxis(name);
         }),
         asCALL_CDECL_OBJFIRST));
 }
@@ -1406,6 +1444,38 @@ void bindRenderer(asIScriptEngine* engine) {
                                          asCALL_THISCALL));
     AS_CALL(engine->RegisterObjectMethod("Renderer", "void Present()",
                                          asMETHOD(Renderer, Present),
+                                         asCALL_THISCALL));
+}
+
+void bindDebugDrawer(asIScriptEngine* engine) {
+    AS_CALL(engine->RegisterObjectMethod(
+        "DebugDrawer",
+        "void DrawRect(const Rect& in, const Color& in, TimeType, bool)",
+        asMETHODPR(DebugDrawer, DrawRect,
+                   (const Rect&, const Color&, TimeType, bool), void),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+        "DebugDrawer",
+        "void DrawCircle(const Circle& in, const Color& in, TimeType, bool)",
+        asMETHODPR(DebugDrawer, DrawCircle,
+                   (const Circle&, const Color&, TimeType, bool), void),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+        "DebugDrawer",
+        "void FillRect(const Rect& in, const Color& in, TimeType, bool)",
+        asMETHODPR(DebugDrawer, FillRect,
+                   (const Rect&, const Color&, TimeType, bool), void),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod(
+        "DebugDrawer",
+        "void AddLine(const Vec2& in, const Vec2& in, const Color& in, "
+        "TimeType, bool)",
+        asMETHODPR(DebugDrawer, AddLine,
+                   (const Vec2&, const Vec2&, const Color&, TimeType, bool),
+                   void),
+        asCALL_THISCALL));
+    AS_CALL(engine->RegisterObjectMethod("DebugDrawer", "void Clear()",
+                                         asMETHOD(DebugDrawer, Clear),
                                          asCALL_THISCALL));
 }
 
@@ -1543,6 +1613,12 @@ void bindContext(asIScriptEngine* engine) {
         "GameContext", "Renderer@ get_m_renderer() property",
         asFUNCTION(+[](GameContext* ctx) -> Renderer* {
             return ctx->m_renderer.get();
+        }),
+        asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod(
+        "GameContext", "DebugDrawer@ get_m_debug_drawer() property",
+        asFUNCTION(+[](GameContext* ctx) -> DebugDrawer* {
+            return dynamic_cast<DebugDrawer*>(ctx->m_debug_drawer.get());
         }),
         asCALL_CDECL_OBJFIRST));
     AS_CALL(engine->RegisterObjectMethod(
@@ -1761,6 +1837,7 @@ void bindAllTypes(asIScriptEngine* engine) {
     bindRelationship(engine);
     bindWindow(engine);
     bindRenderer(engine);
+    bindDebugDrawer(engine);
     bindCamera(engine);
     bindTimer(engine);
     bindTrigger(engine);
