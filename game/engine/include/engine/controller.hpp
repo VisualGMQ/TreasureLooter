@@ -56,10 +56,9 @@ struct VirtualJoystick {
 struct VirtualButton {
     Entity m_ui_entity = null_entity;
     EventListenerID m_press_event{};
+    EventListenerID m_release_event{};
     const Button* m_button{};
     std::string m_action_name;
-
-    void Update();
 };
 
 class TransformManager;
@@ -97,11 +96,10 @@ private:
     EventListenerID m_gamepad_event_listener;
     EventListenerID m_window_resize_event_listener;
 
-    Entity m_virtual_joystick_entity = null_entity;
     VirtualJoystick m_virtual_joystick;
     VirtualButton m_virtual_attack_button;
 
-    void initVirualJoystick(LevelHandle level);
+    void initVirualJoystick(LevelHandle level, const GameConfig&);
     void initVirualAttackButton(LevelHandle level, const GameConfig&);
 
     void handleJoystickDragEvent(EventListenerID id, const UIDragEvent&);

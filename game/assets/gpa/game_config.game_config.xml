@@ -7,8 +7,8 @@
 		<camera_scale x="4.000000" y="4.000000"/>
 		<logic_size x="1920" y="1080"/>
 		<virtual_joystick>
-			<offset x="200.000000" y="200.000000"/>
-			<radius>50.000000</radius>
+			<offset x="200.000000" y="300.000000"/>
+			<radius>100.000000</radius>
 			<max_drag_dist>100.000000</max_drag_dist>
 		</virtual_joystick>
 		<default_font>assets/fonts/zpix.ttf</default_font>
