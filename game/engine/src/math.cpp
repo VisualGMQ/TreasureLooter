@@ -66,20 +66,38 @@ bool Degrees::operator!=(Degrees o) const {
     return !(*this == o);
 }
 
-Degrees operator+(Degrees d1, Degrees d2) {
-    return d1 += d2;
+Degrees Degrees::operator+(Degrees d) const {
+    Degrees o = *this;
+    return o += d;
 }
 
-Degrees operator-(Degrees d1, Degrees d2) {
-    return d1 -= d2;
+Degrees Degrees::operator-(Degrees d) const {
+    Degrees o = *this;
+    return o -= d;
 }
 
-Degrees operator*(Degrees d1, Degrees d2) {
-    return d1 *= d2;
+Degrees Degrees::operator*(Degrees d) const {
+    Degrees o = *this;
+    return o *= d;
 }
 
-Degrees operator/(Degrees d1, Degrees d2) {
-    return d1 /= d2;
+Degrees Degrees::operator/(Degrees d) const {
+    Degrees o = *this;
+    return o /= d;
+}
+
+Degrees Degrees::operator*(float k) const {
+    Degrees o = *this;
+    return o *= k;
+}
+
+Degrees Degrees::operator/(float k) const {
+    Degrees o = *this;
+    return o /= k;
+}
+
+Degrees operator*(float k, Degrees d) {
+    return d * k;
 }
 
 Mat33 Mat33::CreateTranslation(const Vec2& p) {
@@ -183,20 +201,28 @@ Radians& Radians::operator/=(Radians o) {
     return *this;
 }
 
-Radians operator+(Radians d1, Radians d2) {
-    return d1 += d2;
+Radians Radians::operator+(Radians d) const {
+    Radians o = *this;
+    return o += d;
 }
 
-Radians operator-(Radians d1, Radians d2) {
-    return d1 -= d2;
+Radians Radians::operator-(Radians d) const {
+    Radians o = *this;
+    return o -= d;
 }
 
-Radians operator*(Radians d1, Radians d2) {
-    return d1 *= d2;
+Radians Radians::operator*(Radians d) const {
+    Radians o = *this;
+    return o *= d;
 }
 
-Radians operator/(Radians d1, Radians d2) {
-    return d1 /= d2;
+Radians operator*(float k, Radians d) {
+    return d * k;
+}
+
+Radians Radians::operator/(Radians d) const {
+    Radians o = *this;
+    return o /= d;
 }
 
 bool Radians::operator>(Radians o) const {
@@ -223,6 +249,16 @@ bool Radians::operator!=(Radians o) const {
     return !(*this == o);
 }
 
+Radians Radians::operator*(float k) const {
+    Radians o = *this;
+    return o *= k;
+}
+
+Radians Radians::operator/(float k) const {
+    Radians o = *this;
+    return o /= k;
+}
+
 Vec2 Rotate(const Vec2& p, Degrees d) {
     float rot = Radians{d}.Value();
     auto s = std::sin(rot);
@@ -231,9 +267,7 @@ Vec2 Rotate(const Vec2& p, Degrees d) {
     return {p.x * c - p.y * s, p.x * s + p.y * c};
 }
 
-Transform::Transform()
-    : m_size{1.0, 1.0} {
-}
+Transform::Transform() : m_size{1.0, 1.0} {}
 
 const Mat33& Transform::GetLocalMat() const {
     return m_mat;

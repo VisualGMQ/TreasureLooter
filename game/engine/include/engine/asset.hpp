@@ -1,7 +1,7 @@
 #pragma once
 #include "rapidxml.hpp"
-#include "uuid.hpp"
-#include "path.hpp"
+#include "engine/uuid.hpp"
+#include "engine/path.hpp"
 
 template <typename T>
 struct AssetLoadResult {

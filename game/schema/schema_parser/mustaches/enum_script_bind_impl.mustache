@@ -1,0 +1,9 @@
+void register{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
+    AS_CALL(engine->RegisterEnum("{{{enum_name}}}"));
+}
+
+void bind{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
+    {{#enum_values}}
+    AS_CALL(engine->RegisterEnumValue("{{{enum_name}}}", "{{{enum_value}}}", static_cast<int>({{{enum_item}}})));
+    {{/enum_values}}
+}

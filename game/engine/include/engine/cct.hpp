@@ -1,12 +1,12 @@
 #pragma once
 
-#include "manager.hpp"
-#include "physics.hpp"
+#include "engine/manager.hpp"
+#include "engine/physics.hpp"
 #include "schema/physics_schema.hpp"
 
 class CharacterController {
 public:
-    explicit CharacterController(Entity entity, const CCT& create_info);
+    explicit CharacterController(Entity entity, const CCTDefinition& create_info);
     ~CharacterController();
 
     void MoveAndSlide(const Vec2& dir);

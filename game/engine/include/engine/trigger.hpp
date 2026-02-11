@@ -1,7 +1,7 @@
 #pragma once
 
-#include "manager.hpp"
-#include "physics.hpp"
+#include "engine/manager.hpp"
+#include "engine/physics.hpp"
 #include "schema/physics_schema.hpp"
 
 class TriggerEnterEvent {
@@ -38,7 +38,8 @@ class Trigger {
 public:
     friend class TriggerComponentManager;
 
-    Trigger(Entity, const TriggerInfo&);
+    Trigger() = default;
+    Trigger(Entity, const TriggerDefinition&);
     Trigger(Entity, const Circle&, TriggerEventType event_type,
             const CollisionGroup& collision_layer,
             const CollisionGroup& collision_mask);
@@ -57,7 +58,7 @@ public:
     void Update();
 
 private:
-    PhysicsActor* m_actor;
+    PhysicsActor* m_actor = nullptr;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 

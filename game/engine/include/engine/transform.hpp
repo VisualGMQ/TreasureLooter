@@ -1,5 +1,5 @@
 #pragma once
-#include "manager.hpp"
-#include "math.hpp"
+#include "engine/manager.hpp"
+#include "engine/math.hpp"
 
 class TransformManager: public ComponentManager<Transform> {};

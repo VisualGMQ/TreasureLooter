@@ -1,6 +1,6 @@
 #pragma once
 #include "SDL3/SDL.h"
-#include "path.hpp"
+#include "engine/path.hpp"
 
 #include <filesystem>
 #include <vector>

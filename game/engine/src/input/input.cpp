@@ -3,6 +3,8 @@
 #include "engine/input/gamepad.hpp"
 #include "schema/serialize/input.hpp"
 
+#include "engine/input/keyboard.hpp"
+
 void Action::AddButton(const Button& button) {
     m_buttons.push_back(&button);
 }
@@ -160,10 +162,10 @@ Action InputManager::InvalidAction;
 Axis InputManager::InvalidAxis;
 
 Axises::Axises(const Axis& x_axis, const Axis& y_axis)
-    : m_x_axis(x_axis), m_y_axis(y_axis) {}
+    : m_x_axis(&x_axis), m_y_axis(&y_axis) {}
 
 Vec2 Axises::Value(SDL_JoystickID id) const {
-    return Vec2{m_x_axis.Value(id), m_y_axis.Value(id)};
+    return Vec2{m_x_axis->Value(id), m_y_axis->Value(id)};
 }
 
 void InputManager::Initialize(InputConfigHandle config, CommonContext& context) {
@@ -207,7 +209,7 @@ const Action& InputManager::GetAction(const std::string& name) const {
 }
 
 Axises InputManager::MakeAxises(const std::string& x_name,
-                                const std::string& y_name) {
+                                const std::string& y_name) const {
     return {GetAxis(x_name), GetAxis(y_name)};
 }
 

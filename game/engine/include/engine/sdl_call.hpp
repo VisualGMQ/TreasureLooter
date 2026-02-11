@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SDL3/SDL.h"
-#include "log.hpp"
+#include "engine/log.hpp"
 
 #define SDL_CALL(expr)                             \
     do {                                           \

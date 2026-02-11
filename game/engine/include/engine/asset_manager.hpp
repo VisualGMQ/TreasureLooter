@@ -1,16 +1,20 @@
 #pragma once
 
-#include "context.hpp"
-#include "animation.hpp"
-#include "asset_manager_interface.hpp"
-#include "image.hpp"
-#include "level.hpp"
-#include "prefab_manager.hpp"
-#include "text.hpp"
-#include "tilemap.hpp"
+#include "engine/animation.hpp"
+#include "engine/asset_manager_interface.hpp"
+#include "engine/context.hpp"
+#include "engine/image.hpp"
+#include "engine/level.hpp"
+#include "engine/prefab_manager.hpp"
+#include "engine/text.hpp"
+#include "engine/tilemap.hpp"
+#include "engine/script/script.hpp"
 
 class AssetsManager {
 public:
+    AssetsManager();
+    ~AssetsManager();
+
     template <typename T>
     auto& GetManager() {
         TypeIndex index = TypeIndexGenerator::Get<T>();
@@ -26,6 +30,8 @@ public:
             return ensureManager<PrefabManager>(index);
         } else if constexpr (std::is_same_v<T, Font>) {
             return ensureManager<FontManager>(index);
+        } else if constexpr (std::is_same_v<T, ScriptBinaryData>) {
+            return *m_script_binary_data_manager;
         } else {
             return ensureManager<GenericAssetManager<T>>(index);
         }
@@ -33,6 +39,9 @@ public:
 
 private:
     std::vector<std::unique_ptr<IAssetManager>> m_managers;
+
+    // script binary data manager must release at least, so extra declare it
+    std::unique_ptr<ScriptBinaryDataManager> m_script_binary_data_manager;
 
     template <typename T, typename... Args>
     T& ensureManager(TypeIndex index, Args&&... args) {

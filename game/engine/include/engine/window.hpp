@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SDL3/SDL.h"
-#include "math.hpp"
+#include "engine/math.hpp"
 #include <string>
 
 class Window {

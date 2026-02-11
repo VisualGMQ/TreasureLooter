@@ -1,7 +1,6 @@
 <Prefab>
 	<uuid>aad7b845-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<base/>
 		<transform>
 			<value>
 				<position x="0.000000" y="0.000000"/>
@@ -13,4 +12,3 @@
 		<ui>assets/gpa/ui/android_joystick.ui.xml</ui>
 	</payload>
 </Prefab>
-

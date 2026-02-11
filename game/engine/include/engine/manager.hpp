@@ -1,7 +1,7 @@
 #pragma once
-#include "entity.hpp"
-#include "handle.hpp"
-#include "log.hpp"
+#include "engine/entity.hpp"
+#include "engine/handle.hpp"
+#include "engine/log.hpp"
 
 template <typename T>
 class ComponentManager {
@@ -9,6 +9,11 @@ public:
     using component_type =
         std::conditional_t<is_handle_v<T>, T, std::unique_ptr<T>>;
     using expose_type = std::conditional_t<is_handle_v<T>, T, T*>;
+
+    ComponentManager() = default;
+    ComponentManager(const ComponentManager&) = delete;
+    ComponentManager& operator=(const ComponentManager&) = delete;
+
 
     template <typename... Args>
     void RegisterEntity(Entity entity, Args&&... args) {

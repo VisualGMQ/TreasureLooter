@@ -1,7 +1,6 @@
 <Prefab>
 	<uuid>34775d1c-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<base/>
 		<transform>
 			<value>
 				<position x="100.000000" y="100.000000"/>

@@ -1,7 +1,7 @@
 <schema>
     <include>entity.hpp</include>
 
-    <class name="Relationship">
+    <class name="RelationshipDefinition">
         <array type="Entity" name="children"/>
     </class>
 </schema>

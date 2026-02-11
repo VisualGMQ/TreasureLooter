@@ -4,12 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "path.hpp"
+#include "engine/path.hpp"
 
 #include "SDL3/SDL.h"
 #include <future>
-#include <memory>
-#include <vector>
 
 
 struct Filter {

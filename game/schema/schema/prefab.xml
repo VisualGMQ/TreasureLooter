@@ -8,20 +8,21 @@
     <import>physics_schema</import>
     <import>common</import>
     <import>tilemap_schema</import>
-    <import>motor_config</import>
+    <import>gameplay_config</import>
     <import>ui_config</import>
 
     <asset name="Prefab" extension=".prefab">
         <handle type="Prefab" name="base"/>
 
-        <option type="Sprite" name="sprite"/>
         <option type="Transform" name="transform"/>
+        <option type="SpriteDefinition" name="sprite"/>
         <array  type="PrefabHandle" name="children"/>
-        <option type="AnimationPlayerCreateInfo" name="animation"/>
-        <option type="TilemapInfo" name="tilemap"/>
-        <option type="CCT" name="cct"/>
-        <option type="TriggerInfo" name="trigger"/>
-        <handle type="MotorConfig" name="motor_config"/>
-        <handle type="UIWidgetInfo" name="ui"/>
+        <option type="AnimationPlayerDefinition" name="animation"/>
+        <option type="TilemapDefinition" name="tilemap"/>
+        <option type="CCTDefinition" name="cct"/>
+        <option type="TriggerDefinition" name="trigger"/>
+        <element type="Path" name="script" />
+        <handle type="UIWidgetDefinition" name="ui"/>
+        <handle type="GameplayConfig" name="gameplay_config"/>
     </asset>
 </schema>

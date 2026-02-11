@@ -1,16 +1,16 @@
 #pragma once
-#include "flag.hpp"
-#include "image.hpp"
-#include "manager.hpp"
-#include "path.hpp"
-#include "physics.hpp"
+#include "engine/flag.hpp"
+#include "engine/image.hpp"
+#include "engine/manager.hpp"
+#include "engine/path.hpp"
+#include "engine/physics.hpp"
 #include "schema/common.hpp"
 #include "schema/flip.hpp"
 #include "tmxlite/Layer.hpp"
 #include "tmxlite/Map.hpp"
 
 class TilemapTileLayer;
-class TilemapInfo;
+class TilemapDefinition;
 
 constexpr std::string_view TilemapPropertyName_EnableYSort = "enable_y_sort";
 
@@ -131,7 +131,7 @@ public:
 
 class TilemapComponent {
 public:
-    TilemapComponent(Entity, const TilemapInfo&);
+    TilemapComponent(Entity, const TilemapDefinition&);
 
     [[nodiscard]] TilemapHandle GetHandle() const;
 

@@ -17,6 +17,8 @@ cmake --preset=default
 cmake --build cmake-build
 ```
 
+**WARNING:** due to AngelScript cmake config, currently can't use clang++ with msvc backend compile under Windows
+
 ### Build For Android
 
 First we must build `schema_parser` under PC and run `run_schema_parser` target:
@@ -35,6 +37,7 @@ Copy `game/assets` folder to `android/app/src/main/assets`.
 ```bash
 cp -r game android/app/jni
 cp -r game/assets android/app/src/main/assets/
+cp -r game/script android/app/src/main/assets/
 ```
 
 Then use `gradle` to build (or use AndroidStudio)

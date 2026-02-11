@@ -4,7 +4,7 @@
     <include>flag.hpp</include>
     <import>flip</import>
     
-    <class name="Sprite">
+    <class name="SpriteDefinition">
         <handle type="Image" name="image"/>
         <element type="Region" name="region"/>
         <element type="Vec2" name="size"/>

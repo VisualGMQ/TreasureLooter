@@ -3,7 +3,6 @@
 #include "SDL3/SDL.h"
 #include "engine/input/button.hpp"
 #include "engine/math.hpp"
-#include "engine/timer.hpp"
 #include "schema/mouse.hpp"
 
 #include <array>

@@ -1,9 +1,11 @@
 #pragma once
-#include "entity.hpp"
-#include "manager.hpp"
+#include "engine/entity.hpp"
+#include "engine/manager.hpp"
 #include "schema/relationship.hpp"
 
 class Transform;
+
+using Relationship = RelationshipDefinition;
 
 class RelationshipManager : public ComponentManager<Relationship> {
 public:

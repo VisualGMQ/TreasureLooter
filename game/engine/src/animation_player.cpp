@@ -1,11 +1,12 @@
 #include "engine/animation_player.hpp"
 
-#include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/context.hpp"
 #include "engine/profile.hpp"
 #include "engine/sprite.hpp"
 
-AnimationPlayer::AnimationPlayer(const AnimationPlayerCreateInfo& create_info) {
+AnimationPlayer::AnimationPlayer(const AnimationPlayerDefinition& create_info) {
     EnableAutoPlay(create_info.m_auto_play);
     SetLoop(create_info.m_loop);
     SetRate(create_info.m_rate);

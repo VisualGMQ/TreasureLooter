@@ -1,5 +1,5 @@
 #pragma once
-#include "animation.hpp"
+#include "engine/animation.hpp"
 #include "schema/anim_player.hpp"
 
 class AnimationTrackPlayerBase {
@@ -115,7 +115,7 @@ public:
     static constexpr int InfLoop = -1;
 
     AnimationPlayer() = default;
-    explicit AnimationPlayer(const AnimationPlayerCreateInfo&);
+    explicit AnimationPlayer(const AnimationPlayerDefinition&);
 
     void Play();
     void Pause();

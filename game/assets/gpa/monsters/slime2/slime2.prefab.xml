@@ -35,7 +35,6 @@
 				<physics_actor>assets/gpa/monsters/slime2/slime2.physics_actor.xml</physics_actor>
 			</value>
 		</cct>
-		<motor_config>assets/gpa/monsters/slime2/slime2.motor_config.xml</motor_config>
+		<gameplay_config>assets/gpa/monsters/slime2/slime2.gameplay_config.xml</gameplay_config>
 	</payload>
 </Prefab>
-

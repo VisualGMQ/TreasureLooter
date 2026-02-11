@@ -1,6 +1,14 @@
 #include "code_generate.hpp"
 #include "common.hpp"
 #include "mustache.hpp"
+#include <unordered_map>
+#include <unordered_set>
+
+// Forward declarations for property handling (defined later in this file)
+static std::string ExtractOptionalInnerType(const std::string& cpp_type);
+static std::string ExtractFlagsInnerType(const std::string& cpp_type);
+static std::string ExtractVectorInnerType(const std::string& cpp_type);
+static std::string ExtractHandleInnerType(const std::string& cpp_type);
 
 std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
@@ -16,6 +24,7 @@ std::string GenerateClassCode(const ClassInfo& info) {
 
         auto prop_code = prop_mustache.render(prop_data);
         prop_datas << kainjow::mustache::data{"property", prop_code};
+        // optional/flags/array/handle: no get/set in struct; script binding uses lambda on member (m_xxx)
     }
 
     kainjow::mustache::data class_data;
@@ -49,6 +58,12 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
     if (schema_info.m_include_hints & IncludeHint::Option) {
         include_datas << kainjow::mustache::data{
             "include", include_mustache.render({"filename", "<optional>"})};
+        include_datas << kainjow::mustache::data{
+            "include", include_mustache.render({"filename", "\"engine/script/script_option_binding.hpp\""})};
+    }
+    if (schema_info.m_include_hints & IncludeHint::Flags) {
+        include_datas << kainjow::mustache::data{
+            "include", include_mustache.render({"filename", "\"engine/script/script_flags_binding.hpp\""})};
     }
     if (schema_info.m_include_hints & IncludeHint::Array) {
         include_datas << kainjow::mustache::data{"include",
@@ -56,7 +71,10 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
                                                      {"filename", "<array>"})}
             << kainjow::mustache::data{
                 "include",
-                include_mustache.render({"filename", "<vector>"})};
+                include_mustache.render({"filename", "<vector>"})}
+            << kainjow::mustache::data{
+                "include",
+                include_mustache.render({"filename", "\"engine/script/script_array_binding.hpp\""})};
     }
     if (schema_info.m_include_hints & IncludeHint::UnorderedMap) {
         include_datas << kainjow::mustache::data{
@@ -72,6 +90,9 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
         include_datas << kainjow::mustache::data{
             "include",
             include_mustache.render({"filename", "\"engine/handle.hpp\""})};
+        include_datas << kainjow::mustache::data{
+            "include",
+            include_mustache.render({"filename", "\"engine/script/script_handle_binding.hpp\""})};
     }
 
     for (auto& import_filename : schema_info.m_imports) {
@@ -567,4 +588,368 @@ std::string GenerateAssetDisplayTotleHeaderCode(
     data.set("includes", includes_data);
 
     return mustache.render(data);
+}
+
+std::string GenerateEnumScriptBindHeaderCode(const EnumInfo& enum_info) {
+    auto& mustache = MustacheManager::GetInst().m_enum_script_bind_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", enum_info.m_name);
+
+    return mustache.render(data);
+}
+
+std::string GenerateEnumScriptBindImplCode(const EnumInfo& enum_info) {
+    auto& mustache = MustacheManager::GetInst().m_enum_script_bind_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", enum_info.m_name);
+    data.set("enum_name", enum_info.m_name);
+
+    kainjow::mustache::data enum_values_data{kainjow::mustache::data::type::list};
+    for (auto& item : enum_info.m_items) {
+        kainjow::mustache::data enum_value_data;
+        enum_value_data.set("enum_name", enum_info.m_name);
+        enum_value_data.set("enum_value", item.m_name);
+        enum_value_data.set("enum_item", enum_info.m_name + "::" + item.m_name);
+        enum_values_data << enum_value_data;
+    }
+    data.set("enum_values", enum_values_data);
+
+    return mustache.render(data);
+}
+
+std::string GenerateClassScriptBindHeaderCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_class_script_bind_header_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    return mustache.render(data);
+}
+
+std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_class_script_bind_impl_mustache;
+
+    kainjow::mustache::data data;
+    data.set("type", info.m_name);
+
+    if (info.is_asset) {
+        data.set("is_asset", true);
+    }
+
+    kainjow::mustache::data property_entries{kainjow::mustache::data::type::list};
+    kainjow::mustache::data optional_entries{kainjow::mustache::data::type::list};
+    kainjow::mustache::data flags_entries{kainjow::mustache::data::type::list};
+    kainjow::mustache::data array_entries{kainjow::mustache::data::type::list};
+    kainjow::mustache::data handle_entries{kainjow::mustache::data::type::list};
+
+    for (auto& prop : info.m_properties) {
+        std::string property_name_with_prefix = "m_" + prop.m_name;
+        std::string angelscript_type = ConvertCppTypeToAngelScript(prop.m_type);
+
+        if (prop.m_optional) {
+            std::string inner_cpp = ExtractOptionalInnerType(prop.m_type);
+            std::string inner_script = ConvertCppTypeToAngelScript(inner_cpp);
+            std::string optional_script_type = "Optional<" + inner_script + ">";
+            std::string member = "m_" + prop.m_name;
+
+            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + optional_script_type + " get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return OptionalFromStdOptional<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + ", \"" + inner_script + "\"); }), asCALL_CDECL_OBJFIRST));";
+            std::string setter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"void set_" + property_name_with_prefix + "(const " + optional_script_type + "& in) property\", asFUNCTION(+[](" + info.m_name + "* p, const CppOptional& o) { StdOptionalFromOptional<" + inner_cpp + ">(&o, p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+
+            kainjow::mustache::data opt_data;
+            opt_data.set("getter_reg", getter_reg);
+            opt_data.set("setter_reg", setter_reg);
+            optional_entries << opt_data;
+        } else if (!ExtractFlagsInnerType(prop.m_type).empty()) {
+            std::string inner_cpp = ExtractFlagsInnerType(prop.m_type);
+            std::string inner_script = ConvertCppTypeToAngelScript(inner_cpp);
+            std::string flags_script_type = "Flags<" + inner_script + ">";
+            std::string member = "m_" + prop.m_name;
+
+            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + flags_script_type + " get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return CppFlagsFromFlags<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+            std::string setter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"void set_" + property_name_with_prefix + "(const " + flags_script_type + "& in) property\", asFUNCTION(+[](" + info.m_name + "* p, const CppFlags& o) { FlagsFromCppFlags<" + inner_cpp + ">(&o, p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+
+            kainjow::mustache::data flag_data;
+            flag_data.set("getter_reg", getter_reg);
+            flag_data.set("setter_reg", setter_reg);
+            flags_entries << flag_data;
+        } else if (!ExtractVectorInnerType(prop.m_type).empty()) {
+            std::string inner_cpp = ExtractVectorInnerType(prop.m_type);
+            std::string inner_script = ConvertCppTypeToAngelScript(inner_cpp);
+            std::string array_script_type = "array<" + inner_script + ">";
+            std::string member = "m_" + prop.m_name;
+
+            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + array_script_type + "@ get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return VectorToScriptArray<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + ", \"" + inner_script +"\"); }), asCALL_CDECL_OBJFIRST));";
+            std::string setter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"void set_" + property_name_with_prefix + "(" + array_script_type + "@) property\", asFUNCTION(+[](" + info.m_name + "* p, CScriptArray* arr) { ScriptArrayToVector<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), arr, p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+
+            kainjow::mustache::data arr_data;
+            arr_data.set("getter_reg", getter_reg);
+            arr_data.set("setter_reg", setter_reg);
+            array_entries << arr_data;
+        } else if (!ExtractHandleInnerType(prop.m_type).empty()) {
+            std::string inner_cpp = ExtractHandleInnerType(prop.m_type);
+            std::string inner_script = ConvertCppTypeToAngelScript(inner_cpp);
+            std::string handle_script_type = "Handle<" + inner_script + ">";
+            std::string member = "m_" + prop.m_name;
+            // Script binding: register get/set as wrappers (CppHandle), not class methods; struct keeps Handle<T> member
+            std::string getter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"" + handle_script_type + " get_" + property_name_with_prefix + "() const property\", asFUNCTION(+[](const " + info.m_name + "* p) { return CppHandleFromHandle<" + inner_cpp + ">(asGetActiveContext()->GetEngine(), p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+            std::string setter_reg = "AS_CALL(engine->RegisterObjectMethod(\"" + info.m_name + "\", \"void set_" + property_name_with_prefix + "(" + handle_script_type + ") property\", asFUNCTION(+[](" + info.m_name + "* p, const CppHandle& o) { HandleFromCppHandle<" + inner_cpp + ">(&o, p->" + member + "); }), asCALL_CDECL_OBJFIRST));";
+
+            kainjow::mustache::data hnd_data;
+            hnd_data.set("getter_reg", getter_reg);
+            hnd_data.set("setter_reg", setter_reg);
+            handle_entries << hnd_data;
+        } else {
+            kainjow::mustache::data prop_data;
+            prop_data.set("type", info.m_name);
+            prop_data.set("property_type", angelscript_type);
+            prop_data.set("property_name", property_name_with_prefix);
+            property_entries << prop_data;
+        }
+    }
+
+    data.set("property_entries", property_entries);
+    data.set("optional_entries", optional_entries);
+    data.set("flags_entries", flags_entries);
+    data.set("array_entries", array_entries);
+    data.set("handle_entries", handle_entries);
+
+    return mustache.render(data);
+}
+
+std::string GenerateSchemaScriptBindHeaderCode(const SchemaInfo& schema) {
+    auto& header_mustache = MustacheManager::GetInst().m_script_bind_header_mustache;
+
+    kainjow::mustache::data data;
+
+    kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+
+    for (auto& enum_value : schema.m_enums) {
+        auto code = GenerateEnumScriptBindHeaderCode(enum_value);
+        registers_data << kainjow::mustache::data{"register", code};
+        bindings_data << kainjow::mustache::data{"binding", code};
+    }
+
+    for (auto& class_value : schema.m_classes) {
+        auto code = GenerateClassScriptBindHeaderCode(class_value);
+        registers_data << kainjow::mustache::data{"register", code};
+        bindings_data << kainjow::mustache::data{"binding", code};
+    }
+
+    data.set("registers", registers_data);
+    data.set("bindings", bindings_data);
+
+    return header_mustache.render(data);
+}
+
+std::string GenerateSchemaScriptBindImplCode(const SchemaInfo& schema) {
+    auto& impl_mustache = MustacheManager::GetInst().m_script_bind_impl_mustache;
+
+    kainjow::mustache::data data;
+    
+    auto header_filename = schema.m_pure_filename;
+    header_filename.replace_extension(".hpp");
+    auto header_file = "schema/binding/" + header_filename.string();
+    data.set("header_file", header_file);
+    
+    // Include the schema header file (generated in schema/ directory)
+    auto schema_file = "schema/" + header_filename.string();
+    data.set("schema_file", schema_file);
+
+    kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+
+    for (auto& enum_value : schema.m_enums) {
+        auto register_code = GenerateEnumScriptBindHeaderCode(enum_value);
+        auto bind_code = GenerateEnumScriptBindImplCode(enum_value);
+        registers_data << kainjow::mustache::data{"register", register_code};
+        bindings_data << kainjow::mustache::data{"binding", bind_code};
+    }
+
+    for (auto& class_value : schema.m_classes) {
+        auto register_code = GenerateClassScriptBindHeaderCode(class_value);
+        auto bind_code = GenerateClassScriptBindImplCode(class_value);
+        registers_data << kainjow::mustache::data{"register", register_code};
+        bindings_data << kainjow::mustache::data{"binding", bind_code};
+    }
+
+    data.set("registers", registers_data);
+    data.set("bindings", bindings_data);
+
+    return impl_mustache.render(data);
+}
+
+std::string GenerateBindingHeaderCode(const SchemaInfoManager& manager) {
+    auto& header_mustache = MustacheManager::GetInst().m_binding_header_mustache;
+
+    kainjow::mustache::data data;
+    kainjow::mustache::data includes_data{kainjow::mustache::data::type::list};
+
+    for (auto& info : manager.m_infos) {
+        auto header_filename = info.m_pure_filename;
+        header_filename.replace_extension(".hpp");
+        auto binding_include = "schema/binding/" + header_filename.string();
+        auto schema_include = "schema/" + header_filename.string();
+        includes_data << kainjow::mustache::data{"include", binding_include};
+        includes_data << kainjow::mustache::data{"include", schema_include};
+    }
+
+    data.set("includes", includes_data);
+
+    return header_mustache.render(data);
+}
+
+std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
+    auto& impl_mustache = MustacheManager::GetInst().m_binding_impl_mustache;
+
+    kainjow::mustache::data data;
+
+    kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data handle_casts_data{kainjow::mustache::data::type::list};
+
+    std::unordered_set<std::string> handle_types;
+
+    for (auto& info : manager.m_infos) {
+        // Collect all register function calls
+        for (auto& enum_value : info.m_enums) {
+            std::string func_name = "register" + enum_value.m_name + "TypeFromSchema";
+            registers_data << kainjow::mustache::data{"register", func_name + "(engine);"};
+        }
+
+        for (auto& class_value : info.m_classes) {
+            std::string func_name = "register" + class_value.m_name + "TypeFromSchema";
+            registers_data << kainjow::mustache::data{"register", func_name + "(engine);"};
+        }
+
+        // Collect all bind function calls
+        for (auto& enum_value : info.m_enums) {
+            std::string func_name = "bind" + enum_value.m_name + "TypeFromSchema";
+            bindings_data << kainjow::mustache::data{"binding", func_name + "(engine);"};
+        }
+
+        for (auto& class_value : info.m_classes) {
+            std::string func_name = "bind" + class_value.m_name + "TypeFromSchema";
+            bindings_data << kainjow::mustache::data{"binding", func_name + "(engine);"};
+
+            if (class_value.is_asset) {
+                handle_types.insert(class_value.m_name);
+            }
+
+            for (auto& prop : class_value.m_properties) {
+                std::string inner = ExtractHandleInnerType(prop.m_type);
+                if (!inner.empty())
+                    handle_types.insert(inner);
+            }
+        }
+    }
+
+    for (const auto& type_name : handle_types) {
+        handle_casts_data << kainjow::mustache::data{
+            "handle_cast",
+            "bindHandleTypeOpImplCast<" + type_name + ">(engine, \"Handle<" + type_name + ">\", \"" + type_name + "\");"};
+    }
+
+    data.set("registers", registers_data);
+    data.set("bindings", bindings_data);
+    data.set("handle_casts", handle_casts_data);
+
+    return impl_mustache.render(data);
+}
+
+static const std::unordered_map<std::string, std::string> Cpp2AngelScriptTypeMap = {
+    // Integer types
+    {"uint8_t", "uint8"},
+    {"uint16_t", "uint16"},
+    {"uint32_t", "uint32"},
+    {"uint64_t", "uint64"},
+    {"int8_t", "int8"},
+    {"int16_t", "int16"},
+    {"int32_t", "int32"},
+    {"int64_t", "int64"},
+    
+    // Standard types
+    {"std::string", "string"},
+};
+
+static std::string ExtractOptionalInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::optional<";
+    if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    int depth = 1;
+    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
+        char c = cpp_type[i];
+        if (c == '<') ++depth;
+        else if (c == '>') {
+            --depth;
+            if (depth == 0) return cpp_type.substr(prefix.size(), i - prefix.size());
+        }
+    }
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+static std::string ExtractFlagsInnerType(const std::string& cpp_type) {
+    const std::string prefix = "Flags<";
+    if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    int depth = 1;
+    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
+        char c = cpp_type[i];
+        if (c == '<') ++depth;
+        else if (c == '>') {
+            --depth;
+            if (depth == 0) return cpp_type.substr(prefix.size(), i - prefix.size());
+        }
+    }
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+std::string ConvertCppTypeToAngelScript(const std::string& cpp_type) {
+    auto it = Cpp2AngelScriptTypeMap.find(cpp_type);
+    if (it != Cpp2AngelScriptTypeMap.end()) {
+        return it->second;
+    }
+    std::string inner = ExtractOptionalInnerType(cpp_type);
+    if (!inner.empty()) {
+        return "Optional<" + ConvertCppTypeToAngelScript(inner) + ">";
+    }
+    std::string flags_inner = ExtractFlagsInnerType(cpp_type);
+    if (!flags_inner.empty()) {
+        return "Flags<" + ConvertCppTypeToAngelScript(flags_inner) + ">";
+    }
+    std::string vector_inner = ExtractVectorInnerType(cpp_type);
+    if (!vector_inner.empty()) {
+        return "array<" + ConvertCppTypeToAngelScript(vector_inner) + ">";
+    }
+    std::string handle_inner = ExtractHandleInnerType(cpp_type);
+    if (!handle_inner.empty()) {
+        return "Handle<" + ConvertCppTypeToAngelScript(handle_inner) + ">";
+    }
+    return cpp_type;
+}
+
+static std::string ExtractHandleInnerType(const std::string& cpp_type) {
+    const std::string suffix = "Handle";
+    if (cpp_type.size() > suffix.size() &&
+        cpp_type.compare(cpp_type.size() - suffix.size(), suffix.size(), suffix) == 0)
+        return cpp_type.substr(0, cpp_type.size() - suffix.size());
+    return {};
+}
+
+static std::string ExtractVectorInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::vector<";
+    if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    int depth = 1;
+    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
+        char c = cpp_type[i];
+        if (c == '<') ++depth;
+        else if (c == '>') {
+            --depth;
+            if (depth == 0) return cpp_type.substr(prefix.size(), i - prefix.size());
+        }
+    }
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }

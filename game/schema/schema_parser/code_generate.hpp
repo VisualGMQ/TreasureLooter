@@ -27,3 +27,16 @@ std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager&);
 std::string GenerateAssetInfoImplCode(const SchemaInfoManager&);
 std::string GenerateAssetSerializeTotleHeaderCode(const SchemaInfoManager&);
 std::string GenerateAssetDisplayTotleHeaderCode(const SchemaInfoManager&);
+
+// script binding code
+std::string GenerateEnumScriptBindHeaderCode(const EnumInfo&);
+std::string GenerateEnumScriptBindImplCode(const EnumInfo&);
+std::string GenerateClassScriptBindHeaderCode(const ClassInfo&);
+std::string GenerateClassScriptBindImplCode(const ClassInfo&);
+std::string GenerateSchemaScriptBindHeaderCode(const SchemaInfo&);
+std::string GenerateSchemaScriptBindImplCode(const SchemaInfo&);
+std::string GenerateBindingHeaderCode(const SchemaInfoManager&);
+std::string GenerateBindingImplCode(const SchemaInfoManager&);
+
+// Type conversion from C++ to AngelScript
+std::string ConvertCppTypeToAngelScript(const std::string& cpp_type);

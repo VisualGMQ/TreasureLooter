@@ -12,6 +12,7 @@ android/build
 android/app/build
 local.properties
 android/app/src/main/assets/assets
+android/app/src/main/assets/scripts
 emcmake-build
 android/app/release
 project_path.xml

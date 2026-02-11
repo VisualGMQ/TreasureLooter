@@ -1,8 +1,10 @@
 #include "engine/ui.hpp"
 
 #include "engine/context.hpp"
+#include "engine/input/mouse.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
+#include "engine/input/finger_touch.hpp"
 
 void UIText::SetFont(FontHandle font) {
     m_font = font;
@@ -225,7 +227,7 @@ UIWidget::UIWidget() {
     m_old_transform.m_size = Vec2::ZERO;
 }
 
-UIWidget::UIWidget(UIWidgetInfoHandle info) {
+UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
     m_old_transform.m_size = Vec2::ZERO;
 
     m_selected = info->m_selected;

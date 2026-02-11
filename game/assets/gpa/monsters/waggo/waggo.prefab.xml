@@ -31,6 +31,7 @@
 				<animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</animation>
 			</value>
 		</animation>
+		<script>scripts/waggo.as</script>
 		<cct>
 			<value>
 				<skin>0.100000</skin>
@@ -38,7 +39,6 @@
 				<physics_actor>assets/gpa/monsters/waggo/waggo.physics_actor.xml</physics_actor>
 			</value>
 		</cct>
-		<motor_config>assets/gpa/monsters/waggo/waggo.motor_config.xml</motor_config>
+		<gameplay_config>assets/gpa/monsters/waggo/waggo.gameplay_config.xml</gameplay_config>
 	</payload>
 </Prefab>
-

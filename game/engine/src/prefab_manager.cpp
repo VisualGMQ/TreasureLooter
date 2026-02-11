@@ -36,7 +36,7 @@ void PrefabManager::changePrefabByBase(Prefab& prefab) {
     REPLACE_BY_BASE(m_tilemap)
     REPLACE_BY_BASE(m_cct)
     REPLACE_BY_BASE(m_trigger)
-    REPLACE_BY_BASE(m_motor_config)
+    REPLACE_BY_BASE(m_gameplay_config)
 
     if (!prefab.m_base->m_children.empty() && prefab.m_children.empty()) {
         prefab.m_children = prefab.m_base->m_children;

@@ -1,9 +1,9 @@
 #pragma once
 #include "SDL3_ttf/SDL_ttf.h"
-#include "asset_manager_interface.hpp"
-#include "handle.hpp"
-#include "math.hpp"
-#include "path.hpp"
+#include "engine/asset_manager_interface.hpp"
+#include "engine/handle.hpp"
+#include "engine/math.hpp"
+#include "engine/path.hpp"
 
 class Font {
 public:

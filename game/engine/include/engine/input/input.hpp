@@ -1,6 +1,6 @@
 #pragma once
-#include "button.hpp"
-#include "gamepad.hpp"
+#include "engine/input/button.hpp"
+#include "engine/input/gamepad.hpp"
 #include "engine/math.hpp"
 #include "engine/path.hpp"
 #include "schema/input.hpp"
@@ -94,13 +94,14 @@ private:
 
 class Axises {
 public:
+    Axises() = default;
     Axises(const Axis& x_axis, const Axis& y_axis);
 
     Vec2 Value(SDL_JoystickID id = 0) const;
 
 private:
-    const Axis& m_x_axis;
-    const Axis& m_y_axis;
+    const Axis* m_x_axis = nullptr;
+    const Axis* m_y_axis = nullptr;
 };
 
 class InputManager {
@@ -110,7 +111,7 @@ public:
     const Axis& GetAxis(const std::string& name) const;
     const Action& GetAction(const std::string& name) const;
 
-    Axises MakeAxises(const std::string& x_name, const std::string& y_name);
+    Axises MakeAxises(const std::string& x_name, const std::string& y_name) const;
 
     void SetConfig(CommonContext& context, InputConfigHandle config);
 

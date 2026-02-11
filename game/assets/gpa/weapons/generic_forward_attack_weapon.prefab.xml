@@ -20,6 +20,7 @@
                 <rotation>0.000000</rotation>
             </value>
         </transform>
+        <script>scripts/generic_forward_weapon.as</script>
         <animation>
             <value>
                 <loop>0</loop>

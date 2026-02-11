@@ -1,7 +1,7 @@
 #pragma once
-#include "math.hpp"
+#include "engine/math.hpp"
+#include "engine/timer.hpp"
 #include "schema/common.hpp"
-#include "timer.hpp"
 
 #include <vector>
 

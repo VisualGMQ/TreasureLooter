@@ -1,9 +1,8 @@
 #pragma once
-#include "animation.hpp"
-#include "event.hpp"
-#include "image.hpp"
+#include "engine/animation.hpp"
+#include "engine/event.hpp"
+#include "engine/image.hpp"
 #include "schema/level_content.hpp"
-#include "timer.hpp"
 
 #include <unordered_set>
 
@@ -60,6 +59,7 @@ private:
     void initByLevelContent(LevelContentHandle);
 
     void doRemoveEntities();
+    void doRemoveEntityWithChildren(Entity);
 };
 
 using LevelHandle = Handle<Level>;
