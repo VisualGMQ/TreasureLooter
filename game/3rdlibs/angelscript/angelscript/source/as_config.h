@@ -904,7 +904,7 @@
 				#define AS_MINGW47
 			#endif
 		
-			#if (__clang_major__ == 3 && __clang_minor__ > 4) || __clang_major > 3
+			#if (__clang_major__ == 3 && __clang_minor__ > 4) || __clang_major__ > 3
 				#define AS_MINGW47
 			#endif
 

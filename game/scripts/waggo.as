@@ -52,11 +52,7 @@ class Waggo: TL::Behavior {
 
         TL::GameContext@ ctx = TL::GetGameContext();
         TL::InputManager@ input_manager = ctx.m_input_manager;
-        const TL::Axis@ x_axis = input_manager.GetAxis("MoveX");
-        const TL::Axis@ y_axis = input_manager.GetAxis("MoveY");
-        TL::Vec2 axises = TL::Vec2(0, 0);
-        axises.x = x_axis.Value(0);
-        axises.y = y_axis.Value(0);
+        TL::Vec2 axises = input_manager.MakeAxises("MoveX", "MoveY").Value(0);
         const TL::Action@ action = TL::GetGameContext().m_input_manager.GetAction("Attack");
         if (action.IsPressed(0)) {
             attack();

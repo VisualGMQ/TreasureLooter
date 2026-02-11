@@ -111,7 +111,7 @@ public:
     const Axis& GetAxis(const std::string& name) const;
     const Action& GetAction(const std::string& name) const;
 
-    Axises MakeAxises(const std::string& x_name, const std::string& y_name);
+    Axises MakeAxises(const std::string& x_name, const std::string& y_name) const;
 
     void SetConfig(CommonContext& context, InputConfigHandle config);
 

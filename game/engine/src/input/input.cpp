@@ -209,7 +209,7 @@ const Action& InputManager::GetAction(const std::string& name) const {
 }
 
 Axises InputManager::MakeAxises(const std::string& x_name,
-                                const std::string& y_name) {
+                                const std::string& y_name) const {
     return {GetAxis(x_name), GetAxis(y_name)};
 }
 

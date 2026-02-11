@@ -1352,6 +1352,12 @@ void bindInputManager(asIScriptEngine* engine) {
             return &mgr->GetAxis(name);
         }),
         asCALL_CDECL_OBJFIRST));
+    AS_CALL(engine->RegisterObjectMethod(
+            "InputManager", "Axises MakeAxises(const string& in x_axis, const string& in y_axis) const",
+            asFUNCTION(+[](const InputManager* mgr, const std::string& x_axis, const std::string& y_axis) -> Axises {
+                return mgr->MakeAxises(x_axis, y_axis);
+            }),
+            asCALL_CDECL_OBJFIRST));
 }
 
 void bindWindow(asIScriptEngine* engine) {
