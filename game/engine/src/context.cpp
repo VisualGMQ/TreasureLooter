@@ -359,6 +359,7 @@ void GameContext::renderUpdate(TimeType elapse) {
     m_renderer->Clear();
     beginImGui();
 
+    m_script_component_manager->Render();
     m_tilemap_component_manager->Update();
     m_sprite_manager->Update();
     m_ui_manager->Render();

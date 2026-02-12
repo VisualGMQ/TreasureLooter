@@ -73,6 +73,13 @@ class Waggo: TL::Behavior {
         m_weapon_script.Attack();
     }
 
+    void OnRender() override {
+        if (ImGui::Begin("hello imgui in script")) {
+            ImGui::Button("this is button");
+            ImGui::End();
+        }
+    }
+
     private void move(const TL::Vec2& in dir, TL::TimeType duration) {
         if (dir == TL::Vec2::ZERO) {
             if (m_anim_player !is null) {

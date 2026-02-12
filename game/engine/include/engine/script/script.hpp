@@ -42,6 +42,7 @@ public:
     ~Script();
 
     void Update();
+    void Render();
 
     asIScriptObject* GetScriptObject() const { return m_class_instance; }
 
@@ -49,6 +50,7 @@ private:
     asIScriptContext* m_ctx{};
     asIScriptFunction* m_init_fn{};
     asIScriptFunction* m_update_fn{};
+    asIScriptFunction* m_render_fn{};
     asIScriptFunction* m_quit_fn{};
     asIScriptObject* m_class_instance{};
 
@@ -64,4 +66,5 @@ public:
     ~ScriptComponentManager();
 
     void Update();
+    void Render();
 };

@@ -1,6 +1,8 @@
 #include "engine/script/script_binding.hpp"
 #include "angelscript.h"
 #include "autowrapper/aswrappedcall.h"
+#include "imgui.h"
+#include <vector>
 #include "engine/animation_player.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/camera.hpp"
@@ -281,6 +283,8 @@ void registerAllTypes(asIScriptEngine* engine) {
     AS_CALL(engine->RegisterInterfaceMethod("IBehavior", "void OnInit()"));
     AS_CALL(engine->RegisterInterfaceMethod("IBehavior",
                                             "void OnUpdate(TimeType)"));
+    AS_CALL(engine->RegisterInterfaceMethod("IBehavior",
+                                            "void OnRender()"));
     AS_CALL(engine->RegisterInterfaceMethod("IBehavior", "void OnQuit()"));
 }
 
@@ -1809,6 +1813,747 @@ void bindMisc(asIScriptEngine* engine) {
         asFUNCTION(GetZOrderByYSorting), asCALL_CDECL));
 }
 
+//-----------------------------------------------------------------------------
+// ImGui bindings: common widgets and helpers (namespace ImGui)
+//-----------------------------------------------------------------------------
+Vec2 ImGui_GetWindowSize() {
+    ImVec2 v = ImGui::GetWindowSize();
+    return Vec2(v.x, v.y);
+}
+Vec2 ImGui_GetContentRegionAvail() {
+    ImVec2 v = ImGui::GetContentRegionAvail();
+    return Vec2(v.x, v.y);
+}
+Vec2 ImGui_GetCursorScreenPos() {
+    ImVec2 v = ImGui::GetCursorScreenPos();
+    return Vec2(v.x, v.y);
+}
+Vec2 ImGui_GetCursorPos() {
+    ImVec2 v = ImGui::GetCursorPos();
+    return Vec2(v.x, v.y);
+}
+bool ImGui_InputText(const std::string& label, std::string& value,
+                           int max_size) {
+    std::vector<char> buf(static_cast<size_t>(max_size) + 1, '\0');
+    size_t copy_len = (std::min)(value.size(), static_cast<size_t>(max_size));
+    if (copy_len > 0) value.copy(buf.data(), copy_len);
+    buf[copy_len] = '\0';
+    bool ret = ImGui::InputText(label.c_str(), buf.data(),
+                               static_cast<size_t>(max_size));
+    if (ret) value = std::string(buf.data());
+    return ret;
+}
+
+void bindImGui(asIScriptEngine* engine) {
+    //----------------------------------------------------------------------
+    // ImGui enums (script: ImGui::WindowFlags_None etc.)
+    //----------------------------------------------------------------------
+    AS_CALL(engine->SetDefaultNamespace(""));
+
+    AS_CALL(engine->RegisterEnum("ImGuiWindowFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "None", ImGuiWindowFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoTitleBar", ImGuiWindowFlags_NoTitleBar));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoResize", ImGuiWindowFlags_NoResize));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoMove", ImGuiWindowFlags_NoMove));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoScrollbar", ImGuiWindowFlags_NoScrollbar));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoCollapse", ImGuiWindowFlags_NoCollapse));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "AlwaysAutoResize", ImGuiWindowFlags_AlwaysAutoResize));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoBackground", ImGuiWindowFlags_NoBackground));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "NoSavedSettings", ImGuiWindowFlags_NoSavedSettings));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "MenuBar", ImGuiWindowFlags_MenuBar));
+    AS_CALL(engine->RegisterEnumValue("ImGuiWindowFlags", "HorizontalScrollbar", ImGuiWindowFlags_HorizontalScrollbar));
+
+    AS_CALL(engine->RegisterEnum("ImGuiChildFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "None", ImGuiChildFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "Borders", ImGuiChildFlags_Borders));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "ResizeX", ImGuiChildFlags_ResizeX));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "ResizeY", ImGuiChildFlags_ResizeY));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "AutoResizeX", ImGuiChildFlags_AutoResizeX));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "AutoResizeY", ImGuiChildFlags_AutoResizeY));
+    AS_CALL(engine->RegisterEnumValue("ImGuiChildFlags", "FrameStyle", ImGuiChildFlags_FrameStyle));
+
+    AS_CALL(engine->RegisterEnum("ImGuiTreeNodeFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "None", ImGuiTreeNodeFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "Selected", ImGuiTreeNodeFlags_Selected));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "Framed", ImGuiTreeNodeFlags_Framed));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "AllowOverlap", ImGuiTreeNodeFlags_AllowOverlap));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "NoTreePushOnOpen", ImGuiTreeNodeFlags_NoTreePushOnOpen));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "NoAutoOpenOnLog", ImGuiTreeNodeFlags_NoAutoOpenOnLog));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "DefaultOpen", ImGuiTreeNodeFlags_DefaultOpen));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "OpenOnDoubleClick", ImGuiTreeNodeFlags_OpenOnDoubleClick));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "OpenOnArrow", ImGuiTreeNodeFlags_OpenOnArrow));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "Leaf", ImGuiTreeNodeFlags_Leaf));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "Bullet", ImGuiTreeNodeFlags_Bullet));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "FramePadding", ImGuiTreeNodeFlags_FramePadding));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "SpanAvailWidth", ImGuiTreeNodeFlags_SpanAvailWidth));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "SpanFullWidth", ImGuiTreeNodeFlags_SpanFullWidth));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTreeNodeFlags", "CollapsingHeader", ImGuiTreeNodeFlags_CollapsingHeader));
+
+    AS_CALL(engine->RegisterEnum("ImGuiSliderFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSliderFlags", "None", ImGuiSliderFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSliderFlags", "Logarithmic", ImGuiSliderFlags_Logarithmic));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSliderFlags", "NoRoundToFormat", ImGuiSliderFlags_NoRoundToFormat));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSliderFlags", "NoInput", ImGuiSliderFlags_NoInput));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSliderFlags", "AlwaysClamp", ImGuiSliderFlags_AlwaysClamp));
+
+    AS_CALL(engine->RegisterEnum("ImGuiComboFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "None", ImGuiComboFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "PopupAlignLeft", ImGuiComboFlags_PopupAlignLeft));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "HeightSmall", ImGuiComboFlags_HeightSmall));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "HeightRegular", ImGuiComboFlags_HeightRegular));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "HeightLarge", ImGuiComboFlags_HeightLarge));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "HeightLargest", ImGuiComboFlags_HeightLargest));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "NoArrowButton", ImGuiComboFlags_NoArrowButton));
+    AS_CALL(engine->RegisterEnumValue("ImGuiComboFlags", "NoPreview", ImGuiComboFlags_NoPreview));
+
+    AS_CALL(engine->RegisterEnum("ImGuiSelectableFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSelectableFlags", "None", ImGuiSelectableFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSelectableFlags", "NoAutoClosePopups", ImGuiSelectableFlags_NoAutoClosePopups));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSelectableFlags", "SpanAllColumns", ImGuiSelectableFlags_SpanAllColumns));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSelectableFlags", "AllowDoubleClick", ImGuiSelectableFlags_AllowDoubleClick));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSelectableFlags", "Disabled", ImGuiSelectableFlags_Disabled));
+    AS_CALL(engine->RegisterEnumValue("ImGuiSelectableFlags", "AllowOverlap", ImGuiSelectableFlags_AllowOverlap));
+
+    AS_CALL(engine->RegisterEnum("ImGuiTabBarFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabBarFlags", "None", ImGuiTabBarFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabBarFlags", "Reorderable", ImGuiTabBarFlags_Reorderable));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabBarFlags", "AutoSelectNewTabs", ImGuiTabBarFlags_AutoSelectNewTabs));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabBarFlags", "FittingPolicyResizeDown", ImGuiTabBarFlags_FittingPolicyResizeDown));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabBarFlags", "FittingPolicyScroll", ImGuiTabBarFlags_FittingPolicyScroll));
+
+    AS_CALL(engine->RegisterEnum("ImGuiTabItemFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabItemFlags", "None", ImGuiTabItemFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabItemFlags", "UnsavedDocument", ImGuiTabItemFlags_UnsavedDocument));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabItemFlags", "SetSelected", ImGuiTabItemFlags_SetSelected));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTabItemFlags", "NoPushId", ImGuiTabItemFlags_NoPushId));
+
+    AS_CALL(engine->RegisterEnum("ImGuiTableFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "None", ImGuiTableFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "Resizable", ImGuiTableFlags_Resizable));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "Reorderable", ImGuiTableFlags_Reorderable));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "Hideable", ImGuiTableFlags_Hideable));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "Sortable", ImGuiTableFlags_Sortable));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "NoSavedSettings", ImGuiTableFlags_NoSavedSettings));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "RowBg", ImGuiTableFlags_RowBg));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "BordersInnerH", ImGuiTableFlags_BordersInnerH));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "BordersOuterH", ImGuiTableFlags_BordersOuterH));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "BordersInnerV", ImGuiTableFlags_BordersInnerV));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "BordersOuterV", ImGuiTableFlags_BordersOuterV));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "BordersH", ImGuiTableFlags_BordersH));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "BordersV", ImGuiTableFlags_BordersV));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "Borders", ImGuiTableFlags_Borders));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "SizingFixedFit", ImGuiTableFlags_SizingFixedFit));
+    AS_CALL(engine->RegisterEnumValue("ImGuiTableFlags", "SizingStretchSame", ImGuiTableFlags_SizingStretchSame));
+
+    AS_CALL(engine->RegisterEnum("ImGuiInputTextFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "None", ImGuiInputTextFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "CharsDecimal", ImGuiInputTextFlags_CharsDecimal));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "CharsHexadecimal", ImGuiInputTextFlags_CharsHexadecimal));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "ReadOnly", ImGuiInputTextFlags_ReadOnly));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "Password", ImGuiInputTextFlags_Password));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "AutoSelectAll", ImGuiInputTextFlags_AutoSelectAll));
+    AS_CALL(engine->RegisterEnumValue("ImGuiInputTextFlags", "EnterReturnsTrue", ImGuiInputTextFlags_EnterReturnsTrue));
+
+    AS_CALL(engine->RegisterEnum("ImGuiPopupFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiPopupFlags", "None", ImGuiPopupFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiPopupFlags", "MouseButtonLeft", ImGuiPopupFlags_MouseButtonLeft));
+    AS_CALL(engine->RegisterEnumValue("ImGuiPopupFlags", "MouseButtonRight", ImGuiPopupFlags_MouseButtonRight));
+    AS_CALL(engine->RegisterEnumValue("ImGuiPopupFlags", "MouseButtonMiddle", ImGuiPopupFlags_MouseButtonMiddle));
+    AS_CALL(engine->RegisterEnumValue("ImGuiPopupFlags", "NoReopen", ImGuiPopupFlags_NoReopen));
+
+    AS_CALL(engine->RegisterEnum("ImGuiFocusedFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiFocusedFlags", "None", ImGuiFocusedFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiFocusedFlags", "ChildWindows", ImGuiFocusedFlags_ChildWindows));
+    AS_CALL(engine->RegisterEnumValue("ImGuiFocusedFlags", "RootWindow", ImGuiFocusedFlags_RootWindow));
+    AS_CALL(engine->RegisterEnumValue("ImGuiFocusedFlags", "AnyWindow", ImGuiFocusedFlags_AnyWindow));
+    AS_CALL(engine->RegisterEnumValue("ImGuiFocusedFlags", "RootAndChildWindows", ImGuiFocusedFlags_RootAndChildWindows));
+
+    AS_CALL(engine->RegisterEnum("ImGuiHoveredFlags"));
+    AS_CALL(engine->RegisterEnumValue("ImGuiHoveredFlags", "None", ImGuiHoveredFlags_None));
+    AS_CALL(engine->RegisterEnumValue("ImGuiHoveredFlags", "ChildWindows", ImGuiHoveredFlags_ChildWindows));
+    AS_CALL(engine->RegisterEnumValue("ImGuiHoveredFlags", "RootWindow", ImGuiHoveredFlags_RootWindow));
+    AS_CALL(engine->RegisterEnumValue("ImGuiHoveredFlags", "AnyWindow", ImGuiHoveredFlags_AnyWindow));
+    AS_CALL(engine->RegisterEnumValue("ImGuiHoveredFlags", "AllowWhenBlockedByPopup", ImGuiHoveredFlags_AllowWhenBlockedByPopup));
+    AS_CALL(engine->RegisterEnumValue("ImGuiHoveredFlags", "AllowWhenDisabled", ImGuiHoveredFlags_AllowWhenDisabled));
+
+    //----------------------------------------------------------------------
+    // ImGui Widgets
+    //----------------------------------------------------------------------
+    AS_CALL(engine->SetDefaultNamespace("ImGui"));
+
+    // Window
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Begin(const string& in name)",
+        asFUNCTION(+[](const std::string& name) {
+            return ImGui::Begin(name.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Begin(const string& in name, bool& out p_open)",
+        asFUNCTION(+[](const std::string& name, bool* p_open) {
+            return ImGui::Begin(name.c_str(), p_open);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Begin(const string& in name, bool &out p_open, int flags)",
+        asFUNCTION(+[](const std::string& name, bool* p_open, int flags) {
+            return ImGui::Begin(name.c_str(), p_open,
+                                static_cast<ImGuiWindowFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Begin(const string& in name, int flags)",
+        asFUNCTION(+[](const std::string& name, int flags) {
+            return ImGui::Begin(name.c_str(), nullptr,
+                                static_cast<ImGuiWindowFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void End()", asFUNCTION(ImGui::End),
+                                            asCALL_CDECL));
+
+    // Child window
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginChild(const string& in str_id, float size_x = 0, float size_y = 0)",
+        asFUNCTION(+[](const std::string& str_id, float sx, float sy) {
+            return ImGui::BeginChild(str_id.c_str(), ImVec2(sx, sy));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginChild(const string& in str_id, float size_x, float size_y, int child_flags, int window_flags = 0)",
+        asFUNCTION(+[](const std::string& str_id, float sx, float sy,
+                       int child_flags, int window_flags) {
+            return ImGui::BeginChild(str_id.c_str(), ImVec2(sx, sy),
+                                     static_cast<ImGuiChildFlags>(child_flags),
+                                     static_cast<ImGuiWindowFlags>(window_flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndChild()",
+                                            asFUNCTION(ImGui::EndChild),
+                                            asCALL_CDECL));
+
+    // Window utilities
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void SetNextWindowPos(float x, float y)",
+        asFUNCTION(+[](float x, float y) {
+            ImGui::SetNextWindowPos(ImVec2(x, y));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void SetNextWindowSize(float x, float y)",
+        asFUNCTION(+[](float x, float y) {
+            ImGui::SetNextWindowSize(ImVec2(x, y));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("TL::Vec2 GetWindowSize()",
+                                            asFUNCTION(ImGui_GetWindowSize),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool IsWindowFocused(int flags = 0)",
+                                            asFUNCTION(+[](int flags) {
+                                                return ImGui::IsWindowFocused(
+                                                    static_cast<ImGuiFocusedFlags>(flags));
+                                            }),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool IsWindowHovered(int flags = 0)",
+                                            asFUNCTION(+[](int flags) {
+                                                return ImGui::IsWindowHovered(
+                                                    static_cast<ImGuiHoveredFlags>(flags));
+                                            }),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("TL::Vec2 GetContentRegionAvail()",
+                                            asFUNCTION(ImGui_GetContentRegionAvail),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("TL::Vec2 GetCursorScreenPos()",
+                                            asFUNCTION(ImGui_GetCursorScreenPos),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("TL::Vec2 GetCursorPos()",
+                                            asFUNCTION(ImGui_GetCursorPos),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("float GetCursorPosX()",
+                                            asFUNCTION(ImGui::GetCursorPosX),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("float GetCursorPosY()",
+                                            asFUNCTION(ImGui::GetCursorPosY),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void SetCursorPos(float x, float y)",
+        asFUNCTION(+[](float x, float y) { ImGui::SetCursorPos(ImVec2(x, y)); }),
+        asCALL_CDECL));
+
+    // Widgets: Text
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Text(const string& in text)",
+        asFUNCTION(+[](const std::string& text) {
+            ImGui::TextUnformatted(text.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void TextDisabled(const string& in text)",
+        asFUNCTION(+[](const std::string& text) {
+            ImGui::TextDisabled("%s", text.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void TextWrapped(const string& in text)",
+        asFUNCTION(+[](const std::string& text) {
+            ImGui::TextWrapped("%s", text.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void SeparatorText(const string& in label)",
+        asFUNCTION(+[](const std::string& label) {
+            ImGui::SeparatorText(label.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void BulletText(const string& in text)",
+        asFUNCTION(+[](const std::string& text) {
+            ImGui::BulletText("%s", text.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void Bullet()",
+                                            asFUNCTION(ImGui::Bullet),
+                                            asCALL_CDECL));
+
+    // Widgets: Main
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Button(const string& in label)",
+        asFUNCTION(+[](const std::string& label) {
+            return ImGui::Button(label.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Button(const string& in label, float size_x, float size_y)",
+        asFUNCTION(+[](const std::string& label, float sx, float sy) {
+            return ImGui::Button(label.c_str(), ImVec2(sx, sy));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool SmallButton(const string& in label)",
+        asFUNCTION(+[](const std::string& label) {
+            return ImGui::SmallButton(label.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Checkbox(const string& in label, bool &out v)",
+        asFUNCTION(+[](const std::string& label, bool* v) {
+            return ImGui::Checkbox(label.c_str(), v);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool RadioButton(const string& in label, bool active)",
+        asFUNCTION(+[](const std::string& label, bool active) {
+            return ImGui::RadioButton(label.c_str(), active);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool RadioButton(const string& in label, int &out v, int v_button)",
+        asFUNCTION(+[](const std::string& label, int* v, int v_button) {
+            return ImGui::RadioButton(label.c_str(), v, v_button);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void ProgressBar(float fraction, float size_x = -1, float size_y = 0)",
+        asFUNCTION(+[](float fraction, float sx, float sy) {
+            ImGui::ProgressBar(fraction, ImVec2(sx, sy), nullptr);
+        }),
+        asCALL_CDECL));
+
+    // Widgets: Input
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool InputText(const string& in label, string &out value, int max_size = 256)",
+        asFUNCTION(+[](const std::string& label, std::string& value, int max_size) {
+            return ImGui_InputText(label, value, max_size);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool InputText(const string& in label, string &out value, int max_size, int flags)",
+        asFUNCTION(+[](const std::string& label, std::string& value, int max_size,
+                       int flags) {
+            std::vector<char> buf(static_cast<size_t>(max_size) + 1, '\0');
+            size_t copy_len = (std::min)(value.size(), static_cast<size_t>(max_size));
+            if (copy_len > 0) value.copy(buf.data(), copy_len);
+            buf[copy_len] = '\0';
+            bool ret = ImGui::InputText(label.c_str(), buf.data(),
+                                        static_cast<size_t>(max_size),
+                                        static_cast<ImGuiInputTextFlags>(flags));
+            if (ret) value = std::string(buf.data());
+            return ret;
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool InputInt(const string& in label, int &out v, int step = 1, int step_fast = 100)",
+        asFUNCTION(+[](const std::string& label, int* v, int step, int step_fast) {
+            return ImGui::InputInt(label.c_str(), v, step, step_fast);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool InputFloat(const string& in label, float &out v, float step = 0, float step_fast = 0, const string& in format = '%.3f')",
+        asFUNCTION(+[](const std::string& label, float* v, float step,
+                       float step_fast, const std::string& format) {
+            return ImGui::InputFloat(label.c_str(), v, step, step_fast,
+                                    format.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool InputDouble(const string& in label, double &out v, double step = 0, double step_fast = 0, const string& in format = '%.6f')",
+        asFUNCTION(+[](const std::string& label, double* v, double step,
+                       double step_fast, const std::string& format) {
+            return ImGui::InputDouble(label.c_str(), v, step, step_fast,
+                                     format.c_str());
+        }),
+        asCALL_CDECL));
+
+    // Widgets: Drag
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool DragInt(const string& in label, int &out v, float v_speed = 1, int v_min = 0, int v_max = 0, const string& in format = '%d', int flags = 0)",
+        asFUNCTION(+[](const std::string& label, int* v, float speed, int vmin,
+                       int vmax, const std::string& format, int flags) {
+            return ImGui::DragInt(label.c_str(), v, speed, vmin, vmax,
+                                 format.c_str(),
+                                 static_cast<ImGuiSliderFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool DragFloat(const string& in label, float &out v, float v_speed = 1, float v_min = 0, float v_max = 0, const string& in format = '%.3f', int flags = 0)",
+        asFUNCTION(+[](const std::string& label, float* v, float speed, float vmin,
+                       float vmax, const std::string& format, int flags) {
+            return ImGui::DragFloat(label.c_str(), v, speed, vmin, vmax,
+                                  format.c_str(),
+                                  static_cast<ImGuiSliderFlags>(flags));
+        }),
+        asCALL_CDECL));
+
+    // Widgets: Slider
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool SliderInt(const string& in label, int &out v, int v_min, int v_max, const string& in format = '%d', int flags = 0)",
+        asFUNCTION(+[](const std::string& label, int* v, int vmin, int vmax,
+                       const std::string& format, int flags) {
+            return ImGui::SliderInt(label.c_str(), v, vmin, vmax,
+                                   format.c_str(),
+                                   static_cast<ImGuiSliderFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool SliderFloat(const string& in label, float &out v, float v_min, float v_max, const string& in format = '%.3f', int flags = 0)",
+        asFUNCTION(+[](const std::string& label, float* v, float vmin, float vmax,
+                       const std::string& format, int flags) {
+            return ImGui::SliderFloat(label.c_str(), v, vmin, vmax,
+                                     format.c_str(),
+                                     static_cast<ImGuiSliderFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool SliderAngle(const string& in label, float &out v_rad, float v_degrees_min = -360, float v_degrees_max = 360, const string& in format = '%.0f deg', int flags = 0)",
+        asFUNCTION(+[](const std::string& label, float* v, float vmin, float vmax,
+                       const std::string& format, int flags) {
+            return ImGui::SliderAngle(label.c_str(), v, vmin, vmax,
+                                     format.c_str(),
+                                     static_cast<ImGuiSliderFlags>(flags));
+        }),
+        asCALL_CDECL));
+
+    // Widgets: Tree
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool TreeNode(const string& in label)",
+        asFUNCTION(+[](const std::string& label) {
+            return ImGui::TreeNode(label.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool TreeNodeEx(const string& in label, int flags = 0)",
+        asFUNCTION(+[](const std::string& label, int flags) {
+            return ImGui::TreeNodeEx(label.c_str(),
+                                     static_cast<ImGuiTreeNodeFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void TreePop()",
+                                            asFUNCTION(ImGui::TreePop),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool CollapsingHeader(const string& in label, int flags = 0)",
+        asFUNCTION(+[](const std::string& label, int flags) {
+            return ImGui::CollapsingHeader(label.c_str(),
+                                           static_cast<ImGuiTreeNodeFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool CollapsingHeader(const string& in label, bool &out p_visible, int flags = 0)",
+        asFUNCTION(+[](const std::string& label, bool* p_visible, int flags) {
+            return ImGui::CollapsingHeader(label.c_str(), p_visible,
+                                           static_cast<ImGuiTreeNodeFlags>(flags));
+        }),
+        asCALL_CDECL));
+
+    // Widgets: Selectable
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Selectable(const string& in label, bool selected = false)",
+        asFUNCTION(+[](const std::string& label, bool selected) {
+            return ImGui::Selectable(label.c_str(), selected);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Selectable(const string& in label, bool selected, int flags)",
+        asFUNCTION(+[](const std::string& label, bool selected, int flags) {
+            return ImGui::Selectable(label.c_str(), selected,
+                                     static_cast<ImGuiSelectableFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Selectable(const string& in label, bool &out p_selected)",
+        asFUNCTION(+[](const std::string& label, bool* p_selected) {
+            return ImGui::Selectable(label.c_str(), p_selected);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool Selectable(const string& in label, bool &out p_selected, int flags)",
+        asFUNCTION(+[](const std::string& label, bool* p_selected, int flags) {
+            return ImGui::Selectable(label.c_str(), p_selected,
+                                     static_cast<ImGuiSelectableFlags>(flags));
+        }),
+        asCALL_CDECL));
+
+    // Widgets: Combo
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginCombo(const string& in label, const string& in preview_value)",
+        asFUNCTION(+[](const std::string& label, const std::string& preview) {
+            return ImGui::BeginCombo(label.c_str(), preview.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginCombo(const string& in label, const string& in preview_value, int flags)",
+        asFUNCTION(+[](const std::string& label, const std::string& preview,
+                       int flags) {
+            return ImGui::BeginCombo(label.c_str(), preview.c_str(),
+                                     static_cast<ImGuiComboFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndCombo()",
+                                            asFUNCTION(ImGui::EndCombo),
+                                            asCALL_CDECL));
+
+    // Layout
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void SameLine(float offset_from_start_x = 0, float spacing = -1)",
+        asFUNCTION(+[](float offset, float spacing) {
+            ImGui::SameLine(offset, spacing);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void NewLine()",
+                                            asFUNCTION(ImGui::NewLine),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void Separator()",
+                                            asFUNCTION(ImGui::Separator),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void Spacing()",
+                                            asFUNCTION(ImGui::Spacing),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Dummy(float size_x, float size_y)",
+        asFUNCTION(+[](float x, float y) {
+            ImGui::Dummy(ImVec2(x, y));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Indent(float indent_w = 0)",
+        asFUNCTION(ImGui::Indent), asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void Unindent(float indent_w = 0)",
+        asFUNCTION(ImGui::Unindent), asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void BeginGroup()",
+                                            asFUNCTION(ImGui::BeginGroup),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndGroup()",
+                                            asFUNCTION(ImGui::EndGroup),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void AlignTextToFramePadding()",
+                                            asFUNCTION(ImGui::AlignTextToFramePadding),
+                                            asCALL_CDECL));
+
+    // ID stack
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void PushID(const string& in str_id)",
+        asFUNCTION(+[](const std::string& str_id) {
+            ImGui::PushID(str_id.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void PushID(int int_id)",
+        asFUNCTION(+[](int id) { ImGui::PushID(id); }), asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void PopID()",
+                                            asFUNCTION(ImGui::PopID),
+                                            asCALL_CDECL));
+
+    // State: Disabled
+    AS_CALL(engine->RegisterGlobalFunction("void BeginDisabled(bool disabled = true)",
+                                            asFUNCTION(ImGui::BeginDisabled),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndDisabled()",
+                                            asFUNCTION(ImGui::EndDisabled),
+                                            asCALL_CDECL));
+
+    // Menu
+    AS_CALL(engine->RegisterGlobalFunction("bool BeginMenuBar()",
+                                            asFUNCTION(ImGui::BeginMenuBar),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndMenuBar()",
+                                            asFUNCTION(ImGui::EndMenuBar),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginMainMenuBar()",
+        asFUNCTION(ImGui::BeginMainMenuBar), asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndMainMenuBar()",
+                                            asFUNCTION(ImGui::EndMainMenuBar),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginMenu(const string& in label, bool enabled = true)",
+        asFUNCTION(+[](const std::string& label, bool enabled) {
+            return ImGui::BeginMenu(label.c_str(), enabled);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndMenu()",
+                                            asFUNCTION(ImGui::EndMenu),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool MenuItem(const string& in label, const string& in shortcut = '', bool selected = false, bool enabled = true)",
+        asFUNCTION(+[](const std::string& label, const std::string& shortcut,
+                       bool selected, bool enabled) {
+            return ImGui::MenuItem(label.c_str(),
+                                  shortcut.empty() ? nullptr : shortcut.c_str(),
+                                  selected, enabled);
+        }),
+        asCALL_CDECL));
+
+    // Popup
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginPopup(const string& in str_id)",
+        asFUNCTION(+[](const std::string& str_id) {
+            return ImGui::BeginPopup(str_id.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginPopup(const string& in str_id, int flags)",
+        asFUNCTION(+[](const std::string& str_id, int flags) {
+            return ImGui::BeginPopup(str_id.c_str(),
+                                    static_cast<ImGuiWindowFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginPopupModal(const string& in name, bool &out p_open)",
+        asFUNCTION(+[](const std::string& name, bool* p_open) {
+            return ImGui::BeginPopupModal(name.c_str(), p_open);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginPopupModal(const string& in name, bool &out p_open, int flags)",
+        asFUNCTION(+[](const std::string& name, bool* p_open, int flags) {
+            return ImGui::BeginPopupModal(name.c_str(), p_open,
+                                         static_cast<ImGuiWindowFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndPopup()",
+                                            asFUNCTION(ImGui::EndPopup),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void OpenPopup(const string& in str_id)",
+        asFUNCTION(+[](const std::string& str_id) {
+            ImGui::OpenPopup(str_id.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "void OpenPopup(const string& in str_id, int popup_flags)",
+        asFUNCTION(+[](const std::string& str_id, int popup_flags) {
+            ImGui::OpenPopup(str_id.c_str(),
+                             static_cast<ImGuiPopupFlags>(popup_flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void CloseCurrentPopup()",
+                                            asFUNCTION(ImGui::CloseCurrentPopup),
+                                            asCALL_CDECL));
+
+    // Tab bar
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTabBar(const string& in str_id)",
+        asFUNCTION(+[](const std::string& str_id) {
+            return ImGui::BeginTabBar(str_id.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTabBar(const string& in str_id, int flags)",
+        asFUNCTION(+[](const std::string& str_id, int flags) {
+            return ImGui::BeginTabBar(str_id.c_str(),
+                                      static_cast<ImGuiTabBarFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndTabBar()",
+                                            asFUNCTION(ImGui::EndTabBar),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTabItem(const string& in label, bool &out p_open)",
+        asFUNCTION(+[](const std::string& label, bool* p_open) {
+            return ImGui::BeginTabItem(label.c_str(), p_open);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTabItem(const string& in label, bool &out p_open, int flags)",
+        asFUNCTION(+[](const std::string& label, bool* p_open, int flags) {
+            return ImGui::BeginTabItem(label.c_str(), p_open,
+                                       static_cast<ImGuiTabItemFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTabItem(const string& in label)",
+        asFUNCTION(+[](const std::string& label) {
+            return ImGui::BeginTabItem(label.c_str());
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndTabItem()",
+                                            asFUNCTION(ImGui::EndTabItem),
+                                            asCALL_CDECL));
+
+    // Table
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTable(const string& in str_id, int columns)",
+        asFUNCTION(+[](const std::string& str_id, int columns) {
+            return ImGui::BeginTable(str_id.c_str(), columns);
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction(
+        "bool BeginTable(const string& in str_id, int columns, int flags)",
+        asFUNCTION(+[](const std::string& str_id, int columns, int flags) {
+            return ImGui::BeginTable(str_id.c_str(), columns,
+                                     static_cast<ImGuiTableFlags>(flags));
+        }),
+        asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void EndTable()",
+                                            asFUNCTION(ImGui::EndTable),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("void TableNextRow()",
+                                            asFUNCTION(ImGui::TableNextRow),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool TableNextColumn()",
+                                            asFUNCTION(ImGui::TableNextColumn),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool TableSetColumnIndex(int column_index)",
+                                            asFUNCTION(ImGui::TableSetColumnIndex),
+                                            asCALL_CDECL));
+
+    // Item queries
+    AS_CALL(engine->RegisterGlobalFunction("bool IsItemClicked()",
+                                            asFUNCTION(ImGui::IsItemClicked),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool IsItemHovered()",
+                                            asFUNCTION(ImGui::IsItemHovered),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool IsItemActive()",
+                                            asFUNCTION(ImGui::IsItemActive),
+                                            asCALL_CDECL));
+    AS_CALL(engine->RegisterGlobalFunction("bool IsItemVisible()",
+                                            asFUNCTION(ImGui::IsItemVisible),
+                                            asCALL_CDECL));
+
+    AS_CALL(engine->SetDefaultNamespace("TL"));
+}
+
 void bindAllTypes(asIScriptEngine* engine) {
     // Optional<T> (CppOptional) methods
     bindOptionalType(engine);
@@ -1848,6 +2593,7 @@ void bindAllTypes(asIScriptEngine* engine) {
     bindContext(engine);
     bindAssetsManager(engine);
     bindMisc(engine);
+    bindImGui(engine);
 }
 
 void BindTLModule(asIScriptEngine* engine) {

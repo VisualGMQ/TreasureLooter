@@ -43,8 +43,6 @@ static int AngelScriptIncludeCallback(const char* include, const char* from,
     return 0;
 }
 
-// 每个脚本文件使用独立模块名，避免后加载的脚本用 StartNewModule 覆盖先前的 module，
-// 导致已创建的脚本实例变成“来自已废弃模块”的悬空引用（Android 上易崩溃）。
 static std::string pathToModuleName(const std::string& path_str) {
     std::string name = path_str;
     for (char& c : name) {
@@ -84,9 +82,9 @@ ScriptBinaryData::ScriptBinaryData(const Path& filename,
     auto module = builder.GetModule();
     TL_RETURN_IF_FALSE(module);
 
-    // firstly, using reflection to get class name
+    // I tried to use reflection to get class name
     // failed, due to #include may include multiple class inherit from
-    // TL::Behavior so finally we use filename(no - & _, first character
+    // TL::Behavior so finally I use filename(no - & _, first character
     // uppercase) as class name
     TL_RETURN_IF_TRUE(filename_str.empty());
 
@@ -182,6 +180,12 @@ void ScriptComponentManager::Update() {
     }
 }
 
+void ScriptComponentManager::Render() {
+    for (auto&& [entity, component] : m_components) {
+        component.m_component->Render();
+    }
+}
+
 Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
     TL_RETURN_IF_FALSE(handle);
 
@@ -202,6 +206,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) {
 
     m_init_fn = type->GetMethodByDecl("void OnInit()");
     m_update_fn = type->GetMethodByDecl("void OnUpdate(TL::TimeType)");
+    m_render_fn = type->GetMethodByDecl("void OnRender()");
     m_quit_fn = type->GetMethodByDecl("void OnQuit()");
 
     m_ctx = engine->CreateContext();
@@ -246,6 +251,11 @@ void Script::Update() {
     }
 
     callUpdateMethod(m_update_fn, CURRENT_CONTEXT.m_time->GetElapseTime());
+}
+
+void Script::Render() {
+    TL_RETURN_IF_FALSE(m_ctx && m_inited);
+    callNoArgMethod(m_render_fn);
 }
 
 void Script::callNoArgMethod(asIScriptFunction* fn) {

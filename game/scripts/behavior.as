@@ -12,6 +12,7 @@ shared class Behavior: IBehavior {
     void OnInit() override {}
     void OnUpdate(TimeType) override {}
     void OnQuit() override {}
+    void OnRender() override {}
 
     // get other component
 
