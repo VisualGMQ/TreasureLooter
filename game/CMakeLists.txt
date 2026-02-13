@@ -109,7 +109,10 @@ target_link_libraries(${ENGINE_NAME}
     RapidXML
     stduuid
     tmxlite
-    angelscript::angelscript angelscript::all_addon)
+    angelscript::angelscript angelscript::all_addon
+    
+    Luau.Compiler
+    Luau.VM)
 
 if (TL_ENABLE_PROFILE)
     target_link_libraries(${ENGINE_NAME} PUBLIC optick)
