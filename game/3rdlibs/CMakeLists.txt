@@ -37,3 +37,5 @@ set(LUAU_STATIC_CRT OFF)
 set(LUAU_EXTERN_C OFF)
 set(LUAU_BUILD_SHARED OFF)
 add_3rdlib(luau)
+
+add_3rdlib(LuaBridge3)

@@ -112,7 +112,8 @@ target_link_libraries(${ENGINE_NAME}
     angelscript::angelscript angelscript::all_addon
     
     Luau.Compiler
-    Luau.VM)
+    Luau.VM
+    LuaBridge)
 
 if (TL_ENABLE_PROFILE)
     target_link_libraries(${ENGINE_NAME} PUBLIC optick)
