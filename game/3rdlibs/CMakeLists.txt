@@ -21,10 +21,6 @@ set(TMXLITE_STATIC_LIB ON)
 set(USE_SDL3_IOSTREAM ON)
 add_3rdlib(tmxlite/tmxlite)
 
-set(AS_NO_EXCEPTIONS OFF)
-set(AS_DISABLE_INSTALL ON)
-add_3rdlib(angelscript)
-
 if (ANDROID)
     set(LUAU_BUILD_CLI OFF)
 else()

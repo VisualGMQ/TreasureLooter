@@ -1,5 +1,7 @@
 #include "engine/script/script_binding.hpp"
+#include "engine/script/script_handle_binding.hpp"
 #include "engine/asset_manager.hpp"
+#include "schema/binding/binding.hpp"
 #include "engine/animation.hpp"
 #include "engine/context.hpp"
 #include "engine/entity.hpp"
@@ -35,153 +37,24 @@
 #include "imgui.h"
 #include <string>
 #include <type_traits>
+#include <sstream>
 
 #include "lua.h"
 #include "lualib.h"
 #include "LuaBridge/LuaBridge.h"
-
-using namespace luabridge;
+#include "LuaBridge/Array.h"
+#include "LuaBridge/Vector.h"
+#include "LuaBridge/Map.h"
+#include "LuaBridge/UnorderedMap.h"
+#include "LuaBridge/Set.h"
+#include "LuaBridge/List.h"
 
 template <>
-struct luabridge::Stack<Entity> {
-    static Result push(lua_State* L, Entity e) {
-        lua_pushinteger(
-            L, static_cast<lua_Integer>(static_cast<std::underlying_type_t<
-                Entity>>(e)));
-        return {};
-    }
-
-    static TypeResult<Entity> get(lua_State* L, int index) {
-        if (lua_type(L, index) != LUA_TNUMBER)
-            return makeErrorCode(ErrorCode::InvalidTypeCast);
-        return static_cast<Entity>(static_cast<std::underlying_type_t<Entity>>(
-            lua_tointeger(L, index)));
-    }
-
-    static bool isInstance(lua_State* L, int index) {
-        return lua_type(L, index) == LUA_TNUMBER;
-    }
-};
-
-// -----------------------------------------------------------------------------
-// Handle<T> 按值绑定：用 userdata 存一份拷贝，registry 里放 metatable
-// -----------------------------------------------------------------------------
-namespace {
-const char kHandleKey_ScriptBinaryDataHandle[] = "TL::ScriptBinaryDataHandle";
-const char kHandleKey_ImageHandle[] = "TL::ImageHandle";
-const char kHandleKey_LevelHandle[] = "TL::LevelHandle";
-const char kHandleKey_PrefabHandle[] = "TL::PrefabHandle";
-const char kHandleKey_FontHandle[] = "TL::FontHandle";
-const char kHandleKey_AnimationHandle[] = "TL::AnimationHandle";
-const char kHandleKey_TilemapHandle[] = "TL::TilemapHandle";
-
-template <typename T>
-static int handleValidCFunction(lua_State* L) {
-    auto* h = static_cast<Handle<T>*>(lua_touserdata(L, 1));
-    lua_pushboolean(L, h && static_cast<bool>(*h));
-    return 1;
-}
-
-template <typename T>
-void ensureHandleMetatable(lua_State* L, const void* typeKey) {
-    lua_rawgetp(L, LUA_REGISTRYINDEX, const_cast<void*>(typeKey));
-    if (!lua_isnil(L, -1)) {
-        lua_pop(L, 1);
-        return;
-    }
-    lua_pop(L, 1);
-    lua_newtable(L);
-    lua_newtable(L);
-    lua_pushcfunction(L, handleValidCFunction<T>, "valid");
-    lua_setfield(L, -2, "valid");
-    lua_setfield(L, -2, "__index");
-    lua_pushvalue(L, -1);
-    lua_rawsetp(L, LUA_REGISTRYINDEX, const_cast<void*>(typeKey));
-    lua_pop(L, 1);
-}
-
-template <typename T>
-Result pushHandle(lua_State* L, Handle<T> h, const void* typeKey) {
-    ensureHandleMetatable<T>(L, typeKey);
-    void* ud = lua_newuserdata(L, sizeof(Handle<T>));
-    if (!ud)
-        return makeErrorCode(ErrorCode::LuaStackOverflow);
-    new (ud) Handle<T>(std::move(h));
-    lua_rawgetp(L, LUA_REGISTRYINDEX, const_cast<void*>(typeKey));
-    lua_setmetatable(L, -2);
-    return {};
-}
-
-template <typename T>
-TypeResult<Handle<T>> getHandle(lua_State* L, int index, const void* typeKey) {
-    if (!lua_isuserdata(L, index))
-        return makeErrorCode(ErrorCode::InvalidTypeCast);
-    lua_rawgetp(L, LUA_REGISTRYINDEX, const_cast<void*>(typeKey));
-    if (!lua_getmetatable(L, index))
-        return makeErrorCode(ErrorCode::InvalidTypeCast);
-    bool same = lua_rawequal(L, -1, -2) != 0;
-    lua_pop(L, 2);
-    if (!same)
-        return makeErrorCode(ErrorCode::InvalidTypeCast);
-    void* ud = lua_touserdata(L, index);
-    return *static_cast<Handle<T>*>(ud);
-}
-
-template <typename T>
-bool isInstanceHandle(lua_State* L, int index, const void* typeKey) {
-    if (!lua_isuserdata(L, index))
-        return false;
-    lua_rawgetp(L, LUA_REGISTRYINDEX, const_cast<void*>(typeKey));
-    if (lua_isnil(L, -1)) {
-        lua_pop(L, 1);
-        return false;
-    }
-    bool hasMt = lua_getmetatable(L, index) != 0;
-    bool same = hasMt && lua_rawequal(L, -1, -2) != 0;
-    lua_pop(L, 2);
-    return same;
-}
-}  // namespace
-
-#define DEFINE_HANDLE_STACK(T, key)                                    \
-    namespace luabridge {                                              \
-    template <>                                                         \
-    struct Stack<Handle<T>> {                                           \
-        static Result push(lua_State* L, Handle<T> h) {                 \
-            return pushHandle(L, std::move(h), (const void*)(key));     \
-        }                                                               \
-        static TypeResult<Handle<T>> get(lua_State* L, int index) {    \
-            return getHandle<T>(L, index, (const void*)(key));          \
-        }                                                               \
-        static bool isInstance(lua_State* L, int index) {              \
-            return isInstanceHandle<T>(L, index, (const void*)(key));   \
-        }                                                               \
-    };                                                                  \
-    }
-
-DEFINE_HANDLE_STACK(ScriptBinaryData, kHandleKey_ScriptBinaryDataHandle)
-DEFINE_HANDLE_STACK(Image, kHandleKey_ImageHandle)
-DEFINE_HANDLE_STACK(Level, kHandleKey_LevelHandle)
-DEFINE_HANDLE_STACK(Prefab, kHandleKey_PrefabHandle)
-DEFINE_HANDLE_STACK(Font, kHandleKey_FontHandle)
-DEFINE_HANDLE_STACK(Animation, kHandleKey_AnimationHandle)
-DEFINE_HANDLE_STACK(Tilemap, kHandleKey_TilemapHandle)
-
-static void LuauLog(const std::string& msg) {
-    LOGI("[Script]: {}", msg);
-}
-
-static void LuauLogInt(int v) {
-    LOGI("[Script]: {}", v);
-}
-
-static void LuauLogFloat(double v) {
-    LOGI("[Script]: {}", v);
-}
+struct luabridge::Stack<Entity>: public luabridge::Enum<Entity> {};
 
 static int ScriptComponentManager_Get(lua_State* L) {
-    auto mgrRes = get<ScriptComponentManager*>(L, 1);
-    auto eRes = get<Entity>(L, 2);
+    auto mgrRes = luabridge::get<ScriptComponentManager*>(L, 1);
+    auto eRes = luabridge::get<Entity>(L, 2);
     if (!mgrRes || !eRes) {
         lua_pushnil(L);
         return 1;
@@ -196,7 +69,7 @@ static int ScriptComponentManager_Get(lua_State* L) {
 }
 
 static void bindScriptBinaryDataManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<ScriptBinaryDataManager>("ScriptBinaryDataManager")
         .addFunction("Load",
@@ -218,24 +91,16 @@ static void bindScriptBinaryDataManager(lua_State* L) {
 }
 
 static void bindEntity(lua_State* L) {
-    getGlobalNamespace(L)
-        .beginNamespace("TL")
-        .beginClass<Entity>("Entity")
-        .addConstructor<void (*)(void)>()
-        .addFunction("IsNull",
-                     +[](Entity e) {
-                         return e == null_entity;
-                     })
-        .endClass()
-        .endNamespace();
+    (void)L;
+    /* Entity 在 Lua 中为栈上传递的 number（枚举底层值），无需注册类 */
 }
 
 static void bindPath(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<Path>("Path")
-        .addConstructor<void (*)(const std::string&), void (*)(void)>()
-        .addFunction("string", &Path::string)
+        .addConstructor<void (const std::string&), void (void)>()
+        // .addFunction("string", &Path::string)
         .addFunction("parent_path", &Path::parent_path)
         .addFunction("filename", &Path::filename)
         .addFunction("extension", &Path::extension)
@@ -254,33 +119,48 @@ static void bindPath(lua_State* L) {
         .endNamespace();
 }
 
-static void bindMath(lua_State* L) {
-    getGlobalNamespace(L)
+template <typename T>
+static void bindTVec2(lua_State* L, const char* className) {
+    using Scalar = T;
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-        .beginClass<Vec2>("Vec2")
-        .addConstructor<void (*)(void), void (*)(float, float)>()
-        .addProperty("x", &Vec2::x, true)
-        .addProperty("y", &Vec2::y, true)
-        .addFunction("__add", &Vec2::operator+)
-        .addFunction("__sub", &Vec2::operator-)
+        .beginClass<TVec2<T>>(className)
+        .template addConstructor<void (void), void (Scalar, Scalar)>()
+        .addProperty("x", &TVec2<T>::x, true)
+        .addProperty("y", &TVec2<T>::y, true)
+        .addFunction("__add", &TVec2<T>::operator+)
+        .addFunction("__sub", &TVec2<T>::operator-)
         .addFunction("__mul",
-                     (Vec2(Vec2::*)(const Vec2&) const)&Vec2::operator*)
-        .addFunction("__mul", (Vec2(Vec2::*)(float) const)&Vec2::operator*)
+                     (TVec2<T>(TVec2<T>::*)(const TVec2<T>&) const)&TVec2<T>::operator*)
+        .addFunction("__mul", (TVec2<T>(TVec2<T>::*)(float) const)&TVec2<T>::operator*)
         .addFunction("__div",
-                     (Vec2(Vec2::*)(const Vec2&) const)&Vec2::operator/)
-        .addFunction("__div", (Vec2(Vec2::*)(float) const)&Vec2::operator/)
-        .addFunction("__eq", &Vec2::operator==)
-        .addFunction("Length", &Vec2::Length)
-        .addFunction("LengthSquared", &Vec2::LengthSquared)
-        .addFunction("Normalize", &Vec2::Normalize)
-        .addFunction("Dot", &Vec2::Dot)
-        .addFunction("Cross", &Vec2::Cross)
+                     (TVec2<T>(TVec2<T>::*)(const TVec2<T>&) const)&TVec2<T>::operator/)
+        .addFunction("__div", (TVec2<T>(TVec2<T>::*)(float) const)&TVec2<T>::operator/)
+        .addFunction("__eq", &TVec2<T>::operator==)
+        .addFunction("__tostring", +[](const TVec2<T>* v) {
+            std::stringstream ss;
+            ss << *v;
+            return ss.str();
+        })
+        .addFunction("Length", &TVec2<T>::Length)
+        .addFunction("LengthSquared", &TVec2<T>::LengthSquared)
+        .addFunction("Normalize", &TVec2<T>::Normalize)
+        .addFunction("Dot", &TVec2<T>::Dot)
+        .addFunction("Cross", &TVec2<T>::Cross)
+        .addStaticProperty("ZERO", &TVec2<T>::ZERO)
+        .addStaticProperty("X_UNIT", &TVec2<T>::X_UNIT)
+        .addStaticProperty("Y_UNIT", &TVec2<T>::Y_UNIT)
         .endClass()
-        .addFunction("Vec2_ZERO", +[]() { return TVec2<float>::ZERO; })
-        .addFunction("Vec2_X_UNIT", +[]() { return TVec2<float>::X_UNIT; })
-        .addFunction("Vec2_Y_UNIT", +[]() { return TVec2<float>::Y_UNIT; })
+        .endNamespace();
+}
+
+static void bindMath(lua_State* L) {
+    bindTVec2<float>(L, "Vec2");
+    bindTVec2<uint32_t>(L, "Vec2UI");
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
         .beginClass<Color>("Color")
-        .addConstructor<void (*)(void), void (*)(float, float, float, float)>()
+        .addConstructor<void (void), void (float, float, float, float)>()
         .addProperty("r", &Color::r, true)
         .addProperty("g", &Color::g, true)
         .addProperty("b", &Color::b, true)
@@ -293,8 +173,9 @@ static void bindMath(lua_State* L) {
         .addFunction("White", +[]() { return Color::White; })
         .addFunction("Yellow", +[]() { return Color::Yellow; })
         .addFunction("Purple", +[]() { return Color::Purple; })
+        .addFunction("GetZOrderByYSorting", &GetZOrderByYSorting)
         .beginClass<Degrees>("Degrees")
-        .addConstructor<void (*)(void), void (*)(float)>()
+        .addConstructor<void (void), void (float)>()
         .addFunction("Value", &Degrees::Value)
         .addFunction("__add", &Degrees::operator+)
         .addFunction("__sub", &Degrees::operator-)
@@ -304,7 +185,7 @@ static void bindMath(lua_State* L) {
                      (Degrees(Degrees::*)(float) const)&Degrees::operator/)
         .endClass()
         .beginClass<Radians>("Radians")
-        .addConstructor<void (*)(void), void (*)(float)>()
+        .addConstructor<void (void), void (float)>()
         .addFunction("Value", &Radians::Value)
         .addFunction("__add", &Radians::operator+)
         .addFunction("__sub", &Radians::operator-)
@@ -319,6 +200,11 @@ static void bindMath(lua_State* L) {
         .addProperty("m_size", &Transform::m_size, true)
         .addProperty("m_scale", &Transform::m_scale, true)
         .endClass()
+        .beginClass<Region>("Region")
+        .addConstructor<void ()>()
+        .addProperty("m_topleft", &Region::m_topleft, true)
+        .addProperty("m_size", &Region::m_size, true)
+        .endClass()
         .beginClass<TransformManager>("TransformManager")
         .addFunction("Get", +[](TransformManager* m, Entity e) {
             return m->Get(e);
@@ -331,7 +217,7 @@ static void bindMath(lua_State* L) {
 }
 
 static void bindLevel(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<Level>("Level")
         .addFunction("Instantiate", &Level::Instantiate)
@@ -343,7 +229,7 @@ static void bindLevel(lua_State* L) {
 }
 
 static void bindImage(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<Image>("Image")
         .addFunction("GetSize", &Image::GetSize)
@@ -361,78 +247,83 @@ static void bindImage(lua_State* L) {
 }
 
 static void bindContext(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-        .beginClass<CommonContext>("CommonContext")
-        .addProperty("m_camera", &CommonContext::m_camera, true)
-        .endClass()
-        .deriveClass<GameContext, CommonContext>("GameContext")
-        .addFunction("m_script_manager",
+        .beginClass<GameContext>("GameContext")
+        .addFunction("GetCamera", +[](GameContext* ctx) { return &ctx->m_camera; })
+        .addFunction("GetScriptManager",
                      +[](GameContext* ctx) -> ScriptComponentManager* {
                          return ctx->m_script_component_manager.get();
                      })
-        .addFunction("m_assets_manager",
+        .addFunction("GetAssetsManager",
                      +[](GameContext* ctx) -> AssetsManager* {
                          return ctx->m_assets_manager.get();
                      })
-        .addFunction("m_level_manager",
+        .addFunction("GetLevelManager",
                      +[](GameContext* ctx) -> LevelManager* {
                          return ctx->m_level_manager.get();
                      })
-        .addFunction("m_time",
+        .addFunction("GetTime",
                      +[](GameContext* ctx) -> Time* {
                          return ctx->m_time.get();
                      })
-        .addFunction("m_transform_manager",
+        .addFunction("GetTransformManager",
                      +[](GameContext* ctx) -> TransformManager* {
                          return ctx->m_transform_manager.get();
                      })
-        .addFunction("m_sprite_manager",
+        .addFunction("GetSpriteManager",
                      +[](GameContext* ctx) -> SpriteManager* {
                          return ctx->m_sprite_manager.get();
                      })
-        .addFunction("m_renderer",
+        .addFunction("GetRenderer",
                      +[](GameContext* ctx) -> Renderer* {
                          return ctx->m_renderer.get();
                      })
-        .addFunction("m_window",
+        .addFunction("GetWindow",
                      +[](GameContext* ctx) -> Window* {
                          return ctx->m_window.get();
                      })
-        .addFunction("m_input_manager",
+        .addFunction("GetInputManager",
                      +[](GameContext* ctx) -> InputManager* {
                          return ctx->m_input_manager.get();
                      })
-        .addFunction("m_trigger_component_manager",
+        .addFunction("GetTriggerComponentManager",
                      +[](GameContext* ctx) -> TriggerComponentManager* {
                          return ctx->m_trigger_component_manager.get();
                      })
-        .addFunction("m_relationship_manager",
+        .addFunction("GetRelationshipManager",
                      +[](GameContext* ctx) -> RelationshipManager* {
                          return ctx->m_relationship_manager.get();
                      })
-        .addFunction("m_animation_player_manager",
+        .addFunction("GetAnimationPlayerManager",
                      +[](GameContext* ctx) -> AnimationPlayerManager* {
                          return ctx->m_animation_player_manager.get();
                      })
-        .addFunction("m_ui_manager",
+        .addFunction("GetUIManager",
                      +[](GameContext* ctx) -> UIComponentManager* {
                          return ctx->m_ui_manager.get();
                      })
-        .addFunction("m_gameplay_config_manager",
+        .addFunction("GetGameplayConfigManager",
                      +[](GameContext* ctx) -> GameplayConfigManager* {
                          return ctx->m_gameplay_config_manager.get();
                      })
-        .addFunction("m_tilemap_component_manager",
+        .addFunction("GetTilemapComponentManager",
                      +[](GameContext* ctx) -> TilemapComponentManager* {
                          return ctx->m_tilemap_component_manager.get();
                      })
+        .addFunction("GetCCTManager",
+                     +[](GameContext* ctx) -> CCTManager* {
+                         return ctx->m_cct_manager.get();
+                     })
         .endClass()
+        .addFunction("GetContext", +[]() -> GameContext* {
+            return &GameContext::GetInst();
+        })
         .endNamespace();
 }
 
 static void bindAssetsManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<AssetsManager>("AssetsManager")
         .addFunction("GetScriptBinaryDataManager",
@@ -467,8 +358,64 @@ static void bindAssetsManager(lua_State* L) {
         .endNamespace();
 }
 
+static void bindInput(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .addFunction("ACTION_PRESSED",
+                     +[]() { return static_cast<int>(Action::State::Pressed); })
+        .addFunction("ACTION_PRESSING",
+                     +[]() { return static_cast<int>(Action::State::Pressing); })
+        .addFunction("ACTION_RELEASED",
+                     +[]() { return static_cast<int>(Action::State::Released); })
+        .addFunction("ACTION_RELEASING",
+                     +[]() { return static_cast<int>(Action::State::Releasing); })
+        .beginClass<Action>("Action")
+        .addFunction("IsPressed", +[](const Action* a) { return a->IsPressed(0); },
+                     +[](const Action* a, int id) { return a->IsPressed(id); })
+        .addFunction("IsPressing", +[](const Action* a) { return a->IsPressing(0); },
+                     +[](const Action* a, int id) { return a->IsPressing(id); })
+        .addFunction("IsReleased", +[](const Action* a) { return a->IsReleased(0); },
+                     +[](const Action* a, int id) { return a->IsReleased(id); })
+        .addFunction("IsReleasing", +[](const Action* a) { return a->IsReleasing(0); },
+                     +[](const Action* a, int id) { return a->IsReleasing(id); })
+        .addFunction("IsRelease", +[](const Action* a) { return a->IsRelease(0); },
+                     +[](const Action* a, int id) { return a->IsRelease(id); })
+        .addFunction("IsPress", +[](const Action* a) { return a->IsPress(0); },
+                     +[](const Action* a, int id) { return a->IsPress(id); })
+        .endClass()
+        .beginClass<Axis>("Axis")
+        .addFunction("Value", +[](const Axis* a) { return a->Value(0); },
+                     +[](const Axis* a, int id) { return a->Value(id); })
+        .endClass()
+        .beginClass<Axises>("Axises")
+        .addFunction("Value", +[](const Axises* a) { return a->Value(0); },
+                     +[](const Axises* a, int id) { return a->Value(id); })
+        .endClass()
+        .beginClass<InputManager>("InputManager")
+        .addFunction("GetAxis",
+                     +[](const InputManager* m, const std::string& name) {
+                         return &m->GetAxis(name);
+                     })
+        .addFunction("GetAction",
+                     +[](const InputManager* m, const std::string& name) {
+                         return &m->GetAction(name);
+                     })
+        .addFunction("MakeAxises",
+                     +[](const InputManager* m, const std::string& x_name,
+                         const std::string& y_name) { return m->MakeAxises(x_name, y_name); })
+        .addFunction("AcceptFingerAxisEvent",
+                     &InputManager::AcceptFingerAxisEvent)
+        .addFunction("AcceptFingerButton",
+                     +[](InputManager* m, const std::string& name, int state) {
+                         m->AcceptFingerButton(name,
+                                               static_cast<Action::State>(state));
+                     })
+        .endClass()
+        .endNamespace();
+}
+
 static void bindTimer(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<Time>("Time")
         .addFunction("GetElapseTime", &Time::GetElapseTime)
@@ -478,7 +425,7 @@ static void bindTimer(lua_State* L) {
 }
 
 static void bindCamera(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<Camera>("Camera")
         .addFunction("GetPosition", &Camera::GetPosition)
@@ -491,7 +438,7 @@ static void bindCamera(lua_State* L) {
 }
 
 static void bindSprite(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<SpriteDefinition>("Sprite")
         .addProperty("m_region", &SpriteDefinition::m_region, true)
@@ -517,8 +464,113 @@ static void bindSprite(lua_State* L) {
         .endNamespace();
 }
 
+static void bindAnimationPlayer(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .beginClass<AnimationPlayer>("AnimationPlayer")
+        .addFunction("Play", &AnimationPlayer::Play)
+        .addFunction("Pause", &AnimationPlayer::Pause)
+        .addFunction("Stop", &AnimationPlayer::Stop)
+        .addFunction("Rewind", &AnimationPlayer::Rewind)
+        .addFunction("SetLoop", &AnimationPlayer::SetLoop)
+        .addFunction("IsPlaying", &AnimationPlayer::IsPlaying)
+        .addFunction("GetLoopCount", &AnimationPlayer::GetLoopCount)
+        .addFunction("GetCurTime", &AnimationPlayer::GetCurTime)
+        .addFunction("GetMaxTime", &AnimationPlayer::GetMaxTime)
+        .addFunction("ChangeAnimation",
+                     +[](AnimationPlayer* p, AnimationHandle handle) {
+                         p->ChangeAnimation(handle);
+                     })
+        .addFunction("ClearAnimation", &AnimationPlayer::ClearAnimation)
+        .addFunction("HasAnimation", &AnimationPlayer::HasAnimation)
+        .addFunction("Update", &AnimationPlayer::Update)
+        .addFunction("Sync", +[](AnimationPlayer* p, Entity e) {
+            p->Sync(e);
+        })
+        .addFunction("SetRate", &AnimationPlayer::SetRate)
+        .addFunction("GetRate", &AnimationPlayer::GetRate)
+        .addFunction("EnableAutoPlay", &AnimationPlayer::EnableAutoPlay)
+        .addFunction("IsAutoPlayEnabled", &AnimationPlayer::IsAutoPlayEnabled)
+        .endClass()
+        .beginClass<AnimationPlayerManager>("AnimationPlayerManager")
+        .addFunction("Get", +[](AnimationPlayerManager* m, Entity e) {
+            return m->Get(e);
+        })
+        .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
+            return m->Has(e);
+        })
+        .addFunction("Update", &AnimationPlayerManager::Update)
+        .endClass()
+        .endNamespace();
+}
+
+static void bindCCT(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .beginClass<CharacterController>("CharacterController")
+        .addFunction("MoveAndSlide",
+                     +[](CharacterController* cct, Vec2 dir) { cct->MoveAndSlide(dir); })
+        .addFunction("GetPosition", &CharacterController::GetPosition)
+        .addFunction("SetSkin", &CharacterController::SetSkin)
+        .addFunction("GetSkin", &CharacterController::GetSkin)
+        .addFunction("SetMinDisp", &CharacterController::SetMinDisp)
+        .addFunction("GetMinDisp", &CharacterController::GetMinDisp)
+        .addFunction("Teleport", &CharacterController::Teleport)
+        .endClass()
+        .beginClass<CCTManager>("CCTManager")
+        .addFunction("Get", +[](CCTManager* m, Entity e) {
+            return m->Get(e);
+        })
+        .addFunction("Has", +[](CCTManager* m, Entity e) {
+            return m->Has(e);
+        })
+        .endClass()
+        .endNamespace();
+}
+
+static void bindGameplayConfigManager(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .beginClass<GameplayConfigManager>("GameplayConfigManager")
+        .addFunction("Get", +[](GameplayConfigManager* m, Entity e) {
+            return m->Get(e);
+        })
+        .addFunction("Has", +[](GameplayConfigManager* m, Entity e) {
+            return m->Has(e);
+        })
+        .addFunction("RegisterEntity",
+                     +[](GameplayConfigManager* m, Entity e,
+                         const GameplayConfig& config) {
+                         m->RegisterEntity(e, config);
+                     })
+        .endClass()
+        .endNamespace();
+}
+
+static void bindRelationship(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .beginClass<Relationship>("Relationship")
+        .addProperty("m_children", &Relationship::m_children)
+        .endClass()
+        .beginClass<RelationshipManager>("RelationshipManager")
+        .addFunction("Get", +[](RelationshipManager* m, Entity e) {
+            return m->Get(e);
+        })
+        .addFunction("Has", +[](RelationshipManager* m, Entity e) {
+            return m->Has(e);
+        })
+        .addFunction("Update", &RelationshipManager::Update)
+        .addFunction("RegisterEntity",
+                     +[](RelationshipManager* m, Entity e) {
+                         m->RegisterEntity(e);
+                     })
+        .endClass()
+        .endNamespace();
+}
+
 static void bindPrefabManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<PrefabManager>("PrefabManager")
         .addFunction("Find", +[](PrefabManager* m, const std::string& path) {
@@ -529,7 +581,7 @@ static void bindPrefabManager(lua_State* L) {
 }
 
 static void bindFontManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<FontManager>("FontManager")
         .addFunction("Load", +[](FontManager* m, const std::string& path, bool force) {
@@ -543,7 +595,7 @@ static void bindFontManager(lua_State* L) {
 }
 
 static void bindAnimationManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<AnimationManager>("AnimationManager")
         .addFunction("Load", +[](AnimationManager* m, const std::string& path, bool force) {
@@ -557,7 +609,7 @@ static void bindAnimationManager(lua_State* L) {
 }
 
 static void bindTilemapManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<TilemapManager>("TilemapManager")
         .addFunction("Load", +[](TilemapManager* m, const std::string& path, bool force) {
@@ -571,7 +623,7 @@ static void bindTilemapManager(lua_State* L) {
 }
 
 static void bindLevelManager(lua_State* L) {
-    getGlobalNamespace(L)
+    luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<LevelManager>("LevelManager")
         .addFunction("Load", +[](LevelManager* m, const std::string& path, bool force) {
@@ -586,6 +638,14 @@ static void bindLevelManager(lua_State* L) {
         .endNamespace();
 }
 
+static void bindHandleTypes(lua_State* L) {
+    // Handle 通过 __index 转发到已注册的 T 类，无需再为每个 Handle 列举 T 的方法
+    BindHandle<Image>("ImageHandle", L, "Image");
+    BindHandle<Level>("LevelHandle", L, "Level");
+    BindHandle<Prefab>("PrefabHandle", L, "Prefab");
+    BindHandle<Animation>("AnimationHandle", L, "Animation");
+}
+
 static void bindAllTypes(lua_State* L) {
     bindScriptBinaryDataManager(L);
     bindEntity(L);
@@ -595,28 +655,25 @@ static void bindAllTypes(lua_State* L) {
     bindImage(L);
     bindContext(L);
     bindAssetsManager(L);
+    bindInput(L);
     bindTimer(L);
     bindCamera(L);
     bindSprite(L);
+    bindAnimationPlayer(L);
+    bindCCT(L);
+    bindGameplayConfigManager(L);
+    bindRelationship(L);
     bindPrefabManager(L);
     bindLevelManager(L);
     bindFontManager(L);
     bindAnimationManager(L);
     bindTilemapManager(L);
+    bindHandleTypes(L);
 }
 
 void BindTLModule(lua_State* L) {
     TL_RETURN_IF_NULL_WITH_LOG(L, LOGE, "lua_State* is null!");
 
-    getGlobalNamespace(L)
-        .beginNamespace("TL")
-        .addFunction("Log", LuauLog)
-        .addFunction("Log", LuauLogInt)
-        .addFunction("Log", LuauLogFloat)
-        .addFunction("GetContext", +[]() -> GameContext* {
-            return &GameContext::GetInst();
-        })
-        .endNamespace();
-
     bindAllTypes(L);
+    BindSchema(L);
 }
