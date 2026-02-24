@@ -1,6 +1,9 @@
 local Waggo = {}
 Waggo.__index = Waggo
 
+local test = require("scripts.test")
+test:Foo()
+
 type WaggoData = {
 	m_entity: number,
 	m_sprite: userdata,

@@ -90,11 +90,6 @@ static void bindScriptBinaryDataManager(lua_State* L) {
         .endNamespace();
 }
 
-static void bindEntity(lua_State* L) {
-    (void)L;
-    /* Entity 在 Lua 中为栈上传递的 number（枚举底层值），无需注册类 */
-}
-
 static void bindPath(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
@@ -121,11 +116,10 @@ static void bindPath(lua_State* L) {
 
 template <typename T>
 static void bindTVec2(lua_State* L, const char* className) {
-    using Scalar = T;
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginClass<TVec2<T>>(className)
-        .template addConstructor<void (void), void (Scalar, Scalar)>()
+        .addConstructor<void (void), void (T, T)>()
         .addProperty("x", &TVec2<T>::x, true)
         .addProperty("y", &TVec2<T>::y, true)
         .addFunction("__add", &TVec2<T>::operator+)
@@ -639,7 +633,6 @@ static void bindLevelManager(lua_State* L) {
 }
 
 static void bindHandleTypes(lua_State* L) {
-    // Handle 通过 __index 转发到已注册的 T 类，无需再为每个 Handle 列举 T 的方法
     BindHandle<Image>("ImageHandle", L, "Image");
     BindHandle<Level>("LevelHandle", L, "Level");
     BindHandle<Prefab>("PrefabHandle", L, "Prefab");
@@ -648,7 +641,6 @@ static void bindHandleTypes(lua_State* L) {
 
 static void bindAllTypes(lua_State* L) {
     bindScriptBinaryDataManager(L);
-    bindEntity(L);
     bindPath(L);
     bindMath(L);
     bindLevel(L);

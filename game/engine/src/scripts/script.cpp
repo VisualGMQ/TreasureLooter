@@ -1,5 +1,6 @@
 #include "engine/script/script.hpp"
 #include "engine/script/script_binding.hpp"
+#include "engine/script/script_require.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
 #include "engine/log.hpp"
@@ -45,7 +46,7 @@ static std::string pathToClassName(const std::string& filename_str)
 // ScriptBinaryData
 // -----------------------------------------------------------------------------
 
-ScriptBinaryData::ScriptBinaryData(const Path& path)
+ScriptBinaryData::ScriptBinaryData(const Path& path) : m_path(path)
 {
     auto io = IOStream::CreateFromFile(path, IOMode::Read, true);
     m_content = io->Read();
@@ -83,6 +84,8 @@ ScriptBinaryDataManager::ScriptBinaryDataManager()
     }
     luaL_openlibs(m_L);
     bindModule();
+    RegisterScriptBinaryDataManagerForRequire(m_L, this);
+    BindRequire(m_L);
 }
 
 void ScriptBinaryDataManager::bindModule()
@@ -152,6 +155,11 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) : m_entity(entity)
     const std::vector<char>& source = handle->GetContent();
     TL_RETURN_IF_FALSE_WITH_LOG(!source.empty(), LOGE,
                                 "[Luau]: script content empty");
+
+    // 供 require() 的 reset 使用：当前脚本路径
+    std::string script_path = handle->GetPath().string();
+    lua_pushstring(m_L, script_path.c_str());
+    lua_setfield(m_L, LUA_REGISTRYINDEX, "tl_requirer_path");
 
     size_t bytecode_size = 0;
     char* bytecode = luau_compile(source.data(), source.size(), nullptr,

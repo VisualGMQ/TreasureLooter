@@ -14,10 +14,12 @@ public:
 
     const std::vector<char>& GetContent() const;
     const std::string& GetClassName() const;
+    const Path& GetPath() const { return m_path; }
 
 private:
     std::vector<char> m_content;
     std::string m_class_name;
+    Path m_path;
 };
 
 using ScriptBinaryDataHandle = Handle<ScriptBinaryData>;
@@ -30,8 +32,12 @@ public:
     ScriptBinaryDataHandle Load(const Path& filename, bool force = false) override;
     lua_State* GetUnderlyingVM();
 
+    void SetRequireRoot(const Path& root) { m_require_root = root; }
+    const Path& GetRequireRoot() const { return m_require_root; }
+
 private:
     lua_State* m_L{};
+    Path m_require_root;
 
     void bindModule();
 };
