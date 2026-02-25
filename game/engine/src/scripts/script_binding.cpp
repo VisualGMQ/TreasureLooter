@@ -34,20 +34,21 @@
 #include "engine/debug_drawer.hpp"
 #include "engine/prefab_manager.hpp"
 #include "schema/prefab.hpp"
+#include "engine/script/script_imgui_binding.hpp"
 #include "imgui.h"
 #include <string>
 #include <type_traits>
 #include <sstream>
 
+#include "LuaBridge/Array.h"
+#include "LuaBridge/List.h"
+#include "LuaBridge/LuaBridge.h"
+#include "LuaBridge/Map.h"
+#include "LuaBridge/Set.h"
+#include "LuaBridge/UnorderedMap.h"
+#include "LuaBridge/Vector.h"
 #include "lua.h"
 #include "lualib.h"
-#include "LuaBridge/LuaBridge.h"
-#include "LuaBridge/Array.h"
-#include "LuaBridge/Vector.h"
-#include "LuaBridge/Map.h"
-#include "LuaBridge/UnorderedMap.h"
-#include "LuaBridge/Set.h"
-#include "LuaBridge/List.h"
 
 template <>
 struct luabridge::Stack<Entity>: public luabridge::Enum<Entity> {};
@@ -86,8 +87,6 @@ void bindScriptBinaryDataManager(lua_State* L) {
         .endClass()
         .beginClass<ScriptComponentManager>("ScriptComponentManager")
         .addFunction("Get", ScriptComponentManager_Get)
-        .addFunction("Update", &ScriptComponentManager::Update)
-        .addFunction("Render", &ScriptComponentManager::Render)
         .endClass()
         .endNamespace();
 }
@@ -448,6 +447,7 @@ void bindSprite(lua_State* L) {
                 .addProperty("m_anchor", &SpriteDefinition::m_anchor, true)
                 .addProperty("m_z_order", &SpriteDefinition::m_z_order, true)
                 .addProperty("m_color", &SpriteDefinition::m_color, true)
+                .addProperty("m_flip", &SpriteDefinition::m_flip, true)
             .endClass()
             .beginClass<SpriteManager>("SpriteManager")
                 .addFunction("Get", +[](SpriteManager* m, Entity e) {
@@ -456,7 +456,6 @@ void bindSprite(lua_State* L) {
                 .addFunction("Has", +[](SpriteManager* m, Entity e) {
                     return m->Has(e);
                 })
-                .addFunction("Update", &SpriteManager::Update)
                 .addFunction("RegisterEntity",
                              +[](SpriteManager* m, Entity e,
                                  const SpriteDefinition& s) {
@@ -485,7 +484,6 @@ void bindAnimationPlayer(lua_State* L) {
                              })
                 .addFunction("ClearAnimation", &AnimationPlayer::ClearAnimation)
                 .addFunction("HasAnimation", &AnimationPlayer::HasAnimation)
-                .addFunction("Update", &AnimationPlayer::Update)
                 .addFunction("Sync", +[](AnimationPlayer* p, Entity e) {
                     p->Sync(e);
                 })
@@ -501,7 +499,6 @@ void bindAnimationPlayer(lua_State* L) {
                 .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
                     return m->Has(e);
                 })
-                .addFunction("Update", &AnimationPlayerManager::Update)
             .endClass()
         .endNamespace();
 }
@@ -562,7 +559,6 @@ void bindRelationship(lua_State* L) {
                 .addFunction("Has", +[](RelationshipManager* m, Entity e) {
                     return m->Has(e);
                 })
-                .addFunction("Update", &RelationshipManager::Update)
                 .addFunction("RegisterEntity",
                              +[](RelationshipManager* m, Entity e) {
                                  m->RegisterEntity(e);
@@ -678,4 +674,5 @@ void BindTLModule(lua_State* L) {
 
     bindAllTypes(L);
     BindSchema(L);
+    bindImGui(L);
 }

@@ -157,6 +157,11 @@ function Waggo.OnQuit(self: Waggo)
 end
 
 function Waggo.OnRender(self: Waggo)
+	if ImGui.Begin("Hello") then
+		ImGui.Text("this window drawed in script")
+		ImGui.Button("button")
+	end
+	ImGui.End()
 end
 
 return Waggo

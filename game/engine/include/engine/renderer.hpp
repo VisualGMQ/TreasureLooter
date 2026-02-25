@@ -120,6 +120,7 @@ public:
 
     void Clear();
 
+    void ApplyDrawcall();
     void Present();
 
     SDL_Renderer* GetRenderer() const;
