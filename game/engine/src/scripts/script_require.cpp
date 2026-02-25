@@ -13,8 +13,6 @@
 #include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
 
-constexpr std::string_view kLoadedModulesKey = "TLLoadModules";
-
 std::string moduleNameToPath(const std::string& modname)
 {
     if (modname.empty())
@@ -34,7 +32,7 @@ std::string moduleNameToPath(const std::string& modname)
     return s;
 }
 
-bool getCached(lua_State* L, const std::string& loadPath)
+bool GetCached(lua_State* L, const std::string& loadPath)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     if (!lua_istable(L, -1))
@@ -52,7 +50,7 @@ bool getCached(lua_State* L, const std::string& loadPath)
     return found;
 }
 
-void setCached(lua_State* L, const std::string& loadPath)
+void SetCached(lua_State* L, const std::string& loadPath)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     if (!lua_istable(L, -1))
@@ -125,7 +123,7 @@ int requireImpl(lua_State* L)
         return 0;
     }
 
-    if (getCached(L, file_path))
+    if (GetCached(L, file_path))
         return 1;
 
     if (!loadAndRunModule(L, mgr, file_path))
@@ -134,7 +132,7 @@ int requireImpl(lua_State* L)
         luaL_error(L, "require: %s", err ? err : "unknown error");
         return 0;
     }
-    setCached(L, file_path);
+    SetCached(L, file_path);
     return 1;
 }
 

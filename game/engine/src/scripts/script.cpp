@@ -6,6 +6,7 @@
 #include "engine/log.hpp"
 #include "engine/macros.hpp"
 #include "engine/storage.hpp"
+#include "engine/path.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -151,38 +152,43 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) : m_entity(entity)
                          .GetUnderlyingVM();
     TL_RETURN_IF_NULL_WITH_LOG(m_L, LOGE, "[Luau]: VM is null");
 
-    const std::vector<char>& source = handle->GetContent();
-    TL_RETURN_IF_FALSE_WITH_LOG(!source.empty(), LOGE,
-                                "[Luau]: script content empty");
-
-    // 供 require() 的 reset 使用：当前脚本路径
     std::string script_path = handle->GetPath().string();
     lua_pushstring(m_L, script_path.c_str());
-    lua_setfield(m_L, LUA_REGISTRYINDEX, "tl_requirer_path");
+    lua_setfield(m_L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
 
-    size_t bytecode_size = 0;
-    char* bytecode = luau_compile(source.data(), source.size(), nullptr,
-                                  &bytecode_size);
-    TL_RETURN_IF_NULL_WITH_LOG(bytecode, LOGE, "[Luau]: compile failed");
-
-    int load_result = luau_load(m_L, handle->GetClassName().c_str(), bytecode, bytecode_size, 0);
-    free(bytecode);
-
-    if (load_result != 0)
+    bool from_cache = GetCached(m_L, script_path);
+    if (!from_cache)
     {
-        const char* err = lua_tostring(m_L, -1);
-        LOGE("[Luau]: load failed: {}", err ? err : "unknown");
-        lua_pop(m_L, 1);
-        return;
-    }
+        const std::vector<char>& source = handle->GetContent();
+        TL_RETURN_IF_FALSE_WITH_LOG(!source.empty(), LOGE,
+                                    "[Luau]: script content empty");
 
-    int pcall_result = lua_pcall(m_L, 0, 1, 0);
-    if (pcall_result != LUA_OK)
-    {
-        const char* err = lua_tostring(m_L, -1);
-        LOGE("[Luau]: script run failed: {}", err ? err : "unknown");
-        lua_pop(m_L, 1);
-        return;
+        size_t bytecode_size = 0;
+        char* bytecode = luau_compile(source.data(), source.size(), nullptr,
+                                      &bytecode_size);
+        TL_RETURN_IF_NULL_WITH_LOG(bytecode, LOGE, "[Luau]: compile failed");
+
+        int load_result = luau_load(m_L, handle->GetClassName().c_str(), bytecode, bytecode_size, 0);
+        free(bytecode);
+
+        if (load_result != 0)
+        {
+            const char* err = lua_tostring(m_L, -1);
+            LOGE("[Luau]: load failed: {}", err ? err : "unknown");
+            lua_pop(m_L, 1);
+            return;
+        }
+
+        int pcall_result = lua_pcall(m_L, 0, 1, 0);
+        if (pcall_result != LUA_OK)
+        {
+            const char* err = lua_tostring(m_L, -1);
+            LOGE("[Luau]: script run failed: {}", err ? err : "unknown");
+            lua_pop(m_L, 1);
+            return;
+        }
+
+        SetCached(m_L, script_path);
     }
 
     if (!lua_istable(m_L, -1))
