@@ -84,7 +84,6 @@ ScriptBinaryDataManager::ScriptBinaryDataManager()
     }
     luaL_openlibs(m_L);
     bindModule();
-    RegisterScriptBinaryDataManagerForRequire(m_L, this);
     BindRequire(m_L);
 }
 

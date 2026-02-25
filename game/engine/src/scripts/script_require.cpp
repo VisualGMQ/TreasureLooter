@@ -10,13 +10,12 @@
 #include <cstring>
 #include <string>
 
-namespace {
+#include "engine/asset_manager.hpp"
+#include "engine/context.hpp"
 
-const char* kLoadedModulesKey = "tl_loaded_modules";
+constexpr std::string_view kLoadedModulesKey = "TLLoadModules";
 
-ScriptBinaryDataManager* s_require_mgr = nullptr;
-
-static std::string moduleNameToPath(const std::string& modname)
+std::string moduleNameToPath(const std::string& modname)
 {
     if (modname.empty())
         return "";
@@ -35,9 +34,9 @@ static std::string moduleNameToPath(const std::string& modname)
     return s;
 }
 
-static bool getCached(lua_State* L, const std::string& loadPath)
+bool getCached(lua_State* L, const std::string& loadPath)
 {
-    lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey);
+    lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     if (!lua_istable(L, -1))
     {
         lua_pop(L, 1);
@@ -47,34 +46,34 @@ static bool getCached(lua_State* L, const std::string& loadPath)
     lua_gettable(L, -2);
     bool found = !lua_isnil(L, -1);
     if (found)
-        lua_remove(L, -2); // 去掉 cache 表
+        lua_remove(L, -2);
     else
         lua_pop(L, 2);
     return found;
 }
 
-static void setCached(lua_State* L, const std::string& loadPath)
+void setCached(lua_State* L, const std::string& loadPath)
 {
-    lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey);
+    lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     if (!lua_istable(L, -1))
     {
         lua_pop(L, 1);
         lua_newtable(L);
         lua_pushvalue(L, -1);
-        lua_setfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey);
+        lua_setfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     }
-    // 栈: [..., module_result, cache_table]
+    // set module result to kLoadedModulesKey table
     lua_pushlstring(L, loadPath.c_str(), loadPath.size());
-    lua_pushvalue(L, -3); // 压入 module_result 的副本
-    lua_settable(L, -3);  // cache_table[loadPath] = 副本，并弹出 key 与 value
-    lua_pop(L, 1);        // 只弹出 cache_table，保留栈顶的 module_result
+    lua_pushvalue(L, -3);
+    lua_settable(L, -3);
+    lua_pop(L, 1);
 }
 
-// 加载并执行一个 .luau 文件，结果留在栈顶，返回是否成功（失败时已推错误信息）
-static bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager* mgr, const std::string& loadPath)
+// load luau file, result leave on top of stack(or leave error when failed)
+bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager& mgr, const std::string& loadPath)
 {
     Path path(loadPath);
-    auto handle = mgr->Load(path, false);
+    auto handle = mgr.Load(path, false);
     if (!handle)
     {
         lua_pushfstring(L, "module not found: '%s'", loadPath.c_str());
@@ -101,6 +100,8 @@ static bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager* mgr, const s
         lua_pushfstring(L, "load failed: '%s': %s", loadPath.c_str(), err ? err : "unknown");
         return false;
     }
+
+    // FIXME: maybe not need, luau_load executed code
     int pcall_result = lua_pcall(L, 0, 1, 0);
     if (pcall_result != LUA_OK)
     {
@@ -108,16 +109,14 @@ static bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager* mgr, const s
         lua_pushfstring(L, "error running '%s': %s", loadPath.c_str(), err ? err : "unknown");
         return false;
     }
+    
     return true;
 }
 
-static int requireImpl(lua_State* L)
+int requireImpl(lua_State* L)
 {
-    if (!s_require_mgr)
-    {
-        luaL_error(L, "require: not initialized (call RegisterScriptBinaryDataManagerForRequire first)");
-        return 0;
-    }
+    auto& mgr = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+    
     const char* modname = luaL_checkstring(L, 1);
     std::string file_path = moduleNameToPath(modname);
     if (file_path.empty())
@@ -129,7 +128,7 @@ static int requireImpl(lua_State* L)
     if (getCached(L, file_path))
         return 1;
 
-    if (!loadAndRunModule(L, s_require_mgr, file_path))
+    if (!loadAndRunModule(L, mgr, file_path))
     {
         const char* err = lua_tostring(L, -1);
         luaL_error(L, "require: %s", err ? err : "unknown error");
@@ -139,22 +138,9 @@ static int requireImpl(lua_State* L)
     return 1;
 }
 
-} // namespace
-
-void RegisterScriptBinaryDataManagerForRequire(lua_State* L, ScriptBinaryDataManager* mgr)
-{
-    (void)L;
-    s_require_mgr = mgr;
-}
-
 void BindRequire(lua_State* L)
 {
     TL_RETURN_IF_NULL_WITH_LOG(L, LOGE, "BindRequire: lua_State* is null");
-    if (!s_require_mgr)
-    {
-        LOGE("BindRequire: call RegisterScriptBinaryDataManagerForRequire first");
-        return;
-    }
     lua_pushcfunction(L, requireImpl, "require");
     lua_setglobal(L, "require");
 }
