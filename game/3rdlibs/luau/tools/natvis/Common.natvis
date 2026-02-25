@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="Luau::detail::DenseHashTable&lt;*,*,*,*,*,*&gt;">
+    <Expand>
+      <Item Name="[size]">count</Item>
+      <Item Name="[capacity]">capacity</Item>
+      <ArrayItems>
+        <Size>capacity</Size>
+        <ValuePointer>data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="Luau::DenseHashSet&lt;*,*,*&gt;">
+    <Expand>
+      <ExpandedItem>impl</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="Luau::DenseHashMap&lt;*,*,*,*&gt;">
+    <Expand>
+      <ExpandedItem>impl</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="Luau::SmallVector&lt;*,*&gt;">
+    <DisplayString>[size]={count} {ptr,[count]na}</DisplayString>
+    <Expand>
+      <Item Name="[size]">count</Item>
+      <Item Name="[capacity]">max</Item>
+      <ArrayItems>
+        <Size>count</Size>
+        <ValuePointer>ptr</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

@@ -4,19 +4,7 @@
 
 #include "schema/binding/binding.hpp"
 
-void RegisterSchemaType(asIScriptEngine* engine) {
-    {{#registers}}
-    {{{register}}}
-    {{/registers}}
-}
-
-void BindSchemaHandleTypeOpImplCast(asIScriptEngine* engine) {
-    {{#handle_casts}}
-    {{{handle_cast}}}
-    {{/handle_casts}}
-}
-
-void BindSchema(asIScriptEngine* engine) {
+void BindSchema(lua_State* L) {
     {{#bindings}}
     {{{binding}}}
     {{/bindings}}

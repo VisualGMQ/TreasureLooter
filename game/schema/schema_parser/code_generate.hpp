@@ -31,6 +31,7 @@ std::string GenerateAssetDisplayTotleHeaderCode(const SchemaInfoManager&);
 // script binding code
 std::string GenerateEnumScriptBindHeaderCode(const EnumInfo&);
 std::string GenerateEnumScriptBindImplCode(const EnumInfo&);
+std::string GenerateEnumStackSpecializationCode(const EnumInfo&);
 std::string GenerateClassScriptBindHeaderCode(const ClassInfo&);
 std::string GenerateClassScriptBindImplCode(const ClassInfo&);
 std::string GenerateSchemaScriptBindHeaderCode(const SchemaInfo&);

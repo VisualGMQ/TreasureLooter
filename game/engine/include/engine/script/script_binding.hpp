@@ -1,4 +1,4 @@
 #pragma once
-#include "angelscript.h"
+#include "lua.h"
 
-void BindTLModule(asIScriptEngine*);
+void BindTLModule(lua_State* L);

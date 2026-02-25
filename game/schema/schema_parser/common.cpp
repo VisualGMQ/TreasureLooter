@@ -72,6 +72,8 @@ MustacheManager::MustacheManager()
           "schema/schema_parser/mustaches/enum_script_bind_header.mustache")},
       m_enum_script_bind_impl_mustache{readMustache(
           "schema/schema_parser/mustaches/enum_script_bind_impl.mustache")},
+      m_enum_stack_specialization_mustache{readMustache(
+          "schema/schema_parser/mustaches/enum_stack_specialization.mustache")},
       m_class_script_bind_header_mustache{readMustache(
           "schema/schema_parser/mustaches/class_script_bind_header.mustache")},
       m_class_script_bind_impl_mustache{readMustache(

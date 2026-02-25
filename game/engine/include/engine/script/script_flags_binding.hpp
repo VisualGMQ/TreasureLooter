@@ -1,44 +1,32 @@
 #pragma once
-#include "angelscript.h"
+
 #include "engine/flag.hpp"
-#include "engine/script/script_macros.hpp"
+#include "lua.h"
+#include "lualib.h"
+#include "LuaBridge/LuaBridge.h"
+#include <type_traits>
 
-class CppFlags {
-public:
-    explicit CppFlags(asITypeInfo* type_info);
-    CppFlags(asITypeInfo* type_info, int value);
-    ~CppFlags();
-    void SetValue(int value);
-    int Value() const;
-    void OpOrAssign(int value);
-    void OpAndAssign(int value);
-    void Remove(int value);
+template <typename T>
+struct luabridge::Stack<Flags<T>> {
+    using underlying_type = typename Flags<T>::underlying_type;
 
-private:
-    static bool IsIntegerSubType(int subtype_id);
+    [[nodiscard]] static luabridge::Result push(lua_State* L, const Flags<T>& value) {
+#if LUABRIDGE_SAFE_STACK_CHECKS
+        if (!lua_checkstack(L, 1))
+            return luabridge::makeErrorCode(luabridge::ErrorCode::LuaStackOverflow);
+#endif
+        lua_pushinteger(L, static_cast<lua_Integer>(value.Value()));
+        return {};
+    }
 
-    asITypeInfo* m_type_info = nullptr;
-    int m_value = 0;
+    [[nodiscard]] static luabridge::TypeResult<Flags<T>> get(lua_State* L, int index) {
+        if (lua_type(L, index) != LUA_TNUMBER)
+            return luabridge::makeErrorCode(luabridge::ErrorCode::InvalidTypeCast);
+        auto v = static_cast<typename Flags<T>::underlying_type>(lua_tointeger(L, index));
+        return Flags<T>(v);
+    }
+
+    [[nodiscard]] static bool isInstance(lua_State* L, int index) {
+        return lua_type(L, index) == LUA_TNUMBER;
+    }
 };
-
-// Helpers for Flags<T> construct/destruct (implemented in .cpp)
-void flagsDefaultConstruct(asITypeInfo* ti, void* obj);
-void flagsConstructWithInt(asITypeInfo* ti, int value, void* obj);
-void flagsDestruct(void* obj);
-
-void registerFlagsType(asIScriptEngine* engine);
-void bindFlagsType(asIScriptEngine* engine);
-
-// Convert between Flags<EnumType> and CppFlags (for schema-generated bindings).
-template <typename EnumType>
-inline CppFlags CppFlagsFromFlags(asIScriptEngine* engine,
-                                 const Flags<EnumType>& flags) {
-    asITypeInfo* ti = engine->GetTypeInfoByDecl("TL::Flags");
-    return CppFlags(ti, static_cast<int>(flags.Value()));
-}
-
-template <typename EnumType>
-inline void FlagsFromCppFlags(const CppFlags* cpp_flags, Flags<EnumType>& out) {
-    out = Flags<EnumType>(static_cast<typename Flags<EnumType>::underlying_type>(
-        cpp_flags->Value()));
-}

@@ -225,10 +225,14 @@ void Renderer::Clear() {
     m_draw_commands.clear();
 }
 
-void Renderer::Present() {
+void Renderer::ApplyDrawcall() {
     PROFILE_RENDERING_SECTION(__FUNCTION__);
     sortDrawCommands();
     applyDrawCommands();
+}
+
+void Renderer::Present() {
+    PROFILE_RENDERING_SECTION(__FUNCTION__);
     SDL_CALL(SDL_RenderPresent(m_renderer));
 }
 

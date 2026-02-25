@@ -3,13 +3,16 @@
 /////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include "angelscript.h"
+
+struct lua_State;
+
+#include "lua.h"
+#include "lualib.h"
+#include "LuaBridge/LuaBridge.h"
 #include "engine/script/script_handle_binding.hpp"
 
 {{#includes}}
 #include "{{include}}"
 {{/includes}}
 
-void RegisterSchemaType(asIScriptEngine* engine);
-void BindSchemaHandleTypeOpImplCast(asIScriptEngine* engine);
-void BindSchema(asIScriptEngine* engine);
+void BindSchema(lua_State* L);

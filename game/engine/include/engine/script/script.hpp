@@ -1,23 +1,25 @@
 #pragma once
 
-#include "angelscript.h"
+#include "lua.h"
+#include "lualib.h"
 #include "engine/asset_manager_interface.hpp"
+#include "engine/entity.hpp"
 #include "engine/manager.hpp"
 #include "engine/timer.hpp"
 
 class ScriptBinaryData {
 public:
-    ScriptBinaryData(const Path&, asIScriptEngine*);
+    explicit ScriptBinaryData(const Path& path);
     ~ScriptBinaryData();
 
     const std::vector<char>& GetContent() const;
     const std::string& GetClassName() const;
-    const std::string& GetModuleName() const;
+    const Path& GetPath() const { return m_path; }
 
 private:
     std::vector<char> m_content;
     std::string m_class_name;
-    std::string m_module_name;
+    Path m_path;
 };
 
 using ScriptBinaryDataHandle = Handle<ScriptBinaryData>;
@@ -28,36 +30,39 @@ public:
     ~ScriptBinaryDataManager();
 
     ScriptBinaryDataHandle Load(const Path& filename, bool force = false) override;
-    asIScriptEngine* GetUnderlyingEngine();
+    lua_State* GetUnderlyingVM();
+
+    void SetRequireRoot(const Path& root) { m_require_root = root; }
+    const Path& GetRequireRoot() const { return m_require_root; }
 
 private:
-    asIScriptEngine* m_engine{};
+    lua_State* m_L{};
+    Path m_require_root;
 
     void bindModule();
 };
 
 class Script {
 public:
-    Script(Entity entity, ScriptBinaryDataHandle);
+    Script(Entity entity, ScriptBinaryDataHandle handle);
     ~Script();
 
     void Update();
     void Render();
 
-    asIScriptObject* GetScriptObject() const { return m_class_instance; }
+    int GetScriptTableRef() const { return m_table_ref; }
+    lua_State* GetVM() const { return m_L; }
 
 private:
-    asIScriptContext* m_ctx{};
-    asIScriptFunction* m_init_fn{};
-    asIScriptFunction* m_update_fn{};
-    asIScriptFunction* m_render_fn{};
-    asIScriptFunction* m_quit_fn{};
-    asIScriptObject* m_class_instance{};
+    lua_State* m_L{};
+    int m_table_ref{LUA_NOREF};
+    Entity m_entity{};
 
     bool m_inited = false;
 
-    void callNoArgMethod(asIScriptFunction*);
-    void callUpdateMethod(asIScriptFunction*, TimeType);
+    void callMethodNoArg(const char* method);
+    void callMethodWithTime(const char* method, TimeType delta_time);
+    void callMethodWithEntity(const char* method);
 };
 
 class ScriptComponentManager : public ComponentManager<Script> {

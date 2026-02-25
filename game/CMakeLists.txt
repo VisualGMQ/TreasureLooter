@@ -109,7 +109,10 @@ target_link_libraries(${ENGINE_NAME}
     RapidXML
     stduuid
     tmxlite
-    angelscript::angelscript angelscript::all_addon)
+    
+    Luau.Compiler
+    Luau.VM
+    LuaBridge)
 
 if (TL_ENABLE_PROFILE)
     target_link_libraries(${ENGINE_NAME} PUBLIC optick)
@@ -134,7 +137,7 @@ else()
     add_executable(${GAME_NAME})
 endif()
 
-file(GLOB_RECURSE GAME_SCRIPTS scripts/*.as)
+file(GLOB_RECURSE GAME_SCRIPTS scripts/*.luau)
 
 target_sources(${GAME_NAME} PRIVATE main_entry/game_main.cpp ${GAME_SCRIPTS})
 target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})

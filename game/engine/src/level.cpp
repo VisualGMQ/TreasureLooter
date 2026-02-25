@@ -2,6 +2,7 @@
 
 #include "SDL3/SDL.h"
 #include "engine/asset_manager.hpp"
+#include "engine/macros.hpp"
 #include "engine/bind_point.hpp"
 #include "engine/cct.hpp"
 #include "engine/context.hpp"

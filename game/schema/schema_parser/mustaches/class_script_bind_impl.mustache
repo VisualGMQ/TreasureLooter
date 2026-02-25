@@ -1,43 +1,10 @@
-void register{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
-    {{#is_asset}}
-    // Register asset type as reference type
-    AS_CALL(engine->RegisterObjectType("{{type}}", 0, asOBJ_REF | asOBJ_NOCOUNT));
-    {{/is_asset}}
-    {{^is_asset}}
-    {
-        constexpr bool is_pod = std::is_standard_layout_v<{{type}}> && std::is_trivial_v<{{type}}>;
-        AS_CALL(engine->RegisterObjectType("{{type}}",
-                                           sizeof({{type}}),
-                                           (is_pod ? asOBJ_POD : 0) | asOBJ_VALUE | asGetTypeTraits<{{type}}>()));
-        AS_CALL(engine->RegisterObjectBehaviour("{{type}}", asBEHAVE_CONSTRUCT,
-                                               "void f()", WRAP_CON({{type}}, ()),
-                                               asCALL_GENERIC));
-        AS_CALL(engine->RegisterObjectBehaviour("{{type}}", asBEHAVE_DESTRUCT,
-                                               "void f()",
-                                               asFUNCTION(+[]({{type}}* obj) { obj->~{{type}}(); }),
-                                               asCALL_CDECL_OBJFIRST));
-    }
-    {{/is_asset}}
-}
-
-void bind{{{type}}}TypeFromSchema(asIScriptEngine* engine) {
-    {{#property_entries}}
-    AS_CALL(engine->RegisterObjectProperty("{{{type}}}", "{{{property_type}}} {{{property_name}}}", asOFFSET({{{type}}}, {{{property_name}}})));
-    {{/property_entries}}
-    {{#optional_entries}}
-    {{{getter_reg}}}
-    {{{setter_reg}}}
-    {{/optional_entries}}
-    {{#flags_entries}}
-    {{{getter_reg}}}
-    {{{setter_reg}}}
-    {{/flags_entries}}
-    {{#array_entries}}
-    {{{getter_reg}}}
-    {{{setter_reg}}}
-    {{/array_entries}}
-    {{#handle_entries}}
-    {{{getter_reg}}}
-    {{{setter_reg}}}
-    {{/handle_entries}}
+void bind{{{type}}}TypeFromSchema(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .beginClass<{{{type}}}>("{{{type}}}")
+        {{#property_entries}}
+        .addProperty("{{{property_name}}}", &{{{type}}}::{{{property_name}}}, true)
+        {{/property_entries}}
+        .endClass()
+        .endNamespace();
 }

@@ -368,6 +368,7 @@ void GameContext::renderUpdate(TimeType elapse) {
 
     m_debug_drawer->Update(m_time->GetElapseTime());
 
+    m_renderer->ApplyDrawcall();
     endImGui();
     m_renderer->Present();
 }

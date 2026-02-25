@@ -3,6 +3,9 @@
 #include "engine/context.hpp"
 #include "inspector.hpp"
 
+#include "lua.h"
+#include "lualib.h"
+
 namespace editor {
 class EditorContext : public CommonContext {
 public:
