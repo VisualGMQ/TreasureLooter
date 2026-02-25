@@ -1,47 +1,59 @@
+local GenericForwardWeapon = require("scripts.generic_forward_weapon")
+
 local Waggo = {}
 Waggo.__index = Waggo
 
-local test = require("scripts.test")
-test:Foo()
-
-type WaggoData = {
-	m_entity: number,
-	m_sprite: userdata,
-}
-
-export type State = number
+export type CharacterDirection = number
 
 local CharacterDirection = {
     Left = 0,
     Right = 1,
     Down = 2,
     Up = 3,
-} :: { [string]: State }
+} :: { [string]: CharacterDirection }
 
+type WaggoData = {
+	m_entity: number,
+	m_sprite: userdata,
+	m_cct : userdata,
+	m_transform : userdata,
+	m_image_sheet : userdata,
+	m_move_left_anim : userdata,
+	m_move_right_anim : userdata,
+	m_move_up_anim : userdata,
+	m_move_down_anim : userdata,
+	m_anim_player : userdata,
+	m_direction : CharacterDirection,
+	m_move_speed : number,
+	m_weapon_script : userdata,
+}
 
 export type Waggo = typeof(setmetatable({}::WaggoData, Waggo))
 
-function Waggo:new(entity: number): Waggo
-	local self = {}
-	print(entity)
+function Waggo.new(entity: number): Waggo
+	local self = {}::WaggoData
+
+	self.m_entity = entity
 	self.m_sprite = nil
 	self.m_anim_player = nil
 	self.m_cct = nil
 	self.m_transform = nil
-	self.m_entity = entity
 	self.m_image_sheet = nil
 	self.m_move_left_anim = nil
 	self.m_move_right_anim = nil
 	self.m_move_up_anim = nil
 	self.m_move_down_anim = nil
+	self.m_anim_player = nil
 	self.m_direction = CharacterDirection.Down
 	self.m_move_speed = 100
+	self.m_weapon_script = nil
 
 	return setmetatable(self, Waggo)
 end
 
-function Waggo:OnInit()
+function Waggo.OnInit(self: WaggoData)
 	local ctx = TL.GetContext()
+	print("entity", self.m_entity)
 	self.m_sprite = ctx:GetSpriteManager():Get(self.m_entity)
 	self.m_cct = ctx:GetCCTManager():Get(self.m_entity)
 	self.m_transform = ctx:GetTransformManager():Get(self.m_entity)
@@ -56,13 +68,15 @@ function Waggo:OnInit()
 	self.m_move_speed = config.m_speed
 
 	local relationship = ctx:GetRelationshipManager():Get(self.m_entity)
-	--[[
-	local children = relationship.m_children
-	std::vector<T>& not register yet
-	--]]
+
+	if relationship ~= nil and config.m_weapon_entity ~= nil and #relationship.m_children > config.m_weapon_entity then
+		local weapon_entity = relationship.m_children[config.m_weapon_entity + 1]
+		self.m_weapon_script = ctx:GetScriptManager():Get(weapon_entity)
+		print("weapon script : ", self.m_weapon_script)
+	end
 end
 
-function Waggo:OnUpdate(elapse_time: number)
+function Waggo.OnUpdate(self: Waggo, elapse_time: number)
 	local ctx = TL.GetContext()
 	local input_manager = ctx:GetInputManager()
 	local action = input_manager:GetAction("Attack")
@@ -75,21 +89,17 @@ function Waggo:OnUpdate(elapse_time: number)
 	ctx:GetCamera():MoveTo(self.m_transform.m_position)
 end
 
-function Waggo:attack()
+function Waggo.attack(self: Waggo)
+	self.m_weapon_script:Attack()
 end
 
-function Waggo:move(dir, duration: number)
+function Waggo.move(self: Waggo, dir, duration: number)
 	if dir == TL.Vec2.ZERO then
 		if self.m_anim_player ~= nil then
 			self.m_anim_player:Stop()
 		end
-	else
-		-- do weapon relate
-		--[[
-		if (!m_weapon_script.m_anim_player.IsPlaying()) {
-			m_weapon_script.ChangeDir(dir.Normalize());
-		}
-		--]]
+	elseif not self.m_weapon_script.m_anim_player:IsPlaying() then
+		self.m_weapon_script:ChangeDir(dir:Normalize())
 	end
 
 	local old_dir = self.m_direction
@@ -142,11 +152,11 @@ function Waggo:move(dir, duration: number)
 		TL.RenderLayer.TilemapArch)
 end
 
-function Waggo:OnQuit()
+function Waggo.OnQuit(self: Waggo)
 	print("OnQuit")
 end
 
-function Waggo:OnRender()
+function Waggo.OnRender(self: Waggo)
 end
 
 return Waggo

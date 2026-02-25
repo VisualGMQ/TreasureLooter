@@ -104,7 +104,6 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
 {
     if (auto it = Find(filename); it && !force)
     {
-        LOGW("script binary data {} already loaded", filename);
         return it;
     }
     return store(&filename, UUID::CreateV4(),
@@ -205,7 +204,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) : m_entity(entity)
 
     if (new_fn.isFunction())
     {
-        auto new_result = new_fn(class_table, entity_val);
+        auto new_result = new_fn(entity_val);
         if (new_result && new_result.size() > 0)
         {
             luabridge::LuaRef instance = new_result[0];
