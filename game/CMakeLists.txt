@@ -65,6 +65,9 @@ set(SCHEMA_ASSET_INFO_FILES
 list(APPEND SCHEMA_SERD_OUTPUT_FILES "${schema_final_path}/serialize/serialize.hpp")
 list(APPEND SCHEMA_DISPLAY_OUTPUT_FILES "${schema_final_path}/display/display.hpp")
 list(APPEND SCHEMA_BINDING_OUTPUT_FILES "${schema_final_path}/binding/binding.hpp" "${schema_final_path}/binding/binding.cpp")
+set(SCHEMA_SCRIPT_HINT_FILES "${SCHEMA_OUTPUT_PATH}/schema_types.luau.inc")
+set(TL_TYPES_LUAU_INC "script_hint_inc/tl_types.luau.inc")
+set(TL_TYPES_LUAU_OUT "scripts/tl_types.luau")
 
 if (NEED_SCHEMA_PARSER)
     add_custom_target(run_schema_parser
@@ -79,10 +82,23 @@ if (NEED_SCHEMA_PARSER)
             ${SCHEMA_DISPLAY_OUTPUT_FILES}
             ${SCHEMA_BINDING_OUTPUT_FILES}
             ${SCHEMA_ASSET_INFO_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SCRIPT_HINT_FILES}
             COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
             DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "parsing schemas...")
+
+    # Merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_OUT}
+            COMMAND ${CMAKE_COMMAND}
+                -DTL_INC=${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_INC}
+                -DSCHEMA_INC=${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SCRIPT_HINT_FILES}
+                -DOUT=${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_OUT}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
+            DEPENDS run_schema_parser ${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_INC} ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SCRIPT_HINT_FILES}
+            COMMENT "merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau")
+    add_custom_target(merge_tl_types_luau ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_OUT})
+    add_dependencies(merge_tl_types_luau run_schema_parser)
 endif()
 
 ################ build engine ################

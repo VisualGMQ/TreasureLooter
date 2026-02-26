@@ -78,6 +78,7 @@ const std::string& ScriptBinaryData::GetClassName() const
 ScriptBinaryDataManager::ScriptBinaryDataManager()
 {
     m_require_context.RegisterAliasPath("game", "scripts/");
+    m_require_context.RegisterAliasPath("hints", "script_hints/");
     
     m_L = luaL_newstate();
     if (!m_L)

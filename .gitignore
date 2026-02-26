@@ -3,6 +3,7 @@ logs
 imgui.ini
 install
 schema_generate/
+game/scripts/tl_types.luau
 
 .gradle
 .cxx
@@ -13,7 +14,6 @@ android/app/build
 local.properties
 android/app/src/main/assets/assets
 android/app/src/main/assets/scripts
-emcmake-build
 android/app/release
 project_path.xml
 *.tiled-project

@@ -130,6 +130,4 @@ export type MouseButton_Left = number
 export type MouseButton_Right = number
 export type MouseButton_Middle = number
 
-local _M = setmetatable({}, ImGui)
-
-return _M
+return ImGui

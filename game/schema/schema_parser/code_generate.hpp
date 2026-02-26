@@ -41,3 +41,6 @@ std::string GenerateBindingImplCode(const SchemaInfoManager&);
 
 // Type conversion from C++ to AngelScript
 std::string ConvertCppTypeToAngelScript(const std::string& cpp_type);
+
+// Luau schema types: generate schema_types.luau.inc (fragment; merged with tl_types.luau.inc by CMake)
+std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager&);

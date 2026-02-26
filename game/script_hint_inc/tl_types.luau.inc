@@ -1,5 +1,7 @@
 export type Entity = number
 
+export type TimeType = number
+
 export type Vec2 = {
 	x: number,
 	y: number,
@@ -61,8 +63,24 @@ export type Path = {
 	empty: (self: Path) -> boolean,
 } & (string) -> Path
 
-export type Rect = { center: Vec2, half_size: Vec2 }
-export type Circle = { center: Vec2, radius: number }
+export type Image9Grid = {
+	left: number,
+	right: number,
+	top: number,
+	bottom: number,
+	scale: number,
+	IsValid: (self: Image9Grid) -> boolean,
+}
+
+export type CollisionGroup = {
+	Add: (self: CollisionGroup, group: CollisionGroupType) -> (),
+	Remove: (self: CollisionGroup, group: CollisionGroupType) -> (),
+	Has: (self: CollisionGroup, group: CollisionGroupType) -> boolean,
+	Clear: (self: CollisionGroup) -> (),
+	CanCollision: (self: CollisionGroup, o: CollisionGroup) -> boolean,
+	GetUnderlying: (self: CollisionGroup) -> number,
+	SetUnderlying: (self: CollisionGroup, underlying: number) -> (),
+}
 
 export type Image = {
 	GetSize: (self: Image) -> Vec2,
@@ -78,22 +96,10 @@ export type Level = {
 
 export type ImageHandle = { IsValid: (self: ImageHandle) -> boolean } & Image
 export type LevelHandle = { IsValid: (self: LevelHandle) -> boolean } & Level
-export type PrefabHandle = { IsValid: (self: PrefabHandle) -> boolean }
 export type AnimationHandle = { IsValid: (self: AnimationHandle) -> boolean }
 export type TilemapHandle = { IsValid: (self: TilemapHandle) -> boolean }
 export type FontHandle = { IsValid: (self: FontHandle) -> boolean }
 export type ScriptBinaryDataHandle = { IsValid: (self: ScriptBinaryDataHandle) -> boolean }
-
-export type GameplayConfig = {
-	sprite_sheet: ImageHandle?,
-	faceset: ImageHandle?,
-	speed: number,
-	move_left_animation: AnimationHandle?,
-	move_right_animation: AnimationHandle?,
-	move_up_animation: AnimationHandle?,
-	move_down_animation: AnimationHandle?,
-	weapon_entity: number?,
-}
 
 export type Sprite = {
 	m_region: Region,
@@ -255,7 +261,3 @@ export type GetZOrderByYSorting = (y: number, layer: number) -> number
 export type GetAngle = (from: { x: number, y: number }, to: { x: number, y: number }) -> number
 export type DecomposeVector = (velocity: Vec2, tangent: Vec2) -> DecompositionResult
 export type GetContext = () -> GameContext
-
-local _M = setmetatable({}, TL)
-
-return _M
