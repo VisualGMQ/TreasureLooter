@@ -23,7 +23,7 @@ First we must build `schema_parser` under PC and run `run_schema_parser` target:
 
 ```bash
 cmake -S game/ -B cmake-build
-cmake --build cmake-build --target run_schema_parser
+cmake --build cmake-build --target merge_tl_types_luau
 ```
 
 It will generate `game/schema_generate`.
