@@ -1,6 +1,7 @@
 #include "code_generate.hpp"
 #include "common.hpp"
 #include "mustache.hpp"
+#include <cctype>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -875,4 +876,157 @@ static std::string ExtractVectorInnerType(const std::string& cpp_type) {
         }
     }
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+static std::string ExtractArrayInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::array<";
+    if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    size_t comma = cpp_type.find(',', prefix.size());
+    if (comma == std::string::npos) return {};
+    return cpp_type.substr(prefix.size(), comma - prefix.size());
+}
+
+static bool IsLuauPrimitiveType(const std::string& name) {
+    return name == "number" || name == "string" || name == "boolean";
+}
+
+static std::string EnsureTLPrefixForSchema(
+    const std::string& luau_type,
+    const std::unordered_set<std::string>& schema_defined_type_names) {
+    std::string out;
+    out.reserve(luau_type.size() * 2);
+    for (size_t i = 0; i < luau_type.size(); ) {
+        if (luau_type[i] == ' ' || luau_type[i] == '{' || luau_type[i] == '}' || luau_type[i] == ',' ||
+            luau_type[i] == '?' || luau_type[i] == ':') {
+            out += luau_type[i++];
+            continue;
+        }
+        if ((luau_type[i] >= 'a' && luau_type[i] <= 'z') || (luau_type[i] >= 'A' && luau_type[i] <= 'Z') || luau_type[i] == '_') {
+            size_t start = i;
+            while (i < luau_type.size() && (std::isalnum(static_cast<unsigned char>(luau_type[i])) || luau_type[i] == '_'))
+                ++i;
+            std::string id = luau_type.substr(start, i - start);
+            const bool is_primitive = IsLuauPrimitiveType(id);
+            const bool is_schema_type = (schema_defined_type_names.count(id) != 0);
+            if (!is_primitive && !is_schema_type)
+                out += "TL.";
+            out += id;
+            continue;
+        }
+        out += luau_type[i++];
+    }
+    return out;
+}
+
+static bool IsLuaKeyword(const std::string& name) {
+    static const std::unordered_set<std::string> keywords = {
+        "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
+        "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return",
+        "then", "true", "until", "while",
+    };
+    return keywords.count(name) != 0;
+}
+
+static std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
+    static const std::unordered_map<std::string, std::string> Cpp2Luau = {
+        {"float", "number"},
+        {"double", "number"},
+        {"int", "number"},
+        {"int8_t", "number"},
+        {"int16_t", "number"},
+        {"int32_t", "number"},
+        {"int64_t", "number"},
+        {"uint8_t", "number"},
+        {"uint16_t", "number"},
+        {"uint32_t", "number"},
+        {"uint64_t", "number"},
+        {"std::string", "string"},
+        {"bool", "boolean"},
+    };
+    auto it = Cpp2Luau.find(cpp_type);
+    if (it != Cpp2Luau.end())
+        return it->second;
+    std::string inner = ExtractOptionalInnerType(cpp_type);
+    if (!inner.empty())
+        return ConvertCppTypeToLuauType(inner) + "?";
+    if (!ExtractFlagsInnerType(cpp_type).empty())
+        return "number";
+    std::string vec_inner = ExtractVectorInnerType(cpp_type);
+    if (!vec_inner.empty())
+        return "{ " + ConvertCppTypeToLuauType(vec_inner) + " }";
+    std::string arr_inner = ExtractArrayInnerType(cpp_type);
+    if (!arr_inner.empty())
+        return "{ " + ConvertCppTypeToLuauType(arr_inner) + " }";
+    return cpp_type;
+}
+
+static std::string GenerateClassLuauType(
+    const ClassInfo& info,
+    const std::unordered_set<std::string>& schema_defined_type_names,
+    bool use_tl_prefix) {
+    std::string out = "export type " + info.m_name + " = {\n";
+    for (const auto& p : info.m_properties) {
+        std::string luau_type = ConvertCppTypeToLuauType(p.m_type);
+        if (p.m_optional && luau_type.back() != '?')
+            luau_type += "?";
+        if (use_tl_prefix)
+            luau_type = EnsureTLPrefixForSchema(luau_type, schema_defined_type_names);
+        std::string key = IsLuaKeyword(p.m_name) ? ("[\"" + p.m_name + "\"]") : p.m_name;
+        out += "\t" + key + ": " + luau_type + ",\n";
+    }
+    out += "}\n";
+    return out;
+}
+
+static std::string GenerateEnumLuauType(const EnumInfo& info) {
+    std::string out = "export type " + info.m_name + " = {\n";
+    for (const auto& item : info.m_items) {
+        std::string key = IsLuaKeyword(item.m_name) ? ("[\"" + item.m_name + "\"]") : item.m_name;
+        out += "\t" + key + ": number,\n";
+    }
+    out += "}\n";
+    return out;
+}
+
+static std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
+    std::string handle_name = asset_class_name + "Handle";
+    return "export type " + handle_name + " = { IsValid: (self: " + handle_name + ") -> boolean }\n";
+}
+
+std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
+    std::unordered_set<std::string> schema_defined_type_names;
+    for (const auto& schema : manager.m_infos) {
+        for (const auto& clazz : schema.m_classes) {
+            schema_defined_type_names.insert(clazz.m_name);
+            if (clazz.is_asset)
+                schema_defined_type_names.insert(clazz.m_name + "Handle");
+        }
+        for (const auto& enum_info : schema.m_enums)
+            schema_defined_type_names.insert(enum_info.m_name);
+    }
+
+    std::string out = "------------------------------------------------------\n"
+                      "-- CODE GENERATED BY SCHEMA GENERATOR, DO NOT EDIT! --\n"
+                      "------------------------------------------------------\n"
+                      "\n";
+    std::unordered_set<std::string> emitted_classes;
+    std::unordered_set<std::string> emitted_enums;
+    std::unordered_set<std::string> emitted_handles;
+    bool use_tl_prefix = false;
+    for (const auto& schema : manager.m_infos) {
+        for (const auto& clazz : schema.m_classes) {
+            if (emitted_classes.insert(clazz.m_name).second)
+                out += GenerateClassLuauType(clazz, schema_defined_type_names, use_tl_prefix) + "\n";
+            if (clazz.is_asset && emitted_handles.insert(clazz.m_name + "Handle").second)
+                out += GenerateAssetHandleLuauType(clazz.m_name) + "\n";
+        }
+        for (const auto& enum_info : schema.m_enums) {
+            if (emitted_enums.insert(enum_info.m_name).second)
+                out += GenerateEnumLuauType(enum_info) + "\n";
+        }
+    }
+
+    out += "return TL";
+    return out;
 }

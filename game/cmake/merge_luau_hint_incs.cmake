@@ -1,0 +1,10 @@
+# Merge tl_types.luau.inc and schema_types.luau.inc into tl_types.luau
+# Usage: cmake -D TL_INC=<path> -D SCHEMA_INC=<path> -D OUT=<path> -P MergeLuauHintIncs.cmake
+if(NOT TL_INC OR NOT SCHEMA_INC OR NOT OUT)
+  message(FATAL_ERROR "MergeLuauHintIncs.cmake: TL_INC, SCHEMA_INC, OUT required")
+endif()
+file(READ "${TL_INC}" TL_CONTENT)
+file(READ "${SCHEMA_INC}" SCHEMA_CONTENT)
+set(MERGED "${TL_CONTENT}\n\n${SCHEMA_CONTENT}\n")
+file(WRITE "${OUT}" "${MERGED}")
+message(STATUS "Merged luau hints -> ${OUT}")

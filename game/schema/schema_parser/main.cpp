@@ -184,5 +184,13 @@ int main(int argc, char** argv) {
         std::cout << "generate binding impl to : " << binding_output_dir / "binding.cpp" << std::endl;
     }
 
+    // generate schema_types.luau.inc to output_dir (schema_generate/schema); merged with tl_types.luau.inc by CMake to produce tl_types.luau
+    {
+        std::string code = GenerateSchemaTypesLuauCode(manager);
+        std::ofstream file(output_dir / "schema_types.luau.inc");
+        file.write(code.c_str(), code.length());
+        std::cout << "generate schema_types.luau.inc to : " << output_dir / "schema_types.luau.inc" << std::endl;
+    }
+
     return 0;
 }

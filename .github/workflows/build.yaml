@@ -67,6 +67,7 @@ jobs:
         ${{ matrix.cmake-path }}cmake --preset=default
         ${{ matrix.cmake-path }}cmake --build cmake-build --target schema_parser
         ${{ matrix.cmake-path }}cmake --build cmake-build --target run_schema_parser
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target merge_tl_types_luau
 
     - name: Prepare Android JDK
       if: matrix.android

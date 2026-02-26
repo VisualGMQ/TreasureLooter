@@ -91,6 +91,22 @@ void bindScriptBinaryDataManager(lua_State* L) {
         .endNamespace();
 }
 
+void bindCollisionGroup(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<CollisionGroup>("CollisionGroup")
+                .template addConstructor<void ()>()
+                .addFunction("Add", &CollisionGroup::Add)
+                .addFunction("Remove", &CollisionGroup::Remove)
+                .addFunction("Has", &CollisionGroup::Has)
+                .addFunction("Clear", &CollisionGroup::Clear)
+                .addFunction("CanCollision", &CollisionGroup::CanCollision)
+                .addFunction("GetUnderlying", &CollisionGroup::GetUnderlying)
+                .addFunction("SetUnderlying", &CollisionGroup::SetUnderlying)
+            .endClass()
+        .endNamespace();
+}
+
 void bindPath(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
@@ -205,6 +221,15 @@ void bindMath(lua_State* L) {
                 .template addConstructor<void ()>()
                 .addProperty("m_topleft", &Region::m_topleft, true)
                 .addProperty("m_size", &Region::m_size, true)
+            .endClass()
+            .beginClass<Image9Grid>("Image9Grid")
+                .template addConstructor<void ()>()
+                .addProperty("left", &Image9Grid::left, true)
+                .addProperty("right", &Image9Grid::right, true)
+                .addProperty("top", &Image9Grid::top, true)
+                .addProperty("bottom", &Image9Grid::bottom, true)
+                .addProperty("scale", &Image9Grid::scale, true)
+                .addFunction("IsValid", &Image9Grid::IsValid)
             .endClass()
             .beginClass<TransformManager>("TransformManager")
                 .addFunction("Get", +[](TransformManager* m, Entity e) {
@@ -674,5 +699,6 @@ void BindTLModule(lua_State* L) {
 
     bindAllTypes(L);
     BindSchema(L);
+    bindCollisionGroup(L);  // after BindSchema so CollisionGroupType enum is available
     bindImGui(L);
 }
