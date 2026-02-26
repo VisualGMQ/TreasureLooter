@@ -56,6 +56,16 @@
         if (expr) return {};            \
     } while (0)
 
+#define TL_RETURN_VALUE_IF_FALSE(expr, value) \
+    do {                                      \
+        if (!(expr)) return value;            \
+    } while (0)
+
+#define TL_RETURN_VALUE_IF_TRUE(expr, value) \
+    do {                                     \
+        if ((expr)) return value;            \
+    } while (0)
+
 #define TL_RETURN_IF_NULL_WITH_LOG(expr, log_fn, fmt, ...) \
     do {                                                   \
         if ((expr) == nullptr) {                           \
@@ -112,6 +122,22 @@
             log_fn(fmt, ##__VA_ARGS__);                            \
             return {};                                             \
         }                                                          \
+    } while (0)
+
+#define TL_RETURN_VALUE_IF_NULL_WITH_LOG(expr, value, log_fn, fmt, ...) \
+    do {                                                                \
+        if ((expr) == nullptr) {                                        \
+            log_fn(fmt, ##__VA_ARGS__);                                 \
+            return value;                                               \
+        }                                                               \
+    } while (0)
+
+#define TL_RETURN_VALUE_IF_FALSE_WITH_LOG(expr, value, log_fn, fmt, ...) \
+    do {                                                                 \
+        if (!(expr)) {                                                   \
+            log_fn(fmt, ##__VA_ARGS__);                                  \
+            return value;                                                \
+        }                                                                \
     } while (0)
 
 #define TL_ASSERT(expr) assert(expr)

@@ -77,6 +77,8 @@ const std::string& ScriptBinaryData::GetClassName() const
 
 ScriptBinaryDataManager::ScriptBinaryDataManager()
 {
+    m_require_context.RegisterAliasPath("game", "scripts/");
+    
     m_L = luaL_newstate();
     if (!m_L)
     {
@@ -84,8 +86,9 @@ ScriptBinaryDataManager::ScriptBinaryDataManager()
         return;
     }
     luaL_openlibs(m_L);
+    m_require_context.InitModuleRegisterTable(m_L);
     bindModule();
-    BindRequire(m_L);
+    m_require_context.BindRequire(m_L);
 }
 
 void ScriptBinaryDataManager::bindModule()
@@ -152,10 +155,8 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) : m_entity(entity)
     TL_RETURN_IF_NULL_WITH_LOG(m_L, LOGE, "[Luau]: VM is null");
 
     std::string script_path = handle->GetPath().string();
-    lua_pushstring(m_L, script_path.c_str());
-    lua_setfield(m_L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
 
-    bool from_cache = GetCached(m_L, script_path);
+    bool from_cache = LuauRequireContext::GetCached(m_L, script_path);
     if (!from_cache)
     {
         const std::vector<char>& source = handle->GetContent();
@@ -187,7 +188,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle) : m_entity(entity)
             return;
         }
 
-        SetCached(m_L, script_path);
+        LuauRequireContext::SetCached(m_L, script_path);
     }
 
     if (!lua_istable(m_L, -1))
