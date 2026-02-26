@@ -1,4 +1,4 @@
-local GenericForwardWeapon = require("scripts.generic_forward_weapon")
+local GenericForwardWeapon = require("@game/generic_forward_weapon")
 
 local Waggo = {}
 Waggo.__index = Waggo
@@ -14,18 +14,18 @@ local CharacterDirection = {
 
 type WaggoData = {
 	m_entity: number,
-	m_sprite: userdata,
-	m_cct : userdata,
-	m_transform : userdata,
-	m_image_sheet : userdata,
-	m_move_left_anim : userdata,
-	m_move_right_anim : userdata,
-	m_move_up_anim : userdata,
-	m_move_down_anim : userdata,
-	m_anim_player : userdata,
+	m_sprite: userdata?,
+	m_cct : userdata?,
+	m_transform : userdata?,
+	m_image_sheet : userdata?,
+	m_move_left_anim : userdata?,
+	m_move_right_anim : userdata?,
+	m_move_up_anim : userdata?,
+	m_move_down_anim : userdata?,
+	m_anim_player : userdata?,
 	m_direction : CharacterDirection,
 	m_move_speed : number,
-	m_weapon_script : userdata,
+	m_weapon_script : GenericForwardWeapon.GenericForwardWeapon?,
 }
 
 export type Waggo = typeof(setmetatable({}::WaggoData, Waggo))
@@ -53,7 +53,6 @@ end
 
 function Waggo.OnInit(self: WaggoData)
 	local ctx = TL.GetContext()
-	print("entity", self.m_entity)
 	self.m_sprite = ctx:GetSpriteManager():Get(self.m_entity)
 	self.m_cct = ctx:GetCCTManager():Get(self.m_entity)
 	self.m_transform = ctx:GetTransformManager():Get(self.m_entity)
@@ -72,7 +71,6 @@ function Waggo.OnInit(self: WaggoData)
 	if relationship ~= nil and config.m_weapon_entity ~= nil and #relationship.m_children > config.m_weapon_entity then
 		local weapon_entity = relationship.m_children[config.m_weapon_entity + 1]
 		self.m_weapon_script = ctx:GetScriptManager():Get(weapon_entity)
-		print("weapon script : ", self.m_weapon_script)
 	end
 end
 

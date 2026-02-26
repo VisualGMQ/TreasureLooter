@@ -13,26 +13,38 @@
 #include "engine/asset_manager.hpp"
 #include "engine/context.hpp"
 
-std::string moduleNameToPath(const std::string& modname)
+bool LuauRequireContext::moduleNameToPath(const std::string& modname, Path& out_path)
 {
-    if (modname.empty())
-        return "";
-    std::string s;
-    s.reserve(modname.size() + 8);
-    for (size_t i = 0; i < modname.size(); ++i)
-    {
-        char c = modname[i];
-        if (c == '.')
-            s += '/';
-        else
-            s += c;
+    TL_RETURN_VALUE_IF_FALSE(!modname.empty(), false);
+
+    // normalize module path
+    std::string path = modname;
+    std::replace(path.begin(), path.end(), '\\', '/');
+    
+    // alias path
+    Path alias_path;
+    if (path.size() > 1 && path[0] == '@') {
+        auto idx = path.find_first_of('/');
+        TL_RETURN_VALUE_IF_FALSE(idx != std::string::npos, false);
+        
+        auto alias = path.substr(0, idx);
+        alias_path = FindAliasPath(alias);
+        TL_RETURN_VALUE_IF_FALSE_WITH_LOG(!alias_path.empty(), false, LOGE, "[Luau]: can't find require alias {}", alias);
+
+        path = path.substr(idx + 1);
     }
-    if (s.size() < 5 || s.compare(s.size() - 5, 5, ".luau") != 0)
-        s += ".luau";
-    return s;
+
+    out_path = alias_path / path;
+    out_path.replace_extension(".luau");
+    return true;
 }
 
-bool GetCached(lua_State* L, const std::string& loadPath)
+void LuauRequireContext::InitModuleRegisterTable(lua_State* L) {
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, LuauRequireContext::kLoadedModulesKey.data());
+}
+
+bool LuauRequireContext::GetCached(lua_State* L, const std::string& loadPath)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     if (!lua_istable(L, -1))
@@ -50,7 +62,7 @@ bool GetCached(lua_State* L, const std::string& loadPath)
     return found;
 }
 
-void SetCached(lua_State* L, const std::string& loadPath)
+void LuauRequireContext::SetCached(lua_State* L, const std::string& loadPath)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kLoadedModulesKey.data());
     if (!lua_istable(L, -1))
@@ -68,7 +80,7 @@ void SetCached(lua_State* L, const std::string& loadPath)
 }
 
 // load luau file, result leave on top of stack(or leave error when failed)
-bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager& mgr, const std::string& loadPath)
+bool LuauRequireContext::loadAndRunModule(lua_State* L, ScriptBinaryDataManager& mgr, const std::string& loadPath)
 {
     Path path(loadPath);
     auto handle = mgr.Load(path, false);
@@ -111,22 +123,35 @@ bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager& mgr, const std::str
     return true;
 }
 
-int requireImpl(lua_State* L)
+void LuauRequireContext::UnregisterAliasPath(const std::string& name) {
+    m_alias_paths.erase(name);
+}
+
+Path LuauRequireContext::FindAliasPath(const std::string& name) const {
+    if (auto it = m_alias_paths.find(name); it != m_alias_paths.end()) {
+        return it->second;
+    }
+    return {};
+}
+
+int LuauRequireContext::requireImpl(lua_State* L)
 {
-    auto& mgr = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+    auto& script_binary_data_manager = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+    auto& require_ctx = script_binary_data_manager.GetRequireContext();
     
     const char* modname = luaL_checkstring(L, 1);
-    std::string file_path = moduleNameToPath(modname);
-    if (file_path.empty())
-    {
-        luaL_error(L, "require: module not found '%s' (path: %s)", modname, file_path.c_str());
+    Path module_path;
+    bool success = require_ctx.moduleNameToPath(modname, module_path);
+    if (!success) {
+        luaL_error(L, "require: module parse failed", modname);
         return 0;
     }
 
+    std::string file_path = module_path.string();
     if (GetCached(L, file_path))
         return 1;
 
-    if (!loadAndRunModule(L, mgr, file_path))
+    if (!loadAndRunModule(L, script_binary_data_manager, file_path))
     {
         const char* err = lua_tostring(L, -1);
         luaL_error(L, "require: %s", err ? err : "unknown error");
@@ -136,9 +161,14 @@ int requireImpl(lua_State* L)
     return 1;
 }
 
-void BindRequire(lua_State* L)
+void LuauRequireContext::BindRequire(lua_State* L)
 {
     TL_RETURN_IF_NULL_WITH_LOG(L, LOGE, "BindRequire: lua_State* is null");
-    lua_pushcfunction(L, requireImpl, "require");
+    lua_pushcfunction(L, LuauRequireContext::requireImpl, "require");
     lua_setglobal(L, "require");
+}
+
+void LuauRequireContext::RegisterAliasPath(const std::string& name,
+    const Path& path) {
+    m_alias_paths["@" + name] = path;
 }

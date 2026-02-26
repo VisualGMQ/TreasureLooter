@@ -6,6 +6,7 @@
 #include "engine/entity.hpp"
 #include "engine/manager.hpp"
 #include "engine/timer.hpp"
+#include "engine/script/script_require.hpp"
 
 class ScriptBinaryData {
 public:
@@ -34,10 +35,13 @@ public:
 
     void SetRequireRoot(const Path& root) { m_require_root = root; }
     const Path& GetRequireRoot() const { return m_require_root; }
+    auto& GetRequireContext() { return m_require_context; }
 
 private:
     lua_State* m_L{};
     Path m_require_root;
+    
+    LuauRequireContext m_require_context;
 
     void bindModule();
 };

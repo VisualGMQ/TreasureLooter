@@ -3,8 +3,8 @@ GenericForwardWeapon.__index = GenericForwardWeapon
 
 type GenericForwardWeaponData = {
 	m_entity: number,
-    m_transform: userdata,
-    m_anim_player: userdata,
+    m_transform: userdata?,
+    m_anim_player: userdata?,
     m_dir : userdata,
 }
 
