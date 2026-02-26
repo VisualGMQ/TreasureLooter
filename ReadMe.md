@@ -17,8 +17,6 @@ cmake --preset=default
 cmake --build cmake-build
 ```
 
-**WARNING:** due to AngelScript cmake config, currently can't use clang++ with msvc backend compile under Windows
-
 ### Build For Android
 
 First we must build `schema_parser` under PC and run `run_schema_parser` target:
@@ -66,3 +64,16 @@ cmake --build .\cmake-build\ --target package --config Release
 ```
 
 It will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
+
+## For Developer
+
+### Luau developer
+
+For best development experience, open vscode under `TreasureLooter/game`.
+
+You can require [tl_types](scripts/TL_types.luau) and [imgui_types](scripts/imgui_types.luau) to make IDE complete C++ binding functions & classes for you:
+
+```luau
+local TL = require("@game/tl_types")
+local ImGui = require("@game/imgui_types")
+```

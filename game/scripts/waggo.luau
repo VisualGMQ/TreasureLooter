@@ -1,3 +1,5 @@
+local TL = require("@game/tl_types")
+local ImGui = require("@game/imgui_types")
 local GenericForwardWeapon = require("@game/generic_forward_weapon")
 
 local Waggo = {}
@@ -13,16 +15,16 @@ local CharacterDirection = {
 } :: { [string]: CharacterDirection }
 
 type WaggoData = {
-	m_entity: number,
-	m_sprite: userdata?,
-	m_cct : userdata?,
-	m_transform : userdata?,
-	m_image_sheet : userdata?,
-	m_move_left_anim : userdata?,
-	m_move_right_anim : userdata?,
-	m_move_up_anim : userdata?,
-	m_move_down_anim : userdata?,
-	m_anim_player : userdata?,
+	m_entity: TL.Entity,
+	m_sprite: TL.Sprite?,
+	m_cct : TL.CharacterController?,
+	m_transform : TL.Transform?,
+	m_image_sheet : TL.ImageHandle?,
+	m_move_left_anim : TL.AnimationHandle?,
+	m_move_right_anim : TL.AnimationHandle?,
+	m_move_up_anim : TL.AnimationHandle?,
+	m_move_down_anim : TL.AnimationHandle?,
+	m_anim_player : TL.AnimationPlayer?,
 	m_direction : CharacterDirection,
 	m_move_speed : number,
 	m_weapon_script : GenericForwardWeapon.GenericForwardWeapon?,
@@ -34,25 +36,15 @@ function Waggo.new(entity: number): Waggo
 	local self = {}::WaggoData
 
 	self.m_entity = entity
-	self.m_sprite = nil
-	self.m_anim_player = nil
-	self.m_cct = nil
-	self.m_transform = nil
-	self.m_image_sheet = nil
-	self.m_move_left_anim = nil
-	self.m_move_right_anim = nil
-	self.m_move_up_anim = nil
-	self.m_move_down_anim = nil
-	self.m_anim_player = nil
-	self.m_direction = CharacterDirection.Down
-	self.m_move_speed = 100
-	self.m_weapon_script = nil
 
 	return setmetatable(self, Waggo)
 end
 
 function Waggo.OnInit(self: WaggoData)
 	local ctx = TL.GetContext()
+
+	self.m_direction = CharacterDirection.Down
+	self.m_move_speed = 100
 	self.m_sprite = ctx:GetSpriteManager():Get(self.m_entity)
 	self.m_cct = ctx:GetCCTManager():Get(self.m_entity)
 	self.m_transform = ctx:GetTransformManager():Get(self.m_entity)
