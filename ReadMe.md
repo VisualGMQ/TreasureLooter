@@ -23,10 +23,10 @@ First we must build `schema_parser` under PC and run `run_schema_parser` target:
 
 ```bash
 cmake -S game/ -B cmake-build
-cmake --build cmake-build --target merge_tl_types_luau
+cmake --build cmake-build --target mobile_preprocess
 ```
 
-It will generate `game/schema_generate`.
+It will generate `game/schema_generate` and `game/scripts/tl_types.luau`.
 
 Then copy `game` folder to `android/app/jni`.
 

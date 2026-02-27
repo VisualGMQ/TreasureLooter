@@ -65,40 +65,49 @@ set(SCHEMA_ASSET_INFO_FILES
 list(APPEND SCHEMA_SERD_OUTPUT_FILES "${schema_final_path}/serialize/serialize.hpp")
 list(APPEND SCHEMA_DISPLAY_OUTPUT_FILES "${schema_final_path}/display/display.hpp")
 list(APPEND SCHEMA_BINDING_OUTPUT_FILES "${schema_final_path}/binding/binding.hpp" "${schema_final_path}/binding/binding.cpp")
-set(SCHEMA_SCRIPT_HINT_FILES "${SCHEMA_OUTPUT_PATH}/schema_types.luau.inc")
-set(TL_TYPES_LUAU_INC "script_hint_inc/tl_types.luau.inc")
-set(TL_TYPES_LUAU_OUT "scripts/tl_types.luau")
+set(SCHEMA_SCRIPT_HINT_FILES "${schema_final_path}/schema_types.luau.inc")
+set(TL_TYPES_LUAU_INC "${CMAKE_CURRENT_SOURCE_DIR}/script_hint_inc/tl_types.luau.inc")
+set(LUAU_TYPES_HINT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/scripts/tl_types.luau")
 
 if (NEED_SCHEMA_PARSER)
     add_custom_target(run_schema_parser
-            COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
-            DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "parsing schemas...")
+        COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "parsing schemas...")
 
     add_custom_command(OUTPUT
-            ${SCHEMA_DECLARE_OUTPUT_FILES}
-            ${SCHEMA_SERD_OUTPUT_FILES}
-            ${SCHEMA_DISPLAY_OUTPUT_FILES}
-            ${SCHEMA_BINDING_OUTPUT_FILES}
-            ${SCHEMA_ASSET_INFO_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SCRIPT_HINT_FILES}
-            COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
-            DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "parsing schemas...")
+        ${SCHEMA_DECLARE_OUTPUT_FILES}
+        ${SCHEMA_SERD_OUTPUT_FILES}
+        ${SCHEMA_DISPLAY_OUTPUT_FILES}
+        ${SCHEMA_BINDING_OUTPUT_FILES}
+        ${SCHEMA_ASSET_INFO_FILES}
+        ${SCHEMA_SCRIPT_HINT_FILES}
+        COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "parsing schemas...")
 
     # Merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_OUT}
-            COMMAND ${CMAKE_COMMAND}
-                -DTL_INC=${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_INC}
-                -DSCHEMA_INC=${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SCRIPT_HINT_FILES}
-                -DOUT=${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_OUT}
-                -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
-            DEPENDS run_schema_parser ${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_INC} ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SCRIPT_HINT_FILES}
-            COMMENT "merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau")
-    add_custom_target(merge_tl_types_luau ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${TL_TYPES_LUAU_OUT})
-    add_dependencies(merge_tl_types_luau run_schema_parser)
+    add_custom_command(OUTPUT ${LUAU_TYPES_HINT_FILES}
+        COMMAND ${CMAKE_COMMAND}
+            -DTL_INC=${TL_TYPES_LUAU_INC}
+            -DSCHEMA_INC=${SCHEMA_SCRIPT_HINT_FILES}
+            -DOUT=${LUAU_TYPES_HINT_FILES}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
+        DEPENDS ${TL_TYPES_LUAU_INC} ${SCHEMA_SCRIPT_HINT_FILES}
+        COMMENT "merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau")
+
+    # must call by user before compile to Android, don't need call under PC
+    add_custom_target(mobile_preprocess
+        COMMAND ${CMAKE_COMMAND}
+            -DTL_INC=${TL_TYPES_LUAU_INC}
+            -DSCHEMA_INC=${SCHEMA_SCRIPT_HINT_FILES}
+            -DOUT=${LUAU_TYPES_HINT_FILES}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
+        DEPENDS ${SCHEMA_SCRIPT_HINT_FILES} ${TL_TYPES_LUAU_INC}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "mobile_preprocess...")
 endif()
 
 ################ build engine ################
@@ -155,7 +164,11 @@ endif()
 
 file(GLOB_RECURSE GAME_SCRIPTS scripts/*.luau)
 
-target_sources(${GAME_NAME} PRIVATE main_entry/game_main.cpp ${GAME_SCRIPTS})
+target_sources(${GAME_NAME} PRIVATE
+    main_entry/game_main.cpp 
+    ${GAME_SCRIPTS}
+    ${SCHEMA_SCRIPT_HINT_FILES}
+    ${LUAU_TYPES_HINT_FILES})
 target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
 
 ################ build editor ################
