@@ -1,8 +1,12 @@
 #pragma once
-#include "engine/context.hpp"
-#include "imgui.h"
+#include "engine/animation.hpp"
+#include "engine/entity.hpp"
+#include "engine/handle.hpp"
 #include "engine/imgui_id_generator.hpp"
 #include "engine/math.hpp"
+#include "engine/text.hpp"
+#include "engine/tilemap.hpp"
+#include "imgui.h"
 
 #include <array>
 #include <optional>
@@ -10,6 +14,14 @@
 #include <unordered_map>
 #include <vector>
 
+enum class Flip;
+class Animation;
+class AnimationPlayer;
+struct Image9Grid;
+class PhysicsActor;
+class CollisionGroup;
+class CharacterController;
+class Trigger;
 class Image;
 
 void InstanceDisplay(const char* name, int& value);

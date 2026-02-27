@@ -74,8 +74,7 @@ MustacheManager::MustacheManager()
       m_binding_header_mustache{readMustache(
           "schema/schema_parser/mustaches/binding_header.mustache")},
       m_binding_impl_mustache{readMustache(
-          "schema/schema_parser/mustaches/binding_impl.mustache")} {
-}
+          "schema/schema_parser/mustaches/binding_impl.mustache")},
       m_cpp_asset_def_mustache{readMustache(
           "schema/schema_parser/mustaches/cpp_asset_def.mustache")},
       m_cpp_asset_def_header_mustache{readMustache(

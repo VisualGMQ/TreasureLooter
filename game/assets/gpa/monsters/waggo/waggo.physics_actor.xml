@@ -1,0 +1,21 @@
+<PhysicsActorInfo>
+	<uuid>a402bc34-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<is_rect>false</is_rect>
+		<rect>
+			<center x="0.000000" y="0.000000"/>
+			<half_size x="20.000000" y="20.000000"/>
+		</rect>
+		<circle>
+			<center x="0.000000" y="0.000000"/>
+			<radius>6.000000</radius>
+		</circle>
+		<collision_layer>
+			<elem>CCT</elem>
+		</collision_layer>
+		<collision_mask>
+			<elem>Obstacle</elem>
+			<elem>CCT</elem>
+		</collision_mask>
+	</payload>
+</PhysicsActorInfo>

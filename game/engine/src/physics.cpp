@@ -1,6 +1,7 @@
 #include "engine/physics.hpp"
 
 #include "engine/context.hpp"
+#include "engine/macros.hpp"
 #include "engine/math.hpp"
 #include <algorithm>
 #include <array>
@@ -423,18 +424,19 @@ PhysicsScene::PhysicsScene() {
     m_cached_sweep_results.reserve(100);
 }
 
-PhysicsActor *PhysicsScene::CreateActor(Entity entity,
-                                        const PhysicsActorInfo& info) {
+PhysicsActor *PhysicsScene::CreateActor(Entity entity, PhysicsActorInfoHandle info) {
+    TL_RETURN_DEFAULT_IF_FALSE(info);
+    
     PhysicsActor *actor{};
-    if (info.m_is_rect) {
-        actor = CreateActor(entity, info.m_rect);
+    if (info->m_is_rect) {
+        actor = CreateActor(entity, info->m_rect);
     } else {
-        actor = CreateActor(entity, info.m_circle);
+        actor = CreateActor(entity, info->m_circle);
     }
 
     if (actor) {
-        actor->SetCollisionLayer(info.m_collision_layer);
-        actor->SetCollisionMask(info.m_collision_mask);
+        actor->SetCollisionLayer(info->m_collision_layer);
+        actor->SetCollisionMask(info->m_collision_mask);
         return actor;
     }
 

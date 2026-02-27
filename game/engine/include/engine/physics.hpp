@@ -224,7 +224,7 @@ public:
 
     TilemapCollision *CreateTilemapCollision(const Vec2 &topleft);
 
-    PhysicsActor *CreateActor(Entity, const PhysicsActorInfo& info);
+    PhysicsActor *CreateActor(Entity, PhysicsActorInfoHandle info);
 
     PhysicsActor *CreateActor(Entity, const Circle &);
 

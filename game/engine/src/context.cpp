@@ -312,12 +312,6 @@ GameContext& GameContext::GetInst() {
     return *instance;
 }
 
-void sigintHandler(int signum) {
-    if (signum == SIGINT) {
-        GAME_CONTEXT.Exit();
-    }
-}
-
 void GameContext::Initialize() {
     PROFILE_SECTION();
 

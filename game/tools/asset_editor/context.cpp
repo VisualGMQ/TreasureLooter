@@ -5,6 +5,17 @@
 #include "engine/storage.hpp"
 #include "imgui.h"
 #include "schema/display/display.hpp"
+#include "engine/gameplay_config.hpp"
+#include "engine/trigger.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/debug_drawer.hpp"
+#include "engine/cct.hpp"
+#include "engine/input/input.hpp"
+#include "engine/input/finger_touch.hpp"
+#include "engine/input/mouse.hpp"
+#include "engine/input/keyboard.hpp"
+#include "engine/input/gamepad.hpp"
+#include "engine/controller.hpp"
 #include "variant_asset.hpp"
 
 std::unique_ptr<AssetEditorContext> AssetEditorContext::instance;

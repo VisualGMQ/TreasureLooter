@@ -1,5 +1,6 @@
 #include "gizmo.hpp"
 #include "engine/context.hpp"
+#include "engine/input/mouse.hpp"
 #include "engine/physics.hpp"
 
 GizmoID Gizmo::GetID() const {
