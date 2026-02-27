@@ -1,6 +1,6 @@
 <Animation>
 	<uuid>730d16e9-0000-0000-0000-000000000000</uuid>
-	<value>
+	<payload>
 		<tracks>
 			<track>
 				<binding_point>TransformRotation</binding_point>
@@ -21,6 +21,6 @@
 				</keyframes>
 			</track>
 		</tracks>
-	</value>
+	</payload>
 </Animation>
 

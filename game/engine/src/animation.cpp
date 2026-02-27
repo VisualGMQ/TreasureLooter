@@ -100,7 +100,7 @@ AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
         LOGE("parse asset {} failed, no node {}", filename, "uuid");
     }
 
-    auto value_node = node->first_node("value");
+    auto value_node = node->first_node("payload");
     if (!value_node) {
         LOGE("parse asset {} failed, no node {}", filename, "value");
     }
@@ -115,7 +115,7 @@ void SaveAsset(const UUID& uuid, const Animation& payload,
                const Path& filename) {
     rapidxml::xml_document<> doc;
 
-    auto value_node = Serialize(CURRENT_CONTEXT, doc, payload, "value");
+    auto value_node = Serialize(CURRENT_CONTEXT, doc, payload, "payload");
     if (!value_node) {
         LOGE("save asset {} failed", filename);
     }

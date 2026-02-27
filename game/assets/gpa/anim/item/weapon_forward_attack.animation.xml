@@ -1,6 +1,6 @@
 <Animation>
 	<uuid>48594c55-0000-0000-0000-000000000000</uuid>
-	<value>
+	<payload>
 		<tracks>
 			<track>
 				<binding_point>SpriteAnchor</binding_point>
@@ -21,6 +21,6 @@
 				</keyframes>
 			</track>
 		</tracks>
-	</value>
+	</payload>
 </Animation>
 
