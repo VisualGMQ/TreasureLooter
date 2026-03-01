@@ -40,15 +40,15 @@
 #include <type_traits>
 #include <sstream>
 
+#include "lua.h"
+#include "lualib.h"
 #include "LuaBridge/Array.h"
 #include "LuaBridge/List.h"
-#include "LuaBridge/LuaBridge.h"
 #include "LuaBridge/Map.h"
 #include "LuaBridge/Set.h"
 #include "LuaBridge/UnorderedMap.h"
 #include "LuaBridge/Vector.h"
-#include "lua.h"
-#include "lualib.h"
+#include "LuaBridge/LuaBridge.h"
 
 template <>
 struct luabridge::Stack<Entity>: public luabridge::Enum<Entity> {};

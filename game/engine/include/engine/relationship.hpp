@@ -5,7 +5,9 @@
 
 class Transform;
 
-using Relationship = RelationshipDefinition;
+struct Relationship {
+    std::vector<Entity> m_children;
+};
 
 class RelationshipManager : public ComponentManager<Relationship> {
 public:

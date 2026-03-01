@@ -6,10 +6,9 @@
 #include <unordered_set>
 
 // Forward declarations for property handling (defined later in this file)
-static std::string ExtractOptionalInnerType(const std::string& cpp_type);
-static std::string ExtractFlagsInnerType(const std::string& cpp_type);
-static std::string ExtractVectorInnerType(const std::string& cpp_type);
-static std::string ExtractHandleInnerType(const std::string& cpp_type);
+std::string ExtractOptionalInnerType(const std::string& cpp_type);
+std::string ExtractFlagsInnerType(const std::string& cpp_type);
+std::string ExtractVectorInnerType(const std::string& cpp_type);
 
 std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
@@ -803,7 +802,7 @@ std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
     return impl_mustache.render(data);
 }
 
-static const std::unordered_map<std::string, std::string> Cpp2AngelScriptTypeMap = {
+const std::unordered_map<std::string, std::string> Cpp2AngelScriptTypeMap = {
     // Integer types
     {"uint8_t", "uint8"},
     {"uint16_t", "uint16"},
@@ -818,7 +817,7 @@ static const std::unordered_map<std::string, std::string> Cpp2AngelScriptTypeMap
     {"std::string", "string"},
 };
 
-static std::string ExtractOptionalInnerType(const std::string& cpp_type) {
+std::string ExtractOptionalInnerType(const std::string& cpp_type) {
     const std::string prefix = "std::optional<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -834,7 +833,7 @@ static std::string ExtractOptionalInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }
 
-static std::string ExtractFlagsInnerType(const std::string& cpp_type) {
+std::string ExtractFlagsInnerType(const std::string& cpp_type) {
     const std::string prefix = "Flags<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -850,39 +849,7 @@ static std::string ExtractFlagsInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }
 
-std::string ConvertCppTypeToAngelScript(const std::string& cpp_type) {
-    auto it = Cpp2AngelScriptTypeMap.find(cpp_type);
-    if (it != Cpp2AngelScriptTypeMap.end()) {
-        return it->second;
-    }
-    std::string inner = ExtractOptionalInnerType(cpp_type);
-    if (!inner.empty()) {
-        return "Optional<" + ConvertCppTypeToAngelScript(inner) + ">";
-    }
-    std::string flags_inner = ExtractFlagsInnerType(cpp_type);
-    if (!flags_inner.empty()) {
-        return "Flags<" + ConvertCppTypeToAngelScript(flags_inner) + ">";
-    }
-    std::string vector_inner = ExtractVectorInnerType(cpp_type);
-    if (!vector_inner.empty()) {
-        return "array<" + ConvertCppTypeToAngelScript(vector_inner) + ">";
-    }
-    std::string handle_inner = ExtractHandleInnerType(cpp_type);
-    if (!handle_inner.empty()) {
-        return "Handle<" + ConvertCppTypeToAngelScript(handle_inner) + ">";
-    }
-    return cpp_type;
-}
-
-static std::string ExtractHandleInnerType(const std::string& cpp_type) {
-    const std::string suffix = "Handle";
-    if (cpp_type.size() > suffix.size() &&
-        cpp_type.compare(cpp_type.size() - suffix.size(), suffix.size(), suffix) == 0)
-        return cpp_type.substr(0, cpp_type.size() - suffix.size());
-    return {};
-}
-
-static std::string ExtractVectorInnerType(const std::string& cpp_type) {
+std::string ExtractVectorInnerType(const std::string& cpp_type) {
     const std::string prefix = "std::vector<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -898,7 +865,7 @@ static std::string ExtractVectorInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
 }
 
-static std::string ExtractArrayInnerType(const std::string& cpp_type) {
+std::string ExtractArrayInnerType(const std::string& cpp_type) {
     const std::string prefix = "std::array<";
     if (cpp_type.size() <= prefix.size() + 1 || cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
         return {};
@@ -907,11 +874,11 @@ static std::string ExtractArrayInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), comma - prefix.size());
 }
 
-static bool IsLuauPrimitiveType(const std::string& name) {
+bool IsLuauPrimitiveType(const std::string& name) {
     return name == "number" || name == "string" || name == "boolean";
 }
 
-static std::string EnsureTLPrefixForSchema(
+std::string EnsureTLPrefixForSchema(
     const std::string& luau_type,
     const std::unordered_set<std::string>& schema_defined_type_names) {
     std::string out;
@@ -939,7 +906,7 @@ static std::string EnsureTLPrefixForSchema(
     return out;
 }
 
-static bool IsLuaKeyword(const std::string& name) {
+bool IsLuaKeyword(const std::string& name) {
     static const std::unordered_set<std::string> keywords = {
         "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
         "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return",
@@ -948,7 +915,7 @@ static bool IsLuaKeyword(const std::string& name) {
     return keywords.count(name) != 0;
 }
 
-static std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
+std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     static const std::unordered_map<std::string, std::string> Cpp2Luau = {
         {"float", "number"},
         {"double", "number"},
@@ -981,7 +948,7 @@ static std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     return cpp_type;
 }
 
-static std::string GenerateClassLuauType(
+std::string GenerateClassLuauType(
     const ClassInfo& info,
     const std::unordered_set<std::string>& schema_defined_type_names,
     bool use_tl_prefix) {
@@ -999,7 +966,7 @@ static std::string GenerateClassLuauType(
     return out;
 }
 
-static std::string GenerateEnumLuauType(const EnumInfo& info) {
+std::string GenerateEnumLuauType(const EnumInfo& info) {
     std::string out = "export type " + info.m_name + " = {\n";
     for (const auto& item : info.m_items) {
         std::string key = IsLuaKeyword(item.m_name) ? ("[\"" + item.m_name + "\"]") : item.m_name;
@@ -1009,7 +976,7 @@ static std::string GenerateEnumLuauType(const EnumInfo& info) {
     return out;
 }
 
-static std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
+std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
     std::string handle_name = asset_class_name + "Handle";
     return "export type " + handle_name + " = { IsValid: (self: " + handle_name + ") -> boolean }\n";
 }
