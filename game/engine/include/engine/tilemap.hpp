@@ -121,6 +121,12 @@ private:
     Path m_filename;
 };
 
+template <>
+class AssetSLInfo<Tilemap> {
+public:
+    static constexpr bool CanEmbed = false;
+};
+
 using TilemapHandle = Handle<Tilemap>;
 
 class TilemapManager : public AssetManagerBase<Tilemap> {

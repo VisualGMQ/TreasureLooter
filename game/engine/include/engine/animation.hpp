@@ -110,7 +110,16 @@ private:
 using AnimationHandle = Handle<Animation>;
 
 template <>
+class AssetSLInfo<Animation> {
+public:
+    static constexpr bool CanEmbed = true;
+};
+
+template <>
 AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename);
+
+template <>
+AssetLoadResult<Animation> LoadAsset<Animation>(const rapidxml::xml_node<>&);
 
 void SaveAsset(const UUID& uuid, const Animation& payload,
                const Path& filename);

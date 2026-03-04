@@ -696,6 +696,33 @@ void displayAnimationContent(Animation& anim) {
 
 void InstanceDisplay(const char* name, Handle<Animation>& animation) {
     ImGui::Text("%s", name);
+
+    bool is_embed = animation.IsEmbed();
+    ImGui::SameLine();
+    if (ImGui::Checkbox("embed", &is_embed)) {
+        // shift to embed mode, move asset to file
+        if (is_embed) {
+            FileDialog dialog{FileDialog::Type::SaveFile};
+            dialog.AddFilter("Animation", Animation_AssetExtension.data());
+            dialog.SetTitle("Save animation to external file");
+            dialog.Open();
+
+            auto& files = dialog.GetSelectedFiles();
+            if (!files.empty()) {
+                const Path& filename = files[0];
+                SaveAsset(animation.GetUUID(), *animation, filename);
+                CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().MakeExternal(animation, filename);
+            }
+        } else { // shift to un-embed mode, embed asset
+            CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().MakeEmbed(animation);
+        }
+    }
+    
+    if (animation.IsEmbed()) {
+        displayAnimationContent(*animation);
+        return;
+    }
+    
     showAssetSelectFile(
         animation,
         {

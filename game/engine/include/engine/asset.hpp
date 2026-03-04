@@ -14,10 +14,13 @@ struct AssetLoadResult {
 };
 
 template <typename T>
+class AssetSLInfo {};
+
+template <typename T>
 AssetLoadResult<T> LoadAsset(const Path& filename);
 
 template <typename T>
-AssetLoadResult<T> LoadAsset(rapidxml::xml_node<>&);
+AssetLoadResult<T> LoadAsset(const rapidxml::xml_node<>&);
 
 class IAssetManager {
 public:

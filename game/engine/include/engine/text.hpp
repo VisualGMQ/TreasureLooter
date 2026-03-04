@@ -27,6 +27,13 @@ private:
     TTF_Font* m_font{};
 };
 
+template <>
+class AssetSLInfo<Font> {
+public:
+    static constexpr bool CanEmbed = false;
+};
+
+
 using FontHandle = Handle<Font>;
 
 class FontManager : public AssetManagerBase<Font> {

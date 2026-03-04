@@ -25,6 +25,29 @@ void InstanceDisplay(const char* name, const {{type}}& value) {
 
 {{#has_handle}}
 void InstanceDisplay(const char* name, {{type}}Handle handle) {
+    using payload_type = {{type}}Handle::underlying_type;
+
+    bool is_embed = handle.IsEmbed();
+    ImGui::SameLine();
+    if (ImGui::Checkbox("embed", &is_embed)) {
+        // shift to embed mode, move asset to file
+        if (is_embed) {
+            FileDialog dialog{FileDialog::Type::SaveFile};
+            dialog.AddFilter("{{type}}", "{{type_extension}}.xml");
+                dialog.SetTitle("Save animation to external file");
+                dialog.Open();
+
+            auto& files = dialog.GetSelectedFiles();
+            if (!files.empty()) {
+                const Path& filename = files[0];
+                SaveAsset(handle.GetUUID(), *handle, filename);
+                CURRENT_CONTEXT.m_assets_manager->GetManager<payload_type>().MakeExternal(handle, filename);
+            }
+        } else { // shift to un-embed mode, embed asset
+            CURRENT_CONTEXT.m_assets_manager->GetManager<payload_type>().MakeEmbed(handle);
+        }
+    }
+
     InstanceDisplay(name, *handle);
 }
 {{/has_handle}}

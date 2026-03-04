@@ -10,6 +10,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "macros.hpp"
+
 class Tilemap;
 class ImageManager;
 class Image;
@@ -21,7 +23,21 @@ public:
 
     virtual ~AssetManagerBase() = default;
 
+    // load asset from path
     virtual HandleType Load(const Path& filename, bool force = false) = 0;
+
+    // create asset with no path
+    void Create(const UUID& uuid, T&& value, bool force = false) {
+        TL_RETURN_IF_FALSE(uuid);
+        if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
+            if (force) {
+                it->second.reset();
+                it->second = std::make_unique<T>(std::move(value));
+            }
+        } else {
+            m_payloads[uuid] = std::make_unique<T>(std::move(value));        
+        }
+    }
 
     virtual void Unload(HandleType handle) {
         auto uuid = handle.GetUUID();
@@ -87,6 +103,49 @@ public:
             return &it->second;
         }
         return nullptr;
+    }
+
+    void MakeEmbed(const UUID& uuid) {
+        if constexpr (AssetSLInfo<T>::CanEmbed) {
+            auto it = m_uuid_path_map.find(uuid);
+            if (it != m_uuid_path_map.end()) {
+                m_paths_uuid_map.erase(it->second);
+            }
+            m_uuid_path_map.erase(it);
+        } else {
+            LOGW("asset can't be embedded");
+        }
+    }
+
+    void MakeEmbed(const HandleType handle) {
+        TL_RETURN_IF_FALSE(handle);
+        MakeEmbed(handle.GetUUID());
+    }
+
+    /** only change handle path, not save to file
+     * 
+     * @warning only use for editor
+     */
+    void MakeExternal(const UUID& uuid, const Path& filename) {
+        m_uuid_path_map[uuid] = filename;
+        m_paths_uuid_map[filename] = uuid;
+    }
+
+    /** only change handle path, not save to file
+     * 
+     * @warning only use for editor
+     */
+    void MakeExternal(HandleType handle, const Path& filename) {
+        TL_RETURN_IF_FALSE(handle);
+
+        const UUID& uuid = handle.GetUUID();
+        if (const Path* old_filename = handle.GetFilename()) {
+            m_paths_uuid_map.erase(*old_filename);
+            m_uuid_path_map.erase(uuid);
+        }
+        
+        m_uuid_path_map[uuid] = filename;
+        m_paths_uuid_map[filename] = uuid;
     }
 
     void Clear() {

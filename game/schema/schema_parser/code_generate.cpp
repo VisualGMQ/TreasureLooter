@@ -384,9 +384,9 @@ std::string GenerateClassDisplayImplCode(const ClassInfo& info) {
         properties_data << property_data;
     }
 
-    if (info.is_asset) {
-        data.set("has_handle", true);
-    }
+    data.set("has_handle", info.is_asset);
+
+    data.set("type_extension", info.m_asset_extension);
 
     data.set("properties", properties_data);
 
