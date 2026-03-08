@@ -7,8 +7,8 @@
 #include "schema/display/display.hpp"
 #include "variant_asset.hpp"
 
-void ToolContext::Initialize() {
-    CommonContext::Initialize();
+void ToolContext::Initialize(int argc, char** argv) {
+    CommonContext::Initialize(argc, argv);
     parseProjectPath();
 }
 

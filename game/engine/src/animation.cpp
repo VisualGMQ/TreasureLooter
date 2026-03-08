@@ -102,18 +102,18 @@ AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
 
 template <>
 AssetLoadResult<Animation> LoadAsset<Animation>(const rapidxml::xml_node<>& node) {
-     auto uuid_node = node.first_node("uuid");
-     TL_RETURN_DEFAULT_IF_FALSE(uuid_node, LOGE,
-                                "parse asset {} failed, no node", "uuid");
- 
-     auto value_node = node.first_node("payload");
-     TL_RETURN_DEFAULT_IF_FALSE(uuid_node, LOGE,
-                                "parse asset {} failed, no node", "value");
-    
-     AssetLoadResult<Animation> result;
-     Deserialize(CURRENT_CONTEXT, *uuid_node, result.m_uuid);
-     Deserialize(CURRENT_CONTEXT, *value_node, result.m_payload);
-     return result;   
+    auto uuid_node = node.first_node("uuid");
+    TL_RETURN_DEFAULT_IF_FALSE_WITH_LOG(
+        uuid_node, LOGE, "parse asset {} failed, no node", "uuid");
+
+    auto value_node = node.first_node("payload");
+    TL_RETURN_DEFAULT_IF_FALSE_WITH_LOG(
+        uuid_node, LOGE, "parse asset {} failed, no node", "value");
+
+    AssetLoadResult<Animation> result;
+    Deserialize(CURRENT_CONTEXT, *uuid_node, result.m_uuid);
+    Deserialize(CURRENT_CONTEXT, *value_node, result.m_payload);
+    return result;   
 }
 
 void SaveAsset(const UUID& uuid, const Animation& payload,

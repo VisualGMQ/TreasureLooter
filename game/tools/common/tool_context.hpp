@@ -11,7 +11,7 @@ public:
     ToolContext& operator=(ToolContext&&) = delete;
     ~ToolContext() = default;
 
-    void Initialize() override;
+    void Initialize(int argc, char** argv) override;
     void Shutdown() override;
 
     void HandleEvents(const SDL_Event&) override;

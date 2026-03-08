@@ -9,7 +9,7 @@
 				<rotation>0.000000</rotation>
 			</value>
 		</transform>
-		<motor_config/>
+		<script/>
 		<ui>assets/gpa/ui/attack_button.ui.xml</ui>
 	</payload>
 </Prefab>

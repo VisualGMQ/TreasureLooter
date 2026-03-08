@@ -275,6 +275,8 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
         kainjow::mustache::data property_data;
         property_data.set("property", prop.m_name);
         property_data.set("is_optional", prop.m_optional ? "true" : "false");
+        property_data.set("is_handle", prop.m_is_handle ? "true" : "false");
+        property_data.set("is_array", prop.m_is_array ? "true" : "false");
         properties_data << property_data;
     }
 
@@ -386,7 +388,7 @@ std::string GenerateClassDisplayImplCode(const ClassInfo& info) {
 
     data.set("has_handle", info.is_asset);
 
-    data.set("type_extension", info.m_asset_extension);
+    data.set("type_extension", info.m_asset_extension_var);
 
     data.set("properties", properties_data);
 

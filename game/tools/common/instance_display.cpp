@@ -4,7 +4,6 @@
 #include "engine/cct.hpp"
 #include "engine/dialog.hpp"
 #include "engine/image.hpp"
-#include "engine/imgui_id_generator.hpp"
 #include "engine/math.hpp"
 #include "imgui.h"
 #include "schema/display/anim.hpp"
@@ -13,234 +12,234 @@
 #include "schema/display/common.hpp"
 
 void InstanceDisplay(const char* name, int& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragInt(name, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, char& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_S8, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, short& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_S16, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, long long& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_S64, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const int& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragInt(name, (int*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const char& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_S8, (void*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const short& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_S16, (void*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const long long& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_S64, (void*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned int& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_U32, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned char& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_U8, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned short& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_U16, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned long long& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_U64, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned const int& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_U32, (unsigned int*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned const char& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_U8, (void*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned const short& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_U16, (void*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, unsigned const long long& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_U64, (void*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, bool& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::Checkbox(name, &value);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const bool& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::Checkbox(name, (bool*)&value);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, float& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragFloat(name, &value, 0.1);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const float& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragFloat(name, (float*)&value, 01);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, double& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_Double, &value, 0.1);
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const double& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_Double, (void*)&value, 0.1);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, std::string& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     char buf[1024] = {0};
     memcpy(buf, value.data(), value.size());
     ImGui::InputText(name, buf, sizeof(buf) - 1);
     value = buf;
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const std::string& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::InputText(name, (char*)value.data(), value.size());
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, std::string_view value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::InputText(name, (char*)value.data(), value.size());
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Vec2& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::DragFloat2(name, (float*)&value, 0.1);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, Region& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::Text("%s", name);
     InstanceDisplay("top left", value.m_topleft);
     InstanceDisplay("size", value.m_size);
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Region& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::Text("%s", name);
@@ -248,92 +247,49 @@ void InstanceDisplay(const char* name, const Region& value) {
     InstanceDisplay("size", value.m_size);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, Degrees& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     float degree = value.Value();
     ImGui::DragFloat(name, &degree, 0.1);
     value = degree;
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Degrees& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     float degree = value.Value();
     ImGui::DragFloat(name, &degree, 0.1);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, Radians& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     float degree = Degrees{value}.Value();
     ImGui::DragFloat(name, &degree, 0.1);
     value = Degrees{degree};
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Radians& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     float degree = Degrees{value}.Value();
     ImGui::DragFloat(name, &degree, 0.1);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
-}
-
-template <typename T>
-void showAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
-    std::string button_text = "none";
-
-    if (value && value.GetFilename()) {
-        button_text = value.GetFilename()->string();
-    }
-
-    IMGUI_PUSHID(value);
-    if (ImGui::Button(button_text.c_str())) {
-        FileDialog dialog{FileDialog::Type::OpenFile};
-        Path base_path = CURRENT_CONTEXT.GetProjectPath();
-        dialog.SetTitle("Select Image");
-        for (auto& filter : filters) {
-            dialog.AddFilter(filter);
-        }
-        dialog.SetDefaultFolder(base_path);
-        dialog.Open();
-
-        auto& files = dialog.GetSelectedFiles();
-        if (!files.empty()) {
-            auto& filename = files[0];
-
-            std::error_code err;
-            auto relative_path =
-                std::filesystem::relative(filename, base_path, err);
-            std::string relative_path_str = relative_path.string();
-            std::replace_if(
-                relative_path_str.begin(), relative_path_str.end(),
-                [](char c) { return c == '\\'; }, '/');
-            relative_path = relative_path_str;
-
-            if (err) {
-                LOGE("Can only select file under {} dir", base_path);
-            } else {
-                value = CURRENT_CONTEXT.m_assets_manager->GetManager<T>().Load(
-                    relative_path);
-            }
-        }
-    }
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 template <typename T>
@@ -345,19 +301,20 @@ void displayAssetName(Handle<T> handle) {
     }
     ImGui::BeginDisabled(true);
 
-    IMGUI_PUSHID(*handle);
+    ImGui::PushID(handle.Get());
     ImGui::InputText("filename", text.data(), text.size());
-    IMGUI_POPID();
+    ImGui::PopID();
+
+    ImGui::EndDisabled();
 }
 
 void InstanceDisplay(const char* name, Handle<Image>& value) {
-    ImGui::Text("%s", name);
-
-    showAssetSelectFile(
-        value, {
-                   {   "Png", "png"},
-                   {  "JPEG", "jpg"},
-                   {"Bitmap", "bmp"}
+    HandleInstanceDisplayCommon(
+        name, value,
+        {
+            {   "Png", "png"},
+            {  "JPEG", "jpg"},
+            {"Bitmap", "bmp"}
     });
 
     if (value) {
@@ -378,37 +335,33 @@ void InstanceDisplay(const char* name, const Handle<Image>& value) {
         size.y = value->GetSize().y;
         ImGui::Image(value->GetTexture(), size);
     }
-
-    ImGui::EndDisabled();
 }
 
 void InstanceDisplay(const char* name, Handle<Font>& value) {
-    ImGui::Text("%s", name);
-
-    showAssetSelectFile(value, {
-                                   {"TTF", "ttf"},
+    HandleInstanceDisplayCommon(name, value,
+                                {
+                                    {"TTF", "ttf"}
     });
 }
 
 void InstanceDisplay(const char* name, const Handle<Font>& value) {
     ImGui::Text("%s", name);
     displayAssetName(value);
-    ImGui::EndDisabled();
 }
 
 void InstanceDisplay(const char* name, Transform& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::Text("%s", name);
     InstanceDisplay("position", value.m_position);
     InstanceDisplay("scale", value.m_scale);
     InstanceDisplay("rotation", value.m_rotation);
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const Transform& value) {
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
 
     ImGui::BeginDisabled(true);
     ImGui::Text("%s", name);
@@ -417,12 +370,12 @@ void InstanceDisplay(const char* name, const Transform& value) {
     InstanceDisplay("rotation", value.m_rotation);
     ImGui::EndDisabled();
 
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, TilemapHandle& value) {
     ImGui::Text("%s", name);
-    showAssetSelectFile(value, {
+    ShowAssetSelectFile(value, {
                                    {"TileMap", "tmx"}
     });
 }
@@ -545,38 +498,38 @@ void displayAnimationContent(Animation& anim) {
     }
 
     for (auto& [binding, track] : tracks) {
-        IMGUI_PUSHID(track);
+        ImGui::PushID(&track);
         if (ImGui::TreeNode("track")) {
             if (ImGui::Button("delete")) {
                 tracks.erase(binding);
                 ImGui::TreePop();
-                IMGUI_POPID();
+                ImGui::PopID();
                 break;
             }
             InstanceDisplay("binding point", binding);
             animTrackDisplay(binding, *track);
             ImGui::TreePop();
         }
-        IMGUI_POPID();
+        ImGui::PopID();
     }
 
     auto& bind_point_tracks = anim.GetBindPointTracks();
     if (!bind_point_tracks.empty()) {
         ImGui::SeparatorText("bind point tracks");
         for (auto& [name, track] : bind_point_tracks) {
-            IMGUI_PUSHID(track);
+            ImGui::PushID(&track);
             if (ImGui::TreeNode("track")) {
                 if (ImGui::Button("delete")) {
                     bind_point_tracks.erase(name);
                     ImGui::TreePop();
-                    IMGUI_POPID();
+                    ImGui::PopID();
                     break;
                 }
                 InstanceDisplay("name", name);
                 animTrackDisplay(AnimationBindingPoint::BindPoint, *track);
                 ImGui::TreePop();
             }
-            IMGUI_POPID();
+            ImGui::PopID();
         }
     }
 
@@ -695,41 +648,13 @@ void displayAnimationContent(Animation& anim) {
 }
 
 void InstanceDisplay(const char* name, Handle<Animation>& animation) {
-    ImGui::Text("%s", name);
-
-    bool is_embed = animation.IsEmbed();
-    ImGui::SameLine();
-    if (ImGui::Checkbox("embed", &is_embed)) {
-        // shift to embed mode, move asset to file
-        if (is_embed) {
-            FileDialog dialog{FileDialog::Type::SaveFile};
-            dialog.AddFilter("Animation", Animation_AssetExtension.data());
-            dialog.SetTitle("Save animation to external file");
-            dialog.Open();
-
-            auto& files = dialog.GetSelectedFiles();
-            if (!files.empty()) {
-                const Path& filename = files[0];
-                SaveAsset(animation.GetUUID(), *animation, filename);
-                CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().MakeExternal(animation, filename);
-            }
-        } else { // shift to un-embed mode, embed asset
-            CURRENT_CONTEXT.m_assets_manager->GetManager<Animation>().MakeEmbed(animation);
-        }
-    }
-    
-    if (animation.IsEmbed()) {
-        displayAnimationContent(*animation);
-        return;
-    }
-    
-    showAssetSelectFile(
-        animation,
+    HandleInstanceDisplayCommon(
+        name, animation,
         {
-            {"Animation", Animation_AssetExtension.substr(1).data()}
+            {"Animation", std::string{Animation_AssetExtension.substr(1)}}
     });
 
-    if (animation) {
+    if (animation.IsEmbed()) {
         displayAnimationContent(*animation);
     }
 }
@@ -764,9 +689,9 @@ void InstanceDisplay(const char* name, AnimationPlayer& player) {
     InstanceDisplay("loop", loop);
 
     float rate = player.GetRate();
-    IMGUI_PUSHID(player);
+    ImGui::PushID(&player);
     ImGui::DragFloat("rate", &rate, 0.1, 0, FLT_MAX);
-    IMGUI_POPID();
+    ImGui::PopID();
     player.SetRate(rate);
 
     if (ImGui::Button("play")) {
@@ -834,12 +759,12 @@ void InstanceDisplay(const char* name, Path& path) {
 void InstanceDisplay(const char* name, CharacterController& cct) {
     ImGui::Text("%s", name);
 
-    IMGUI_PUSHID(cct);
+    ImGui::PushID(&cct);
     if (ImGui::TreeNode(name)) {
         InstanceDisplay("actor", *cct.GetActor());
         ImGui::TreePop();
     }
-    IMGUI_POPID();
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, CollisionGroup& group) {
@@ -917,6 +842,6 @@ void InstanceDisplay(const char* name, const Image9Grid& grid) {
     ImGui::DragFloat("left", (float*)&grid.left);
     ImGui::DragFloat("right", (float*)&grid.right);
     ImGui::DragFloat("top", (float*)&grid.top);
-    ImGui::DragFloat("bottom", (float*)&grid.bottom);   
+    ImGui::DragFloat("bottom", (float*)&grid.bottom);
     ImGui::EndDisabled();
 }

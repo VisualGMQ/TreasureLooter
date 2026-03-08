@@ -54,7 +54,7 @@ public:
     /**
      * initialize context
      */
-    virtual void Initialize();
+    virtual void Initialize(int argc, char** argv);
 
     /**
      * shutdown context
@@ -74,6 +74,8 @@ public:
 
     const GameConfig& GetGameConfig() const;
     const Path& GetProjectPath() const;
+    const std::vector<std::string_view>& GetOSArgs() const;
+    std::string_view GetAppPath() const;
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
@@ -110,6 +112,7 @@ protected:
 
 private:
     static CommonContext* m_current_context;
+    std::vector<std::string_view> m_args;
 
     bool m_should_exit = true;
     bool m_is_inited = false;
@@ -134,7 +137,7 @@ public:
     GameContext& operator=(GameContext&&) = delete;
     ~GameContext() override;
 
-    void Initialize() override;
+    void Initialize(int argc, char** argv) override;
 
     void Update() override;
 

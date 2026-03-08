@@ -380,13 +380,13 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Handle<T>
     auto& manager =
         static_cast<AssetManagerBase<T>&>(CURRENT_CONTEXT.m_assets_manager->
             GetManager<T>());
-    if (node.type() == rapidxml::node_type::node_element) {
+    if (auto data_node = node.first_node(); data_node && data_node->type() == rapidxml::node_type::node_element) {
         if constexpr (AssetSLInfo<T>::CanEmbed) {
             auto first_node = node.first_node();
             TL_RETURN_IF_FALSE_WITH_LOG(first_node, LOGE,
                                         "[Asset]: node not has child node");
             AssetLoadResult<T> result = LoadAsset<T>(*first_node);
-            manager.Create(result.m_uuid, std::move(result.m_payload));
+            payload = manager.Create(result.m_uuid, std::move(result.m_payload));
             return;
         } else {
             LOGE("[Asset]: asset {} can't embed", AssetInfoManager::GetName<T>());

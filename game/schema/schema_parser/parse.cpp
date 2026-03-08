@@ -138,6 +138,7 @@ std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
         property.m_type = "std::array<" + std::string{type->value()} + ", " +
                           std::to_string(count) + ">";
     }
+    property.m_is_array = true;
     schema.m_include_hints = schema.m_include_hints | IncludeHint::Array;
     return property;
 }
@@ -179,6 +180,7 @@ std::optional<PropertyInfo> ParseHandle(SchemaInfo& schema,
     property.m_name = name->value();
     property.m_type = type->value() + std::string{"Handle"};
     property.m_optional = false;
+    property.m_is_handle = true;
     return property;
 }
 

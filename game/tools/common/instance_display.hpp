@@ -1,8 +1,10 @@
 #pragma once
 #include "engine/animation.hpp"
+#include "engine/asset_manager.hpp"
+#include "engine/context.hpp"
+#include "engine/dialog.hpp"
 #include "engine/entity.hpp"
 #include "engine/handle.hpp"
-#include "engine/imgui_id_generator.hpp"
 #include "engine/math.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
@@ -84,23 +86,122 @@ void InstanceDisplay(const char* name, Image9Grid&);
 void InstanceDisplay(const char* name, const Image9Grid&);
 
 template <typename T>
-void InstanceDisplay(const char* name, std::optional<T>& value) {
-    ImGui::Text("%s", name);
-    ImGui::SameLine();
-    if (!value) {
-        ImGui::PushID(ImGuiIDGenerator::Gen());
-        if (ImGui::Button("new")) {
-            value = T{};
+void ShowAssetSelectFile(Handle<T>& value, const std::vector<Filter>& filters) {
+    std::string button_text = "none";
+
+    if (value && value.GetFilename()) {
+        button_text = value.GetFilename()->string();
+    }
+
+    ImGui::PushID(&value);
+    if (ImGui::Button(button_text.c_str())) {
+        FileDialog dialog{FileDialog::Type::OpenFile};
+        Path base_path = CURRENT_CONTEXT.GetProjectPath();
+        dialog.SetTitle("Select Image");
+        for (auto& filter : filters) {
+            dialog.AddFilter(filter);
         }
-        ImGui::PopID();
-        ImGui::Text("NULL");
-    } else {
-        ImGui::PushID(ImGuiIDGenerator::Gen());
-        if (ImGui::Button("del")) {
-            value.reset();
+        dialog.SetDefaultFolder(base_path);
+        dialog.Open();
+
+        auto& files = dialog.GetSelectedFiles();
+        if (!files.empty()) {
+            auto& filename = files[0];
+
+            std::error_code err;
+            auto relative_path =
+                std::filesystem::relative(filename, base_path, err);
+            std::string relative_path_str = relative_path.string();
+            std::replace_if(
+                relative_path_str.begin(), relative_path_str.end(),
+                [](char c) { return c == '\\'; }, '/');
+            relative_path = relative_path_str;
+
+            if (err) {
+                LOGE("Can only select file under {} dir", base_path);
+            } else {
+                value = CURRENT_CONTEXT.m_assets_manager->GetManager<T>().Load(
+                    relative_path);
+            }
+        }
+    }
+    ImGui::PopID();
+}
+
+template <typename T>
+void HandleInstanceDisplayCommon(const char* name, Handle<T>& handle,
+    const std::vector<Filter>& filters) {
+    ImGui::Text("%s", name);
+    using payload_type = T;
+    
+    if constexpr (AssetSLInfo<payload_type>::CanEmbed) {
+        bool is_embed = handle.IsEmbed();
+        ImGui::SameLine();
+        if (ImGui::Checkbox("embed", &is_embed)) {
+            // shift to embed mode, move asset to file
+            if (is_embed) {
+                CURRENT_CONTEXT.m_assets_manager->GetManager<payload_type>()
+                    .MakeEmbed(handle);
+            } else {  // shift to un-embed mode, embed asset
+                FileDialog dialog{FileDialog::Type::SaveFile};
+                for (auto& filter : filters) {
+                    dialog.AddFilter(filter);
+                }
+                dialog.SetTitle("Save asset to external file");
+                dialog.Open();
+
+                auto& files = dialog.GetSelectedFiles();
+                if (!files.empty()) {
+                    const Path& filename = files[0];
+                    SaveAsset(handle.GetUUID(), *handle, filename);
+                    CURRENT_CONTEXT.m_assets_manager->GetManager<T>()
+                        .MakeExternal(handle, filename);
+                }
+            }
+        }
+    }
+
+    if (!handle.IsEmbed()) {
+        ShowAssetSelectFile(handle, filters);
+        ImGui::SameLine();
+
+        ImGui::PushID(handle.GetUUID());
+        if (ImGui::Button("Open")) {
+            std::string_view app_path = CURRENT_CONTEXT.GetAppPath();
+            std::string filename = handle.GetFilename()->string();
+            const char* args[] = {
+                app_path.data(),
+                "--filename",
+                filename.c_str(),
+                nullptr,
+            };
+            SDL_Process* process = SDL_CreateProcess(args, false);
+            if (!process) {
+                LOGE("failed to create asset editor process: {}", SDL_GetError());
+            } else {
+                SDL_DestroyProcess(process);
+            }
         }
         ImGui::PopID();
     }
+}
+
+template <typename T>
+void InstanceDisplay(const char* name, std::optional<T>& value) {
+    ImGui::Text("%s", name);
+    ImGui::SameLine();
+    ImGui::PushID(name);
+    if (!value) {
+        if (ImGui::Button("new")) {
+            value = T{};
+        }
+        ImGui::Text("NULL");
+    } else {
+        if (ImGui::Button("del")) {
+            value.reset();
+        }
+    }
+    ImGui::PopID();
 
     if (value) {
         InstanceDisplay("payload", value.value());
@@ -124,11 +225,13 @@ template <typename T>
 void InstanceDisplay(const char* name, const std::vector<T>& values) {
     ImGui::BeginDisabled(true);
     ImGui::Text("%s", name);
+    ImGui::PushID(name);
     for (size_t i = 0; i < values.size(); i++) {
-        ImGui::PushID(ImGuiIDGenerator::Gen());
+        ImGui::PushID(static_cast<int>(i));
         InstanceDisplay(std::to_string(i).c_str(), values[i]);
         ImGui::PopID();
     }
+    ImGui::PopID();
     ImGui::EndDisabled();
 }
 
@@ -136,15 +239,14 @@ template <typename T>
 void InstanceDisplay(const char* name, std::vector<T>& values) {
     ImGui::Text("%s", name);
     ImGui::SameLine();
+    ImGui::PushID(name);
 
-    ImGui::PushID(ImGuiIDGenerator::Gen());
     if (ImGui::Button("add")) {
         values.emplace_back(T{});
     }
-    ImGui::PopID();
 
     for (size_t i = 0; i < values.size(); i++) {
-        ImGui::PushID(ImGuiIDGenerator::Gen());
+        ImGui::PushID(static_cast<int>(i));
         if (ImGui::Button("del")) {
             values.erase(values.begin() + i);
             ImGui::PopID();
@@ -154,6 +256,7 @@ void InstanceDisplay(const char* name, std::vector<T>& values) {
         ImGui::SameLine();
         InstanceDisplay(std::to_string(i).c_str(), values[i]);
     }
+    ImGui::PopID();
 }
 
 template <typename T, size_t Size>
@@ -236,7 +339,7 @@ void InstanceDisplay(const char* name, AnimationTrack<T, TrackType>& m) {
 
 template <typename T>
 void InstanceDisplay(const char* name, TVec2<T>& value) {
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::PushID(static_cast<void*>(&value));
     if constexpr (std::is_same_v<T, float>) {
         ImGui::DragFloat2(name, (float*)&value, 0.1);
     } else if constexpr (std::is_same_v<T, double>) {
@@ -263,7 +366,7 @@ void InstanceDisplay(const char* name, TVec2<T>& value) {
 
 template <typename T>
 void InstanceDisplay(const char* name, const TVec2<T>& value) {
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::PushID(static_cast<const void*>(&value));
     ImGui::BeginDisabled(true);
     if constexpr (std::is_same_v<T, float>) {
         ImGui::DragFloat2(name, (float*)&value, 0.1);

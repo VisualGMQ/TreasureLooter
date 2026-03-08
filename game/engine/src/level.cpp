@@ -181,7 +181,8 @@ void Level::initByLevelContent(LevelContentHandle level_content) {
 
     for (auto& instance : level_content->m_entities) {
         if (!instance.m_prefab) {
-            LOGW("prefab {} invalid", *instance.m_prefab.GetFilename());
+            auto filename = instance.m_prefab.GetFilename();
+            LOGW("prefab {} invalid", filename ? *filename : "<embed>");
             continue;
         }
         auto entity = CURRENT_CONTEXT.CreateEntity();

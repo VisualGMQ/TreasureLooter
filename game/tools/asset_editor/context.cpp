@@ -1,29 +1,30 @@
 #include "context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/cct.hpp"
+#include "engine/controller.hpp"
+#include "engine/debug_drawer.hpp"
 #include "engine/dialog.hpp"
+#include "engine/gameplay_config.hpp"
+#include "engine/input/finger_touch.hpp"
+#include "engine/input/gamepad.hpp"
+#include "engine/input/input.hpp"
+#include "engine/input/keyboard.hpp"
+#include "engine/input/mouse.hpp"
 #include "engine/relationship.hpp"
 #include "engine/storage.hpp"
-#include "imgui.h"
-#include "schema/display/display.hpp"
-#include "engine/gameplay_config.hpp"
 #include "engine/trigger.hpp"
-#include "engine/bind_point.hpp"
-#include "engine/debug_drawer.hpp"
-#include "engine/cct.hpp"
-#include "engine/input/input.hpp"
-#include "engine/input/finger_touch.hpp"
-#include "engine/input/mouse.hpp"
-#include "engine/input/keyboard.hpp"
-#include "engine/input/gamepad.hpp"
-#include "engine/controller.hpp"
+#include "imgui.h"
+#include "lyra/lyra.hpp"
+#include "schema/display/display.hpp"
+#include "instance_display.hpp"
 #include "variant_asset.hpp"
 
 std::unique_ptr<AssetEditorContext> AssetEditorContext::instance;
 
 void AssetEditorContext::Init() {
     if (!instance) {
-        instance =
-            std::unique_ptr<AssetEditorContext>(new AssetEditorContext);
+        instance = std::unique_ptr<AssetEditorContext>(new AssetEditorContext);
     } else {
         LOGW("inited context singleton twice!");
     }
@@ -37,11 +38,12 @@ AssetEditorContext& AssetEditorContext::GetInst() {
     return *instance;
 }
 
-void AssetEditorContext::Initialize() {
-    ToolContext::Initialize();
+void AssetEditorContext::Initialize(int argc, char** argv) {
+    ToolContext::Initialize(argc, argv);
 
     m_window->SetTitle("TreasureLooter AssetEditor");
     m_window->Resize({720, 680});
+    parseCmdArgs(argc, argv);
 }
 
 void AssetEditorContext::Shutdown() {
@@ -73,6 +75,25 @@ void AssetEditorContext::update() {
     if (ImGui::Begin("Fullscreen Window", nullptr, flags)) {
         std::visit(DisplayAsset{}, m_asset);
         ImGui::End();
+    }
+}
+
+void AssetEditorContext::parseCmdArgs(int argc, char** argv) {
+    std::filesystem::path filename;
+    auto cli = lyra::cli() | lyra::opt(filename, "filename")["--filename"];
+    lyra::parse_result result = cli.parse({argc, argv});
+
+    if (!result) {
+        LOGE("Command line parse failed: {}", result.message());
+    }
+
+    const bool is_regular = std::filesystem::is_regular_file(filename);
+    if (is_regular) {
+        auto path = filename;
+        this->LoadAsset(path);
+    } else if (!filename.empty()) {
+        LOGW("asset editor cannot open file '{}', cwd='{}'", filename.string(),
+             std::filesystem::current_path().string());
     }
 }
 

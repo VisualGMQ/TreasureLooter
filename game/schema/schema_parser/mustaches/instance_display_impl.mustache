@@ -3,15 +3,15 @@
 /////////////////////////////////////////////////////////////////////
 
 #include "schema/display/{{{filename}}}.hpp"
-#include "engine/imgui_id_generator.hpp"
 #include "schema/serialize/{{{filename}}}.hpp"
 {{#import_filenames}}
 #include "{{{import_filename}}}"
 {{/import_filenames}}
-#include "../editor/instance_display.hpp"
 #include "engine/dialog.hpp"
 #include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
+#include "instance_display.hpp"
+#include "schema/asset_info.hpp"
 
 {{#display_impls}}
 {{{display_impl}}}

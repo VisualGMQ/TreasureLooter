@@ -25,6 +25,8 @@ struct PropertyInfo {
     std::string m_type;
     std::string m_name;
     bool m_optional = false;
+    bool m_is_handle = false;
+    bool m_is_array = false;
     std::string m_default;
 };
 

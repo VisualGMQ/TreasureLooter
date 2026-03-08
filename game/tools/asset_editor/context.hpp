@@ -9,7 +9,7 @@ public:
     static void Destroy();
     static AssetEditorContext& GetInst();
 
-    void Initialize() override;
+    void Initialize(int argc, char** argv) override;
     void Shutdown() override;
 
     void HandleEvents(const SDL_Event&) override;
@@ -23,6 +23,7 @@ private:
     static std::unique_ptr<AssetEditorContext> instance;
     VariantAsset m_asset;
 
+    void parseCmdArgs(int argc, char** argv);
     void showMainMenu();
     void saveAs();
     void changeAssetPathInTitle(const Path& path);

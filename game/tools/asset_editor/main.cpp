@@ -7,12 +7,10 @@
 #include "lyra/lyra.hpp"
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
-    // TODO: using lyra
     AssetEditorContext::Init();
     CommonContext::ChangeContext(ASSET_VIEWER_CONTEXT);
     AssetEditorContext::GetInst().InitSystem();
-    AssetEditorContext::GetInst().Initialize();
-    LOGI("asset viewer start");
+    AssetEditorContext::GetInst().Initialize(argc, argv);
 
     return SDL_APP_CONTINUE;
 }

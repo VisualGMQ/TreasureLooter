@@ -1,53 +1,39 @@
 void InstanceDisplay(const char* name, {{type}}& value) {
     ImGui::Text("%s", name);
     {{#properties}}
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     if (ImGui::TreeNode("{{property}}")) {
         InstanceDisplay("{{{property}}}", value.m_{{{property}}});
         ImGui::TreePop();
     }
-    IMGUI_POPID();
+    ImGui::PopID();
     {{/properties}}
 }
 
 void InstanceDisplay(const char* name, const {{type}}& value) {
     ImGui::BeginDisabled(true);
     {{#properties}}
-    IMGUI_PUSHID(value);
+    ImGui::PushID(&value);
     if (ImGui::TreeNode("{{property}}")) {
         InstanceDisplay("{{{property}}}", value.m_{{{property}}});
         ImGui::TreePop();
     }
-    IMGUI_POPID();
+    ImGui::PopID();
     {{/properties}}
     ImGui::EndDisabled();
 }
 
 {{#has_handle}}
-void InstanceDisplay(const char* name, {{type}}Handle handle) {
-    using payload_type = {{type}}Handle::underlying_type;
+void InstanceDisplay(const char* name, {{type}}Handle& handle) {
+    std::vector<Filter> filters;
+    Filter filter;
+    filter.name = name;
+    filter.pattern = std::string({{type_extension}}.substr(1));
+    filters.push_back(filter);
+    HandleInstanceDisplayCommon(name, handle, filters);
 
-    bool is_embed = handle.IsEmbed();
-    ImGui::SameLine();
-    if (ImGui::Checkbox("embed", &is_embed)) {
-        // shift to embed mode, move asset to file
-        if (is_embed) {
-            FileDialog dialog{FileDialog::Type::SaveFile};
-            dialog.AddFilter("{{type}}", "{{type_extension}}.xml");
-                dialog.SetTitle("Save animation to external file");
-                dialog.Open();
-
-            auto& files = dialog.GetSelectedFiles();
-            if (!files.empty()) {
-                const Path& filename = files[0];
-                SaveAsset(handle.GetUUID(), *handle, filename);
-                CURRENT_CONTEXT.m_assets_manager->GetManager<payload_type>().MakeExternal(handle, filename);
-            }
-        } else { // shift to un-embed mode, embed asset
-            CURRENT_CONTEXT.m_assets_manager->GetManager<payload_type>().MakeEmbed(handle);
-        }
+    if (handle.IsEmbed()) {
+        InstanceDisplay(name, *handle);
     }
-
-    InstanceDisplay(name, *handle);
 }
 {{/has_handle}}

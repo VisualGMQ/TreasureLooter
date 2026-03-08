@@ -27,16 +27,19 @@ public:
     virtual HandleType Load(const Path& filename, bool force = false) = 0;
 
     // create asset with no path
-    void Create(const UUID& uuid, T&& value, bool force = false) {
-        TL_RETURN_IF_FALSE(uuid);
+    HandleType Create(const UUID& uuid, T&& value, bool force = false) {
+        TL_RETURN_DEFAULT_IF_FALSE(uuid);
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             if (force) {
                 it->second.reset();
                 it->second = std::make_unique<T>(std::move(value));
+                return HandleType{it->first, it->second.get(), this};
             }
         } else {
             m_payloads[uuid] = std::make_unique<T>(std::move(value));        
+            return HandleType{uuid, m_payloads[uuid].get(), this};
         }
+        return {};
     }
 
     virtual void Unload(HandleType handle) {

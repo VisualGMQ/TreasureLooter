@@ -10,6 +10,8 @@
 				</region>
 				<size x="16.000000" y="16.000000"/>
 				<anchor x="0.000000" y="0.000000"/>
+				<z_order>0</z_order>
+				<color r="1" g="1" b="1" a="1"/>
 				<flip>None</flip>
 			</value>
 		</sprite>

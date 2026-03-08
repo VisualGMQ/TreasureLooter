@@ -61,7 +61,11 @@ void CommonContext::ShutdownSystem() {
     LOGT("system shutdown");
 }
 
-void CommonContext::Initialize() {
+void CommonContext::Initialize(int argc, char** argv) {
+    for (int i = 0; i < argc; i++) {
+        m_args.push_back(argv[i]);
+    }
+    
     m_should_exit = false;
     m_is_inited = true;
     m_assets_manager = std::make_unique<AssetsManager>();
@@ -222,6 +226,14 @@ const Path& CommonContext::GetProjectPath() const {
     return m_project_path;
 }
 
+const std::vector<std::string_view>& CommonContext::GetOSArgs() const {
+    return m_args;
+}
+
+std::string_view CommonContext::GetAppPath() const {
+    return m_args[0];
+}
+
 void CommonContext::beginImGui() {
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
@@ -312,10 +324,10 @@ GameContext& GameContext::GetInst() {
     return *instance;
 }
 
-void GameContext::Initialize() {
+void GameContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 
-    CommonContext::Initialize();
+    CommonContext::Initialize(argc, argv);
 
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(

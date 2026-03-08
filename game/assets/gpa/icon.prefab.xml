@@ -1,6 +1,13 @@
 <Prefab>
 	<uuid>e056e8bc-0000-0000-0000-000000000000</uuid>
 	<payload>
+		<transform>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<scale x="1.000000" y="1.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
 		<sprite>
 			<value>
 				<image>assets/Items/Treasure/Coin2.png</image>
@@ -9,16 +16,14 @@
 					<size x="10.000000" y="10.000000"/>
 				</region>
 				<size x="10.000000" y="10.000000"/>
-				<flip>None</flip>
+				<anchor x="0.000000" y="0.000000"/>
+				<flip>
+					<item>None</item>
+				</flip>
+				<z_order>0.000000</z_order>
+				<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 			</value>
 		</sprite>
-		<transform>
-			<value>
-				<position x="0.000000" y="0.000000"/>
-				<scale x="1.000000" y="1.000000"/>
-				<rotation>0.000000</rotation>
-			</value>
-		</transform>
 		<animation>
 			<value>
 				<loop>-1</loop>
@@ -27,15 +32,14 @@
 				<animation>assets/gpa/anim/item/icon.animation.xml</animation>
 			</value>
 		</animation>
-		<tilemap/>
 		<trigger>
 			<value>
 				<event_type>Coin</event_type>
-				<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
 				<physics_actor>assets/gpa/icon.physics_actor.xml</physics_actor>
+				<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
 			</value>
 		</trigger>
-		<type>Normal</type>
+		<script/>
 	</payload>
 </Prefab>
 

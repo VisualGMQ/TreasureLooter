@@ -10,6 +10,8 @@
 				</region>
 				<size x="0.000000" y="0.000000"/>
 				<anchor x="0.000000" y="0.000000"/>
+				<z_order>0</z_order>
+				<color r="1" g="1" b="1" a="1"/>
 				<flip>None</flip>
 			</value>
 		</sprite>
@@ -35,6 +37,7 @@
 				<physics_actor>assets/gpa/monsters/slime2/slime2.physics_actor.xml</physics_actor>
 			</value>
 		</cct>
+		<script/>
 		<gameplay_config>assets/gpa/monsters/slime2/slime2.gameplay_config.xml</gameplay_config>
 	</payload>
 </Prefab>

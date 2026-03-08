@@ -11,6 +11,10 @@
 			<radius>100.000000</radius>
 			<max_drag_dist>100.000000</max_drag_dist>
 		</virtual_joystick>
+		<virtual_attack_button>
+			<offset x="200.000000" y="200.000000"/>
+			<radius>100.000000</radius>
+		</virtual_attack_button>
 		<default_font>assets/fonts/zpix.ttf</default_font>
 	</payload>
 </GameConfig>
