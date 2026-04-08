@@ -12,12 +12,12 @@ Font::Font(const Path& filename, int pt) {
     }
 }
 
-Font::Font(Font&& o) {
+Font::Font(Font&& o) noexcept {
     m_font = o.m_font;
     o.m_font = nullptr;
 }
 
-Font& Font::operator=(Font&& o) {
+Font& Font::operator=(Font&& o) noexcept {
     if (&o != this) {
         m_font = o.m_font;
         o.m_font = nullptr;

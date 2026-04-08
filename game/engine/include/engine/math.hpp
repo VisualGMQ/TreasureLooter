@@ -55,6 +55,8 @@ struct TVec2 final {
 
     float Dot(const TVec2 &) const;
 
+    float DistTo(const TVec2&) const;
+
     float Cross(const TVec2 &) const;
 
     float LengthSquared() const;
@@ -146,6 +148,11 @@ float TVec2<T>::Dot(const TVec2 &o) const {
 }
 
 template <typename T>
+float TVec2<T>::DistTo(const TVec2& o) const {
+    return (*this - o).Length();
+}
+
+template <typename T>
 float TVec2<T>::Cross(const TVec2 &o) const {
     return x * o.y - y * o.x;
 }
@@ -228,7 +235,7 @@ TVec2<T> operator-(const TVec2<T> &o) {
 
 template <typename T>
 std::ostream &operator<<(std::ostream &os, const TVec2<T> &p) {
-    os << "TVec2<T>(" << p.x << ", " << p.y << ")";
+    os << "TVec2(" << p.x << ", " << p.y << ")";
     return os;
 }
 
@@ -288,6 +295,8 @@ private:
 
 Degrees operator*(float k, Degrees d);
 
+std::ostream& operator<<(std::ostream&, const Degrees&);
+
 struct Radians {
     Radians() = default;
 
@@ -324,6 +333,8 @@ private:
 
 Radians operator*(float k, Radians d);
 
+std::ostream& operator<<(std::ostream&, const Radians&);
+
 inline const Radians PI{3.14159265358979323846f};
 inline const Radians PI_Half{3.14159265358979323846f * 0.5};
 
@@ -349,6 +360,8 @@ private:
 };
 
 Mat33 operator*(const Mat33 &, const Mat33 &);
+
+Vec2 GetPosition(const Mat33&);
 
 template <typename T>
 class MatStorage {

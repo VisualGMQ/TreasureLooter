@@ -1,75 +1,150 @@
 #include "engine/script/script_binding.hpp"
-#include "engine/script/script_handle_binding.hpp"
-#include "engine/asset_manager.hpp"
-#include "schema/binding/binding.hpp"
 #include "engine/animation.hpp"
-#include "engine/context.hpp"
-#include "engine/entity.hpp"
-#include "engine/handle.hpp"
-#include "engine/log.hpp"
-#include "engine/macros.hpp"
-#include "engine/path.hpp"
-#include "engine/script/script.hpp"
-#include "engine/text.hpp"
-#include "engine/timer.hpp"
-#include "engine/math.hpp"
-#include "engine/transform.hpp"
-#include "engine/level.hpp"
-#include "engine/image.hpp"
-#include "engine/sprite.hpp"
-#include "engine/tilemap.hpp"
-#include "engine/renderer.hpp"
-#include "engine/window.hpp"
+#include "engine/animation_player.hpp"
+#include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
 #include "engine/camera.hpp"
-#include "engine/trigger.hpp"
-#include "engine/input/input.hpp"
-#include "engine/relationship.hpp"
-#include "engine/physics.hpp"
 #include "engine/cct.hpp"
 #include "engine/collision_group.hpp"
-#include "engine/ui.hpp"
-#include "engine/text.hpp"
-#include "engine/animation_player.hpp"
-#include "engine/gameplay_config.hpp"
+#include "engine/context.hpp"
 #include "engine/debug_drawer.hpp"
-#include "engine/prefab_manager.hpp"
-#include "schema/prefab.hpp"
+#include "engine/entity.hpp"
+#include "engine/handle.hpp"
+#include "engine/image.hpp"
+#include "engine/input/input.hpp"
+#include "engine/input/mouse.hpp"
+#include "engine/level.hpp"
+#include "engine/log.hpp"
+#include "engine/macros.hpp"
+#include "engine/math.hpp"
+#include "engine/path.hpp"
+#include "engine/physics.hpp"
+#include "engine/relationship.hpp"
+#include "engine/renderer.hpp"
+#include "engine/script/script.hpp"
+#include "engine/script/script_handle_binding.hpp"
 #include "engine/script/script_imgui_binding.hpp"
+#include "engine/sprite.hpp"
+#include "engine/text.hpp"
+#include "engine/tilemap.hpp"
+#include "engine/timer.hpp"
+#include "engine/transform.hpp"
+#include "engine/trigger.hpp"
+#include "engine/ui.hpp"
+#include "engine/window.hpp"
 #include "imgui.h"
+#include "schema/binding/binding.hpp"
+#include "schema/prefab.hpp"
+
+#include <sstream>
 #include <string>
 #include <type_traits>
-#include <sstream>
 
-#include "LuaBridge/Array.h"
-#include "LuaBridge/List.h"
-#include "LuaBridge/LuaBridge.h"
-#include "LuaBridge/Map.h"
-#include "LuaBridge/Set.h"
-#include "LuaBridge/UnorderedMap.h"
-#include "LuaBridge/Vector.h"
-#include "lua.h"
-#include "lualib.h"
+#include "engine/script/luabridge_include.hpp"
+#include "engine/script/script_event_registry.hpp"
 
-template <>
-struct luabridge::Stack<Entity>: public luabridge::Enum<Entity> {};
+#define TL_REGISTER_SCRIPT_UI_EVENT(EventType, EventName)                \
+    do {                                                                 \
+        ScriptEventRegistry::Register<EventType>(EventName);             \
+        CURRENT_CONTEXT.m_event_system->AddListener<EventType>(          \
+            [](EventListenerID, const EventType& event) {                \
+                auto level =                                             \
+                    CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();  \
+                TL_RETURN_IF_NULL(level);                                \
+                CURRENT_CONTEXT.m_script_component_manager->HandleEvent( \
+                    event, EventName);                                   \
+            });                                                          \
+    } while (0)
 
-int ScriptComponentManager_Get(lua_State* L) {
-    auto mgrRes = luabridge::get<ScriptComponentManager*>(L, 1);
-    auto eRes = luabridge::get<Entity>(L, 2);
-    if (!mgrRes || !eRes) {
-        lua_pushnil(L);
-        return 1;
+void registerLuaScriptEventBindings() {
+    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseHoverEvent, "UIMouseHoverEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseDownEvent, "UIMouseDownEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseUpEvent, "UIMouseUpEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseClickedEvent, "UIMouseClickedEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(UICheckToggledEvent, "UICheckToggledEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(UIDragEvent, "UIDragEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(TriggerEnterEvent, "TriggerEnterEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(TriggerTouchEvent, "TriggerTouchEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(TriggerLeaveEvent, "TriggerLeaveEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(EventDebugger::DebugEvent, "DebugEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(TimerEvent, "TimerEvent");
+    TL_REGISTER_SCRIPT_UI_EVENT(TimerStopEvent, "TimerStopEvent");
+}
+
+#undef TL_REGISTER_SCRIPT_UI_EVENT
+
+int TL_Log(lua_State* L) {
+    const int argc = lua_gettop(L);
+    std::string msg;
+    for (int i = 1; i <= argc; ++i) {
+        if (i > 1) {
+            msg += " ";
+        }
+
+        size_t len = 0;
+        const char* s = luaL_tolstring(L, i, &len);  // pushes tostring(arg)
+        if (s && len > 0) {
+            msg.append(s, len);
+        } else {
+            msg += "nil";
+        }
+        lua_pop(L, 1);  // pop tostring result
     }
-    Script* s = (*mgrRes)->Get(*eRes);
-    if (!s) {
-        lua_pushnil(L);
-        return 1;
+
+    lua_Debug ar{};
+    const bool hasInfo = lua_getinfo(L, 1, "sln", &ar) != 0;
+
+    std::string file = "unknown";
+    std::string func = "anonymous";
+    int line = 0;
+
+    if (hasInfo) {
+        const char* source = ar.source;
+        if (source && *source != '\0') {
+            file = source;
+        } else if (ar.short_src[0] != '\0') {
+            file = ar.short_src;
+        }
+
+        if (!file.empty() && file[0] == '@') {
+            file.erase(0, 1);
+        }
+
+        if (ar.name && ar.name[0] != '\0') {
+            func = ar.name;
+        }
+
+        line = ar.currentline > 0 ? ar.currentline : 0;
     }
-    lua_getref(L, s->GetScriptTableRef());
-    return 1;
+
+    LOGI("[Luau][{}:{}: {}]: {}", file, func, line, msg);
+    return 0;
 }
 
 // clang-format off
+
+static int ScriptComponentManager_GetTable(lua_State* L) {
+    auto mgr = luabridge::Stack<ScriptComponentManager*>::get(L, 1);
+    if (!mgr) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    auto entity = luabridge::Stack<Entity>::get(L, 2);
+    if (!entity) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    Script* script = mgr.value()->Get(entity.value());
+    if (!script || script->GetScriptTableRef() == LUA_NOREF) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_getref(L, script->GetScriptTableRef());
+    return 1;
+}
 
 void bindScriptBinaryDataManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
@@ -86,7 +161,17 @@ void bindScriptBinaryDataManager(lua_State* L) {
                      })
         .endClass()
         .beginClass<ScriptComponentManager>("ScriptComponentManager")
-        .addFunction("Get", ScriptComponentManager_Get)
+            .addFunction("Has", &ScriptComponentManager::Has)
+            .addFunction("Get", ScriptComponentManager_GetTable)
+            .addFunction("IsEnable", &ScriptComponentManager::IsEnable)
+            .addFunction(
+                "SubscribeEvent",
+                +[](ScriptComponentManager* m, Entity entity,
+                    const std::string& event_name) {
+                    if (m) {
+                        m->SubscribeEvent(entity, event_name);
+                    }
+                })
         .endClass()
         .endNamespace();
 }
@@ -176,14 +261,14 @@ void bindMath(lua_State* L) {
                 .addProperty("g", &Color::g, true)
                 .addProperty("b", &Color::b, true)
                 .addProperty("a", &Color::a, true)
+                .addStaticProperty("Red", &Color::Red)
+                .addStaticProperty("Green", &Color::Green)
+                .addStaticProperty("Blue", &Color::Blue)
+                .addStaticProperty("Black", &Color::Black)
+                .addStaticProperty("White", &Color::White)
+                .addStaticProperty("Yellow", &Color::Yellow)
+                .addStaticProperty("Purple", &Color::Purple)
             .endClass()
-            .addFunction("Red", +[]() { return Color::Red; })
-            .addFunction("Green", +[]() { return Color::Green; })
-            .addFunction("Blue", +[]() { return Color::Blue; })
-            .addFunction("Black", +[]() { return Color::Black; })
-            .addFunction("White", +[]() { return Color::White; })
-            .addFunction("Yellow", +[]() { return Color::Yellow; })
-            .addFunction("Purple", +[]() { return Color::Purple; })
             .addFunction("GetZOrderByYSorting", &GetZOrderByYSorting)
             .addFunction("GetAngle", &GetAngle)
             .addFunction("DecomposeVector", &DecomposeVector)
@@ -200,6 +285,11 @@ void bindMath(lua_State* L) {
                              (Degrees(Degrees::*)(float) const)&Degrees::operator*)
                 .addFunction("__div",
                              (Degrees(Degrees::*)(float) const)&Degrees::operator/)
+                .addFunction("__tostring", +[](const Degrees* v) {
+                                std::stringstream ss;
+                                ss << *v;
+                                return ss.str();
+                            })
             .endClass()
             .beginClass<Radians>("Radians")
                 .template addConstructor<void (void), void (float), void(Degrees)>()
@@ -210,8 +300,14 @@ void bindMath(lua_State* L) {
                              (Radians(Radians::*)(float) const)&Radians::operator*)
                 .addFunction("__div",
                              (Radians(Radians::*)(float) const)&Radians::operator/)
+                .addFunction("__tostring", +[](const Radians* v) {
+                                std::stringstream ss;
+                                ss << *v;
+                                return ss.str();
+                            })
             .endClass()
             .beginClass<Transform>("Transform")
+                .addConstructor<void(void)>()
                 .addProperty("m_position", &Transform::m_position, true)
                 .addProperty("m_rotation", &Transform::m_rotation, true)
                 .addProperty("m_size", &Transform::m_size, true)
@@ -275,6 +371,7 @@ void bindImage(lua_State* L) {
 void bindContext(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
+            .addFunction("Log", TL_Log)
             .beginClass<GameContext>("GameContext")
                 .addFunction("GetCamera", +[](GameContext* ctx) { return &ctx->m_camera; })
                 .addFunction("GetScriptManager",
@@ -292,6 +389,10 @@ void bindContext(lua_State* L) {
                 .addFunction("GetTime",
                              +[](GameContext* ctx) -> Time* {
                                  return ctx->m_time.get();
+                             })
+                .addFunction("GetTimerManager",
+                             +[](GameContext* ctx) -> TimerManager* {
+                                 return ctx->m_timer_manager.get();
                              })
                 .addFunction("GetTransformManager",
                              +[](GameContext* ctx) -> TransformManager* {
@@ -325,13 +426,13 @@ void bindContext(lua_State* L) {
                              +[](GameContext* ctx) -> AnimationPlayerManager* {
                                  return ctx->m_animation_player_manager.get();
                              })
+                .addFunction("GetBindPointsComponentManager",
+                             +[](GameContext* ctx) -> BindPointsComponentManager* {
+                                 return ctx->m_bind_point_component_manager.get();
+                             })
                 .addFunction("GetUIManager",
                              +[](GameContext* ctx) -> UIComponentManager* {
                                  return ctx->m_ui_manager.get();
-                             })
-                .addFunction("GetGameplayConfigManager",
-                             +[](GameContext* ctx) -> GameplayConfigManager* {
-                                 return ctx->m_gameplay_config_manager.get();
                              })
                 .addFunction("GetTilemapComponentManager",
                              +[](GameContext* ctx) -> TilemapComponentManager* {
@@ -340,6 +441,14 @@ void bindContext(lua_State* L) {
                 .addFunction("GetCCTManager",
                              +[](GameContext* ctx) -> CCTManager* {
                                  return ctx->m_cct_manager.get();
+                             })
+                .addFunction("GetPhysicsScene",
+                             +[](GameContext* ctx) -> PhysicsScene* {
+                                 return ctx->m_physics_scene.get();
+                             })
+                .addFunction("GetEventDebugger",
+                             +[](GameContext* ctx) -> EventDebugger* {
+                                 return ctx->m_event_debugger_system.get();
                              })
             .endClass()
             .addFunction("GetContext", +[]() -> GameContext* {
@@ -371,10 +480,6 @@ void bindAssetsManager(lua_State* L) {
                 .addFunction("GetLevelManager",
                              +[](AssetsManager* m) -> LevelManager* {
                                  return &m->GetManager<Level>();
-                             })
-                .addFunction("GetPrefabManager",
-                             +[](AssetsManager* m) -> PrefabManager* {
-                                 return &m->GetManager<Prefab>();
                              })
                 .addFunction("GetFontManager",
                              +[](AssetsManager* m) -> FontManager* {
@@ -437,6 +542,22 @@ void bindInput(lua_State* L) {
                                                        static_cast<Action::State>(state));
                              })
             .endClass()
+            .beginClass<MouseButton>("MouseButton")
+                .addFunction("IsPressing",
+                             +[](const MouseButton* b) { return b->IsPressing(); })
+                .addFunction("IsReleasing",
+                             +[](const MouseButton* b) { return b->IsReleasing(); })
+                .addFunction("IsReleased",
+                             +[](const MouseButton* b) { return b->IsReleased(); })
+                .addFunction("IsPressed",
+                             +[](const MouseButton* b) { return b->IsPressed(); })
+                .addFunction("IsPress",
+                             +[](const MouseButton* b) { return b->IsPress(); })
+                .addFunction("IsRelease",
+                             +[](const MouseButton* b) { return b->IsRelease(); })
+                .addFunction("GetLastDownTime", &MouseButton::GetLastDownTime)
+                .addFunction("GetLastUpTime", &MouseButton::GetLastUpTime)
+            .endClass()
         .endNamespace();
 }
 
@@ -446,6 +567,25 @@ void bindTimer(lua_State* L) {
             .beginClass<Time>("Time")
                 .addFunction("GetElapseTime", &Time::GetElapseTime)
                 .addFunction("GetCurrentTime", &Time::GetCurrentTime)
+            .endClass()
+            .addProperty("null_timer_id", +[]() -> TimerID { return null_timer_id; })
+            .beginClass<Timer>("Timer")
+                .addFunction("SetInterval", &Timer::SetInterval)    
+                .addFunction("Start", &Timer::Start)    
+                .addFunction("Stop", &Timer::Stop)    
+                .addFunction("Rewind", &Timer::Rewind)    
+                .addFunction("SetLoop", &Timer::SetLoop)    
+                .addFunction("Pause", &Timer::Pause)    
+                .addFunction("GetInterval", &Timer::GetInterval)    
+                .addFunction("SetEventType", &Timer::SetEventType)    
+                .addFunction("GetEventType", &Timer::GetEventType)    
+                .addFunction("GetID", &Timer::GetID)    
+                .addFunction("IsRunning", &Timer::IsRunning)    
+            .endClass()
+            .beginClass<TimerManager>("TimerManager")
+                .addFunction("Create", &TimerManager::Create)
+                .addFunction("Remove", &TimerManager::Remove)
+                .addFunction("Find", &TimerManager::Find)
             .endClass()
         .endNamespace();
 }
@@ -467,6 +607,7 @@ void bindSprite(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<SpriteDefinition>("Sprite")
+                .addConstructor<void(void)>()
                 .addProperty("m_region", &SpriteDefinition::m_region, true)
                 .addProperty("m_size", &SpriteDefinition::m_size, true)
                 .addProperty("m_anchor", &SpriteDefinition::m_anchor, true)
@@ -552,21 +693,163 @@ void bindCCT(lua_State* L) {
         .endNamespace();
 }
 
-void bindGameplayConfigManager(lua_State* L) {
+void bindPhysics(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<GameplayConfigManager>("GameplayConfigManager")
-                .addFunction("Get", +[](GameplayConfigManager* m, Entity e) {
+            .beginClass<PhysicsActor>("PhysicsActor")
+                .addFunction("GetPosition", &PhysicsActor::GetPosition)
+                .addFunction("SetCollisionLayer", &PhysicsActor::SetCollisionLayer)
+                .addFunction("GetCollisionLayer", &PhysicsActor::GetCollisionLayer)
+                .addFunction("SetCollisionMask", &PhysicsActor::SetCollisionMask)
+                .addFunction("GetCollisionMask", &PhysicsActor::GetCollisionMask)
+                .addFunction("GetEntity", &PhysicsActor::GetEntity)
+                .addFunction("MoveTo", &PhysicsActor::MoveTo)
+                .addFunction("Move", &PhysicsActor::Move)
+                .addFunction("GetStorageType",
+                             +[](const PhysicsActor* actor) {
+                                 return static_cast<int>(actor->GetStorageType());
+                             })
+            .endClass()
+            .beginClass<PhysicsScene>("PhysicsScene")
+                .addFunction("IsEnableDebugDraw", &PhysicsScene::IsEnableDebugDraw)
+                .addFunction("ToggleDebugDraw", &PhysicsScene::ToggleDebugDraw)
+                .addFunction("OverlapActors",
+                             +[](PhysicsScene* scene, const PhysicsActor* lhs,
+                                 const PhysicsActor* rhs) {
+                                 if (!lhs || !rhs) {
+                                     return false;
+                                 }
+                                 return scene->Overlap(*lhs, *rhs);
+                             })
+            .endClass()
+            .beginClass<OverlapResult>("OverlapResult")
+                .addProperty("m_dst_entity", &OverlapResult::m_dst_entity) 
+                .addProperty("m_dst_actor", &OverlapResult::m_dst_actor) 
+            .endClass()
+        .endNamespace();
+}
+
+void bindUI(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<UIWidget>("UIWidget")
+                .addProperty("m_use_clip", &UIWidget::m_use_clip, true)
+                .addProperty("m_disabled", &UIWidget::m_disabled, true)
+                .addProperty("m_selected", &UIWidget::m_selected, true)
+                .addProperty("m_can_be_selected", &UIWidget::m_can_be_selected, true)
+                .addProperty("m_margin", &UIWidget::m_margin, true)
+                .addProperty("m_padding", &UIWidget::m_padding, true)
+            .endClass()
+            .beginClass<UIComponentManager>("UIComponentManager")
+                .addFunction("Get", +[](UIComponentManager* m, Entity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](GameplayConfigManager* m, Entity e) {
+                .addFunction("Has", +[](UIComponentManager* m, Entity e) {
                     return m->Has(e);
                 })
-                .addFunction("RegisterEntity",
-                             +[](GameplayConfigManager* m, Entity e,
-                                 const GameplayConfig& config) {
-                                 m->RegisterEntity(e, config);
+            .endClass()
+        .endNamespace();
+}
+
+void bindEvent(lua_State* L) {
+     luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            // events
+            .beginClass<UIMouseHoverEvent>("UIMouseHoverEvent")
+                .addProperty("m_entity", &UIMouseHoverEvent::m_entity, true)
+            .endClass()
+            .beginClass<UIMouseDownEvent>("UIMouseDownEvent")
+                .addProperty("m_entity", &UIMouseDownEvent::m_entity, true)
+                .addFunction("GetButton",
+                             +[](const UIMouseDownEvent* e) -> const MouseButton* {
+                                 return static_cast<const MouseButton*>(&e->m_button);
                              })
+            .endClass()
+            .beginClass<UIMouseUpEvent>("UIMouseUpEvent")
+                .addProperty("m_entity", &UIMouseUpEvent::m_entity, true)
+                .addFunction("GetButton",
+                             +[](const UIMouseUpEvent* e) -> const MouseButton* {
+                                 return static_cast<const MouseButton*>(&e->m_button);
+                             })
+            .endClass()
+            .beginClass<UIMouseClickedEvent>("UIMouseClickedEvent")
+                .addProperty("m_entity", &UIMouseClickedEvent::m_entity, true)
+            .endClass()
+            .beginClass<UICheckToggledEvent>("UICheckToggledEvent")
+                .addProperty("m_entity", &UICheckToggledEvent::m_entity, true)
+                .addProperty("m_checked", &UICheckToggledEvent::m_checked, true)
+            .endClass()
+            .beginClass<UIDragEvent>("UIDragEvent")
+                .addProperty("m_entity", &UIDragEvent::m_entity, true)
+            .endClass()
+    
+            // event debugger
+            .beginClass<EventDebugger>("EventDebugger")
+                .addFunction("SendDebugEvent", &EventDebugger::SendDebugEvent)
+                .addFunction("GetTriggeredCount", &EventDebugger::GetTriggeredCount)
+            .endClass()
+            .beginClass<EventDebugger::DebugEvent>("DebugEvent")
+                .addConstructor<void(void)>()
+                .addProperty("m_value", &EventDebugger::DebugEvent::m_value)
+            .endClass()
+            .beginClass<TriggerEnterEvent>("TriggerEnterEvent")
+                .addFunction("GetType", &TriggerEnterEvent::GetType)
+                .addFunction("GetOverlapResult", &TriggerEnterEvent::GetOverlapResult)
+                .addFunction("GetSrcEntity", &TriggerEnterEvent::GetSrcEntity)
+            .endClass()
+            .beginClass<TriggerTouchEvent>("TriggerTouchEvent")
+                .addFunction("GetType", &TriggerTouchEvent::GetType)
+                .addFunction("GetOverlapResult", &TriggerTouchEvent::GetOverlapResult)
+                .addFunction("GetSrcEntity", &TriggerTouchEvent::GetSrcEntity)
+            .endClass()
+            .beginClass<TriggerLeaveEvent>("TriggerLeaveEvent")
+                .addFunction("GetType", &TriggerLeaveEvent::GetType)
+                .addFunction("GetOverlapResult", &TriggerLeaveEvent::GetOverlapResult)
+                .addFunction("GetSrcEntity", &TriggerLeaveEvent::GetSrcEntity)
+            .endClass()
+            .beginClass<TimerEvent>("TimerEvent")
+                .addFunction("GetID", &TimerEvent::GetID)
+                .addFunction("GetEventType", &TimerEvent::GetEventType)
+            .endClass()
+            .beginClass<TimerStopEvent>("TimerStopEvent")
+                .addFunction("GetID", &TimerStopEvent::GetID)
+                .addFunction("GetEventType", &TimerStopEvent::GetEventType)
+            .endClass()
+    .endNamespace();
+}
+
+void bindTilemapComponent(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<TilemapComponent>("TilemapComponent")
+                .addFunction("GetHandle", &TilemapComponent::GetHandle)
+            .endClass()
+            .beginClass<TilemapComponentManager>("TilemapComponentManager")
+                .addFunction("Get", +[](TilemapComponentManager* m, Entity e) {
+                    return m->Get(e);
+                })
+                .addFunction("Has", +[](TilemapComponentManager* m, Entity e) {
+                    return m->Has(e);
+                })
+            .endClass()
+        .endNamespace();
+}
+
+void bindTrigger(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<Trigger>("Trigger")
+                .addFunction("GetEventType",
+                            &Trigger::GetEventType)
+                .addFunction("SetEventType", &Trigger::SetEventType)
+                .addFunction("GetActor", static_cast<PhysicsActor*(Trigger::*)()>(&Trigger::GetActor))
+                .addFunction("EnableTriggerEveryFrameWhenTouch", &Trigger::EnableTriggerEveryFrameWhenTouch)
+                .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
+                .addFunction("GetBindPointName", &Trigger::GetBindPointName)
+            .endClass()
+            .beginClass<TriggerComponentManager>("TriggerComponentManager")
+                .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
+                .addFunction("Has", &TriggerComponentManager::Has)
             .endClass()
         .endNamespace();
 }
@@ -592,17 +875,6 @@ void bindRelationship(lua_State* L) {
         .endNamespace();
 }
 
-void bindPrefabManager(lua_State* L) {
-    luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
-            .beginClass<PrefabManager>("PrefabManager")
-                .addFunction("Find", +[](PrefabManager* m, const std::string& path) {
-                    return m->Find(Path(path));
-                })
-            .endClass()
-        .endNamespace();
-}
-
 void bindFontManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
@@ -620,6 +892,15 @@ void bindFontManager(lua_State* L) {
 void bindAnimationManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
+            .addFunction("LoadAssetAnimation", +[](const Path& path) {
+                return LoadAsset<Animation>(path).m_payload;
+            })
+            .addFunction("SaveAssetAnimation", +[](const AnimationHandle& handle, const Path& path) {
+                if (!handle) {
+                    return;
+                }
+                SaveAsset(handle.GetUUID(), *handle, path);
+            })
             .beginClass<AnimationManager>("AnimationManager")
                 .addFunction("Load", +[](AnimationManager* m, const std::string& path, bool force) {
                     return m->Load(Path(path), force);
@@ -645,7 +926,29 @@ void bindTilemapManager(lua_State* L) {
         .endNamespace();
 }
 
-static void bindLevelManager(lua_State* L) {
+void bindBindPoint(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<BindPoint>("BindPoint")
+                .addProperty("m_position", &BindPoint::m_position)
+                .addProperty("m_name", &BindPoint::m_name)
+                .addFunction("GetGlobalPosition", &BindPoint::GetGlobalPosition)
+            .endClass()
+            .beginClass<BindPoints>("BindPoints")
+                .addConstructor<void(void)>()
+                .addProperty("m_bind_points", &BindPoints::m_bind_points)
+            .endClass()
+            .beginClass<BindPointsComponentManager>("BindPointsComponentManager")
+                    .addFunction("Get", +[](BindPointsComponentManager* m, Entity e) {
+                        return m->Get(e);
+                    })
+                    .addFunction("Has", &BindPointsComponentManager::Has)
+                    .addFunction("ToggleDebugDraw", &BindPointsComponentManager::ToggleDebugDraw)
+            .endClass()
+    .endNamespace();
+}
+
+void bindLevelManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<LevelManager>("LevelManager")
@@ -670,7 +973,18 @@ void bindHandleTypes(lua_State* L) {
     BindHandle<Animation>("AnimationHandle", L, "Animation");
 }
 
+void bindEntity(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+        .addProperty(
+            "null_entity",
+            +[]() -> Entity { return static_cast<Entity>(null_entity); })
+        .endNamespace();
+}
+
 void bindAllTypes(lua_State* L) {
+    registerLuaScriptEventBindings();
+    bindEntity(L);
     bindScriptBinaryDataManager(L);
     bindPath(L);
     bindMath(L);
@@ -684,14 +998,19 @@ void bindAllTypes(lua_State* L) {
     bindSprite(L);
     bindAnimationPlayer(L);
     bindCCT(L);
-    bindGameplayConfigManager(L);
+    bindPhysics(L);
+    bindUI(L);
+    bindTilemapComponent(L);
+    bindTrigger(L);
     bindRelationship(L);
-    bindPrefabManager(L);
     bindLevelManager(L);
     bindFontManager(L);
     bindAnimationManager(L);
     bindTilemapManager(L);
     bindHandleTypes(L);
+    bindCollisionGroup(L);
+    bindBindPoint(L);
+    bindEvent(L);
 }
 
 void BindTLModule(lua_State* L) {
@@ -699,6 +1018,5 @@ void BindTLModule(lua_State* L) {
 
     bindAllTypes(L);
     BindSchema(L);
-    bindCollisionGroup(L);  // after BindSchema so CollisionGroupType enum is available
     bindImGui(L);
 }

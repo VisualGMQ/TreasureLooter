@@ -1,6 +1,6 @@
 <Animation>
 	<uuid>3d57924d-0000-0000-0000-000000000000</uuid>
-	<value>
+	<payload>
 		<tracks>
 			<track>
 				<binding_point>SpriteRegionPosition</binding_point>
@@ -61,6 +61,6 @@
 				</keyframes>
 			</track>
 		</tracks>
-	</value>
+	</payload>
 </Animation>
 

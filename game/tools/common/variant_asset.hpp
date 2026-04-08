@@ -1,5 +1,8 @@
 #pragma once
+#include "engine/dialog.hpp"
 #include "schema/asset_info.hpp"
+
+class ToolContext;
 
 namespace internal {
 template <typename... Args>
@@ -12,10 +15,11 @@ using VariantAsset = decltype(internal::VariantAssetTypeGenerator(
 
 void SaveVariantAsset(const VariantAsset& asset);
 void SaveAsVariantAsset(const VariantAsset& asset, const Path&);
-VariantAsset LoadVariantAsset(const Path& filename);
+VariantAsset LoadVariantAsset(const Path& filename, ToolContext&);
 
-Path AppendExtension(const Path& path, const std::string& extension);
+Filter GetAssetFilterByType(const VariantAsset& asset);
+std::string_view GetAssetExtensionByType(const VariantAsset& asset);
 
-void SaveEntity(Entity entity);
+const Path* GetAssetFilename(const VariantAsset& asset);
 
-class EntityPrefabComponent: public ComponentManager<PrefabHandle> {};
+std::vector<Filter> GetAssetFilters();

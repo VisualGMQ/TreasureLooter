@@ -90,7 +90,6 @@ ImageManager::ImageManager(Renderer& renderer) : m_renderer{renderer} {}
 
 ImageHandle ImageManager::Load(const Path& filename, bool force) {
     if (auto it = Find(filename); it && !force) {
-        LOGW("image {} already loaded", filename);
         return it;
     }
 

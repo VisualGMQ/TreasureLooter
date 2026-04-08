@@ -1,6 +1,6 @@
 <Animation>
 	<uuid>8de8a4ab-0000-0000-0000-000000000000</uuid>
-	<value>
+	<payload>
 		<tracks>
 			<track>
 				<binding_point>SpriteImage</binding_point>
@@ -54,6 +54,6 @@
 				</keyframes>
 			</track>
 		</tracks>
-	</value>
+	</payload>
 </Animation>
 

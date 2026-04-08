@@ -2,9 +2,9 @@
 
 #include "engine/context.hpp"
 #include "engine/image.hpp"
-#include "rapidxml_print.hpp"
 #include "engine/serialize.hpp"
 #include "engine/storage.hpp"
+#include "rapidxml_print.hpp"
 
 #include <sstream>
 
@@ -21,10 +21,6 @@ AnimationHandle AnimationManager::Load(const Path& filename, bool force) {
 
     return store(&filename, result.m_uuid,
                  std::make_unique<Animation>(std::move(result.m_payload)));
-}
-
-AnimationHandle AnimationManager::Create() {
-    return store(nullptr, UUID::CreateV4(), std::make_unique<Animation>());
 }
 
 void Animation::AddTrack(AnimationBindingPoint binding,
@@ -95,15 +91,22 @@ AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
         LOGE("parse asset {} failed, no node {}", filename, "Animation");
     }
 
-    auto uuid_node = node->first_node("uuid");
-    if (!uuid_node) {
-        LOGE("parse asset {} failed, no node {}", filename, "uuid");
-    }
+    auto result = LoadAsset<Animation>(*node);
+    TL_RETURN_DEFAULT_IF_FALSE_WITH_LOG(result, LOGE, "load asset {} failed",
+                                        filename);
+    return result;
+}
 
-    auto value_node = node->first_node("value");
-    if (!value_node) {
-        LOGE("parse asset {} failed, no node {}", filename, "value");
-    }
+template <>
+AssetLoadResult<Animation> LoadAsset<Animation>(
+    const rapidxml::xml_node<>& node) {
+    auto uuid_node = node.first_node("uuid");
+    TL_RETURN_DEFAULT_IF_FALSE_WITH_LOG(
+        uuid_node, LOGE, "parse asset {} failed, no node", "uuid");
+
+    auto value_node = node.first_node("payload");
+    TL_RETURN_DEFAULT_IF_FALSE_WITH_LOG(
+        uuid_node, LOGE, "parse asset {} failed, no node", "value");
 
     AssetLoadResult<Animation> result;
     Deserialize(CURRENT_CONTEXT, *uuid_node, result.m_uuid);
@@ -115,7 +118,7 @@ void SaveAsset(const UUID& uuid, const Animation& payload,
                const Path& filename) {
     rapidxml::xml_document<> doc;
 
-    auto value_node = Serialize(CURRENT_CONTEXT, doc, payload, "value");
+    auto value_node = Serialize(CURRENT_CONTEXT, doc, payload, "payload");
     if (!value_node) {
         LOGE("save asset {} failed", filename);
     }

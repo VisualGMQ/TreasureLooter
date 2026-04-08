@@ -1,7 +1,7 @@
 void InstanceDisplay(const char* name, {{type}}& value) {
     ImGui::Text("%s", name);
     {{#properties}}
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::PushID(&value);
     if (ImGui::TreeNode("{{property}}")) {
         InstanceDisplay("{{{property}}}", value.m_{{{property}}});
         ImGui::TreePop();
@@ -13,7 +13,7 @@ void InstanceDisplay(const char* name, {{type}}& value) {
 void InstanceDisplay(const char* name, const {{type}}& value) {
     ImGui::BeginDisabled(true);
     {{#properties}}
-    ImGui::PushID(ImGuiIDGenerator::Gen());
+    ImGui::PushID(&value);
     if (ImGui::TreeNode("{{property}}")) {
         InstanceDisplay("{{{property}}}", value.m_{{{property}}});
         ImGui::TreePop();
@@ -24,7 +24,16 @@ void InstanceDisplay(const char* name, const {{type}}& value) {
 }
 
 {{#has_handle}}
-void InstanceDisplay(const char* name, {{type}}Handle handle) {
-    InstanceDisplay(name, *handle);
+void InstanceDisplay(const char* name, {{type}}Handle& handle) {
+    std::vector<Filter> filters;
+    Filter filter;
+    filter.name = name;
+    filter.pattern = std::string({{type_extension}}.substr(1));
+    filters.push_back(filter);
+    HandleInstanceDisplayCommon(name, handle, filters);
+
+    if (handle.IsEmbed()) {
+        InstanceDisplay(name, *handle);
+    }
 }
 {{/has_handle}}

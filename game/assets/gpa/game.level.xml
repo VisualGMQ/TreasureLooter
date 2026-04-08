@@ -1,16 +1,20 @@
 <LevelContent>
-	<uuid>8785ce65-7b55-4742-99b7-c967bf453a6e</uuid>
+	<uuid>8785ce65-0000-0000-0000-000000000000</uuid>
 	<payload>
+		<script_path>scripts/game_entry.luau</script_path>
 		<entities>
+			<!--
 			<elem>
 				<prefab>assets/gpa/monsters/waggo/waggo.prefab.xml</prefab>
 			</elem>
 			<elem>
 				<prefab>assets/gpa/monsters/slime2/slime2.prefab.xml</prefab>
 			</elem>
+			-->
 			<elem>
 				<prefab>assets/gpa/tilemap.prefab.xml</prefab>
 			</elem>
+			<!--
 			<elem>
 				<transform>
 					<value>
@@ -21,6 +25,8 @@
 				</transform>
 				<prefab>assets/gpa/icon.prefab.xml</prefab>
 			</elem>
+			-->
 		</entities>
 	</payload>
 </LevelContent>
+

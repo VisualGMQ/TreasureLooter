@@ -19,6 +19,7 @@ public:
     void Teleport(const Vec2& pos);
 
     [[nodiscard]] const PhysicsActor* GetActor() const;
+    PhysicsActor* GetActor();
 
 private:
     float m_skin = 0.1;
@@ -31,5 +32,3 @@ private:
 };
 
 class CCTManager : public ComponentManager<CharacterController> {};
-
-void InstanceDisplay(const char*, CharacterController&);

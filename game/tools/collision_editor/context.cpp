@@ -1,0 +1,712 @@
+#include "engine/asset_manager.hpp"
+#include "engine/bind_point.hpp"
+#include "engine/camera.hpp"
+#include "engine/cct.hpp"
+#include "engine/controller.hpp"
+#include "engine/debug_drawer.hpp"
+#include "engine/dialog.hpp"
+#include "engine/input/finger_touch.hpp"
+#include "engine/input/input.hpp"
+#include "engine/input/keyboard.hpp"
+#include "engine/input/mouse.hpp"
+#include "engine/relationship.hpp"
+#include "engine/renderer.hpp"
+#include "engine/sprite.hpp"
+#include "engine/storage.hpp"
+#include "engine/trigger.hpp"
+#include "instance_display.hpp"
+#include "lyra/lyra.hpp"
+#include "rapidxml.hpp"
+#include "schema/display/bind_point_schema.hpp"
+#include "schema/display/physics_schema.hpp"
+#include "schema/physics_schema.hpp"
+#include "schema/serialize/physics_schema.hpp"
+#include "schema/serialize/gameplay_config.hpp"
+
+#include "imgui.h"
+
+#include "context.hpp"
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdio>
+#include <filesystem>
+#include <string>
+#include <string_view>
+
+std::unique_ptr<CollisionEditorContext> CollisionEditorContext::instance;
+
+bool pathFilenameEndsWith(const Path& p, std::string_view suffix) {
+    const std::string fn = p.filename().string();
+    return fn.size() >= suffix.size() &&
+           std::string_view(fn).substr(fn.size() - suffix.size()) == suffix;
+}
+
+std::optional<CollisionAstKind> detectCollisionAstKindFromXmlRoot(
+    const Path& path) {
+    auto file = IOStream::CreateFromFile(path, IOMode::Read, true);
+    if (!file) {
+        return std::nullopt;
+    }
+    auto content = file->Read();
+    content.push_back('\0');
+    rapidxml::xml_document<> doc;
+    try {
+        doc.parse<rapidxml::parse_default>(content.data());
+    } catch (...) {
+        return std::nullopt;
+    }
+    if (doc.first_node("WeaponDefinition")) {
+        return CollisionAstKind::Weapon;
+    }
+    if (doc.first_node("CharacterDefinition")) {
+        return CollisionAstKind::Character;
+    }
+    return std::nullopt;
+}
+
+std::optional<CollisionAstKind> detectCollisionAstKind(
+    const Path& absolute_path) {
+    if (pathFilenameEndsWith(absolute_path, ".weapon_def.xml")) {
+        return CollisionAstKind::Weapon;
+    }
+    if (pathFilenameEndsWith(absolute_path, ".character_def.xml")) {
+        return CollisionAstKind::Character;
+    }
+    return detectCollisionAstKindFromXmlRoot(absolute_path);
+}
+
+Vec2 weaponBindPointOffset(const WeaponDefinition& weapon,
+                           const std::string& bind_name) {
+    if (bind_name.empty()) {
+        return Vec2{0.0f, 0.0f};
+    }
+    for (const auto& bp : weapon.m_bind_points) {
+        if (bp.m_name == bind_name) {
+            return bp.m_position;
+        }
+    }
+    return Vec2{0.0f, 0.0f};
+}
+
+void SaveExternalPhysicsActorIfNeeded(const PhysicsActorInfoHandle& handle) {
+    if (!handle || handle.IsEmbed()) {
+        return;
+    }
+    auto filename = handle.GetFilename();
+    if (!filename || filename->empty()) {
+        return;
+    }
+    SaveAsset(handle.GetUUID(), *handle, *filename);
+}
+
+void SaveReferencedExternalPhysicsActors(const WeaponDefinition& weapon) {
+    for (const auto& trigger : weapon.m_hit_shapes) {
+        SaveExternalPhysicsActorIfNeeded(trigger.m_physics_actor);
+    }
+}
+
+void SaveReferencedExternalPhysicsActors(const CharacterDefinition& character) {
+    SaveExternalPhysicsActorIfNeeded(character.m_cct.m_physics_actor);
+}
+
+void drawPhysicsShapeForPreview(Renderer& renderer,
+                                const PhysicsActorInfo& info,
+                                Vec2 shape_center_world, float z_base,
+                                const Color& outline, const Color& fill) {
+    if (info.m_is_rect) {
+        Rect r;
+        r.m_center = shape_center_world;
+        r.m_half_size = info.m_rect.m_half_size;
+        renderer.FillRect(r, fill, z_base, true);
+        renderer.DrawRect(r, outline, z_base + 1.0f, true);
+    } else {
+        Circle c;
+        c.m_center = shape_center_world;
+        c.m_radius = info.m_circle.m_radius;
+        if (c.m_radius > 0.0f) {
+            renderer.DrawCircle(c, outline, 32, z_base + 1.0f, true);
+        }
+    }
+}
+
+void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 bind_offset,
+                                   float z_base, const Color& edge) {
+    constexpr float kHalf = 6.0f;
+    Rect r;
+    r.m_center = bind_offset;
+    r.m_half_size = {kHalf, kHalf};
+    renderer.FillRect(
+        r, Color{edge.r * 0.35f, edge.g * 0.35f, edge.b * 0.35f, 0.45f}, z_base,
+        true);
+    renderer.DrawRect(r, edge, z_base + 1.0f, true);
+}
+
+void drawBindPointScreenFixedMarker(Renderer& renderer, const Camera& camera,
+                                    const Vec2& window_size, Vec2 world_pos,
+                                    float z_order) {
+    Vec2 screen_center =
+        (world_pos - camera.GetPosition()) * camera.GetScale() +
+        window_size * 0.5f;
+    constexpr float kHalfPx = 5.0f;
+    Rect r;
+    r.m_center = screen_center;
+    r.m_half_size = {kHalfPx, kHalfPx};
+    renderer.FillRect(r, Color{1.0f, 0.15f, 0.12f, 1.0f}, z_order, false);
+}
+
+void CollisionEditorContext::Init() {
+    if (!instance) {
+        instance =
+            std::unique_ptr<CollisionEditorContext>(new CollisionEditorContext);
+    } else {
+        LOGW("inited context singleton twice!");
+    }
+}
+
+void CollisionEditorContext::Destroy() {
+    instance.reset();
+}
+
+CollisionEditorContext& CollisionEditorContext::GetInst() {
+    return *instance;
+}
+
+void CollisionEditorContext::Initialize(int argc, char** argv) {
+    ToolContext::Initialize(argc, argv);
+
+    m_window->SetTitle("TreasureLooter CollisionEditor - [No Name]");
+    m_window->Resize({960, 720});
+    parseCmdArgs(argc, argv);
+}
+
+void CollisionEditorContext::Shutdown() {
+    clearDocument();
+    ToolContext::Shutdown();
+}
+
+void CollisionEditorContext::HandleEvents(const SDL_Event& event) {
+    ToolContext::HandleEvents(event);
+}
+
+void CollisionEditorContext::parseCmdArgs(int argc, char** argv) {
+    std::filesystem::path filename;
+    auto cli = lyra::cli() | lyra::opt(filename, "filename")["--filename"];
+    lyra::parse_result result = cli.parse({argc, argv});
+    if (!result) {
+        LOGE("Command line parse failed: {}", result.message());
+        return;
+    }
+    if (std::filesystem::is_regular_file(filename)) {
+        loadAsset(Path{filename.string()});
+    }
+}
+
+void CollisionEditorContext::changeWindowTitle(const Path& path) {
+    if (path.empty()) {
+        m_window->SetTitle("TreasureLooter CollisionEditor - [No Name]");
+    } else {
+        m_window->SetTitle("TreasureLooter CollisionEditor - " + path.string());
+    }
+}
+
+void CollisionEditorContext::clearDocument() {
+    clearPreviewEntity();
+    m_weapon.Reset();
+    m_character.Reset();
+    m_kind.reset();
+    m_asset_path.clear();
+    m_selected_hit_shape_index = -1;
+    m_prev_weapon_hit_shape_count = 0;
+    changeWindowTitle({});
+}
+
+void CollisionEditorContext::loadAsset(Path absolute_path) {
+    auto kind = detectCollisionAstKind(absolute_path);
+    if (!kind) {
+        LOGE("Not a collision editor document: open a *.weapon_def.xml or "
+             "*.character_def.xml file, "
+             "or XML with <WeaponDefinition> / <CharacterDefinition> root.");
+        return;
+    }
+
+    auto relative = ToProjectRelative(absolute_path);
+    if (*kind == CollisionAstKind::Weapon) {
+        m_character.Reset();
+        auto h = m_assets_manager->GetManager<WeaponDefinition>().Load(relative,
+                                                                       true);
+        if (!h) {
+            LOGE("Failed to load WeaponDefinition: {}", relative.string());
+            return;
+        }
+        m_weapon = std::move(h);
+        m_kind = kind;
+        m_asset_path = relative;
+        changeWindowTitle(relative);
+        if (!m_weapon->m_hit_shapes.empty()) {
+            m_selected_hit_shape_index = 0;
+        } else {
+            m_selected_hit_shape_index = -1;
+        }
+        m_prev_weapon_hit_shape_count =
+            static_cast<int>(m_weapon->m_hit_shapes.size());
+    } else {
+        m_weapon.Reset();
+        auto h = m_assets_manager->GetManager<CharacterDefinition>().Load(
+            relative, true);
+        if (!h) {
+            LOGE("Failed to load CharacterDefinition: {}", relative.string());
+            return;
+        }
+        m_character = std::move(h);
+        m_kind = kind;
+        m_asset_path = relative;
+        changeWindowTitle(relative);
+        m_selected_hit_shape_index = -1;
+        m_prev_weapon_hit_shape_count = 0;
+    }
+}
+
+void CollisionEditorContext::saveAsset() {
+    if (!m_kind) {
+        return;
+    }
+    if (m_asset_path.empty()) {
+        saveAssetAs();
+        return;
+    }
+    if (*m_kind == CollisionAstKind::Weapon) {
+        if (!m_weapon) {
+            return;
+        }
+        SaveReferencedExternalPhysicsActors(*m_weapon);
+        SaveAsset(m_weapon.GetUUID(), *m_weapon, m_asset_path);
+        loadAsset(GetProjectPath() / m_asset_path);
+    } else {
+        if (!m_character) {
+            return;
+        }
+        SaveReferencedExternalPhysicsActors(*m_character);
+        SaveAsset(m_character.GetUUID(), *m_character, m_asset_path);
+        loadAsset(GetProjectPath() / m_asset_path);
+    }
+}
+
+void CollisionEditorContext::saveAssetAs() {
+    if (!m_kind) {
+        return;
+    }
+
+    FileDialog dialog{FileDialog::Type::SaveFile};
+    dialog.SetTitle("Save As");
+    if (*m_kind == CollisionAstKind::Weapon) {
+        dialog.AddFilter({"WeaponDefinition", "weapon_def.xml"});
+    } else {
+        dialog.AddFilter({"CharacterDefinition", "character_def.xml"});
+    }
+    dialog.SetDefaultFolder(GetProjectPath());
+    dialog.Open();
+    auto& files = dialog.GetSelectedFiles();
+    if (files.empty()) {
+        return;
+    }
+    Path final_file = files[0];
+    auto extension = final_file.extension().string();
+    if (extension.empty()) {
+        if (*m_kind == CollisionAstKind::Weapon) {
+            final_file += ".weapon_def.xml";
+        } else {
+            final_file += ".character_def.xml";
+        }
+    }
+
+    auto relative = ToProjectRelative(final_file);
+    if (*m_kind == CollisionAstKind::Weapon) {
+        if (!m_weapon) {
+            return;
+        }
+        SaveReferencedExternalPhysicsActors(*m_weapon);
+        SaveAsset(m_weapon.GetUUID(), *m_weapon, relative);
+        loadAsset(GetProjectPath() / relative);
+    } else {
+        if (!m_character) {
+            return;
+        }
+        SaveReferencedExternalPhysicsActors(*m_character);
+        SaveAsset(m_character.GetUUID(), *m_character, relative);
+        loadAsset(GetProjectPath() / relative);
+    }
+}
+
+void CollisionEditorContext::newWeaponAsset() {
+    clearPreviewEntity();
+    m_character.Reset();
+    m_weapon = m_assets_manager->GetManager<WeaponDefinition>().Create();
+    m_kind = CollisionAstKind::Weapon;
+    m_asset_path.clear();
+    m_selected_hit_shape_index = -1;
+    m_prev_weapon_hit_shape_count = 0;
+    changeWindowTitle({});
+}
+
+void CollisionEditorContext::newCharacterAsset() {
+    clearPreviewEntity();
+    m_weapon.Reset();
+    m_character = m_assets_manager->GetManager<CharacterDefinition>().Create();
+    m_kind = CollisionAstKind::Character;
+    m_asset_path.clear();
+    m_selected_hit_shape_index = -1;
+    m_prev_weapon_hit_shape_count = 0;
+    changeWindowTitle({});
+}
+
+void CollisionEditorContext::showMainMenu() {
+    if (!ImGui::BeginMainMenuBar()) {
+        return;
+    }
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("New Weapon (hit_shapes)")) {
+            newWeaponAsset();
+        }
+        if (ImGui::MenuItem("New Character (cct)")) {
+            newCharacterAsset();
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Open...")) {
+            FileDialog dialog{FileDialog::Type::OpenFile};
+            dialog.SetTitle("Open");
+            dialog.AddFilter({"WeaponDefinition", "weapon_def.xml"});
+            dialog.AddFilter({"CharacterDefinition", "character_def.xml"});
+            dialog.SetDefaultFolder(GetProjectPath());
+            dialog.Open();
+            auto& files = dialog.GetSelectedFiles();
+            if (!files.empty()) {
+                loadAsset(files[0]);
+            }
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Save", nullptr, false,
+                            static_cast<bool>(m_kind))) {
+            saveAsset();
+        }
+        if (ImGui::MenuItem("Save As...", nullptr, false,
+                            static_cast<bool>(m_kind))) {
+            saveAssetAs();
+        }
+        ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+}
+
+void CollisionEditorContext::showWeaponHitShapesAndBindPointsUi() {
+    auto& weapon = *m_weapon;
+    auto& bps = weapon.m_bind_points;
+
+    ImGui::SeparatorText("Bind points");
+    if (ImGui::Button("Add bind point")) {
+        BindPointDefinition bp{};
+        bp.m_name = "bind_" + std::to_string(bps.size());
+        bp.m_position = {0.0f, 0.0f};
+        bps.push_back(std::move(bp));
+    }
+    for (size_t bi = 0; bi < bps.size(); ++bi) {
+        ImGui::PushID(static_cast<int>(bi + 9000));
+        char bp_title[160];
+        std::snprintf(bp_title, sizeof(bp_title), "%zu: %s###bp%zu", bi,
+                      bps[bi].m_name.c_str(), bi);
+        if (ImGui::TreeNodeEx(bp_title, ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::Button("Remove")) {
+                bps.erase(bps.begin() + static_cast<ptrdiff_t>(bi));
+                ImGui::TreePop();
+                ImGui::PopID();
+                break;
+            }
+            InstanceDisplay("Bind point", bps[bi]);
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+
+    ImGui::SeparatorText("Hit shapes (triggers)");
+    if (ImGui::Button("Add hit shape")) {
+        TriggerDefinition td{};
+        td.m_event_type = TriggerEventType::WeaponAttack;
+        td.m_bind_point_name = {};
+        weapon.m_hit_shapes.push_back(std::move(td));
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Remove selected hit shape")) {
+        const int n = static_cast<int>(weapon.m_hit_shapes.size());
+        if (n > 0 && m_selected_hit_shape_index >= 0 &&
+            m_selected_hit_shape_index < n) {
+            const size_t i = static_cast<size_t>(m_selected_hit_shape_index);
+            const int old_sel = m_selected_hit_shape_index;
+            weapon.m_hit_shapes.erase(weapon.m_hit_shapes.begin() +
+                                      static_cast<ptrdiff_t>(i));
+            const int new_n = static_cast<int>(weapon.m_hit_shapes.size());
+            if (new_n == 0) {
+                m_selected_hit_shape_index = -1;
+            } else if (old_sel == static_cast<int>(i)) {
+                m_selected_hit_shape_index =
+                    std::min(static_cast<int>(i), new_n - 1);
+            } else if (old_sel > static_cast<int>(i)) {
+                m_selected_hit_shape_index--;
+            }
+        }
+    }
+
+    auto& shapes = weapon.m_hit_shapes;
+    const int n = static_cast<int>(shapes.size());
+    if (n > m_prev_weapon_hit_shape_count) {
+        m_selected_hit_shape_index = n - 1;
+    }
+    m_prev_weapon_hit_shape_count = n;
+    if (n == 0) {
+        m_selected_hit_shape_index = -1;
+    } else if (m_selected_hit_shape_index < 0 ||
+               m_selected_hit_shape_index >= n) {
+        m_selected_hit_shape_index = 0;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        ImGui::PushID(i);
+        auto& trig = shapes[static_cast<size_t>(i)];
+        char title[64];
+        std::snprintf(title, sizeof(title), "Shape %d###hs%d", i, i);
+
+        ImGuiTreeNodeFlags node_flags =
+            ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
+        if (m_selected_hit_shape_index == i) {
+            node_flags |= ImGuiTreeNodeFlags_Selected;
+        }
+        const bool open = ImGui::TreeNodeEx(title, node_flags);
+        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+            m_selected_hit_shape_index = i;
+        }
+        if (open) {
+            if (!bps.empty()) {
+                ImGui::TextUnformatted("Attach to bind point");
+                ImGui::SameLine();
+                const char* preview = trig.m_bind_point_name.empty()
+                                          ? "(sprite origin)"
+                                          : trig.m_bind_point_name.c_str();
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                if (ImGui::BeginCombo("##bind_pick", preview)) {
+                    const bool origin_sel = trig.m_bind_point_name.empty();
+                    if (ImGui::Selectable("(sprite origin)", origin_sel)) {
+                        trig.m_bind_point_name.clear();
+                    }
+                    for (const auto& bp : bps) {
+                        const bool sel = (trig.m_bind_point_name == bp.m_name);
+                        if (ImGui::Selectable(bp.m_name.c_str(), sel)) {
+                            trig.m_bind_point_name = bp.m_name;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::Spacing();
+            }
+            InstanceDisplay("Trigger", trig);
+            if (trig.m_physics_actor && !trig.m_physics_actor.IsEmbed()) {
+                ImGui::SeparatorText("External PhysicsActorInfo");
+                InstanceDisplay("physics actor payload", *trig.m_physics_actor);
+            }
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+}
+
+void CollisionEditorContext::showCollisionPanel() {
+    if (!ImGui::Begin("Collision")) {
+        ImGui::End();
+        return;
+    }
+
+    if (!m_kind) {
+        ImGui::TextWrapped("No document. Use File → Open or create New. "
+                           "Supported: *.weapon_def.xml (hit shapes), "
+                           "*.character_def.xml (CCT)");
+        ImGui::End();
+        return;
+    }
+
+    if (*m_kind == CollisionAstKind::Weapon) {
+        ImGui::TextUnformatted("WeaponDefinition");
+    } else {
+        ImGui::TextUnformatted("CharacterDefinition");
+    }
+    if (!m_asset_path.empty()) {
+        ImGui::Text("Path: %s", m_asset_path.string().c_str());
+    } else {
+        ImGui::TextUnformatted("Path: <unsaved>");
+    }
+    ImGui::Spacing();
+
+    if (*m_kind == CollisionAstKind::Weapon) {
+        if (!m_weapon) {
+            ImGui::TextUnformatted("Internal error: no weapon asset.");
+            ImGui::End();
+            return;
+        }
+        showWeaponHitShapesAndBindPointsUi();
+    } else {
+        if (!m_character) {
+            ImGui::TextUnformatted("Internal error: no character asset.");
+            ImGui::End();
+            return;
+        }
+        ImGui::SeparatorText("CharacterDefinition — CCTDefinition");
+        InstanceDisplay("cct", m_character->m_cct);
+    }
+
+    ImGui::End();
+}
+
+void CollisionEditorContext::clearPreviewEntity() {
+    if (m_preview_entity == null_entity) {
+        return;
+    }
+    m_sprite_manager->RemoveEntity(m_preview_entity);
+    m_transform_manager->RemoveEntity(m_preview_entity);
+    m_preview_entity = null_entity;
+}
+
+void CollisionEditorContext::ensurePreviewSprite() {
+    if (!m_kind) {
+        clearPreviewEntity();
+        return;
+    }
+    ImageHandle img;
+    if (*m_kind == CollisionAstKind::Weapon) {
+        if (!m_weapon) {
+            clearPreviewEntity();
+            return;
+        }
+        img = m_weapon->m_sprite;
+    } else {
+        if (!m_character) {
+            clearPreviewEntity();
+            return;
+        }
+        img = m_character->m_sprite_sheet;
+    }
+    if (!img) {
+        clearPreviewEntity();
+        return;
+    }
+    if (m_preview_entity == null_entity) {
+        m_preview_entity = CreateEntity();
+        m_transform_manager->ReplaceComponent(m_preview_entity, Transform{});
+    }
+    Sprite* spr = m_sprite_manager->Get(m_preview_entity);
+    if (!spr || spr->m_image.GetUUID() != img.GetUUID()) {
+        Sprite sprite{};
+        sprite.m_image = img;
+        const Vec2 sz = img->GetSize();
+        sprite.m_region.m_topleft = {0.0f, 0.0f};
+        sprite.m_region.m_size = sz;
+        m_sprite_manager->ReplaceComponent(m_preview_entity, sprite);
+    }
+}
+
+void CollisionEditorContext::renderScenePreview() {
+    ensurePreviewSprite();
+    if (m_preview_entity == null_entity) {
+        return;
+    }
+    auto* sprite = m_sprite_manager->Get(m_preview_entity);
+    if (!sprite || !sprite->m_image) {
+        return;
+    }
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (!io.WantCaptureMouse) {
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+            Vec2 scale = m_camera.GetScale();
+            scale.x = std::max(scale.x, 0.001f);
+            scale.y = std::max(scale.y, 0.001f);
+            m_camera.Move(
+                {-io.MouseDelta.x / scale.x, -io.MouseDelta.y / scale.y});
+        }
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+            float factor = 1.0f + (-io.MouseDelta.y * 0.01f);
+            factor = std::max(0.2f, factor);
+            Vec2 scale = m_camera.GetScale() * factor;
+            scale.x = Clamp(scale.x, 0.05f, 20.0f);
+            scale.y = Clamp(scale.y, 0.05f, 20.0f);
+            m_camera.ChangeScale(scale);
+        }
+        if (io.MouseWheel != 0.0f) {
+            float factor = 1.0f + (io.MouseWheel * 0.1f);
+            Vec2 scale = m_camera.GetScale() * factor;
+            scale.x = Clamp(scale.x, 0.05f, 20.0f);
+            scale.y = Clamp(scale.y, 0.05f, 20.0f);
+            m_camera.ChangeScale(scale);
+        }
+    }
+
+    constexpr float axis_len = 10000.0f;
+    m_renderer->DrawLine({-axis_len, 0.0f}, {axis_len, 0.0f},
+                         Color{1.0f, 0.2f, 0.2f, 0.8f}, -1000.0f, true);
+    m_renderer->DrawLine({0.0f, -axis_len}, {0.0f, axis_len},
+                         Color{0.2f, 1.0f, 0.2f, 0.8f}, -1000.0f, true);
+
+    m_relationship_manager->Update();
+    m_sprite_manager->Update();
+
+    // z: sprite default 0 → bind point markers → hit shapes (see
+    // Renderer::sortDrawCommands).
+    constexpr float kBindMarkerZ = 40.0f;
+    constexpr float kShapeZ = 50.0f;
+
+    const Color unsel_outline{0.35f, 0.75f, 0.95f, 1.0f};
+    const Color unsel_fill{0.35f, 0.75f, 0.95f, 0.12f};
+    const Color sel_outline{0.55f, 0.35f, 0.12f, 1.0f};
+    const Color sel_fill{0.55f, 0.35f, 0.12f, 0.22f};
+
+    if (m_kind && *m_kind == CollisionAstKind::Weapon && m_weapon) {
+        const Vec2 window_size = m_window->GetWindowSize();
+        for (const auto& bp : m_weapon->m_bind_points) {
+            drawBindPointScreenFixedMarker(*m_renderer, m_camera, window_size,
+                                           bp.m_position, kBindMarkerZ);
+        }
+
+        const int n = static_cast<int>(m_weapon->m_hit_shapes.size());
+        for (int i = 0; i < n; ++i) {
+            const auto& trig = m_weapon->m_hit_shapes[static_cast<size_t>(i)];
+            const Vec2 bind_offset =
+                weaponBindPointOffset(*m_weapon, trig.m_bind_point_name);
+            const bool is_sel = (m_selected_hit_shape_index == i);
+            const Color& outline = is_sel ? sel_outline : unsel_outline;
+            const Color& fill = is_sel ? sel_fill : unsel_fill;
+            if (trig.m_physics_actor) {
+                drawPhysicsShapeForPreview(*m_renderer, *trig.m_physics_actor,
+                                           bind_offset, kShapeZ, outline, fill);
+            } else {
+                drawMissingPhysicsPlaceholder(*m_renderer, bind_offset, kShapeZ,
+                                              outline);
+            }
+        }
+    } else if (m_kind && *m_kind == CollisionAstKind::Character &&
+               m_character && m_character->m_cct.m_physics_actor) {
+        const Vec2 origin{0.0f, 0.0f};
+        const Color cct_outline{0.35f, 0.85f, 0.45f, 1.0f};
+        const Color cct_fill{0.35f, 0.85f, 0.45f, 0.18f};
+        drawPhysicsShapeForPreview(*m_renderer,
+                                   *m_character->m_cct.m_physics_actor, origin,
+                                   kShapeZ, cct_outline, cct_fill);
+    }
+
+    m_renderer->ApplyDrawcall();
+}
+
+void CollisionEditorContext::update() {
+#ifdef IMGUI_HAS_DOCK
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(),
+                                 ImGuiDockNodeFlags_PassthruCentralNode);
+#endif
+    showMainMenu();
+    showCollisionPanel();
+    renderScenePreview();
+}

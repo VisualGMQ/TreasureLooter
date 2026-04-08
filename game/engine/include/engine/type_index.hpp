@@ -3,8 +3,11 @@
 
 using TypeIndex = uint32_t;
 
+static constexpr TypeIndex kInvalidTypeIndex = 0;
+
 class TypeIndexGenerator {
 public:
+    
     template <typename>
     static TypeIndex Get() {
         static TypeIndex index = m_type_index ++;

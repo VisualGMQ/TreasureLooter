@@ -13,6 +13,8 @@ public:
 
     const Vec2& GetPosition() const { return m_position; }
 
+    void transform(Vec2* center, Vec2* size) const;
+
 private:
     Vec2 m_scale = {1, 1};
     Vec2 m_position = {0, 0};

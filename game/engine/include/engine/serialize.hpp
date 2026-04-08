@@ -9,7 +9,8 @@
 #include "engine/log.hpp"
 #include "engine/math.hpp"
 #include "rapidxml.hpp"
-#include "schema/serialize/collision_group_schema.hpp"
+#include "schema/serialize/serialize.hpp"
+#include "schema/asset_info.hpp"
 
 #include <optional>
 #include <string>
@@ -288,6 +289,7 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
         Deserialize(ctx, *key_node, key);
         Deserialize(ctx, *value_node, value);
         payload.emplace(std::move(key), std::move(value));
+        elem_node = elem_node->next_sibling("elem");
     }
 }
 
@@ -346,22 +348,53 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, KeyFrame<
 template <typename T>
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 Handle<T> payload, const std::string& name) {
+    TL_RETURN_VALUE_IF_FALSE(payload, {});
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    if (payload) {
-        auto filename = payload.GetFilename();
-        if (filename) {
-            node->value(doc.allocate_string(filename->string().c_str()));
+    if constexpr (AssetSLInfo<T>::CanEmbed) {
+        if (payload.IsEmbed()) {
+            auto value_node = Serialize(
+                CURRENT_CONTEXT, doc, *payload, "payload");
+            if (!value_node) {
+                LOGE("save asset <embed> failed");
+            }
+            auto uuid_node = Serialize(CURRENT_CONTEXT, doc, payload.GetUUID(), "uuid");
+            if (!uuid_node) {
+                LOGE("save asset <embed> failed");
+            }
+
+            node->append_node(uuid_node);
+            node->append_node(value_node);
+            return node;
         }
+    }
+    
+    auto filename = payload.GetFilename();
+    if (filename) {
+        node->value(doc.allocate_string(filename->string().c_str()));
     }
     return node;
 }
 
 template <typename T>
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Handle<T>& payload) {
-    Path filename = node.value();
     auto& manager =
-        CURRENT_CONTEXT.m_assets_manager->GetManager<T>();
+        static_cast<AssetManagerBase<T>&>(CURRENT_CONTEXT.m_assets_manager->
+            GetManager<T>());
+    if (auto data_node = node.first_node(); data_node && data_node->type() == rapidxml::node_type::node_element) {
+        if constexpr (AssetSLInfo<T>::CanEmbed) {
+            TL_RETURN_IF_FALSE_WITH_LOG(data_node, LOGE,
+                                        "[Asset]: node not has child node");
+            AssetLoadResult<T> result = LoadAsset<T>(node);
+            payload = manager.Create(result.m_uuid, std::move(result.m_payload), nullptr);
+            return;
+        } else {
+            LOGE("[Asset]: asset {} can't embed", AssetInfoManager::GetName<T>());
+            return;
+        }
+    }
+
+    Path filename = node.value();
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);
@@ -371,7 +404,8 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Handle<T>
 // TVec2
 
 template <typename T>
-rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,
+                                rapidxml::xml_document<>& doc,
                                 const TVec2<T>& payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
@@ -386,7 +420,8 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 }
 
 template <typename T>
-void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, TVec2<T>& payload) {
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
+                 TVec2<T>& payload) {
     auto x_attr = node.first_attribute("x");
     auto y_attr = node.first_attribute("y");
     if (!x_attr || !y_attr) {

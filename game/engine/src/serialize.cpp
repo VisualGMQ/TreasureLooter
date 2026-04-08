@@ -475,7 +475,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
     std::vector<CollisionGroupType> types;
     for (int i = 0; i < sizeof(std::underlying_type_t<CollisionGroupType>);
          i++) {
-        auto type = static_cast<CollisionGroupType>(1 << i);
+        auto type = static_cast<CollisionGroupType>(i);
         if (payload.Has(type)) {
             types.push_back(type);
         }

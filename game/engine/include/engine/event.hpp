@@ -33,6 +33,7 @@ template <typename T>
 class EventSink : public EventSinkBase {
 public:
     using EventListenerType = EventListener<T>;
+    using Event = T;
 
     void AddListener(EventListenerID id, const EventListenerType& listener) {
         m_pending_add_listeners.emplace_back(EventListenerInfo{id, listener});
@@ -146,4 +147,22 @@ private:
         }
         return static_cast<EventSink<T>*>(result.first->second.get());
     }
+};
+
+class EventDebugger {
+public:
+    struct DebugEvent {
+        int m_value = 0;
+    };
+    
+    EventDebugger();
+    ~EventDebugger();
+    
+    void SendDebugEvent(int value);
+    
+    uint32_t GetTriggeredCount() const;
+    
+private:
+    EventListenerID m_listener_id;
+    uint32_t m_triggered_count = 0;
 };

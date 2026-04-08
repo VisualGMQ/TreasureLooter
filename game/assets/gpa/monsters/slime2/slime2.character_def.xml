@@ -1,0 +1,38 @@
+<CharacterDefinition>
+	<uuid>c84465f5-5dcf-4393-b901-d09505397a12</uuid>
+	<payload>
+		<sprite_sheet>assets/Characters/Slime2/Slime2.png</sprite_sheet>
+		<faceset>assets/Characters/Slime2/Faceset.png</faceset>
+		<speed>10.000000</speed>
+		<cct>
+			<skin>0.100000</skin>
+			<min_disp>0.001000</min_disp>
+			<physics_actor>
+				<uuid>3e203e9e-e09b-43c8-8ca4-93ae06757e9d</uuid>
+				<payload>
+					<is_rect>false</is_rect>
+					<rect>
+						<center x="0.000000" y="0.000000"/>
+						<half_size x="0.000000" y="0.000000"/>
+					</rect>
+					<circle>
+						<center x="0.000000" y="0.000000"/>
+						<radius>6.000000</radius>
+					</circle>
+					<collision_layer>
+						<elem>CCT</elem>
+					</collision_layer>
+					<collision_mask>
+						<elem>CCT</elem>
+						<elem>Obstacle</elem>
+					</collision_mask>
+				</payload>
+			</physics_actor>
+		</cct>
+		<move_left_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_left_animation>
+		<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
+		<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
+		<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
+		<script>scripts/slime.luau</script>
+	</payload>
+</CharacterDefinition>

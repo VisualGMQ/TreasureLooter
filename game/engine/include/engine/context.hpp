@@ -1,7 +1,7 @@
 #pragma once
+#include "engine/camera.hpp"
 #include "engine/entity.hpp"
 #include "schema/config.hpp"
-#include "engine/camera.hpp"
 #include <memory>
 
 class TriggerComponentManager;
@@ -54,7 +54,7 @@ public:
     /**
      * initialize context
      */
-    virtual void Initialize();
+    virtual void Initialize(int argc, char** argv);
 
     /**
      * shutdown context
@@ -73,10 +73,14 @@ public:
     void Exit();
 
     const GameConfig& GetGameConfig() const;
+    const Path& GetProjectPath() const;
+    const std::vector<std::string_view>& GetOSArgs() const;
+    std::string_view GetAppPath() const;
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<EventSystem> m_event_system;
+    std::unique_ptr<EventDebugger> m_event_debugger_system;
     std::unique_ptr<InputManager> m_input_manager;
     std::unique_ptr<PlayerController> m_player_controller;
     std::unique_ptr<Keyboard> m_keyboard;
@@ -99,21 +103,24 @@ public:
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
     std::unique_ptr<ScriptComponentManager> m_script_component_manager;
-    std::unique_ptr<GameplayConfigManager> m_gameplay_config_manager;
     Camera m_camera;
 
 protected:
     void beginImGui();
     void endImGui();
+    virtual void parseProjectPath() = 0;
+
     class ImGuiContext* m_imgui_context{};
+    Path m_project_path;
+    GameConfig m_game_config;
 
 private:
     static CommonContext* m_current_context;
+    std::vector<std::string_view> m_args;
 
     bool m_should_exit = true;
     bool m_is_inited = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
-    GameConfig m_game_config;
 
     void initImGui();
     void shutdownImGui();
@@ -131,9 +138,11 @@ public:
     GameContext& operator=(GameContext&&) = delete;
     ~GameContext() override;
 
-    void Initialize() override;
+    void Initialize(int argc, char** argv) override;
 
     void Update() override;
+
+    void parseProjectPath() override;
 
 private:
     static std::unique_ptr<GameContext> instance;

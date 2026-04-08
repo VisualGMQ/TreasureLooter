@@ -7,6 +7,9 @@
 
 class IDebugDrawer {
 public:
+    static constexpr TimeType kOneFrame = -1;
+    static constexpr TimeType kAlways = -2;
+    
     virtual ~IDebugDrawer() = default;
 
     virtual void DrawRect(const Rect&, const Color& color, TimeType m_time, bool use_camera) = 0;
@@ -62,4 +65,6 @@ private:
     std::vector<Element<Circle>> m_circles;
     std::vector<Element<Rect>> m_rects;
     std::vector<Element<std::pair<Vec2, Vec2>>> m_segments;
+    
+    TimeType decTime(TimeType cur_time, TimeType elapse);
 };

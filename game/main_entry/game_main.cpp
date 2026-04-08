@@ -9,7 +9,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     GameContext::Init();
     CommonContext::ChangeContext(GAME_CONTEXT);
     GameContext::GetInst().InitSystem();
-    GameContext::GetInst().Initialize();
+    GameContext::GetInst().Initialize(argc, argv);
     LOGI("app start");
 
     return SDL_APP_CONTINUE;

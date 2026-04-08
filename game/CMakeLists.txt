@@ -139,6 +139,11 @@ target_link_libraries(${ENGINE_NAME}
     Luau.VM
     LuaBridge)
 
+# TODO: compatible with clang++
+if (MSVC)
+    target_compile_options(${ENGINE_NAME} PRIVATE /bigobj)
+endif()
+
 if (TL_ENABLE_PROFILE)
     target_link_libraries(${ENGINE_NAME} PUBLIC optick)
     target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ENABLE_PROFILE)
@@ -173,10 +178,11 @@ target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
 
 ################ build editor ################
 if (NOT ANDROID)
-    file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
-    add_executable(editor)
-    target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
-    target_link_libraries(editor PRIVATE ${ENGINE_NAME})
+    add_subdirectory(tools)
+    # file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
+    # add_executable(editor)
+    # target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
+    # target_link_libraries(editor PRIVATE ${ENGINE_NAME})
 endif()
 
 ################ install #######################

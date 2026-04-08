@@ -7,7 +7,7 @@
 #include "engine/cct.hpp"
 #include "engine/controller.hpp"
 #include "engine/debug_drawer.hpp"
-#include "engine/gameplay_config.hpp"
+#include "engine/event.hpp"
 #include "engine/input/finger_touch.hpp"
 #include "engine/input/keyboard.hpp"
 #include "engine/input/mouse.hpp"
@@ -24,14 +24,13 @@
 #include "engine/transform.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
+#include "engine/uuid.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
-#include <csignal>
-#include <memory>
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -62,7 +61,11 @@ void CommonContext::ShutdownSystem() {
     LOGT("system shutdown");
 }
 
-void CommonContext::Initialize() {
+void CommonContext::Initialize(int argc, char** argv) {
+    for (int i = 0; i < argc; i++) {
+        m_args.push_back(argv[i]);
+    }
+
     m_should_exit = false;
     m_is_inited = true;
     m_assets_manager = std::make_unique<AssetsManager>();
@@ -84,6 +87,7 @@ void CommonContext::Initialize() {
 
     // event relative
     m_event_system = std::make_unique<EventSystem>();
+    m_event_debugger_system = std::make_unique<EventDebugger>();
 
     // input relate
     m_input_manager = std::make_unique<InputManager>();
@@ -97,7 +101,6 @@ void CommonContext::Initialize() {
     m_level_manager = std::make_unique<LevelManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
-    m_gameplay_config_manager = std::make_unique<GameplayConfigManager>();
     m_bind_point_component_manager =
         std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
@@ -111,19 +114,7 @@ void CommonContext::Initialize() {
     m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
 #endif
 
-    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
-        std::string{"assets/gpa/game_config"} +
-        GameConfig_AssetExtension.data());
-    if (!handle) {
-        LOGC("game config not found!");
-        SDL_Quit();
-        return;
-    }
-
-    m_window->Resize(handle->m_logic_size);
-    m_game_config = *handle;
-    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
-    m_assets_manager->GetManager<GameConfig>().Unload(handle);
+    parseProjectPath();
 }
 
 void CommonContext::Shutdown() {
@@ -140,7 +131,6 @@ void CommonContext::Shutdown() {
     m_trigger_component_manager.reset();
     m_bind_point_component_manager.reset();
     m_timer_manager.reset();
-    m_gameplay_config_manager.reset();
     m_debug_drawer.reset();
     m_cct_manager.reset();
     m_physics_scene.reset();
@@ -149,6 +139,7 @@ void CommonContext::Shutdown() {
     m_player_controller.reset();
     m_input_manager.reset();
     m_gamepad_manager.reset();
+    m_event_debugger_system.reset();
     m_event_system.reset();
 
     m_touches.reset();
@@ -215,6 +206,18 @@ void CommonContext::Exit() {
 
 const GameConfig& CommonContext::GetGameConfig() const {
     return m_game_config;
+}
+
+const Path& CommonContext::GetProjectPath() const {
+    return m_project_path;
+}
+
+const std::vector<std::string_view>& CommonContext::GetOSArgs() const {
+    return m_args;
+}
+
+std::string_view CommonContext::GetAppPath() const {
+    return m_args[0];
 }
 
 void CommonContext::beginImGui() {
@@ -289,18 +292,25 @@ GameContext& GameContext::GetInst() {
     return *instance;
 }
 
-void sigintHandler(int signum) {
-    if (signum == SIGINT) {
-        GAME_CONTEXT.Exit();
-    }
-}
-
-void GameContext::Initialize() {
+void GameContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 
-    signal(SIGINT, sigintHandler);
+    CommonContext::Initialize(argc, argv);
 
-    CommonContext::Initialize();
+    auto handle = m_assets_manager->GetManager<GameConfig>().Load(
+        std::string{"assets/gpa/game_config"} +
+        GameConfig_AssetExtension.data());
+    if (!handle) {
+        LOGC("game config not found!");
+        SDL_Quit();
+        return;
+    }
+    m_game_config = *handle;
+
+    m_window->Resize(handle->m_logic_size);
+    m_camera.ChangeScale(GetGameConfig().m_camera_scale);
+    m_assets_manager->GetManager<ScriptBinaryData>().Initialize(m_game_config);
+    m_assets_manager->GetManager<GameConfig>().Unload(handle);
 
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
@@ -312,10 +322,14 @@ void GameContext::Initialize() {
     m_level_manager->Switch(level);
 
     m_player_controller->RegisterVirtualController(level, GetGameConfig());
+
+    m_time->SetFPS(120);
 }
 
 void GameContext::Update() {
     PROFILE_MAIN_FRAME();
+    m_time->Begin();
+
     auto elapse_time = m_time->GetElapseTime();
 
     logicUpdate(elapse_time);
@@ -323,7 +337,11 @@ void GameContext::Update() {
     logicPostUpdate(elapse_time);
 
     m_level_manager->PoseUpdate();
+
+    m_time->End();
 }
+
+void GameContext::parseProjectPath() {}
 
 void GameContext::logicUpdate(TimeType elapse) {
     PROFILE_SECTION();
@@ -335,12 +353,12 @@ void GameContext::logicUpdate(TimeType elapse) {
     m_touches->Update();
 
     m_script_component_manager->Update();
-    m_bind_point_component_manager->Update();
 
     m_animation_player_manager->Update(elapse);
     m_ui_manager->HandleEvent();
     m_ui_manager->Update();
     m_relationship_manager->Update();
+    m_bind_point_component_manager->Update();
     m_trigger_component_manager->Update();
     m_event_system->Update();
     m_timer_manager->Update(elapse);
@@ -365,6 +383,7 @@ void GameContext::renderUpdate(TimeType elapse) {
     m_ui_manager->Render();
 
     m_physics_scene->RenderDebug();
+    m_bind_point_component_manager->RenderDebug(elapse);
 
     m_debug_drawer->Update(m_time->GetElapseTime());
 

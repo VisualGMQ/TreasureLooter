@@ -14,6 +14,7 @@
     </class>
 
     <asset name="LevelContent" extension=".level">
+        <element type="Path" name="script_path"/>
         <array type="EntityInstance" name="entities"/>
     </asset>
 </schema>

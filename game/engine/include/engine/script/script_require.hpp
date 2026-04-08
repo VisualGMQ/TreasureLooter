@@ -13,7 +13,7 @@ public:
     static constexpr std::string_view kLoadedModulesKey = "TLLoadModules";
 
     static void InitModuleRegisterTable(lua_State* L);
-    
+
     /**
      * Get cached module from lua
      * If module cached, put module on stack then return true, else get false
@@ -30,8 +30,9 @@ public:
 
 private:
     std::unordered_map<std::string, Path> m_alias_paths;
-    
+
     static int requireImpl(lua_State* L);
-    static bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager& mgr, const std::string& loadPath);
+    static bool loadAndRunModule(lua_State* L, ScriptBinaryDataManager& mgr,
+                                 const std::string& loadPath);
     bool moduleNameToPath(const std::string& modname, Path& out_path);
 };

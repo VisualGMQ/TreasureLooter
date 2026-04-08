@@ -26,5 +26,6 @@
         <element name="virtual_joystick" type="VirtualJoystickConfig"/>
         <element name="virtual_attack_button" type="VirtualButtonConfig"/>
         <handle  name="default_font" type="Font"/>
+        <unordered_map name="lua_paths" key="std::string" value="std::string"/>
     </asset>
 </schema>
