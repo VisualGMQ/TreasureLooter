@@ -1,9 +1,20 @@
 #include "engine/math.hpp"
-
-#include <valarray>
+#include <limits>
 
 Vec2 Reflect(const Vec2& v, const Vec2& n) {
     return 2.0 * n * v.Length() - v;
+}
+
+Vec2 Mirror(const Vec2& p, const Vec2& axis_position, const Vec2& axis_dir) {
+    return Reflect(p - axis_position, axis_dir);
+}
+
+Color Color::From0_1(float r, float g, float b, float a) {
+    return Color{r, g, b, a};
+}
+
+Color Color::From0_255(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    return Color{r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
 }
 
 Degrees::Degrees(float value) : m_value{value} {}

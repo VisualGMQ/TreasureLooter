@@ -240,6 +240,7 @@ std::ostream &operator<<(std::ostream &os, const TVec2<T> &p) {
 }
 
 Vec2 Reflect(const Vec2 &v, const Vec2 &n);
+Vec2 Mirror(const Vec2& p, const Vec2& axis_position, const Vec2& axis_dir);
 
 struct Color {
     static const Color Red;
@@ -249,6 +250,9 @@ struct Color {
     static const Color Purple;
     static const Color Black;
     static const Color White;
+
+    static Color From0_1(float r, float g, float b, float a);
+    static Color From0_255(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
     Color() = default;
 
