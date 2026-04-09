@@ -1,27 +1,47 @@
 #include "engine/tilemap.hpp"
 
-#include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
+#include "engine/context.hpp"
 #include "engine/log.hpp"
+#include "engine/macros.hpp"
 #include "engine/profile.hpp"
+#include "engine/renderer.hpp"
 #include "schema/tilemap_schema.hpp"
+#include "tmxlite/ObjectGroup.hpp"
+#include "tmxlite/Property.hpp"
 #include "tmxlite/TileLayer.hpp"
+#include <variant>
 
 // Bits on the far end of the 32-bit global tile ID are used for tile flags
-const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x8;
-const unsigned FLIPPED_VERTICALLY_FLAG = 0x4;
-const unsigned FLIPPED_DIAGONALLY_FLAG = 0x2;
-const unsigned ROTATED_HEXAGONAL_120_FLAG = 0x1;
+constexpr unsigned FLIPPED_HORIZONTALLY_FLAG = 0x8;
+constexpr unsigned FLIPPED_VERTICALLY_FLAG = 0x4;
+constexpr unsigned FLIPPED_DIAGONALLY_FLAG = 0x2;
+constexpr unsigned ROTATED_HEXAGONAL_120_FLAG = 0x1;
 
-TilemapLayer::TilemapLayer(Type type)
-    : m_type{type} {
+constexpr std::string_view TilemapPropertyName_EnableYSort = "enable_y_sort";
+
+constexpr std::array<std::string_view,
+                     static_cast<size_t>(RenderLayer::RenderLayerCount)>
+    TilemapRenderLayerNameMap = {
+        "land",
+        "arch",
+};
+
+TilemapLayer::TilemapLayer(Type type) : m_type{type} {}
+
+const TilemapTileLayer* TilemapLayer::AsTiledLayer() const {
+    TL_RETURN_DEFAULT_IF_FALSE(m_type == Type::Tiled);
+    return static_cast<const TilemapTileLayer*>(this);
 }
 
-const TilemapTileLayer* TilemapLayer::CastAsTiledLayer() const {
-    if (m_type == Type::Tiled) {
-        return static_cast<const TilemapTileLayer*>(this);
-    }
-    return nullptr;
+const class TilemapImageLayer* TilemapLayer::AsImageLayer() const {
+    TL_RETURN_DEFAULT_IF_FALSE(m_type == Type::Image);
+    return static_cast<const TilemapImageLayer*>(this);
+}
+
+const class TilemapObjectLayer* TilemapLayer::AsObjectLayer() const {
+    TL_RETURN_DEFAULT_IF_FALSE(m_type == Type::Object);
+    return static_cast<const TilemapObjectLayer*>(this);
 }
 
 TilemapLayer::Type TilemapLayer::GetType() const {
@@ -42,10 +62,16 @@ const Vec2& TilemapTileLayer::GetSize() const {
     return m_size;
 }
 
-bool TilemapLayer::IsEnableYSort() const { return m_enable_y_sort; }
+bool TilemapLayer::IsEnableYSort() const {
+    return m_enable_y_sort;
+}
 
 RenderLayer TilemapLayer::GetRenderLayer() const {
     return m_render_layer;
+}
+
+const std::vector<TilemapProperty>& TilemapLayer::GetProperties() const {
+    return m_properties;
 }
 
 void TilemapTileLayer::parse(const tmx::TileLayer& layer) {
@@ -59,16 +85,13 @@ void TilemapTileLayer::parse(const tmx::TileLayer& layer) {
         }
     }
 
-    // record properties
-    {
-        auto properties = layer.getProperties();
-        auto it = std::find_if(properties.begin(), properties.end(),
-                               [](const tmx::Property& prop) {
-                                   return prop.getName() ==
-                                          TilemapPropertyName_EnableYSort;
-                               });
-        if (it != properties.end()) {
-            m_enable_y_sort = it->getBoolValue();
+    // record Properties
+    for (auto& prop : layer.getProperties()) {
+        m_properties.emplace_back(TilemapProperty{prop});
+
+        if (prop.getType() == tmx::Property::Type::Boolean &&
+            prop.getName() == TilemapPropertyName_EnableYSort) {
+            m_enable_y_sort = prop.getBoolValue();
         }
     }
 
@@ -93,8 +116,269 @@ void TilemapTileLayer::parse(const tmx::TileLayer& layer) {
     }
 }
 
+TilemapProperty::TilemapProperty(int value) : m_data{value} {}
+
+TilemapProperty::TilemapProperty(float value) : m_data{value} {}
+
+TilemapProperty::TilemapProperty(bool value) : m_data{value} {}
+
+TilemapProperty::TilemapProperty(const Color& value) : m_data{value} {}
+
+TilemapProperty::TilemapProperty(const Path& value) : m_data{value} {}
+
+TilemapProperty::TilemapProperty(const std::string& value) : m_data{value} {}
+
+TilemapProperty::TilemapProperty(const tmx::Property& prop) {
+    switch (prop.getType()) {
+        case tmx::Property::Type::Boolean:
+            *this = TilemapProperty{prop.getBoolValue()};
+            break;
+        case tmx::Property::Type::Float:
+            *this = TilemapProperty{prop.getFloatValue()};
+            break;
+        case tmx::Property::Type::Int:
+            *this = TilemapProperty{prop.getIntValue()};
+            break;
+        case tmx::Property::Type::String:
+            *this = TilemapProperty{prop.getStringValue()};
+            break;
+        case tmx::Property::Type::Colour: {
+            auto color = prop.getColourValue();
+            *this = TilemapProperty{
+                Color::From0_255(color.r, color.g, color.b, color.a)};
+        } break;
+        case tmx::Property::Type::File:
+            *this = TilemapProperty{Path{prop.getFileValue()}};
+            break;
+        case tmx::Property::Type::Object:
+        case tmx::Property::Type::Class:
+            LOGW("[Tilemap]: not support object type property");
+            break;
+        case tmx::Property::Type::Undef:
+            break;
+    }
+}
+
+const int* TilemapProperty::AsInt() const {
+    return std::get_if<int>(&m_data);
+}
+
+const bool* TilemapProperty::AsBool() const {
+    return std::get_if<bool>(&m_data);
+}
+
+const std::string* TilemapProperty::AsString() const {
+    return std::get_if<std::string>(&m_data);
+}
+
+const Path* TilemapProperty::AsPath() const {
+    return std::get_if<Path>(&m_data);
+}
+
+const float* TilemapProperty::AsFloat() const {
+    return std::get_if<float>(&m_data);
+}
+
+TilemapProperty::Type TilemapProperty::GetType() const {
+    struct Visitor {
+        Type operator()(int) const { return Type::Int; }
+
+        Type operator()(float) const { return Type::Float; }
+
+        Type operator()(const Color&) const { return Type::Color; }
+
+        Type operator()(bool) const { return Type::Bool; }
+
+        Type operator()(const Path&) const { return Type::File; }
+
+        Type operator()(std::monostate) const { return Type::None; }
+    };
+
+    return std::visit(Visitor{}, m_data);
+}
+
+TilemapObject::TilemapObject(const Circle& value,
+                             const std::vector<TilemapProperty>& properties,
+                             bool visiable) noexcept
+    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+
+TilemapObject::TilemapObject(const Rect& value,
+                             const std::vector<TilemapProperty>& properties,
+                             bool visiable) noexcept
+    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+
+TilemapObject::TilemapObject(const Polygon& value,
+                             const std::vector<TilemapProperty>& properties,
+                             bool visiable) noexcept
+    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+
+TilemapObject::TilemapObject(const Vec2& value,
+                             const std::vector<TilemapProperty>& properties,
+                             bool visiable) noexcept
+    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+
+TilemapObject::TilemapObject(const tmx::Object& obj) {
+    for (auto& prop : obj.getProperties()) {
+        m_properties.emplace_back(TilemapProperty{prop});
+    }
+
+    m_visiable = obj.visible();
+    switch (obj.getShape()) {
+        case tmx::Object::Shape::Rectangle: {
+            auto& aabb = obj.getAABB();
+            m_data = Rect{
+                Vec2{aabb.left + aabb.width * 0.5f,
+                     aabb.top + aabb.height * 0.5f                    },
+                Vec2{            aabb.width * 0.5f, aabb.height * 0.5f}
+            };
+        } break;
+        case tmx::Object::Shape::Ellipse: {
+            auto& aabb = obj.getAABB();
+            TL_RETURN_IF_FALSE(aabb.width == aabb.height);
+            m_data = Circle{
+                Vec2{aabb.left + aabb.width * 0.5f,
+                     aabb.top + aabb.height * 0.5f},
+                aabb.width * 0.5f
+            };
+        } break;
+
+        case tmx::Object::Shape::Point:
+            m_data = Vec2{obj.getPosition().x, obj.getPosition().y};
+            break;
+        case tmx::Object::Shape::Polygon: {
+            auto& points = obj.getPoints();
+            auto& position = obj.getPosition();
+            Polygon polygon;
+            for (auto& p : points) {
+                auto final_position = p + position;
+                polygon.m_points.emplace_back(
+                    Vec2{final_position.x, final_position.y});
+            }
+            auto flip = obj.getFlipFlags();
+            auto& aabb = obj.getAABB();
+            Vec2 center{aabb.left + aabb.width * 0.5f,
+                        aabb.top + aabb.height * 0.5f};
+            if (flip & FLIPPED_VERTICALLY_FLAG) {
+                for (auto& p : polygon.m_points) {
+                    p = Mirror(p, center, Vec2::X_UNIT);
+                }
+            }
+            if (flip & FLIPPED_HORIZONTALLY_FLAG) {
+                for (auto& p : polygon.m_points) {
+                    p = Mirror(p, center, Vec2::Y_UNIT);
+                }
+            }
+            m_data = polygon;
+        } break;
+        case tmx::Object::Shape::Polyline:
+        case tmx::Object::Shape::Text:
+            LOGW("[Tilemap]: not support polyline & text object");
+            break;
+    }
+}
+
+Circle* TilemapObject::AsCircle() {
+    return const_cast<Circle*>(
+        static_cast<const TilemapObject&>(*this).AsCircle());
+}
+
+Rect* TilemapObject::AsRect() {
+    return const_cast<Rect*>(static_cast<const TilemapObject&>(*this).AsRect());
+}
+
+Polygon* TilemapObject::AsPolygon() {
+    return const_cast<Polygon*>(
+        static_cast<const TilemapObject&>(*this).AsPolygon());
+}
+
+Vec2* TilemapObject::AsPoint() {
+    return const_cast<Vec2*>(
+        static_cast<const TilemapObject&>(*this).AsPoint());
+}
+
+const Circle* TilemapObject::AsCircle() const {
+    return std::get_if<Circle>(&m_data);
+}
+
+const Rect* TilemapObject::AsRect() const {
+    return std::get_if<Rect>(&m_data);
+}
+
+const Polygon* TilemapObject::AsPolygon() const {
+    return std::get_if<Polygon>(&m_data);
+}
+
+const Vec2* TilemapObject::AsPoint() const {
+    return std::get_if<Vec2>(&m_data);
+}
+
+TilemapObject::Type TilemapObject::GetType() const {
+    struct Visitor {
+        Type operator()(const Circle&) const { return Type::Circle; }
+
+        Type operator()(const Rect&) const { return Type::Rect; }
+
+        Type operator()(const Polygon&) const { return Type::Polygon; }
+
+        Type operator()(const Vec2&) const { return Type::Point; }
+
+        Type operator()(std::monostate) const { return Type::None; }
+    };
+
+    return std::visit(Visitor{}, m_data);
+}
+
+bool TilemapObject::IsVisiable() const {
+    return m_visiable;
+}
+
+TilemapObjectLayer::TilemapObjectLayer(const tmx::ObjectGroup& layer)
+    : TilemapLayer(Type::Object) {
+    parse(layer);
+}
+
+const std::vector<TilemapObject>& TilemapObjectLayer::GetObjects() const {
+    return m_objects;
+}
+
+void TilemapObjectLayer::parse(const tmx::ObjectGroup& layer) {
+    for (auto& prop : layer.getProperties()) {
+        m_properties.emplace_back(TilemapProperty{prop});
+    }
+
+    for (auto& object : layer.getObjects()) {
+        m_objects.emplace_back(TilemapObject{object});
+    }
+}
+
+TilemapImageLayer::TilemapImageLayer(const tmx::ImageLayer& layer,
+                                     const Path& dir)
+    : TilemapLayer{Type::Image} {
+    parse(layer, dir);
+}
+
+ImageHandle TilemapImageLayer::GetImage() const {
+    return m_image;
+}
+
+const Vec2& TilemapImageLayer::GetPosition() const {
+    return m_position;
+}
+
+void TilemapImageLayer::parse(const tmx::ImageLayer& layer, const Path& dir) {
+    for (auto& prop : layer.getProperties()) {
+        m_properties.emplace_back(TilemapProperty{prop});
+    }
+
+    auto image_path = layer.getImagePath();
+
+    m_image =
+        CURRENT_CONTEXT.m_assets_manager->GetManager<Image>().Load(image_path);
+    m_position.x = layer.getOffset().x;
+    m_position.y = layer.getOffset().y;
+}
+
 Tileset::Tileset(const tmx::Tileset& tileset) {
-    tileset.getTileSize();
     parse(tileset);
 }
 
@@ -147,11 +431,58 @@ bool Tileset::HasTile(uint32_t gid) const {
     return gid >= m_firstgid && gid < m_lastgid;
 }
 
-const Vec2& Tileset::GetTileSize() const { return m_tile_size; }
+const Vec2& Tileset::GetTileSize() const {
+    return m_tile_size;
+}
 
-Tilemap::Tilemap(const Path& filename)
-    : m_filename{filename} {
+Tilemap::Tilemap(const Path& filename) : m_filename{filename} {
     parse(filename);
+}
+
+Tilemap::Tilemap(const Tilemap& o)
+    : m_tile_size{o.m_tile_size},
+      m_tilesets{o.m_tilesets},
+      m_filename{o.m_filename} {
+    for (auto& layer : o.m_layers) {
+        switch (layer->GetType()) {
+            case TilemapLayer::Type::Tiled:
+                m_layers.emplace_back(
+                    std::make_unique<TilemapTileLayer>(*layer->AsTiledLayer()));
+                break;
+            case TilemapLayer::Type::Object:
+                m_layers.emplace_back(std::make_unique<TilemapObjectLayer>(
+                    *layer->AsObjectLayer()));
+            case TilemapLayer::Type::Image:
+                m_layers.emplace_back(std::make_unique<TilemapImageLayer>(
+                    *layer->AsImageLayer()));
+                break;
+        }
+    }
+}
+
+Tilemap& Tilemap::operator=(const Tilemap& o) {
+    TL_RETURN_VALUE_IF_FALSE(&o != this, *this);
+
+    m_tile_size = o.m_tile_size;
+    m_tilesets = o.m_tilesets;
+    m_filename = o.m_filename;
+    for (auto& layer : m_layers) {
+        switch (layer->GetType()) {
+            case TilemapLayer::Type::Tiled:
+                m_layers.emplace_back(
+                    std::make_unique<TilemapTileLayer>(*layer->AsTiledLayer()));
+                break;
+            case TilemapLayer::Type::Object:
+                m_layers.emplace_back(std::make_unique<TilemapObjectLayer>(
+                    *layer->AsObjectLayer()));
+            case TilemapLayer::Type::Image:
+                m_layers.emplace_back(std::make_unique<TilemapImageLayer>(
+                    *layer->AsImageLayer()));
+                break;
+        }
+    }
+
+    return *this;
 }
 
 const Tile* Tilemap::GetTile(uint32_t gid) const {
@@ -188,6 +519,16 @@ void Tilemap::parse(const Path& filename) {
             m_layers.emplace_back(
                 std::make_unique<TilemapTileLayer>(tile_layer));
         }
+        if (layer->getType() == tmx::Layer::Type::Object) {
+            const auto& object_layer = layer->getLayerAs<tmx::ObjectGroup>();
+            m_layers.emplace_back(
+                std::make_unique<TilemapObjectLayer>(object_layer));
+        }
+        if (layer->getType() == tmx::Layer::Type::Image) {
+            const auto& image_layer = layer->getLayerAs<tmx::ImageLayer>();
+            m_layers.emplace_back(std::make_unique<TilemapImageLayer>(
+                image_layer, filename.parent_path()));
+        }
     }
 
     const auto& tilesets = map.getTilesets();
@@ -206,31 +547,26 @@ TilemapHandle TilemapManager::Load(const Path& filename, bool force) {
 
 TilemapComponent::TilemapComponent(Entity entity,
                                    const TilemapDefinition& create_info)
-    : m_handle{create_info.m_tilemap} {
-    if (!m_handle) {
-        return;
-    }
-
+    : m_tilemap{*create_info.m_tilemap} {
     auto& game_config = CURRENT_CONTEXT.GetGameConfig();
     auto& physics_scene = CURRENT_CONTEXT.m_physics_scene;
 
-    auto tile_size = m_handle->GetTileSize();
-    m_tilemap_collision = physics_scene->CreateTilemapCollision(
-        create_info.m_position);
+    auto tile_size = m_tilemap.GetTileSize();
+    m_tilemap_collision =
+        physics_scene->CreateTilemapCollision(create_info.m_position);
 
-    auto& layers = m_handle->GetLayers();
+    auto& layers = m_tilemap.GetLayers();
     for (size_t i = 0; i < layers.size(); i++) {
         auto& layer = layers[i];
         if (layer->GetType() == TilemapLayer::Type::Tiled) {
-            auto tiled_layer = layer->CastAsTiledLayer();
-            m_tilemap_collision->CreateLayer(
-                Vec2UI(tile_size.w, tile_size.h),
-                game_config.m_tile_in_chunk_size);
+            auto tiled_layer = layer->AsTiledLayer();
+            m_tilemap_collision->CreateLayer(Vec2UI(tile_size.w, tile_size.h),
+                                             game_config.m_tile_in_chunk_size);
             auto& size = tiled_layer->GetSize();
             for (size_t y = 0; y < size.y; y++) {
                 for (size_t x = 0; x < size.x; x++) {
                     auto& layer_tile = tiled_layer->GetTile(x, y);
-                    auto tile = m_handle->GetTile(layer_tile.m_gid);
+                    auto tile = m_tilemap.GetTile(layer_tile.m_gid);
                     if (!tile ||
                         tile->m_collision_rect.m_half_size == Vec2::ZERO) {
                         continue;
@@ -250,10 +586,9 @@ TilemapComponent::TilemapComponent(Entity entity,
                         rect.m_center.x += offset_x * 2.0;
                     }
 
-                    rect.m_center +=
-                        create_info.m_position +
-                        Vec2(x, y + 1) * m_handle->GetTileSize() + Vec2(
-                            0, -tile->m_tile_size.h);
+                    rect.m_center += create_info.m_position +
+                                     Vec2(x, y + 1) * m_tilemap.GetTileSize() +
+                                     Vec2(0, -tile->m_tile_size.h);
 
                     PhysicsShape shape{rect};
                     auto actor = physics_scene->CreateActorInChunk(
@@ -270,10 +605,12 @@ TilemapComponent::TilemapComponent(Entity entity,
     }
 }
 
-TilemapHandle TilemapComponent::GetHandle() const { return m_handle; }
+const Tilemap& TilemapComponent::Get() const {
+    return m_tilemap;
+}
 
-const PhysicsScene::TilemapCollision*
-TilemapComponent::GetTilemapCollision() const {
+const PhysicsScene::TilemapCollision* TilemapComponent::GetTilemapCollision()
+    const {
     return m_tilemap_collision;
 }
 
@@ -289,17 +626,17 @@ void TilemapComponentManager::Update() {
     }
 }
 
-void TilemapComponentManager::drawTilemap(const TilemapComponent& tilemap) {
+void TilemapComponentManager::drawTilemap(const TilemapComponent& component) {
     auto& renderer = CURRENT_CONTEXT.m_renderer;
-    auto handle = tilemap.GetHandle();
-    for (auto& layer : handle->GetLayers()) {
+    auto tilemap = component.Get();
+    for (auto& layer : tilemap.GetLayers()) {
         if (layer->GetType() == TilemapLayer::Type::Tiled) {
-            auto tiled_layer = layer->CastAsTiledLayer();
+            auto tiled_layer = layer->AsTiledLayer();
             auto& size = tiled_layer->GetSize();
             for (size_t y = 0; y < size.y; y++) {
                 for (size_t x = 0; x < size.x; x++) {
                     auto& layer_tile = tiled_layer->GetTile(x, y);
-                    auto tile = handle->GetTile(layer_tile.m_gid);
+                    auto tile = tilemap.GetTile(layer_tile.m_gid);
                     if (!tile) {
                         continue;
                     }
@@ -307,12 +644,12 @@ void TilemapComponentManager::drawTilemap(const TilemapComponent& tilemap) {
                     dst_rect.m_half_size = tile->m_region.m_size * 0.5;
 
                     float scale = 1.0;
-                    Vec2 scaled_tile_size = handle->GetTileSize() * scale;
+                    Vec2 scaled_tile_size = tilemap.GetTileSize() * scale;
 
                     dst_rect.m_center =
-                        tilemap.GetTilemapCollision()->m_topleft +
-                        Vec2(x, y + 1) * scaled_tile_size + Vec2(
-                            tile->m_tile_size.w, -tile->m_tile_size.h) * 0.5;
+                        component.GetTilemapCollision()->m_topleft +
+                        Vec2(x, y + 1) * scaled_tile_size +
+                        Vec2(tile->m_tile_size.w, -tile->m_tile_size.h) * 0.5;
 
                     constexpr float scale_expand = 0.01;
                     scale += scale_expand;
@@ -332,9 +669,18 @@ void TilemapComponentManager::drawTilemap(const TilemapComponent& tilemap) {
                     renderer->DrawImage(*tile->m_image, tile->m_region,
                                         dst_region, Color::White, 0, {0, 0},
 
-                                        layer_tile.m_flip,
-                                        z_order);
+                                        layer_tile.m_flip, z_order);
                 }
+            }
+        } else if (layer->GetType() == TilemapLayer::Type::Image) {
+            auto image_layer = layer->AsImageLayer();
+            ImageHandle image = image_layer->GetImage();
+            if (image) {
+                renderer->DrawImage(
+                    *image, Region{Vec2::ZERO, image->GetSize()},
+                    Region{image_layer->GetPosition(), image->GetSize()},
+                    Color::White, 0, Vec2::ZERO, Flip::None,
+                    GetZOrderByYSorting(0, RenderLayer::Default));
             }
         }
     }

@@ -822,7 +822,7 @@ void bindTilemapComponent(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<TilemapComponent>("TilemapComponent")
-                .addFunction("GetHandle", &TilemapComponent::GetHandle)
+                .addFunction("GetHandle", &TilemapComponent::Get)
             .endClass()
             .beginClass<TilemapComponentManager>("TilemapComponentManager")
                 .addFunction("Get", +[](TilemapComponentManager* m, Entity e) {

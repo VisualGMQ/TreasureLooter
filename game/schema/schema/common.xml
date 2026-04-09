@@ -2,36 +2,40 @@
     <include>math.hpp</include>
 
     <class name="Rect">
-        <element name="center" type="Vec2"/>
-        <element name="half_size" type="Vec2"/>
+        <element name="center" type="Vec2" />
+        <element name="half_size" type="Vec2" />
     </class>
 
     <class name="Circle">
-        <element name="center" type="Vec2"/>
-        <element name="radius" type="float" default="0"/>
+        <element name="center" type="Vec2" />
+        <element name="radius" type="float" default="0" />
     </class>
-    
+
+    <class name="Polygon">
+        <array name="points" type="Vec2" />
+    </class>
+
     <enum name="EntityType">
-        <item name="Normal"/>
-        <item name="Player"/>
+        <item name="Normal" />
+        <item name="Player" />
     </enum>
-    
+
     <enum name="FPSOption">
-        <item name="FPS_15"/>
-        <item name="FPS_30"/>
-        <item name="FPS_60"/>
-        <item name="FPS_90"/>
-        <item name="FPS_120"/>
-        <item name="FPS_144"/>
-        <item name="NoLimit"/>
+        <item name="FPS_15" />
+        <item name="FPS_30" />
+        <item name="FPS_60" />
+        <item name="FPS_90" />
+        <item name="FPS_120" />
+        <item name="FPS_144" />
+        <item name="NoLimit" />
     </enum>
 
     <enum name="RenderLayer">
-        <item name="TilemapLand" value="0"/>
-        <item name="TilemapArch"/>
-        <item name="Default"/>
-        <item name="DebugDraw"/>
-        <item name="UI"/>
-        <item name="RenderLayerCount"/>
+        <item name="TilemapLand" value="0" />
+        <item name="TilemapArch" />
+        <item name="Default" />
+        <item name="DebugDraw" />
+        <item name="UI" />
+        <item name="RenderLayerCount" />
     </enum>
 </schema>
