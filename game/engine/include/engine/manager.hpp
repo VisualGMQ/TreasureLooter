@@ -14,7 +14,9 @@ public:
     ComponentManager(const ComponentManager&) = delete;
     ComponentManager& operator=(const ComponentManager&) = delete;
 
-
+    /**
+     * register component on entity
+     */
     template <typename... Args>
     void RegisterEntity(Entity entity, Args&&... args) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
@@ -23,13 +25,20 @@ public:
         }
 
         if constexpr (is_handle) {
-            m_components.emplace(entity, Component{component_type{std::forward<Args>(args)...}, true});
+            m_components.emplace(
+                entity,
+                Component{component_type{std::forward<Args>(args)...}, true});
         } else {
             m_components.emplace(
-                entity, Component{std::make_unique<T>(std::forward<Args>(args)...), true});
+                entity,
+                Component{std::make_unique<T>(std::forward<Args>(args)...),
+                          true});
         }
     }
 
+    /**
+     * register inherit type of component on entity
+     */
     template <typename U, typename... Args>
     void RegisterEntityByDerive(Entity entity, Args&&... args) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
@@ -38,33 +47,25 @@ public:
         }
 
         if constexpr (is_handle) {
-            m_components.emplace(entity, Component{component_type{std::forward<Args>(args)...}, true});
+            m_components.emplace(
+                entity,
+                Component{component_type{std::forward<Args>(args)...}, true});
         } else {
             m_components.emplace(
-                entity, Component{std::make_unique<U>(std::forward<Args>(args)...), true});
+                entity,
+                Component{std::make_unique<U>(std::forward<Args>(args)...),
+                          true});
         }
     }
 
     void RemoveEntity(Entity entity) { m_components.erase(entity); }
 
-    void ReplaceComponent(Entity entity, const T& component) {
-        if (auto it = m_components.find(entity); it != m_components.end()) {
-            if constexpr (is_handle) {
-                it->second.m_component = component;
-                it->second.m_enable = true;
-            } else {
-                *it->second.m_component = component;
-                it->second.m_enable = true;
-            }
-            return;
-        }
+    void ReplaceComponent(Entity entity, T&& component) {
+        this->doReplaceComponent(entity, std::move(component));
+    }
 
-        if constexpr (is_handle) {
-            m_components.emplace(entity, Component{component, true});
-        } else {
-            m_components.emplace(
-                entity, Component{std::make_unique<T>(component), true});
-        }
+    void ReplaceComponent(Entity entity, const T& component) {
+        this->doReplaceComponent(entity, component);
     }
 
     bool Has(Entity entity) const {
@@ -77,13 +78,13 @@ public:
         }
         return false;
     }
-    
+
     void Enable(Entity entity) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             it->second.m_enable = true;
         }
     }
- 
+
     void Disable(Entity entity) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             it->second.m_enable = false;
@@ -119,5 +120,27 @@ protected:
         component_type m_component;
         bool m_enable = true;
     };
+
     std::unordered_map<Entity, Component> m_components;
+
+    template <typename U>
+    void doReplaceComponent(Entity entity, U&& component) {
+        if (auto it = m_components.find(entity); it != m_components.end()) {
+            if constexpr (is_handle) {
+                it->second.m_component = std::forward<U>(component);
+                it->second.m_enable = true;
+            } else {
+                *it->second.m_component = std::forward<U>(component);
+                it->second.m_enable = true;
+            }
+            return;
+        }
+
+        if constexpr (is_handle) {
+            m_components.emplace(entity, Component{std::forward<U>(component), true});
+        } else {
+            m_components.emplace(
+                entity, Component{std::make_unique<T>(std::forward<U>(component)), true});
+        }
+    }
 };

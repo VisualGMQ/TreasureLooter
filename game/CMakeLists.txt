@@ -122,7 +122,7 @@ target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} $
     ${SCHEMA_DECLARE_OUTPUT_FILES}
     ${SCHEMA_SERD_OUTPUT_FILES}
     ${SCHEMA_ASSET_INFO_FILES}
-    ${SCHEMA_BINDING_OUTPUT_FILES}) 
+    ${SCHEMA_BINDING_OUTPUT_FILES})
 target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
 target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${ENGINE_NAME}
@@ -134,7 +134,7 @@ target_link_libraries(${ENGINE_NAME}
     RapidXML
     stduuid
     tmxlite
-    
+
     Luau.Compiler
     Luau.VM
     LuaBridge)
@@ -170,7 +170,7 @@ endif()
 file(GLOB_RECURSE GAME_SCRIPTS scripts/*.luau)
 
 target_sources(${GAME_NAME} PRIVATE
-    main_entry/game_main.cpp 
+    main_entry/game_main.cpp
     ${GAME_SCRIPTS}
     ${SCHEMA_SCRIPT_HINT_FILES}
     ${LUAU_TYPES_HINT_FILES})

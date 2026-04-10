@@ -374,9 +374,9 @@ void InstanceDisplay(const char* name, const Transform& value) {
 }
 
 void InstanceDisplay(const char* name, TilemapHandle& value) {
-    ImGui::Text("%s", name);
-    ShowSelectAssetFileDialog(value, {
-                                         {"TileMap", "tmx"}
+    HandleInstanceDisplayCommon(name, value,
+                                {
+                                    {"TileMap", "tmx"}
     });
 }
 
@@ -736,7 +736,8 @@ void InstanceDisplay(const char* name, NullEntity) {
 void InstanceDisplay(const char* name, const Path& path) {
     auto string = path.string();
     ImGui::BeginDisabled(true);
-    ImGui::InputText(name, string.data(), string.size(), ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputText(name, string.data(), string.size(),
+                     ImGuiInputTextFlags_ReadOnly);
     ImGui::EndDisabled();
 }
 
@@ -893,8 +894,8 @@ void InstanceDisplay(const char* name, const CollisionGroup& group) {
     ImGui::PushID(&group);
 
     std::vector<CollisionGroupType> collision_groups;
-    for (unsigned i = 0;
-         i < sizeof(std::underlying_type_t<CollisionGroupType>); i++) {
+    for (unsigned i = 0; i < sizeof(std::underlying_type_t<CollisionGroupType>);
+         i++) {
         auto type = static_cast<CollisionGroupType>(i);
         if (group.Has(type)) {
             collision_groups.push_back(type);

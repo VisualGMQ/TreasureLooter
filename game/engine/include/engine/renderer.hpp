@@ -9,6 +9,7 @@
 #include "schema/flip.hpp"
 #include "engine/text.hpp"
 #include "engine/window.hpp"
+#include <optional>
 
 class Camera;
 class Image;
@@ -70,6 +71,7 @@ struct DrawCommand {
                  DrawLineCommand
     > m_cmd;
     float m_z_order{};
+    float m_y_sorting{};
     Color m_color = Color::White;
 };
 
@@ -90,33 +92,40 @@ public:
     void SetClearColor(const Color&);
 
     void DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
-                  float z_order = 0,
-                  bool use_camera = true);
+                  double z_order = 0,
+                  bool use_camera = true,
+                  float y_sorting = 0);
 
-    void DrawRect(const Rect&, const Color&, float z_order = 0,
-                  bool use_camera = true);
+    void DrawRect(const Rect&, const Color&, double z_order = 0,
+                  bool use_camera = true,
+                  float y_sorting = 0);
 
     void DrawCircle(const Circle&, const Color&, uint32_t fragment = 20,
-                    float z_order = 0,
-                    bool use_camera = true);
+                    double z_order = 0,
+                    bool use_camera = true,
+                    float y_sorting = 0);
 
-    void FillRect(const Rect&, const Color&, float z_order = 0,
-                  bool use_camera = true);
+    void FillRect(const Rect&, const Color&, double z_order = 0,
+                  bool use_camera = true,
+                  float y_sorting = 0);
 
     void DrawImage(const Image&, const Region& src, const Region& dst,
                    const Color& color,
                    Degrees rotation, const Vec2& center, Flags<Flip>,
-                   float z_order = 0, bool use_camera = true);
+                   double z_order = 0, bool use_camera = true,
+                   float y_sorting = 0);
 
     void DrawImage9Grid(const Image&, const Region& src, const Region& dst,
                         const Color& color,
                         const Image9Grid&, float border_scale = 1.0,
-                        float z_order = 0, bool use_camera = true);
+                        double z_order = 0, bool use_camera = true,
+                        float y_sorting = 0);
 
     void DrawImageEx(const Image& image, const Region& src, const Vec2& topleft,
                      const Vec2& topright, const Vec2& bottomleft,
                      const Color& color,
-                     float z_order = 0, bool use_camera = true);
+                     double z_order = 0, bool use_camera = true,
+                     float y_sorting = 0);
 
     void Clear();
 
@@ -125,16 +134,20 @@ public:
 
     SDL_Renderer* GetRenderer() const;
 
+    void BeginYSorting();
+    void EndYSorting();
+    bool IsRecordingYSorting() const;
+
 private:
     SDL_Renderer* m_renderer{};
     SDL_Color m_clear_color;
     SDL_Texture* m_text_texture{};
     std::vector<DrawCommand> m_draw_commands;
+    std::vector<std::pair<size_t, size_t>> m_y_sorting_range;
+    bool m_is_y_sorting_range_close = true;
 
     void transformByCamera(const Camera&, Vec2* center, Vec2* size) const;
     void resizeTexture(const Vec2UI& new_size);
     void applyDrawCommands();
     void sortDrawCommands();
 };
-
-float GetZOrderByYSorting(float y, RenderLayer);

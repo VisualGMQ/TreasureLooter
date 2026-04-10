@@ -14,7 +14,8 @@
 #include <variant>
 
 class TilemapTileLayer;
-class TilemapDefinition;
+class TilemapLayerDefinition;
+class DrawOrder;
 
 struct TilemapProperty {
     enum class Type {
@@ -60,7 +61,7 @@ public:
         // Group, not support currently
     };
 
-    TilemapLayer(Type);
+    TilemapLayer(const std::string& name, Type);
 
     virtual ~TilemapLayer() = default;
 
@@ -70,18 +71,15 @@ public:
 
     Type GetType() const;
 
-    bool IsEnableYSort() const;
-    RenderLayer GetRenderLayer() const;
-
     const std::vector<TilemapProperty>& GetProperties() const;
+    std::string_view GetName() const;
 
 protected:
-    bool m_enable_y_sort{false};
-    RenderLayer m_render_layer = RenderLayer::Default;
     std::vector<TilemapProperty> m_properties;
 
 private:
     Type m_type;
+    std::string m_name;
 };
 
 class TilemapTileLayer : public TilemapLayer {
@@ -91,7 +89,7 @@ public:
         Flags<Flip> m_flip = Flip::None;
     };
 
-    explicit TilemapTileLayer(const tmx::TileLayer&);
+    explicit TilemapTileLayer(const std::string& name, const tmx::TileLayer&);
 
     const Tile& GetTile(int x, int y) const;
     const Vec2& GetSize() const;
@@ -148,7 +146,8 @@ private:
 
 class TilemapObjectLayer : public TilemapLayer {
 public:
-    explicit TilemapObjectLayer(const tmx::ObjectGroup&);
+    explicit TilemapObjectLayer(const std::string& name,
+                                const tmx::ObjectGroup&);
 
     const std::vector<TilemapObject>& GetObjects() const;
 
@@ -160,7 +159,8 @@ private:
 
 class TilemapImageLayer : public TilemapLayer {
 public:
-    TilemapImageLayer(const tmx::ImageLayer&, const Path& dir);
+    TilemapImageLayer(const std::string& name, const tmx::ImageLayer&,
+                      const Path& dir);
 
     ImageHandle GetImage() const;
     const Vec2& GetPosition() const;
@@ -245,23 +245,28 @@ public:
     TilemapHandle Load(const Path& filename, bool force = false) override;
 };
 
-class TilemapComponent {
+class TilemapLayerComponent {
 public:
-    TilemapComponent(Entity, const TilemapDefinition&);
+    TilemapLayerComponent(Entity, const TilemapLayerDefinition&);
 
-    [[nodiscard]] const Tilemap& Get() const;
+    [[nodiscard]] const TilemapLayer* GetLayer() const;
+    [[nodiscard]] const Tilemap* GetTilemap() const;
 
     const PhysicsScene::TilemapCollision* GetTilemapCollision() const;
 
 private:
-    Tilemap m_tilemap;
+    std::unique_ptr<TilemapLayer> m_tilemap_layer;
+    TilemapHandle m_tilemap_handle;  // FIXME: component rely on asset may cause
+                                     // asset dangling reference
+    std::string m_name;
     PhysicsScene::TilemapCollision* m_tilemap_collision{};
 };
 
-class TilemapComponentManager : public ComponentManager<TilemapComponent> {
+class TilemapLayerComponentManager : public ComponentManager<TilemapLayerComponent> {
 public:
-    void Update();
+    void SubmitDrawCommand(Entity);
 
 private:
-    void drawTilemap(const TilemapComponent& tilemap);
+    void drawTilemapLayer(const DrawOrder*,
+                          const TilemapLayerComponent& tilemap);
 };

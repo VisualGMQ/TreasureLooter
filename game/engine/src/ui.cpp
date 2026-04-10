@@ -1,10 +1,11 @@
 #include "engine/ui.hpp"
 
 #include "engine/context.hpp"
+#include "engine/input/finger_touch.hpp"
 #include "engine/input/mouse.hpp"
+#include "engine/macros.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
-#include "engine/input/finger_touch.hpp"
 
 void UIText::SetFont(FontHandle font) {
     m_font = font;
@@ -287,21 +288,9 @@ void UIComponentManager::Update() {
     m_is_first_update = false;
 }
 
-void UIComponentManager::Render() {
-    PROFILE_UI_SECTION(__FUNCTION__);
-
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
-    if (!level) {
-        return;
-    }
-
-    Entity ui_root_entity = level->GetUIRootEntity();
+void UIComponentManager::SubmitDrawCommand(Entity entity) {
     auto& renderer = CURRENT_CONTEXT.m_renderer;
-    auto relationship =
-        CURRENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
-    for (auto child : relationship->m_children) {
-        render(*renderer, child);
-    }
+    render(*renderer, entity);
 }
 
 void UIComponentManager::HandleEvent() {
@@ -321,8 +310,7 @@ void UIComponentManager::HandleEvent() {
 
 #ifndef TL_ANDROID
     for (auto child : relationship->m_children) {
-        handleEvent(child, -1, left_button, mouse->Position(),
-                    mouse->Offset());
+        handleEvent(child, -1, left_button, mouse->Position(), mouse->Offset());
     }
 #else
     auto& touches = CURRENT_CONTEXT.m_touches;
@@ -499,9 +487,8 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
-    if (!transform || !ui) {
-        return;
-    }
+    TL_RETURN_IF_FALSE(transform && ui && IsEnable(entity));
+
     if (ui->m_use_clip) {
         SDL_Rect rect;
         rect.w = transform->m_size.w;
@@ -534,26 +521,28 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     dst.m_size = transform->m_size;
     dst.m_topleft = transform->m_position;
 
+    const DrawOrder* draw_order = CURRENT_CONTEXT.m_draw_order_manager->Get(entity);
+    double z_order = draw_order ? draw_order->GetGlobalOrder() : 0;
+    float y = transform->m_position.y;
+
     if (theme->m_image) {
         Region src;
         src.m_size = theme->m_image->GetSize();
         theme->m_image->ChangeColorMask(theme->m_background_color);
         if (theme->m_image_9grid.IsValid()) {
-            renderer.DrawImage9Grid(*theme->m_image, src, dst,
-                                    Color::White,
-                                    theme->m_image_9grid,
-                                    theme->m_image_9grid.scale, ZOrder, false);
+            renderer.DrawImage9Grid(
+                *theme->m_image, src, dst, Color::White, theme->m_image_9grid,
+                theme->m_image_9grid.scale, z_order, false, y);
         } else {
             renderer.DrawImage(*theme->m_image, src, dst, Color::White, 0, {},
-                               Flip::None,
-                               ZOrder, false);
+                               Flip::None, z_order, false, y);
         }
         theme->m_image->ChangeColorMask(Color::White);
     } else {
-        renderer.FillRect(rect, theme->m_background_color, ZOrder, false);
+        renderer.FillRect(rect, theme->m_background_color, z_order, false, y);
     }
 
-    renderer.DrawRect(rect, theme->m_border_color, ZOrder, false);
+    renderer.DrawRect(rect, theme->m_border_color, z_order, false, y);
 
     if (ui->m_text) {
         auto text_size = ui->m_text->GetTextImageSize();
@@ -582,8 +571,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         Region src;
         src.m_size = image.GetSize();
         renderer.DrawImage(image, src, region, Color::White, 0, Vec2::ZERO,
-                           Flip::None,
-                           ZOrder, false);
+                           Flip::None, z_order, false, y);
         image.ChangeColorMask(Color::White);
     }
 

@@ -8,6 +8,7 @@
 #include "engine/collision_group.hpp"
 #include "engine/context.hpp"
 #include "engine/debug_drawer.hpp"
+#include "engine/draw_order.hpp"
 #include "engine/entity.hpp"
 #include "engine/handle.hpp"
 #include "engine/image.hpp"
@@ -269,7 +270,6 @@ void bindMath(lua_State* L) {
                 .addStaticProperty("Yellow", &Color::Yellow)
                 .addStaticProperty("Purple", &Color::Purple)
             .endClass()
-            .addFunction("GetZOrderByYSorting", &GetZOrderByYSorting)
             .addFunction("GetAngle", &GetAngle)
             .addFunction("DecomposeVector", &DecomposeVector)
             .beginClass<DecompositionResult>("DecompositionResult")
@@ -312,6 +312,10 @@ void bindMath(lua_State* L) {
                 .addProperty("m_rotation", &Transform::m_rotation, true)
                 .addProperty("m_size", &Transform::m_size, true)
                 .addProperty("m_scale", &Transform::m_scale, true)
+                .addFunction("GetGlobalPosition",
+                             +[](Transform* t) {
+                                 return GetPosition(t->GetGlobalMat());
+                             })
             .endClass()
             .beginClass<Region>("Region")
                 .template addConstructor<void ()>()
@@ -368,6 +372,105 @@ void bindImage(lua_State* L) {
         .endNamespace();
 }
 
+void bindDebugDraw(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<IDebugDrawer>("DebugDraw")
+                .addStaticProperty("kOneFrame",
+                                   +[]() { return IDebugDrawer::kOneFrame; })
+                .addStaticProperty("kAlways",
+                                   +[]() { return IDebugDrawer::kAlways; })
+                .addFunction(
+                    "DrawRect",
+                    +[](IDebugDrawer* d, Vec2 center, Vec2 half_size, Color color,
+                        TimeType time) {
+                        if (!d) {
+                            return;
+                        }
+                        Rect r;
+                        r.m_center = center;
+                        r.m_half_size = half_size;
+                        d->DrawRect(r, color, time, true);
+                    },
+                    +[](IDebugDrawer* d, Vec2 center, Vec2 half_size, Color color,
+                        TimeType time, bool use_camera) {
+                        if (!d) {
+                            return;
+                        }
+                        Rect r;
+                        r.m_center = center;
+                        r.m_half_size = half_size;
+                        d->DrawRect(r, color, time, use_camera);
+                    })
+                .addFunction(
+                    "FillRect",
+                    +[](IDebugDrawer* d, Vec2 center, Vec2 half_size, Color color,
+                        TimeType time) {
+                        if (!d) {
+                            return;
+                        }
+                        Rect r;
+                        r.m_center = center;
+                        r.m_half_size = half_size;
+                        d->FillRect(r, color, time, true);
+                    },
+                    +[](IDebugDrawer* d, Vec2 center, Vec2 half_size, Color color,
+                        TimeType time, bool use_camera) {
+                        if (!d) {
+                            return;
+                        }
+                        Rect r;
+                        r.m_center = center;
+                        r.m_half_size = half_size;
+                        d->FillRect(r, color, time, use_camera);
+                    })
+                .addFunction(
+                    "DrawCircle",
+                    +[](IDebugDrawer* d, Vec2 center, float radius, Color color,
+                        TimeType time) {
+                        if (!d) {
+                            return;
+                        }
+                        Circle c;
+                        c.m_center = center;
+                        c.m_radius = radius;
+                        d->DrawCircle(c, color, time, true);
+                    },
+                    +[](IDebugDrawer* d, Vec2 center, float radius, Color color,
+                        TimeType time, bool use_camera) {
+                        if (!d) {
+                            return;
+                        }
+                        Circle c;
+                        c.m_center = center;
+                        c.m_radius = radius;
+                        d->DrawCircle(c, color, time, use_camera);
+                    })
+                .addFunction(
+                    "AddLine",
+                    +[](IDebugDrawer* d, Vec2 p1, Vec2 p2, Color color,
+                        TimeType time) {
+                        if (!d) {
+                            return;
+                        }
+                        d->AddLine(p1, p2, color, time, true);
+                    },
+                    +[](IDebugDrawer* d, Vec2 p1, Vec2 p2, Color color,
+                        TimeType time, bool use_camera) {
+                        if (!d) {
+                            return;
+                        }
+                        d->AddLine(p1, p2, color, time, use_camera);
+                    })
+                .addFunction("Clear", +[](IDebugDrawer* d) {
+                    if (d) {
+                        d->Clear();
+                    }
+                })
+            .endClass()
+        .endNamespace();
+}
+
 void bindContext(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
@@ -402,6 +505,10 @@ void bindContext(lua_State* L) {
                              +[](GameContext* ctx) -> SpriteManager* {
                                  return ctx->m_sprite_manager.get();
                              })
+                .addFunction("GetDrawOrderManager",
+                             +[](GameContext* ctx) -> DrawOrderManager* {
+                                 return ctx->m_draw_order_manager.get();
+                             })
                 .addFunction("GetRenderer",
                              +[](GameContext* ctx) -> Renderer* {
                                  return ctx->m_renderer.get();
@@ -435,8 +542,8 @@ void bindContext(lua_State* L) {
                                  return ctx->m_ui_manager.get();
                              })
                 .addFunction("GetTilemapComponentManager",
-                             +[](GameContext* ctx) -> TilemapComponentManager* {
-                                 return ctx->m_tilemap_component_manager.get();
+                             +[](GameContext* ctx) -> TilemapLayerComponentManager* {
+                                 return ctx->m_tilemap_layer_component_manager.get();
                              })
                 .addFunction("GetCCTManager",
                              +[](GameContext* ctx) -> CCTManager* {
@@ -449,6 +556,14 @@ void bindContext(lua_State* L) {
                 .addFunction("GetEventDebugger",
                              +[](GameContext* ctx) -> EventDebugger* {
                                  return ctx->m_event_debugger_system.get();
+                             })
+                .addFunction("GetDrawOrderManager",
+                             +[](GameContext* ctx) -> DrawOrderManager* {
+                                 return ctx->m_draw_order_manager.get();
+                             })
+                .addFunction("GetDebugDraw",
+                             +[](GameContext* ctx) -> IDebugDrawer* {
+                                 return ctx->m_debug_drawer.get();
                              })
             .endClass()
             .addFunction("GetContext", +[]() -> GameContext* {
@@ -570,17 +685,17 @@ void bindTimer(lua_State* L) {
             .endClass()
             .addProperty("null_timer_id", +[]() -> TimerID { return null_timer_id; })
             .beginClass<Timer>("Timer")
-                .addFunction("SetInterval", &Timer::SetInterval)    
-                .addFunction("Start", &Timer::Start)    
-                .addFunction("Stop", &Timer::Stop)    
-                .addFunction("Rewind", &Timer::Rewind)    
-                .addFunction("SetLoop", &Timer::SetLoop)    
-                .addFunction("Pause", &Timer::Pause)    
-                .addFunction("GetInterval", &Timer::GetInterval)    
-                .addFunction("SetEventType", &Timer::SetEventType)    
-                .addFunction("GetEventType", &Timer::GetEventType)    
-                .addFunction("GetID", &Timer::GetID)    
-                .addFunction("IsRunning", &Timer::IsRunning)    
+                .addFunction("SetInterval", &Timer::SetInterval)
+                .addFunction("Start", &Timer::Start)
+                .addFunction("Stop", &Timer::Stop)
+                .addFunction("Rewind", &Timer::Rewind)
+                .addFunction("SetLoop", &Timer::SetLoop)
+                .addFunction("Pause", &Timer::Pause)
+                .addFunction("GetInterval", &Timer::GetInterval)
+                .addFunction("SetEventType", &Timer::SetEventType)
+                .addFunction("GetEventType", &Timer::GetEventType)
+                .addFunction("GetID", &Timer::GetID)
+                .addFunction("IsRunning", &Timer::IsRunning)
             .endClass()
             .beginClass<TimerManager>("TimerManager")
                 .addFunction("Create", &TimerManager::Create)
@@ -608,10 +723,10 @@ void bindSprite(lua_State* L) {
         .beginNamespace("TL")
             .beginClass<SpriteDefinition>("Sprite")
                 .addConstructor<void(void)>()
+                .addProperty("m_image", &SpriteDefinition::m_image, true)
                 .addProperty("m_region", &SpriteDefinition::m_region, true)
                 .addProperty("m_size", &SpriteDefinition::m_size, true)
                 .addProperty("m_anchor", &SpriteDefinition::m_anchor, true)
-                .addProperty("m_z_order", &SpriteDefinition::m_z_order, true)
                 .addProperty("m_color", &SpriteDefinition::m_color, true)
                 .addProperty("m_flip", &SpriteDefinition::m_flip, true)
             .endClass()
@@ -626,6 +741,30 @@ void bindSprite(lua_State* L) {
                              +[](SpriteManager* m, Entity e,
                                  const SpriteDefinition& s) {
                                  m->RegisterEntity(e, s);
+                             })
+            .endClass()
+        .endNamespace();
+}
+
+void bindDrawOrder(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<DrawOrder>("DrawOrder")
+                .addProperty("m_z_order", &DrawOrder::m_z_order, true)
+                .addProperty("m_enable_y_sorting", &DrawOrder::m_enable_y_sorting,
+                             true)
+                .addFunction("GetGlobalOrder", &DrawOrder::GetGlobalOrder)
+            .endClass()
+            .beginClass<DrawOrderManager>("DrawOrderManager")
+                .addFunction("Get", +[](DrawOrderManager* m, Entity e) {
+                    return m->Get(e);
+                })
+                .addFunction("Has", +[](DrawOrderManager* m, Entity e) {
+                    return m->Has(e);
+                })
+                .addFunction("RegisterEntity",
+                             +[](DrawOrderManager* m, Entity e, const DrawOrderDefinition& def) {
+                                 m->RegisterEntity(e, def);
                              })
             .endClass()
         .endNamespace();
@@ -665,6 +804,10 @@ void bindAnimationPlayer(lua_State* L) {
                 .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
                     return m->Has(e);
                 })
+                .addFunction("RegisterEntity",
+                             +[](AnimationPlayerManager* m, Entity e, const AnimationPlayerDefinition& def) {
+                                 m->RegisterEntity(e, def);
+                             })
             .endClass()
         .endNamespace();
 }
@@ -723,8 +866,8 @@ void bindPhysics(lua_State* L) {
                              })
             .endClass()
             .beginClass<OverlapResult>("OverlapResult")
-                .addProperty("m_dst_entity", &OverlapResult::m_dst_entity) 
-                .addProperty("m_dst_actor", &OverlapResult::m_dst_actor) 
+                .addProperty("m_dst_entity", &OverlapResult::m_dst_entity)
+                .addProperty("m_dst_actor", &OverlapResult::m_dst_actor)
             .endClass()
         .endNamespace();
 }
@@ -782,7 +925,7 @@ void bindEvent(lua_State* L) {
             .beginClass<UIDragEvent>("UIDragEvent")
                 .addProperty("m_entity", &UIDragEvent::m_entity, true)
             .endClass()
-    
+
             // event debugger
             .beginClass<EventDebugger>("EventDebugger")
                 .addFunction("SendDebugEvent", &EventDebugger::SendDebugEvent)
@@ -818,17 +961,140 @@ void bindEvent(lua_State* L) {
     .endNamespace();
 }
 
+void bindTilemap(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL")
+            .beginClass<Tile>("Tile")
+                .addProperty("m_image", &Tile::m_image, true)
+                .addProperty("m_region", &Tile::m_region, true)
+                .addProperty("m_id", &Tile::m_id, true)
+                .addProperty("m_tile_size", &Tile::m_tile_size, true)
+            .endClass()
+            .beginClass<TilemapTileLayer::Tile>("TilemapLayerTile")
+                .addProperty("m_gid", &TilemapTileLayer::Tile::m_gid, true)
+                .addFunction(
+                    "GetFlipValue",
+                    +[](const TilemapTileLayer::Tile* t) { return t->m_flip.Value(); })
+            .endClass()
+            .beginClass<Tileset>("Tileset")
+                .addFunction("GetTile",
+                             +[](const Tileset* ts, uint32_t gid) -> const Tile* {
+                                 if (!ts->HasTile(gid)) {
+                                     return nullptr;
+                                 }
+                                 return &ts->GetTile(gid);
+                             })
+                .addFunction("HasTile", &Tileset::HasTile)
+                .addFunction("GetTileSize", &Tileset::GetTileSize)
+            .endClass()
+            .beginClass<Tilemap>("Tilemap")
+                .addFunction("GetLayerCount",
+                             +[](const Tilemap* m) { return m->GetLayers().size(); })
+                .addFunction("GetLayer",
+                             +[](const Tilemap* m, size_t index) -> const TilemapLayer* {
+                                 const auto& layers = m->GetLayers();
+                                 if (index >= layers.size()) {
+                                     return nullptr;
+                                 }
+                                 return layers[index].get();
+                             })
+                .addFunction("GetTilesetCount",
+                             +[](const Tilemap* m) { return m->GetTileset().size(); })
+                .addFunction("GetTileset",
+                             +[](const Tilemap* m, size_t index) -> const Tileset* {
+                                 const auto& tilesets = m->GetTileset();
+                                 if (index >= tilesets.size()) {
+                                     return nullptr;
+                                 }
+                                 return &tilesets[index];
+                             })
+                .addFunction("GetTile", &Tilemap::GetTile)
+                .addFunction("GetTileSize", &Tilemap::GetTileSize)
+                .addFunction("GetFilename",
+                             +[](const Tilemap* m) { return m->GetFilename().string(); })
+            .endClass()
+            .beginClass<TilemapLayer>("TilemapLayer")
+                .addFunction("GetType",
+                             +[](const TilemapLayer* l) {
+                                 return static_cast<int>(l->GetType());
+                             })
+                .addFunction("AsTiledLayer", &TilemapLayer::AsTiledLayer)
+                .addFunction("AsImageLayer", &TilemapLayer::AsImageLayer)
+                .addFunction("AsObjectLayer", &TilemapLayer::AsObjectLayer)
+                .addFunction("GetName",
+                             +[](const TilemapLayer* l) {
+                                 return std::string(l->GetName());
+                             })
+            .endClass()
+            .deriveClass<TilemapTileLayer, TilemapLayer>("TilemapTileLayer")
+                .addFunction(
+                    "GetTile",
+                    +[](const TilemapTileLayer* layer, int x, int y)
+                        -> const TilemapTileLayer::Tile* {
+                        const Vec2& sz = layer->GetSize();
+                        if (x < 0 || y < 0 || static_cast<float>(x) >= sz.x ||
+                            static_cast<float>(y) >= sz.y) {
+                            return nullptr;
+                        }
+                        return &layer->GetTile(x, y);
+                    })
+                .addFunction("GetSize", &TilemapTileLayer::GetSize)
+            .endClass()
+            .deriveClass<TilemapObjectLayer, TilemapLayer>("TilemapObjectLayer")
+                .addFunction("GetObjectCount",
+                             +[](const TilemapObjectLayer* l) {
+                                 return l->GetObjects().size();
+                             })
+                .addFunction("GetObject",
+                             +[](const TilemapObjectLayer* l, size_t index)
+                                 -> const TilemapObject* {
+                                 const auto& objs = l->GetObjects();
+                                 if (index >= objs.size()) {
+                                     return nullptr;
+                                 }
+                                 return &objs[index];
+                             })
+            .endClass()
+            .deriveClass<TilemapImageLayer, TilemapLayer>("TilemapImageLayer")
+                .addFunction("GetImage", &TilemapImageLayer::GetImage)
+                .addFunction("GetPosition", &TilemapImageLayer::GetPosition)
+            .endClass()
+            .beginClass<TilemapObject>("TilemapObject")
+                .addFunction("GetType",
+                             +[](const TilemapObject* o) {
+                                 return static_cast<int>(o->GetType());
+                             })
+                .addFunction("IsVisiable", &TilemapObject::IsVisiable)
+                .addFunction("AsCircle",
+                             +[](const TilemapObject* o) { return o->AsCircle(); })
+                .addFunction("AsRect",
+                             +[](const TilemapObject* o) { return o->AsRect(); })
+                .addFunction("AsPolygon",
+                             +[](const TilemapObject* o) { return o->AsPolygon(); })
+                .addFunction("AsPoint",
+                             +[](const TilemapObject* o) { return o->AsPoint(); })
+            .endClass()
+            .beginClass<PhysicsScene::TilemapCollision>("TilemapCollision")
+                .addProperty("m_topleft", &PhysicsScene::TilemapCollision::m_topleft,
+                             true)
+            .endClass()
+        .endNamespace();
+}
+
 void bindTilemapComponent(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<TilemapComponent>("TilemapComponent")
-                .addFunction("GetHandle", &TilemapComponent::Get)
+            .beginClass<TilemapLayerComponent>("TilemapComponent")
+                .addFunction("GetLayer", &TilemapLayerComponent::GetLayer)
+                .addFunction("GetTilemap", &TilemapLayerComponent::GetTilemap)
+                .addFunction("GetTilemapCollision",
+                             &TilemapLayerComponent::GetTilemapCollision)
             .endClass()
-            .beginClass<TilemapComponentManager>("TilemapComponentManager")
-                .addFunction("Get", +[](TilemapComponentManager* m, Entity e) {
+            .beginClass<TilemapLayerComponentManager>("TilemapComponentManager")
+                .addFunction("Get", +[](TilemapLayerComponentManager* m, Entity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](TilemapComponentManager* m, Entity e) {
+                .addFunction("Has", +[](TilemapLayerComponentManager* m, Entity e) {
                     return m->Has(e);
                 })
             .endClass()
@@ -971,6 +1237,7 @@ void bindHandleTypes(lua_State* L) {
     BindHandle<Level>("LevelHandle", L, "Level");
     BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
+    BindHandle<TilemapHandle>("TilemapHandle", L, "Tilemap");
 }
 
 void bindEntity(lua_State* L) {
@@ -990,12 +1257,14 @@ void bindAllTypes(lua_State* L) {
     bindMath(L);
     bindLevel(L);
     bindImage(L);
+    bindDebugDraw(L);
     bindContext(L);
     bindAssetsManager(L);
     bindInput(L);
     bindTimer(L);
     bindCamera(L);
     bindSprite(L);
+    bindDrawOrder(L);
     bindAnimationPlayer(L);
     bindCCT(L);
     bindPhysics(L);
@@ -1007,6 +1276,7 @@ void bindAllTypes(lua_State* L) {
     bindFontManager(L);
     bindAnimationManager(L);
     bindTilemapManager(L);
+    bindTilemap(L);
     bindHandleTypes(L);
     bindCollisionGroup(L);
     bindBindPoint(L);

@@ -121,9 +121,11 @@ function Slime.move(self: Slime, dir: TL.Vec2, duration: number)
 		end
 	end
 
+    --[[ TODO set z order
 	self.m_sprite.m_z_order = TL.GetZOrderByYSorting(
 		self.m_transform.m_position.y + self.m_sprite.m_size.y * 0.5,
 		TL.RenderLayer.TilemapArch)
+    --]]
 end
 
 function Slime.OnQuit(self: Slime)

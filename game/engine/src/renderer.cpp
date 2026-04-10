@@ -4,6 +4,7 @@
 #include "engine/context.hpp"
 #include "engine/image.hpp"
 #include "engine/log.hpp"
+#include "engine/macros.hpp"
 #include "engine/profile.hpp"
 #include "engine/sdl_call.hpp"
 
@@ -28,7 +29,7 @@ void Renderer::SetClearColor(const Color& c) {
 }
 
 void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
-                        float z_order, bool use_camera) {
+                        double z_order, bool use_camera, float y_sorting) {
     Vec2 dp1 = p1;
     Vec2 dp2 = p2;
     if (use_camera) {
@@ -39,6 +40,7 @@ void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
     DrawCommand cmd;
     cmd.m_color = color;
     cmd.m_z_order = z_order;
+    cmd.m_y_sorting = y_sorting;
 
     DrawLineCommand cmd_line;
     cmd_line.m_p1 = dp1;
@@ -49,8 +51,8 @@ void Renderer::DrawLine(const Vec2& p1, const Vec2& p2, const Color& color,
     m_draw_commands.emplace_back(std::move(cmd));
 }
 
-void Renderer::DrawRect(const Rect& r, const Color& c, float z_order,
-                        bool use_camera) {
+void Renderer::DrawRect(const Rect& r, const Color& c, double z_order,
+                        bool use_camera, float y_sorting) {
     Rect dst = r;
     if (use_camera) {
         transformByCamera(CURRENT_CONTEXT.m_camera, &dst.m_center,
@@ -60,6 +62,7 @@ void Renderer::DrawRect(const Rect& r, const Color& c, float z_order,
     DrawCommand cmd;
     cmd.m_color = c;
     cmd.m_z_order = z_order;
+    cmd.m_y_sorting = y_sorting;
 
     DrawRectCommand cmd_rect;
     cmd_rect.m_rect = dst;
@@ -70,7 +73,8 @@ void Renderer::DrawRect(const Rect& r, const Color& c, float z_order,
 }
 
 void Renderer::DrawCircle(const Circle& c, const Color& color,
-                          uint32_t fragment, float z_order, bool use_camera) {
+                          uint32_t fragment, double z_order, bool use_camera,
+                          float y_sorting) {
     Radians angle_step = 2 * PI / fragment;
     Vec2 p = c.m_center + Vec2::X_UNIT * c.m_radius;
     auto& camera = CURRENT_CONTEXT.m_camera;
@@ -89,6 +93,7 @@ void Renderer::DrawCircle(const Circle& c, const Color& color,
         DrawCommand cmd;
         cmd.m_color = color;
         cmd.m_z_order = z_order;
+        cmd.m_y_sorting = y_sorting;
 
         DrawLineCommand cmd_line;
         cmd_line.m_p1 = p;
@@ -100,8 +105,8 @@ void Renderer::DrawCircle(const Circle& c, const Color& color,
     }
 }
 
-void Renderer::FillRect(const Rect& r, const Color& c, float z_order,
-                        bool use_camera) {
+void Renderer::FillRect(const Rect& r, const Color& c, double z_order,
+                        bool use_camera, float y_sorting) {
     Rect dst = r;
     if (use_camera) {
         transformByCamera(CURRENT_CONTEXT.m_camera, &dst.m_center,
@@ -111,6 +116,7 @@ void Renderer::FillRect(const Rect& r, const Color& c, float z_order,
     DrawCommand cmd;
     cmd.m_color = c;
     cmd.m_z_order = z_order;
+    cmd.m_y_sorting = y_sorting;
 
     FillRectCommand cmd_rect;
     cmd_rect.m_rect = dst;
@@ -120,12 +126,9 @@ void Renderer::FillRect(const Rect& r, const Color& c, float z_order,
 }
 
 void Renderer::DrawImage(const Image& image, const Region& src,
-                         const Region& dst,
-                         const Color& color,
-                         Degrees rotation,
-                         const Vec2& center, Flags<Flip> flip,
-                         float z_order,
-                         bool use_camera) {
+                         const Region& dst, const Color& color,
+                         Degrees rotation, const Vec2& center, Flags<Flip> flip,
+                         double z_order, bool use_camera, float y_sorting) {
     Rect dst_region;
     dst_region.m_half_size = dst.m_size * 0.5;
     dst_region.m_center = dst.m_topleft + dst_region.m_half_size;
@@ -142,6 +145,7 @@ void Renderer::DrawImage(const Image& image, const Region& src,
 
     DrawCommand cmd;
     cmd.m_z_order = z_order;
+    cmd.m_y_sorting = y_sorting;
     cmd.m_color = color;
 
     DrawImageCommand cmd_image;
@@ -158,11 +162,10 @@ void Renderer::DrawImage(const Image& image, const Region& src,
 }
 
 void Renderer::DrawImage9Grid(const Image& image, const Region& src,
-                              const Region& dst,
-                              const Color& color,
-                              const Image9Grid& grid,
-                              float border_scale, float z_order,
-                              bool use_camera) {
+                              const Region& dst, const Color& color,
+                              const Image9Grid& grid, float border_scale,
+                              double z_order, bool use_camera,
+                              float y_sorting) {
     Rect dst_region;
     dst_region.m_half_size = dst.m_size * 0.5;
     dst_region.m_center = dst.m_topleft + dst_region.m_half_size;
@@ -175,6 +178,7 @@ void Renderer::DrawImage9Grid(const Image& image, const Region& src,
     DrawCommand cmd;
     cmd.m_z_order = z_order;
     cmd.m_color = color;
+    cmd.m_y_sorting = y_sorting;
 
     DrawImage9GridCommand cmd_image;
     cmd_image.m_src = src;
@@ -190,12 +194,10 @@ void Renderer::DrawImage9Grid(const Image& image, const Region& src,
 
 void Renderer::DrawImageEx(const Image& image, const Region& src,
                            const Vec2& topleft, const Vec2& topright,
-                           const Vec2& bottomleft,
-                           const Color& color,
-                           float z_order,
-                           bool use_camera) {
+                           const Vec2& bottomleft, const Color& color,
+                           double z_order, bool use_camera, float y_sorting) {
     Vec2 tl{topleft.x, topleft.y}, tr{topright.x, topright.y},
-         bl{bottomleft.x, bottomleft.y};
+        bl{bottomleft.x, bottomleft.y};
     if (use_camera) {
         CURRENT_CONTEXT.m_camera.transform(&tl, nullptr);
         CURRENT_CONTEXT.m_camera.transform(&tr, nullptr);
@@ -204,6 +206,7 @@ void Renderer::DrawImageEx(const Image& image, const Region& src,
 
     DrawCommand cmd;
     cmd.m_z_order = z_order;
+    cmd.m_y_sorting = y_sorting;
     cmd.m_color = color;
 
     DrawImageExCommand cmd_image;
@@ -219,16 +222,19 @@ void Renderer::DrawImageEx(const Image& image, const Region& src,
 
 void Renderer::Clear() {
     SDL_CALL(SDL_SetRenderDrawColor(m_renderer, m_clear_color.r,
-        m_clear_color.g, m_clear_color.b,
-        m_clear_color.a));
+                                    m_clear_color.g, m_clear_color.b,
+                                    m_clear_color.a));
     SDL_CALL(SDL_RenderClear(m_renderer));
-    m_draw_commands.clear();
 }
 
 void Renderer::ApplyDrawcall() {
     PROFILE_RENDERING_SECTION(__FUNCTION__);
     sortDrawCommands();
     applyDrawCommands();
+    
+    m_draw_commands.clear();
+    m_y_sorting_range.clear();
+    m_is_y_sorting_range_close = true;
 }
 
 void Renderer::Present() {
@@ -238,6 +244,27 @@ void Renderer::Present() {
 
 SDL_Renderer* Renderer::GetRenderer() const {
     return m_renderer;
+}
+
+void Renderer::BeginYSorting() {
+    TL_RETURN_IF_FALSE(m_is_y_sorting_range_close);
+
+    m_is_y_sorting_range_close = false;
+    m_y_sorting_range.emplace_back(
+        std::make_pair<size_t, size_t>(m_draw_commands.size(), 0));
+}
+
+void Renderer::EndYSorting() {
+    TL_RETURN_IF_TRUE(m_y_sorting_range.empty());
+
+    m_is_y_sorting_range_close = true;
+
+    auto& range = m_y_sorting_range.back();
+    range.second = m_draw_commands.size();
+}
+
+bool Renderer::IsRecordingYSorting() const {
+    return !m_is_y_sorting_range_close;
 }
 
 void Renderer::transformByCamera(const Camera& camera, Vec2* center,
@@ -269,14 +296,12 @@ void Renderer::resizeTexture(const Vec2UI& new_size) {
 
 struct ApplyDrawCmdVisitor {
     ApplyDrawCmdVisitor(SDL_Renderer* renderer, const Color& color)
-        : m_renderer{renderer}, m_color{color} {
-    }
+        : m_renderer{renderer}, m_color{color} {}
 
     void operator()(const DrawLineCommand& cmd) {
         setRenderColor(m_color);
-        SDL_CALL(
-            SDL_RenderLine(m_renderer, cmd.m_p1.x, cmd.m_p1.y, cmd.m_p2.x, cmd.
-                m_p2.y));
+        SDL_CALL(SDL_RenderLine(m_renderer, cmd.m_p1.x, cmd.m_p1.y, cmd.m_p2.x,
+                                cmd.m_p2.y));
     }
 
     void operator()(const DrawRectCommand& cmd) {
@@ -303,28 +328,26 @@ struct ApplyDrawCmdVisitor {
 
         SDL_FPoint rot_center{cmd.m_rot_center.x, cmd.m_rot_center.y};
 
-        SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r, m_color.g, m_color.b);
+        SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r,
+                                    m_color.g, m_color.b);
         SDL_SetTextureAlphaModFloat(cmd.m_image->GetTexture(), m_color.a);
-        SDL_CALL(
-            SDL_RenderTextureRotated(m_renderer, cmd.m_image->GetTexture(), &
-                src_rect,
-                &dst_rect, cmd.m_rotation.Value(), &rot_center,
-                static_cast<SDL_FlipMode>(cmd.m_flip.Value())));
+        SDL_CALL(SDL_RenderTextureRotated(
+            m_renderer, cmd.m_image->GetTexture(), &src_rect, &dst_rect,
+            cmd.m_rotation.Value(), &rot_center,
+            static_cast<SDL_FlipMode>(cmd.m_flip.Value())));
     }
 
     void operator()(const DrawImageExCommand& cmd) {
         SDL_FRect rect = {cmd.m_src.m_topleft.x, cmd.m_src.m_topleft.y,
-                          cmd.m_src.m_size.w,
-                          cmd.m_src.m_size.h};
-        SDL_FPoint sdl_tl{cmd.m_origin.x, cmd.m_origin.y}, sdl_tr{
-                       cmd.m_right.x, cmd.m_right.y}, sdl_bl{
-                       cmd.m_down.x, cmd.m_down.y};
-        SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r, m_color.g, m_color.b);
+                          cmd.m_src.m_size.w, cmd.m_src.m_size.h};
+        SDL_FPoint sdl_tl{cmd.m_origin.x, cmd.m_origin.y},
+            sdl_tr{cmd.m_right.x, cmd.m_right.y},
+            sdl_bl{cmd.m_down.x, cmd.m_down.y};
+        SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r,
+                                    m_color.g, m_color.b);
         SDL_SetTextureAlphaModFloat(cmd.m_image->GetTexture(), m_color.a);
-        SDL_CALL(
-            SDL_RenderTextureAffine(m_renderer, cmd.m_image->GetTexture(), &rect
-                ,
-                &sdl_tl, &sdl_tr, &sdl_bl));
+        SDL_CALL(SDL_RenderTextureAffine(m_renderer, cmd.m_image->GetTexture(),
+                                         &rect, &sdl_tl, &sdl_tr, &sdl_bl));
     }
 
     void operator()(const FillRectCommand& cmd) {
@@ -362,10 +385,8 @@ struct ApplyDrawCmdVisitor {
             dst_rect.y = top_left.y;
             dst_rect.w = scaled_left;
             dst_rect.h = scaled_top;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // top border
@@ -373,8 +394,8 @@ struct ApplyDrawCmdVisitor {
             SDL_FRect src_rect;
             src_rect.x = cmd.m_src.m_topleft.x + cmd.m_grid.left;
             src_rect.y = cmd.m_src.m_topleft.y;
-            src_rect.w = cmd.m_src.m_size.w - cmd.m_grid.left - cmd.m_grid.
-                         right;
+            src_rect.w =
+                cmd.m_src.m_size.w - cmd.m_grid.left - cmd.m_grid.right;
             src_rect.h = cmd.m_grid.top;
 
             SDL_FRect dst_rect;
@@ -382,17 +403,15 @@ struct ApplyDrawCmdVisitor {
             dst_rect.y = top_left.y;
             dst_rect.w = final_rect.w - scaled_left - scaled_right;
             dst_rect.h = scaled_top;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // top right
         {
             SDL_FRect src_rect;
-            src_rect.x = cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid
-                         .right;
+            src_rect.x =
+                cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid.right;
             src_rect.y = cmd.m_src.m_topleft.y;
             src_rect.w = cmd.m_grid.right;
             src_rect.h = cmd.m_grid.top;
@@ -402,10 +421,8 @@ struct ApplyDrawCmdVisitor {
             dst_rect.y = top_left.y;
             dst_rect.w = scaled_right;
             dst_rect.h = scaled_top;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // middle left
@@ -414,18 +431,16 @@ struct ApplyDrawCmdVisitor {
             src_rect.x = cmd.m_src.m_topleft.x;
             src_rect.y = cmd.m_src.m_topleft.y + cmd.m_grid.top;
             src_rect.w = cmd.m_grid.left;
-            src_rect.h = cmd.m_src.m_size.h - cmd.m_grid.top - cmd.m_grid.
-                         bottom;
+            src_rect.h =
+                cmd.m_src.m_size.h - cmd.m_grid.top - cmd.m_grid.bottom;
 
             SDL_FRect dst_rect;
             dst_rect.x = final_rect.x;
             dst_rect.y = final_rect.y + scaled_top;
             dst_rect.w = scaled_left;
             dst_rect.h = final_rect.h - scaled_top - scaled_bottom;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // middle middle
@@ -433,49 +448,45 @@ struct ApplyDrawCmdVisitor {
             SDL_FRect src_rect;
             src_rect.x = cmd.m_src.m_topleft.x + cmd.m_grid.left;
             src_rect.y = cmd.m_src.m_topleft.y + cmd.m_grid.top;
-            src_rect.w = cmd.m_src.m_size.w - cmd.m_grid.left - cmd.m_grid.
-                         right;
-            src_rect.h = cmd.m_src.m_size.h - cmd.m_grid.top - cmd.m_grid.
-                         bottom;
+            src_rect.w =
+                cmd.m_src.m_size.w - cmd.m_grid.left - cmd.m_grid.right;
+            src_rect.h =
+                cmd.m_src.m_size.h - cmd.m_grid.top - cmd.m_grid.bottom;
 
             SDL_FRect dst_rect;
             dst_rect.x = final_rect.x + scaled_left;
             dst_rect.y = final_rect.y + scaled_top;
             dst_rect.w = final_rect.w - scaled_left - scaled_bottom;
             dst_rect.h = final_rect.h - scaled_top - scaled_bottom;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // middle right
         {
             SDL_FRect src_rect;
-            src_rect.x = cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid
-                         .right;
+            src_rect.x =
+                cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid.right;
             src_rect.y = cmd.m_src.m_topleft.y + cmd.m_grid.top;
             src_rect.w = cmd.m_grid.right;
-            src_rect.h = cmd.m_src.m_size.h - cmd.m_grid.top - cmd.m_grid.
-                         bottom;
+            src_rect.h =
+                cmd.m_src.m_size.h - cmd.m_grid.top - cmd.m_grid.bottom;
 
             SDL_FRect dst_rect;
             dst_rect.x = final_rect.x + final_rect.w - scaled_right;
             dst_rect.y = final_rect.y + scaled_top;
             dst_rect.w = scaled_right;
             dst_rect.h = final_rect.h - scaled_top - scaled_bottom;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // bottom left
         {
             SDL_FRect src_rect;
             src_rect.x = cmd.m_src.m_topleft.x;
-            src_rect.y = cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid
-                         .bottom;
+            src_rect.y =
+                cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid.bottom;
             src_rect.w = cmd.m_grid.right;
             src_rect.h = cmd.m_grid.bottom;
 
@@ -484,21 +495,18 @@ struct ApplyDrawCmdVisitor {
             dst_rect.y = final_rect.y + final_rect.h - scaled_bottom;
             dst_rect.w = scaled_left;
             dst_rect.h = scaled_bottom;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // bottom middle
         {
             SDL_FRect src_rect;
             src_rect.x = cmd.m_src.m_topleft.x + cmd.m_grid.left;
-            src_rect.y = cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid
-                         .bottom;
-            src_rect.w = cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid
-                         .right - cmd.m_grid.
-                                      left;
+            src_rect.y =
+                cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid.bottom;
+            src_rect.w = cmd.m_src.m_topleft.x + cmd.m_src.m_size.w -
+                         cmd.m_grid.right - cmd.m_grid.left;
             src_rect.h = cmd.m_grid.bottom;
 
             SDL_FRect dst_rect;
@@ -506,19 +514,17 @@ struct ApplyDrawCmdVisitor {
             dst_rect.y = final_rect.y + final_rect.h - scaled_bottom;
             dst_rect.w = final_rect.w - scaled_left - scaled_right;
             dst_rect.h = scaled_bottom;
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
 
         // bottom right
         {
             SDL_FRect src_rect;
-            src_rect.x = cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid
-                         .right;
-            src_rect.y = cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid
-                         .bottom;
+            src_rect.x =
+                cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid.right;
+            src_rect.y =
+                cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid.bottom;
             src_rect.w = cmd.m_grid.right;
             src_rect.h = cmd.m_grid.bottom;
 
@@ -527,12 +533,11 @@ struct ApplyDrawCmdVisitor {
             dst_rect.y = final_rect.y + final_rect.h - scaled_bottom;
             dst_rect.w = scaled_right;
             dst_rect.h = scaled_bottom;
-            SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r, m_color.g, m_color.b);
+            SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r,
+                                        m_color.g, m_color.b);
             SDL_SetTextureAlphaModFloat(cmd.m_image->GetTexture(), m_color.a);
-            SDL_CALL(
-                SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(), &
-                    src_rect,
-                    &dst_rect));
+            SDL_CALL(SDL_RenderTexture(m_renderer, cmd.m_image->GetTexture(),
+                                       &src_rect, &dst_rect));
         }
     }
 
@@ -541,9 +546,8 @@ private:
     Color m_color;
 
     void setRenderColor(const Color& c) {
-        SDL_CALL(
-            SDL_SetRenderDrawColor(m_renderer, c.r * 255, c.g * 255, c.b * 255,
-                c.a * 255));
+        SDL_CALL(SDL_SetRenderDrawColor(m_renderer, c.r * 255, c.g * 255,
+                                        c.b * 255, c.a * 255));
     }
 };
 
@@ -557,12 +561,18 @@ void Renderer::applyDrawCommands() {
 
 void Renderer::sortDrawCommands() {
     PROFILE_RENDERING_SECTION(__FUNCTION__);
+    for (auto& range : m_y_sorting_range) {
+        TL_CONTINUE_IF_FALSE(range.first < range.second);
+
+        auto it = m_draw_commands.begin();
+        std::sort(it + range.first, it + range.second,
+                  [](const DrawCommand& lhs, const DrawCommand& rhs) {
+                      return lhs.m_y_sorting < rhs.m_y_sorting;
+                  });
+    }
+
     std::stable_sort(m_draw_commands.begin(), m_draw_commands.end(),
                      [](const DrawCommand& lhs, const DrawCommand& rhs) {
                          return lhs.m_z_order < rhs.m_z_order;
                      });
-}
-
-float GetZOrderByYSorting(float y, RenderLayer layer) {
-    return 1.0f - (y == 0.f ? 1.0f : 1.0f / y) + static_cast<float>(layer);
 }

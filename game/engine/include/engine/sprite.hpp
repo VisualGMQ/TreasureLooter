@@ -9,5 +9,5 @@ using Sprite = SpriteDefinition;
 
 class SpriteManager : public ComponentManager<Sprite> {
 public:
-    void Update();
+    void SubmitDrawCommand(Entity);
 };

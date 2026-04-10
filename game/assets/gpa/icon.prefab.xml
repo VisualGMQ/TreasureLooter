@@ -8,6 +8,12 @@
 				<rotation>0.000000</rotation>
 			</value>
 		</transform>
+		<draw_order>
+			<value>
+				<draw_layer>TilemapArch</draw_layer>
+				<enable_y_sorting>false</enable_y_sorting>
+			</value>
+		</draw_order>
 		<sprite>
 			<value>
 				<image>assets/Items/Treasure/Coin2.png</image>
@@ -20,7 +26,6 @@
 				<flip>
 					<item>None</item>
 				</flip>
-				<z_order>0.000000</z_order>
 				<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 			</value>
 		</sprite>
@@ -36,6 +41,7 @@
 			<value>
 				<event_type>Coin</event_type>
 				<physics_actor>assets/gpa/icon.physics_actor.xml</physics_actor>
+				<bind_point_name/>
 				<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
 			</value>
 		</trigger>

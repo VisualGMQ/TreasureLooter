@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/camera.hpp"
+#include "engine/draw_order.hpp"
 #include "engine/entity.hpp"
 #include "schema/config.hpp"
 #include <memory>
@@ -16,6 +17,7 @@ struct EntityInstance;
 class RelationshipManager;
 class TransformManager;
 class SpriteManager;
+class DrawOrderManager;
 class AssetsManager;
 class Level;
 struct GameConfig;
@@ -29,8 +31,8 @@ class Window;
 class Renderer;
 class PhysicsScene;
 class GameplayConfigManager;
-class TilemapComponent;
-class TilemapComponentManager;
+class TilemapLayerComponent;
+class TilemapLayerComponentManager;
 class LevelManager;
 
 class CommonContext {
@@ -101,8 +103,10 @@ public:
     std::unique_ptr<BindPointsComponentManager> m_bind_point_component_manager;
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
-    std::unique_ptr<TilemapComponentManager> m_tilemap_component_manager;
+    std::unique_ptr<TilemapLayerComponentManager>
+        m_tilemap_layer_component_manager;
     std::unique_ptr<ScriptComponentManager> m_script_component_manager;
+    std::unique_ptr<DrawOrderManager> m_draw_order_manager;
     Camera m_camera;
 
 protected:

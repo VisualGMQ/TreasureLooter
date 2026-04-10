@@ -50,6 +50,7 @@ export type Transform = {
 	m_rotation: Degrees,
 	m_size: Vec2,
 	m_scale: Vec2,
+	GetGlobalPosition: (self: Transform) -> Vec2,
 } & (() -> Transform)
 export type Region = { m_topleft: Vec2, m_size: Vec2 }
 
@@ -111,14 +112,15 @@ export type BindPointsComponentManager = {
 export type Tilemap = {}
 export type ScriptBinaryData = {}
 
-export type ImageHandle = { IsValid: (self: ImageHandle) -> boolean } & Image
-export type LevelHandle = { IsValid: (self: LevelHandle) -> boolean } & Level
-export type AnimationHandle = { IsValid: (self: AnimationHandle) -> boolean } & Animation
-export type TilemapHandle = { IsValid: (self: TilemapHandle) -> boolean } & Tilemap
-export type FontHandle = { IsValid: (self: FontHandle) -> boolean } & Font
-export type ScriptBinaryDataHandle = { IsValid: (self: ScriptBinaryDataHandle) -> boolean } & ScriptBinaryData
+export type ImageHandle = { IsValid: (self: ImageHandle) -> boolean, GetAssetPath: (self: ImageHandle) -> string } & Image
+export type LevelHandle = { IsValid: (self: LevelHandle) -> boolean, GetAssetPath: (self: LevelHandle) -> string } & Level
+export type AnimationHandle = { IsValid: (self: AnimationHandle) -> boolean, GetAssetPath: (self: AnimationHandle) -> string } & Animation
+export type TilemapHandle = { IsValid: (self: TilemapHandle) -> boolean, GetAssetPath: (self: TilemapHandle) -> string } & Tilemap
+export type FontHandle = { IsValid: (self: FontHandle) -> boolean, GetAssetPath: (self: FontHandle) -> string } & Font
+export type ScriptBinaryDataHandle = { IsValid: (self: ScriptBinaryDataHandle) -> boolean, GetAssetPath: (self: ScriptBinaryDataHandle) -> string } & ScriptBinaryData
 
 export type Sprite = {
+	m_image: ImageHandle,
 	m_region: Region,
 	m_size: Vec2,
 	m_anchor: Vec2,
@@ -135,6 +137,8 @@ export type ScriptBinaryDataManager = {
 }
 export type ScriptComponentManager = {
 	Get: (self: ScriptComponentManager, entity: Entity) -> unknown,
+	Has: (self: ScriptComponentManager, entity: Entity) -> boolean,
+	IsEnable: (self: ScriptComponentManager, entity: Entity) -> boolean,
 	SubscribeEvent: (self: ScriptComponentManager, entity: Entity, eventName: string) -> (),
 }
 export type TransformManager = {
@@ -192,8 +196,11 @@ export type UIWidget = {
 	m_margin: Vec2,
 	m_padding: Vec2,
 }
+export type TilemapCollisionInfo = { m_topleft: Vec2 }
 export type TilemapComponent = {
-	GetHandle: (self: TilemapComponent) -> TilemapHandle,
+	GetLayer: (self: TilemapComponent) -> unknown,
+	GetTilemap: (self: TilemapComponent) -> TilemapHandle,
+	GetTilemapCollision: (self: TilemapComponent) -> TilemapCollisionInfo?,
 }
 export type TriggerComponentManager = { Get: (self: TriggerComponentManager, entity: Entity) -> Trigger, Has: (self: TriggerComponentManager, entity: Entity) -> boolean }
 export type UIComponentManager = { Get: (self: UIComponentManager, entity: Entity) -> UIWidget?, Has: (self: UIComponentManager, entity: Entity) -> boolean }
@@ -290,6 +297,15 @@ export type SpriteManager = {
 	Has: (self: SpriteManager, entity: Entity) -> boolean,
 	RegisterEntity: (self: SpriteManager, entity: Entity, def: Sprite) -> (),
 }
+export type DrawOrder = {
+	m_z_order: number,
+	m_enable_y_sorting: boolean,
+	GetGlobalOrder: (self: DrawOrder) -> number,
+}
+export type DrawOrderManager = {
+	Get: (self: DrawOrderManager, entity: Entity) -> DrawOrder?,
+	Has: (self: DrawOrderManager, entity: Entity) -> boolean,
+}
 export type AnimationPlayer = {
 	Play: (self: AnimationPlayer) -> (),
 	Pause: (self: AnimationPlayer) -> (),
@@ -383,6 +399,16 @@ export type RelationshipManager = {
 	RegisterEntity: (self: RelationshipManager, entity: Entity) -> (),
 }
 
+export type DebugDraw = {
+	kOneFrame: TimeType,
+	kAlways: TimeType,
+	DrawRect: (self: DebugDraw, center: Vec2, half_size: Vec2, color: Color, time: TimeType, use_camera: boolean?) -> (),
+	FillRect: (self: DebugDraw, center: Vec2, half_size: Vec2, color: Color, time: TimeType, use_camera: boolean?) -> (),
+	DrawCircle: (self: DebugDraw, center: Vec2, radius: number, color: Color, time: TimeType, use_camera: boolean?) -> (),
+	AddLine: (self: DebugDraw, p1: Vec2, p2: Vec2, color: Color, time: TimeType, use_camera: boolean?) -> (),
+	Clear: (self: DebugDraw) -> (),
+}
+
 export type GameContext = {
 	GetCamera: (self: GameContext) -> Camera,
 	GetScriptManager: (self: GameContext) -> ScriptComponentManager,
@@ -392,6 +418,7 @@ export type GameContext = {
 	GetTimerManager: (self: GameContext) -> TimerManager,
 	GetTransformManager: (self: GameContext) -> TransformManager,
 	GetSpriteManager: (self: GameContext) -> SpriteManager,
+	GetDrawOrderManager: (self: GameContext) -> DrawOrderManager,
 	GetRenderer: (self: GameContext) -> Renderer,
 	GetWindow: (self: GameContext) -> Window,
 	GetInputManager: (self: GameContext) -> InputManager,
@@ -404,6 +431,7 @@ export type GameContext = {
 	GetCCTManager: (self: GameContext) -> CCTManager,
 	GetPhysicsScene: (self: GameContext) -> PhysicsScene,
 	GetEventDebugger: (self: GameContext) -> EventDebugger,
+	GetDebugDraw: (self: GameContext) -> DebugDraw?,
 }
 
 export type GetZOrderByYSorting = (y: number, layer: number) -> number

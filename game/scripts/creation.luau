@@ -68,6 +68,10 @@ function _M.CreateWeapon(config: TL.WeaponDefinitionHandle) : Config.WeaponConfi
     prefab_handle.m_sprite = TL.Sprite()
     prefab_handle.m_sprite.m_image = self.m_image
 
+    prefab_handle.m_draw_order = TL.DrawOrderDefinition()
+    prefab_handle.m_draw_order.m_enable_y_sorting = false
+    prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
+
     -- prefab_handle.m_sprite.m_size.x = 0
     -- prefab_handle.m_sprite.m_size.y = 0
     -- prefab_handle.m_sprite.m_region.m_size.x = 0
@@ -88,7 +92,7 @@ function _M.CreateWeapon(config: TL.WeaponDefinitionHandle) : Config.WeaponConfi
     local relationship_mgr = ctx:GetRelationshipManager()
     relationship_mgr:RegisterEntity(self.m_entity)
     local relationship = relationship_mgr:Get(self.m_entity)
-    
+
     -- create hit shape as child entity
     for i, shape in ipairs(config.m_hit_shapes) do
         local entity = _M.createHitShape(shape)
@@ -163,6 +167,10 @@ function _M.CreateCharacter(transform: TL.Transform, config: TL.CharacterDefinit
     prefab_handle.m_sprite.m_region.m_size.x = 16
     prefab_handle.m_sprite.m_region.m_size.y = 16
 
+    prefab_handle.m_draw_order = TL.DrawOrderDefinition()
+    prefab_handle.m_draw_order.m_enable_y_sorting = false
+    prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
+
     prefab_handle.m_animation = TL.AnimationPlayerDefinition()
     prefab_handle.m_animation.m_animation = config.m_move_down_animation
     prefab_handle.m_animation.m_auto_play = true
@@ -191,7 +199,7 @@ function _M.CreateCharacter(transform: TL.Transform, config: TL.CharacterDefinit
     if script then
         (script :: CharacterBehavior.CharacterBehavior):__attach_config(self, self.m_weapon_entity)
     end
-    
+
     return self
 end
 

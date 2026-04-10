@@ -1,10 +1,10 @@
-#include "engine/context.hpp"
 #include "engine/asset_manager.hpp"
-#include "tool_context.hpp"
+#include "engine/context.hpp"
 #include "engine/handle.hpp"
 #include "rapidxml.hpp"
 #include "schema/asset_info.hpp"
 #include "schema/serialize/serialize.hpp"
+#include "tool_context.hpp"
 #include "variant_asset.hpp"
 
 VariantAsset LoadVariantAsset(const Path& filename, ToolContext& ctx) {
@@ -14,7 +14,7 @@ VariantAsset LoadVariantAsset(const Path& filename, ToolContext& ctx) {
 struct AssetSaver {
     AssetSaver() = default;
 
-    AssetSaver(const Path& save_as_path)
+    explicit AssetSaver(const Path& save_as_path)
         : m_is_save_as{true}, m_save_as_path{save_as_path} {}
 
     bool IsSaveAs() const { return m_is_save_as; }
@@ -24,7 +24,7 @@ struct AssetSaver {
     template <typename T, typename = std::enable_if_t<is_handle_v<T>>>
     void operator()(const T& handle) {
         if (m_is_save_as) {
-            SaveAsset(handle.GetUUID(), *handle, m_save_as_path);
+            SaveAsset(UUID::CreateV4(), *handle, m_save_as_path);
         } else {
             SaveAsset(handle.GetUUID(), *handle, *handle.GetFilename());
         }
@@ -33,6 +33,7 @@ struct AssetSaver {
 private:
     bool m_is_save_as = false;
     Path m_save_as_path;
+    UUID m_uuid;
 };
 
 void SaveVariantAsset(const VariantAsset& asset) {
@@ -71,7 +72,8 @@ std::string_view GetAssetExtensionByType(const VariantAsset& asset) {
                 using payload_type = typename type::underlying_type;
                 return AssetInfoManager::GetExtension<payload_type>();
             }
-        }, asset);
+        },
+        asset);
 }
 
 struct GetAssetFilenameHelper {

@@ -40,8 +40,8 @@ function GameEntry.OnInit(self: GameEntry)
     -- create slime monster
     local slime_config = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load("assets/gpa/monsters/slime2/slime2.character_def.xml", false)
     local slime_transform: TL.Transform = TL.Transform()
-    slime_transform.m_position.x = 200
-    slime_transform.m_position.y = 200
+    slime_transform.m_position.x = 300
+    slime_transform.m_position.y = 100
     local slime_character = Creation.CreateCharacter(slime_transform, slime_config)
 
     if slime_character == nil then
@@ -71,14 +71,24 @@ function GameEntry.OnInit(self: GameEntry)
         return
     end
 
-    local children = root_relationship.m_children
-    children[#children + 1] = character.m_entity
-    children[#children + 1] = slime_character.m_entity
-    root_relationship.m_children = children
+    local arch_entity = root_relationship.m_children[2]
+
+    TL.Log("arch_entity = ", arch_entity)
+
+    local arch_layer_relationship = relationship_mgr:Get(arch_entity)
+    if arch_layer_relationship == nil then
+        relationship_mgr:RegisterEntity(arch_entity)
+        arch_layer_relationship = relationship_mgr:Get(arch_entity)
+    end
+
+    local arch_children = arch_layer_relationship.m_children
+    arch_children[#arch_children + 1] = character.m_entity
+    arch_children[#arch_children + 1] = slime_character.m_entity
+    arch_layer_relationship.m_children = arch_children
 end
 
 function GameEntry.OnRender(self: GameEntry)
-    DebugPanel.ShowDebugPanel()    
+    DebugPanel.ShowDebugPanel()
 end
 
 return GameEntry

@@ -123,7 +123,7 @@ void ScriptComponentManager::Update() {
     TL_RETURN_IF_FALSE(level);
 
     doUpdate(level->GetRootEntity());
-    doUIUpdate(level->GetUIRootEntity());
+    doUpdate(level->GetUIRootEntity());
 }
 
 void ScriptComponentManager::Render() {
@@ -135,44 +135,28 @@ void ScriptComponentManager::Render() {
 }
 
 void ScriptComponentManager::doUpdate(Entity entity) {
-    if (auto it = m_components.find(entity); it != m_components.end()) {
-        TL_RETURN_IF_FALSE(it->second.m_enable);
-
+    if (auto it = m_components.find(entity);
+        it != m_components.end() && it->second.m_enable) {
         it->second.m_component->Update();
-
-        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-        TL_RETURN_IF_FALSE(relationship);
-        for (auto child : relationship->m_children) {
-            doUIUpdate(entity);
-        }
     }
-}
 
-void ScriptComponentManager::doUIUpdate(Entity entity) {
-    if (auto it = m_components.find(entity); it != m_components.end()) {
-        TL_RETURN_IF_FALSE(it->second.m_enable);
-
-        it->second.m_component->Update();
-
-        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-        TL_RETURN_IF_FALSE(relationship);
-        for (auto child : relationship->m_children) {
-            doUIUpdate(child);
-        }
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    TL_RETURN_IF_FALSE(relationship);
+    for (auto child : relationship->m_children) {
+        doUpdate(child);
     }
 }
 
 void ScriptComponentManager::doRender(Entity entity) {
-    if (auto it = m_components.find(entity); it != m_components.end()) {
-        TL_RETURN_IF_FALSE(it->second.m_enable);
-
+    if (auto it = m_components.find(entity);
+        it != m_components.end() && it->second.m_enable) {
         it->second.m_component->Render();
+    }
 
-        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-        TL_RETURN_IF_FALSE(relationship);
-        for (auto child : relationship->m_children) {
-            doRender(child);
-        }
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    TL_RETURN_IF_FALSE(relationship);
+    for (auto child : relationship->m_children) {
+        doRender(child);
     }
 }
 
@@ -276,7 +260,8 @@ void Script::Render() {
 }
 
 void Script::SubscribeEvent(std::string_view event_name) {
-    if (auto id = ScriptEventRegistry::Lookup(event_name); id != kInvalidTypeIndex) {
+    if (auto id = ScriptEventRegistry::Lookup(event_name);
+        id != kInvalidTypeIndex) {
         m_subscribed_events.insert(id);
     } else {
         LOGE("[Script]: SubscribeEvent unknown name: {}", event_name);
@@ -284,7 +269,7 @@ void Script::SubscribeEvent(std::string_view event_name) {
 }
 
 void ScriptComponentManager::SubscribeEvent(Entity entity,
-                                                const std::string& event_name) {
+                                            const std::string& event_name) {
     if (Script* script = Get(entity)) {
         script->SubscribeEvent(event_name);
     }
@@ -318,14 +303,15 @@ void Script::callMethodWithEntity(const char* method) {
 }
 
 void Script::checkAndPrintErrorResult(const luabridge::LuaResult& result,
-                         std::string_view method) {
+                                      std::string_view method) {
     TL_RETURN_IF_TRUE(result);
-    
+
     std::string msg = result.errorMessage();
     const char* fallback = "(no detailed Lua error text; likely wrong "
                            "call signature or non-string error object)";
-    bool success = std::any_of(msg.begin(), msg.end(),
-                      [](unsigned char ch) { return !std::isspace(ch); });
+    bool success = std::any_of(msg.begin(), msg.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    });
     LOGE("[Luau] {}: {}", method, success ? msg : fallback);
 }
 

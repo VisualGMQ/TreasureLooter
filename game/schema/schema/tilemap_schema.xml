@@ -2,8 +2,9 @@
     <include>tilemap.hpp</include>
     <include>math.hpp</include>
 
-    <class name="TilemapDefinition">
+    <class name="TilemapLayerDefinition">
         <element name="position" type="Vec2"/>
         <handle name="tilemap" type="Tilemap"/>
+        <element name="layer_name" type="std::string"/>
     </class>
 </schema>

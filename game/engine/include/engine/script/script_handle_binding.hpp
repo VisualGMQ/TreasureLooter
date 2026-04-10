@@ -5,6 +5,8 @@
 
 #include "engine/script/luabridge_include.hpp"
 
+#include <string>
+
 namespace detail {
 
 template <typename T>
@@ -45,6 +47,18 @@ void BindHandle(const std::string& name,
 			.addFunction(
 				"IsValid",
 				+[](Handle<T> handle) { return static_cast<bool>(handle); })
+			.addFunction(
+			    "GetAssetPath",
+			    +[](const Handle<T>& h) -> std::string {
+				    if (!h) {
+					    return "(invalid)";
+				    }
+				    const Path* p = h.GetFilename();
+				    if (!p) {
+					    return "<embed>";
+				    }
+				    return p->string();
+			    })
 			.addIndexMetaMethod(
 				[t_class_name](Handle<T>& handle, const luabridge::LuaRef& key,
 							   lua_State* L) -> luabridge::LuaRef {
