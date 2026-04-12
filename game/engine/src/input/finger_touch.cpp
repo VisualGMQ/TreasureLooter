@@ -38,7 +38,8 @@ void FingerTouch::handleEvent(const SDL_TouchFingerEvent& event) {
     if (event.type == SDL_EVENT_FINGER_DOWN) {
         m_is_press = true;
         m_last_down_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
-    } else if (event.type == SDL_EVENT_FINGER_CANCELED || event.type == SDL_EVENT_FINGER_UP) {
+    } else if (event.type == SDL_EVENT_FINGER_CANCELED ||
+               event.type == SDL_EVENT_FINGER_UP) {
         m_is_press = false;
         m_last_up_time = CURRENT_CONTEXT.m_time->GetCurrentTime();
     } else if (event.type == SDL_EVENT_FINGER_MOTION) {
@@ -71,14 +72,16 @@ void Touches::HandleEvent(const SDL_TouchFingerEvent& event) {
 }
 
 void Touches::Update() {
-    PROFILE_INPUT_SECTION(__FUNCTION__);
-    
+    PROFILE_SECTION();
+
     for (auto& touch : m_touches) {
         touch.update();
     }
 }
 
 void Touches::PostUpdate() {
+    PROFILE_SECTION();
+
     for (auto& touch : m_touches) {
         touch.postUpdate();
     }

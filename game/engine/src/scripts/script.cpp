@@ -3,6 +3,7 @@
 #include "engine/log.hpp"
 #include "engine/macros.hpp"
 #include "engine/path.hpp"
+#include "engine/profile.hpp"
 #include "engine/script/script_binding.hpp"
 #include "engine/script/script_event_registry.hpp"
 #include "engine/script/script_require.hpp"
@@ -119,6 +120,8 @@ ScriptComponentManager::ScriptComponentManager() = default;
 ScriptComponentManager::~ScriptComponentManager() = default;
 
 void ScriptComponentManager::Update() {
+    PROFILE_SECTION();
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     TL_RETURN_IF_FALSE(level);
 
@@ -127,6 +130,8 @@ void ScriptComponentManager::Update() {
 }
 
 void ScriptComponentManager::Render() {
+    PROFILE_SECTION();
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     TL_RETURN_IF_FALSE(level);
 
@@ -135,6 +140,8 @@ void ScriptComponentManager::Render() {
 }
 
 void ScriptComponentManager::doUpdate(Entity entity) {
+    PROFILE_SECTION();
+
     if (auto it = m_components.find(entity);
         it != m_components.end() && it->second.m_enable) {
         it->second.m_component->Update();
@@ -148,6 +155,8 @@ void ScriptComponentManager::doUpdate(Entity entity) {
 }
 
 void ScriptComponentManager::doRender(Entity entity) {
+    PROFILE_SECTION();
+
     if (auto it = m_components.find(entity);
         it != m_components.end() && it->second.m_enable) {
         it->second.m_component->Render();

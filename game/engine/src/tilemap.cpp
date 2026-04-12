@@ -628,7 +628,7 @@ TilemapLayerComponent::GetTilemapCollision() const {
 }
 
 void TilemapLayerComponentManager::SubmitDrawCommand(Entity entity) {
-    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     auto tilemap_layer = Get(entity);
     TL_RETURN_IF_FALSE(IsEnable(entity) && tilemap_layer->GetLayer() &&

@@ -1,5 +1,6 @@
 #include "engine/draw_order.hpp"
 #include "engine/context.hpp"
+#include "engine/profile.hpp"
 #include "engine/relationship.hpp"
 
 DrawOrder::DrawOrder(const DrawOrderDefinition& def)
@@ -15,6 +16,8 @@ bool DrawOrder::IsEnableYSorting() const {
 }
 
 void DrawOrderManager::Update() {
+    PROFILE_SECTION();
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     TL_RETURN_IF_NULL(level);
 

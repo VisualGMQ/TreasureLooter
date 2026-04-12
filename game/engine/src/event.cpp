@@ -47,16 +47,15 @@ void EventSystem::HandleEvent(const SDL_Event& event) {
 
 void EventSystem::Update() {
     PROFILE_SECTION();
-    
+
     for (auto& [_, sink] : m_sinks) {
         sink->Update();
     }
 }
 
 EventDebugger::EventDebugger() {
-    m_listener_id = CURRENT_CONTEXT.m_event_system->AddListener<DebugEvent>([&](EventListenerID, const DebugEvent& event) {
-        m_triggered_count++; 
-    });
+    m_listener_id = CURRENT_CONTEXT.m_event_system->AddListener<DebugEvent>(
+        [&](EventListenerID, const DebugEvent& event) { m_triggered_count++; });
 }
 
 EventDebugger::~EventDebugger() {

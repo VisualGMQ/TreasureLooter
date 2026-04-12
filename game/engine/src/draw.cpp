@@ -1,11 +1,14 @@
 #include "engine/draw.hpp"
 #include "engine/context.hpp"
 #include "engine/macros.hpp"
+#include "engine/profile.hpp"
 #include "engine/sprite.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/ui.hpp"
 
 void DrawCommandSubmitter::Submit() {
+    PROFILE_SECTION();
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     TL_RETURN_IF_NULL(level);
 
@@ -13,6 +16,8 @@ void DrawCommandSubmitter::Submit() {
 }
 
 void DrawCommandSubmitter::SubmitUI() {
+    PROFILE_SECTION();
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     TL_RETURN_IF_NULL(level);
 
@@ -36,6 +41,8 @@ void DrawCommandSubmitter::submitUI(Entity root_entity) {
 }
 
 void DrawCommandSubmitter::submitRecursive(Entity entity) {
+    PROFILE_SECTION();
+
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
 
     auto draw_order = CURRENT_CONTEXT.m_draw_order_manager->Get(entity);
@@ -62,6 +69,8 @@ void DrawCommandSubmitter::submitRecursive(Entity entity) {
 }
 
 void DrawCommandSubmitter::submitUIRecursive(Entity entity) {
+    PROFILE_SECTION();
+
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
 
     auto draw_order = CURRENT_CONTEXT.m_draw_order_manager->Get(entity);

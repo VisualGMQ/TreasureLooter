@@ -26,7 +26,7 @@ void DebugDrawer::AddLine(const Vec2& p1, const Vec2& p2, const Color& color,
 }
 
 void DebugDrawer::Update(TimeType elapse) {
-    PROFILE_DEBUG_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     auto& renderer = CURRENT_CONTEXT.m_renderer;
 

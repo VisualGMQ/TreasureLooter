@@ -171,7 +171,7 @@ void Trigger::Update() {
 }
 
 void TriggerComponentManager::Update() {
-    PROFILE_PHYSICS_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     for (auto& [entity, trigger] : m_components) {
         if (!trigger.m_enable || !trigger.m_component->m_actor) {

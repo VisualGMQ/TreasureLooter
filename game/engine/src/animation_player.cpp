@@ -385,7 +385,7 @@ bool AnimationPlayer::IsAutoPlayEnabled() const {
 }
 
 void AnimationPlayerManager::Update(TimeType delta_time) {
-    PROFILE_ANIMATION_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     for (auto& [entity, anim] : m_components) {
         if (!anim.m_enable) {
