@@ -75,7 +75,7 @@ function Waggo.move(self: Waggo, dir, duration: number)
 		if self.m_anim_player ~= nil then
 			self.m_anim_player:Stop()
 		end
-	elseif not self.m_weapon_behavior.m_anim_player:IsPlaying() then
+	elseif self.m_weapon_behavior and not self.m_weapon_behavior.m_anim_player:IsPlaying() then
 		self.m_weapon_behavior:ChangeDir(dir:Normalize())
 	end
 
@@ -124,9 +124,12 @@ function Waggo.move(self: Waggo, dir, duration: number)
 		end
 	end
 
-	self.m_sprite.m_z_order = TL.GetZOrderByYSorting(
+    -- TODO set draw order
+    --[[
+    TL.GetZOrderByYSorting(
 		self.m_transform.m_position.y + self.m_sprite.m_size.y * 0.5,
 		TL.RenderLayer.TilemapArch)
+    --]]
 end
 
 function Waggo.OnQuit(self: Waggo)

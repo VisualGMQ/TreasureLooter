@@ -25,12 +25,14 @@
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
 #include "engine/uuid.hpp"
+#include "engine/draw_order.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
+#include "engine/draw.hpp"
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -78,6 +80,7 @@ void CommonContext::Initialize(int argc, char** argv) {
     m_transform_manager = std::make_unique<TransformManager>();
     m_sprite_manager = std::make_unique<SpriteManager>();
     m_relationship_manager = std::make_unique<RelationshipManager>();
+    m_draw_order_manager = std::make_unique<DrawOrderManager>();
 
     // device input relate
     m_keyboard = std::make_unique<Keyboard>();
@@ -104,7 +107,7 @@ void CommonContext::Initialize(int argc, char** argv) {
     m_bind_point_component_manager =
         std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
-    m_tilemap_component_manager = std::make_unique<TilemapComponentManager>();
+    m_tilemap_layer_component_manager = std::make_unique<TilemapLayerComponentManager>();
     m_ui_manager = std::make_unique<UIComponentManager>();
     m_script_component_manager = std::make_unique<ScriptComponentManager>();
 
@@ -128,6 +131,7 @@ void CommonContext::Shutdown() {
 
     m_script_component_manager.reset();
 
+    m_draw_order_manager.reset();
     m_trigger_component_manager.reset();
     m_bind_point_component_manager.reset();
     m_timer_manager.reset();
@@ -146,7 +150,7 @@ void CommonContext::Shutdown() {
     m_mouse.reset();
     m_keyboard.reset();
 
-    m_tilemap_component_manager.reset();
+    m_tilemap_layer_component_manager.reset();
     m_sprite_manager.reset();
     m_transform_manager.reset();
     m_animation_player_manager.reset();
@@ -323,7 +327,7 @@ void GameContext::Initialize(int argc, char** argv) {
 
     m_player_controller->RegisterVirtualController(level, GetGameConfig());
 
-    m_time->SetFPS(120);
+    m_time->SetFPS(kNoLimitFPS);
 }
 
 void GameContext::Update() {
@@ -377,17 +381,21 @@ void GameContext::renderUpdate(TimeType elapse) {
     m_renderer->Clear();
     beginImGui();
 
+    m_draw_order_manager->Update();
     m_script_component_manager->Render();
-    m_tilemap_component_manager->Update();
-    m_sprite_manager->Update();
-    m_ui_manager->Render();
+
+    DrawCommandSubmitter draw_cmd_submitter;
+    draw_cmd_submitter.Submit();
+    m_renderer->ApplyDrawcall();
+
+    draw_cmd_submitter.SubmitUI();
+    m_renderer->ApplyDrawcall();
 
     m_physics_scene->RenderDebug();
     m_bind_point_component_manager->RenderDebug(elapse);
-
     m_debug_drawer->Update(m_time->GetElapseTime());
-
     m_renderer->ApplyDrawcall();
+
     endImGui();
     m_renderer->Present();
 }

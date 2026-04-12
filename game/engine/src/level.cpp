@@ -2,12 +2,14 @@
 
 #include "SDL3/SDL.h"
 #include "engine/asset_manager.hpp"
-#include "engine/macros.hpp"
 #include "engine/bind_point.hpp"
 #include "engine/cct.hpp"
 #include "engine/context.hpp"
+#include "engine/draw_order.hpp"
+#include "engine/macros.hpp"
 #include "engine/relationship.hpp"
 #include "engine/sprite.hpp"
+#include "engine/tilemap.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
 
@@ -101,6 +103,7 @@ void Level::initRootEntity(const Path& script_path) {
     m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
+    CURRENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_root_entity);
 
     m_ui_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_ui_root_entity);
@@ -113,10 +116,13 @@ void Level::initRootEntity(const Path& script_path) {
     Transform* transform =
         CURRENT_CONTEXT.m_transform_manager->Get(m_ui_root_entity);
     transform->m_size = CURRENT_CONTEXT.m_window->GetWindowSize();
-    
+
     if (!script_path.empty()) {
-        auto handle = CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>().Load(script_path);
-        CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(m_root_entity, m_root_entity, handle);
+        auto handle =
+            CURRENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>()
+                .Load(script_path);
+        CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(
+            m_root_entity, m_root_entity, handle);
     }
 }
 
@@ -129,16 +135,21 @@ void Level::registerEntity(Entity entity, const EntityInstance& instance) {
 void Level::createEntityByPrefab(Entity entity, const Transform* transform,
                                  const Prefab& prefab) {
     if (prefab.m_sprite) {
-        CURRENT_CONTEXT.m_sprite_manager->ReplaceComponent(
+        CURRENT_CONTEXT.m_sprite_manager->RegisterEntity(
             entity, prefab.m_sprite.value());
     }
     if (transform || prefab.m_transform) {
-        CURRENT_CONTEXT.m_transform_manager->ReplaceComponent(
+        CURRENT_CONTEXT.m_transform_manager->RegisterEntity(
             entity, transform ? *transform : prefab.m_transform.value());
     }
-    if (prefab.m_tilemap) {
-        CURRENT_CONTEXT.m_tilemap_component_manager->ReplaceComponent(
-            entity, {entity, prefab.m_tilemap.value()});
+    if (prefab.m_tilemap_layer) {
+        CURRENT_CONTEXT.m_tilemap_layer_component_manager->RegisterEntity(
+            entity,
+            TilemapLayerComponent{entity, prefab.m_tilemap_layer.value()});
+    }
+    if (prefab.m_draw_order) {
+        CURRENT_CONTEXT.m_draw_order_manager->RegisterEntity(
+            entity, prefab.m_draw_order.value());
     }
     if (prefab.m_animation) {
         CURRENT_CONTEXT.m_animation_player_manager->RegisterEntity(
@@ -155,7 +166,8 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
             entity, entity, prefab.m_trigger.value());
     }
     if (!prefab.m_bind_points.empty()) {
-        CURRENT_CONTEXT.m_bind_point_component_manager->RegisterEntity(entity,prefab.m_bind_points);
+        CURRENT_CONTEXT.m_bind_point_component_manager->RegisterEntity(
+            entity, prefab.m_bind_points);
     }
     if (prefab.m_ui) {
         CURRENT_CONTEXT.m_ui_manager->RegisterEntity(entity, prefab.m_ui);
@@ -213,7 +225,7 @@ void Level::doRemoveEntities() {
 
 void Level::doRemoveEntityWithChildren(Entity entity) {
     TL_RETURN_IF_FALSE(entity != null_entity);
-    
+
     // TODO: remove entity from parent
 
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
@@ -226,7 +238,7 @@ void Level::doRemoveEntityWithChildren(Entity entity) {
     CURRENT_CONTEXT.m_sprite_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_transform_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_relationship_manager->RemoveEntity(entity);
-    CURRENT_CONTEXT.m_tilemap_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_tilemap_layer_component_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);

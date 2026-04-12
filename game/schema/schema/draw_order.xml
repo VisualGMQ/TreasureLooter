@@ -1,0 +1,15 @@
+<schema>
+    <enum name="DrawLayer">
+        <item name="Default" value="0" />
+        <item name="TilemapLand" />
+        <item name="TilemapArch" />
+        <item name="UI" />
+        <item name="DebugDraw" />
+        <item name="RenderLayerCount" />
+    </enum>
+
+    <class name="DrawOrderDefinition">
+        <element type="DrawLayer" name="draw_layer" default="DrawLayer::Default" />
+        <element type="bool" name="enable_y_sorting" default="false" />
+    </class>
+</schema>

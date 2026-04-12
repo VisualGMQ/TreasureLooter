@@ -157,6 +157,11 @@ void bindImGui(lua_State* L) {
         .addFunction("SliderInt", &ImGui_SliderInt)
         // Tree
         .addFunction("TreeNode", +[](const char* label) { return ImGui::TreeNode(label); })
+        .addFunction("TreeNodeEx",
+                     +[](const char* label, int flags) {
+                         return ImGui::TreeNodeEx(
+                             label, static_cast<ImGuiTreeNodeFlags>(flags));
+                     })
         .addFunction("TreePop", +[]() { ImGui::TreePop(); })
         .addFunction("CollapsingHeader", +[](const char* label) { return ImGui::CollapsingHeader(label); })
         // Layout
@@ -206,7 +211,11 @@ void bindImGui(lua_State* L) {
         .addProperty("TreeNodeFlags_Selected", +[]() { return static_cast<int>(ImGuiTreeNodeFlags_Selected); })
         .addProperty("TreeNodeFlags_Framed", +[]() { return static_cast<int>(ImGuiTreeNodeFlags_Framed); })
         .addProperty("TreeNodeFlags_DefaultOpen", +[]() { return static_cast<int>(ImGuiTreeNodeFlags_DefaultOpen); })
+        .addProperty("TreeNodeFlags_OpenOnDoubleClick",
+                     +[]() { return static_cast<int>(ImGuiTreeNodeFlags_OpenOnDoubleClick); })
         .addProperty("TreeNodeFlags_Leaf", +[]() { return static_cast<int>(ImGuiTreeNodeFlags_Leaf); })
+        .addProperty("TreeNodeFlags_OpenOnArrow",
+                     +[]() { return static_cast<int>(ImGuiTreeNodeFlags_OpenOnArrow); })
         .addProperty("TreeNodeFlags_Bullet", +[]() { return static_cast<int>(ImGuiTreeNodeFlags_Bullet); })
         .addProperty("TreeNodeFlags_CollapsingHeader", +[]() { return static_cast<int>(ImGuiTreeNodeFlags_CollapsingHeader); })
         .addProperty("InputTextFlags_None", +[]() { return static_cast<int>(ImGuiInputTextFlags_None); })

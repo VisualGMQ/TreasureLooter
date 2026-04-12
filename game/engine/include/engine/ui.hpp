@@ -7,6 +7,7 @@
 #include "engine/text.hpp"
 #include "input/button.hpp"
 #include "schema/ui_config.hpp"
+#include "schema/draw_order.hpp"
 #include "engine/relationship.hpp"
 
 struct UIWidget;
@@ -140,12 +141,10 @@ struct UIDragEvent{
 class UIComponentManager : public ComponentManager<UIWidget> {
 public:
     void Update();
-    void Render();
+    void SubmitDrawCommand(Entity);
     void HandleEvent();
 
 private:
-    static constexpr float ZOrder = static_cast<float>(RenderLayer::UI);
-
     void updateSize(Entity);
     void updateTransform(Entity);
     /**

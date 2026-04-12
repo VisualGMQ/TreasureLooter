@@ -3,6 +3,8 @@
 #include "engine/context.hpp"
 #include "engine/profile.hpp"
 
+constexpr uint32_t kZOrder = 1e8;
+
 void DebugDrawer::DrawRect(const Rect& r, const Color& color, TimeType time,
                            bool use_camera) {
     m_rects.push_back({color, r, time, use_camera});
@@ -28,13 +30,11 @@ void DebugDrawer::Update(TimeType elapse) {
 
     auto& renderer = CURRENT_CONTEXT.m_renderer;
 
-    float z_order = GetZOrderByYSorting(0, RenderLayer::DebugDraw);
-
     size_t i = 0;
 
     while (i < m_rects.size()) {
         auto& elem = m_rects[i];
-        renderer->DrawRect(elem.m_value, elem.m_color, z_order,
+        renderer->DrawRect(elem.m_value, elem.m_color, kZOrder,
                            elem.use_camera);
         elem.m_time = decTime(elem.m_time, elapse);
 
@@ -49,7 +49,7 @@ void DebugDrawer::Update(TimeType elapse) {
     i = 0;
     while (i < m_fill_rects.size()) {
         auto& elem = m_fill_rects[i];
-        renderer->FillRect(elem.m_value, elem.m_color, z_order,
+        renderer->FillRect(elem.m_value, elem.m_color, kZOrder,
                            elem.use_camera);
         elem.m_time = decTime(elem.m_time, elapse);
 
@@ -64,7 +64,7 @@ void DebugDrawer::Update(TimeType elapse) {
     i = 0;
     while (i < m_circles.size()) {
         auto& elem = m_circles[i];
-        renderer->DrawCircle(elem.m_value, elem.m_color, 20, z_order,
+        renderer->DrawCircle(elem.m_value, elem.m_color, 20, kZOrder,
                              elem.use_camera);
         elem.m_time = decTime(elem.m_time, elapse);
 
@@ -80,7 +80,7 @@ void DebugDrawer::Update(TimeType elapse) {
     while (i < m_segments.size()) {
         auto& elem = m_segments[i];
         renderer->DrawLine(elem.m_value.first, elem.m_value.second,
-                           elem.m_color, z_order, elem.use_camera);
+                           elem.m_color, kZOrder, elem.use_camera);
         elem.m_time = decTime(elem.m_time, elapse);
 
         if (elem.m_time == 0) {

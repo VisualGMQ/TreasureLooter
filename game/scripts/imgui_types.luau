@@ -18,6 +18,7 @@ export type SliderFloat = (label: string, v: number, v_min: number, v_max: numbe
 export type SliderInt = (label: string, v: number, v_min: number, v_max: number) -> (number, boolean)
 
 export type TreeNode = (label: string) -> boolean
+export type TreeNodeEx = (label: string, flags: number) -> boolean
 export type TreePop = () -> ()
 export type CollapsingHeader = (label: string) -> boolean
 
@@ -69,7 +70,9 @@ export type TreeNodeFlags_None = number
 export type TreeNodeFlags_Selected = number
 export type TreeNodeFlags_Framed = number
 export type TreeNodeFlags_DefaultOpen = number
+export type TreeNodeFlags_OpenOnDoubleClick = number
 export type TreeNodeFlags_Leaf = number
+export type TreeNodeFlags_OpenOnArrow = number
 export type TreeNodeFlags_Bullet = number
 export type TreeNodeFlags_CollapsingHeader = number
 

@@ -1,6 +1,7 @@
 <schema>
     <include>transform.hpp</include>
     <include>animation_player.hpp</include>
+    <import>draw_order</import>
     <import>sprite</import>
     <import>relationship</import>
     <import>anim</import>
@@ -13,10 +14,11 @@
 
     <asset name="Prefab" extension=".prefab">
         <option type="Transform" name="transform"/>
+        <option type="DrawOrderDefinition" name="draw_order"/>
         <option type="SpriteDefinition" name="sprite"/>
         <array  type="PrefabHandle" name="children"/>
         <option type="AnimationPlayerDefinition" name="animation"/>
-        <option type="TilemapDefinition" name="tilemap"/>
+        <option type="TilemapLayerDefinition" name="tilemap_layer"/>
         <option type="CCTDefinition" name="cct"/>
         <option type="TriggerDefinition" name="trigger"/>
         <array type="BindPointDefinition" name="bind_points"/>

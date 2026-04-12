@@ -25,12 +25,12 @@ public:
 
     // load asset from path
     virtual HandleType Load(const Path& filename, bool force = false) = 0;
-    
+
     // create an empty asset
     HandleType Create() {
         return this->store(nullptr, UUID::CreateV4(), std::make_unique<T>());
     }
-    
+
     HandleType Create(const UUID& uuid, T&& value, const Path* filename) {
         TL_RETURN_DEFAULT_IF_FALSE(uuid);
         return this->store(filename, uuid,
@@ -75,7 +75,8 @@ public:
     }
 
     void Reload(HandleType handle) {
-        if (auto it = m_uuid_path_map.find(handle.GetUUID()); it != m_uuid_path_map.end()) {
+        if (auto it = m_uuid_path_map.find(handle.GetUUID());
+            it != m_uuid_path_map.end()) {
             Load(it->second);
         }
     }
@@ -121,7 +122,7 @@ public:
     }
 
     /** only change handle path, not save to file
-     * 
+     *
      * @warning only use for editor
      */
     void MakeExternal(const UUID& uuid, const Path& filename) {
@@ -130,7 +131,7 @@ public:
     }
 
     /** only change handle path, not save to file
-     * 
+     *
      * @warning only use for editor
      */
     void MakeExternal(HandleType handle, const Path& filename) {
@@ -141,7 +142,7 @@ public:
             m_paths_uuid_map.erase(*old_filename);
             m_uuid_path_map.erase(uuid);
         }
-        
+
         m_uuid_path_map[uuid] = filename;
         m_paths_uuid_map[filename] = uuid;
     }
@@ -182,7 +183,8 @@ public:
     using HandleType = typename AssetManagerBase<T>::HandleType;
 
     HandleType Load(const Path& filename, bool force = false) override {
-        if (auto handle = AssetManagerBase<T>::Find(filename); handle && !force) {
+        if (auto handle = AssetManagerBase<T>::Find(filename);
+            handle && !force) {
             return handle;
         }
 

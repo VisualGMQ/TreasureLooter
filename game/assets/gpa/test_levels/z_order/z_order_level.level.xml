@@ -1,0 +1,81 @@
+<LevelContent>
+	<uuid>a736e81a-2768-4309-b651-c59a7dacfe77</uuid>
+	<payload>
+		<script_path>scripts/game_entry.luau</script_path>
+		<entities>
+			<elem>
+				<transform>
+					<value>
+						<position x="100.000000" y="100.000000"/>
+						<scale x="1.000000" y="1.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>
+					<uuid>c6073c47-3245-49ee-85cc-c843fd17dc2d</uuid>
+					<payload>
+						<draw_order>
+							<value>
+								<draw_layer>TilemapLand</draw_layer>
+								<enable_y_sorting>false</enable_y_sorting>
+							</value>
+						</draw_order>
+						<sprite>
+							<value>
+								<image>assets/UI/Dialog/FacesetBox.png</image>
+								<region>
+									<topleft x="0.000000" y="0.000000"/>
+									<size x="0.000000" y="0.000000"/>
+								</region>
+								<size x="0.000000" y="0.000000"/>
+								<anchor x="0.000000" y="0.000000"/>
+								<flip>
+									<item>None</item>
+								</flip>
+								<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+							</value>
+						</sprite>
+						<script/>
+					</payload>
+				</prefab>
+			</elem>
+			<elem>
+				<transform>
+					<value>
+						<position x="120.000000" y="120.000000"/>
+						<scale x="1.500000" y="1.500000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>
+					<uuid>c25e24ec-812e-4621-807d-bc19241a3498</uuid>
+					<payload>
+						<draw_order>
+							<value>
+								<draw_layer>Default</draw_layer>
+								<enable_y_sorting>false</enable_y_sorting>
+							</value>
+						</draw_order>
+						<sprite>
+							<value>
+								<image>assets/UI/Dialog/FacesetBox.png</image>
+								<region>
+									<topleft x="0.000000" y="0.000000"/>
+									<size x="0.000000" y="0.000000"/>
+								</region>
+								<size x="0.000000" y="0.000000"/>
+								<anchor x="0.000000" y="0.000000"/>
+								<flip>
+									<item>None</item>
+								</flip>
+								<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+							</value>
+						</sprite>
+						<script/>
+					</payload>
+				</prefab>
+			</elem>
+		</entities>
+	</payload>
+</LevelContent>
+

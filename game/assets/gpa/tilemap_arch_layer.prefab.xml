@@ -1,0 +1,27 @@
+<Prefab>
+	<uuid>5e23da11-738f-46c5-aa01-0fa2214fe290</uuid>
+	<payload>
+		<transform>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<scale x="1.000000" y="1.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<draw_order>
+			<value>
+				<draw_layer>TilemapArch</draw_layer>
+				<enable_y_sorting>true</enable_y_sorting>
+			</value>
+		</draw_order>
+		<tilemap_layer>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<tilemap>assets/tilemap/test.tmx</tilemap>
+				<layer_name>arch</layer_name>
+			</value>
+		</tilemap_layer>
+		<script/>
+	</payload>
+</Prefab>
+

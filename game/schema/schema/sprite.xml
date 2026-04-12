@@ -3,14 +3,13 @@
     <include>renderer.hpp</include>
     <include>flag.hpp</include>
     <import>flip</import>
-    
+
     <class name="SpriteDefinition">
-        <handle type="Image" name="image"/>
-        <element type="Region" name="region"/>
-        <element type="Vec2" name="size"/>
-        <element type="Vec2" name="anchor"/>
-        <flags type="Flip" name="flip"/>
-        <element type="float" name="z_order" default="0"/>
-        <element type="Color" name="color" default="Color::White"/>
+        <handle type="Image" name="image" />
+        <element type="Region" name="region" />
+        <element type="Vec2" name="size" />
+        <element type="Vec2" name="anchor" />
+        <flags type="Flip" name="flip" />
+        <element type="Color" name="color" default="Color::White" />
     </class>
 </schema>

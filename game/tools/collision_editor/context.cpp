@@ -5,6 +5,7 @@
 #include "engine/controller.hpp"
 #include "engine/debug_drawer.hpp"
 #include "engine/dialog.hpp"
+#include "engine/draw.hpp"
 #include "engine/input/finger_touch.hpp"
 #include "engine/input/input.hpp"
 #include "engine/input/keyboard.hpp"
@@ -653,7 +654,10 @@ void CollisionEditorContext::renderScenePreview() {
                          Color{0.2f, 1.0f, 0.2f, 0.8f}, -1000.0f, true);
 
     m_relationship_manager->Update();
-    m_sprite_manager->Update();
+    m_draw_order_manager->Update();
+
+    DrawCommandSubmitter draw_cmd_submitter;
+    draw_cmd_submitter.Submit();
 
     // z: sprite default 0 → bind point markers → hit shapes (see
     // Renderer::sortDrawCommands).

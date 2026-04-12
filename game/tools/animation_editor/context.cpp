@@ -3,6 +3,7 @@
 #include "engine/asset_manager.hpp"
 #include "engine/bind_point.hpp"
 #include "engine/dialog.hpp"
+#include "engine/draw.hpp"
 #include "engine/sprite.hpp"
 #include "engine/transform.hpp"
 #include "engine/input/input.hpp"
@@ -244,7 +245,12 @@ void AnimationEditorContext::renderScenePreview() {
     m_renderer->DrawLine({0.0f, -axis_len}, {0.0f, axis_len}, Color{0.2f, 1.0f, 0.2f, 0.8f}, -1000.0f, true);
 
     m_relationship_manager->Update();
-    m_sprite_manager->Update();
+
+    m_draw_order_manager->Update();
+
+    DrawCommandSubmitter draw_cmd_submitter;
+    draw_cmd_submitter.Submit();
+
     m_renderer->ApplyDrawcall();
 }
 

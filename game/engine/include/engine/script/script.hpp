@@ -141,7 +141,6 @@ public:
 
 private:
     void doUpdate(Entity);
-    void doUIUpdate(Entity);
     void doRender(Entity);
 
     template <typename T>
