@@ -11,7 +11,7 @@ include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
 ################# options #####################
-option(TL_ENABLE_PROFILE "enable profile use optick" OFF)
+option(TL_ENABLE_PROFILE "enable profile use tracy v0.13.1" OFF)
 
 ################ generate project path config file ################
 configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_path.xml)
@@ -145,7 +145,7 @@ if (MSVC)
 endif()
 
 if (TL_ENABLE_PROFILE)
-    target_link_libraries(${ENGINE_NAME} PUBLIC optick)
+    target_link_libraries(${ENGINE_NAME} PUBLIC Tracy::TracyClient)
     target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ENABLE_PROFILE)
 endif()
 

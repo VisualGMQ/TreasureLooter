@@ -59,8 +59,8 @@ void Keyboard::HandleEvent(const SDL_KeyboardEvent& event) {
 }
 
 void Keyboard::Update() {
-    PROFILE_INPUT_SECTION(__FUNCTION__);
-    
+    PROFILE_SECTION();
+
     for (auto& [_, button] : m_buttons) {
         button.update();
     }

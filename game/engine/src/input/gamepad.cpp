@@ -127,8 +127,8 @@ void GamepadManager::HandleEvent(const SDL_Event& event) {
 }
 
 void GamepadManager::Update() {
-    PROFILE_INPUT_SECTION(__FUNCTION__);
-    
+    PROFILE_SECTION();
+
     for (auto& [_, gamepad] : m_gamepads) {
         gamepad.update();
     }

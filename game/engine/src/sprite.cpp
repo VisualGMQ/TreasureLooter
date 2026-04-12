@@ -9,7 +9,7 @@
 #include "engine/profile.hpp"
 
 void SpriteManager::SubmitDrawCommand(Entity entity) {
-    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     auto sprite = Get(entity);
     TL_RETURN_IF_FALSE(sprite && sprite->m_image && IsEnable(entity));

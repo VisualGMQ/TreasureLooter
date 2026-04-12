@@ -6,8 +6,8 @@
 #include "engine/transform.hpp"
 
 void RelationshipManager::Update() {
-    PROFILE_GAMELOGIC_SECTION(__FUNCTION__);
-    
+    PROFILE_SECTION();
+
     auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
     if (!level) {
         return;

@@ -8,6 +8,8 @@ Time::Time() {
 }
 
 void Time::Update() {
+    PROFILE_SECTION();
+
     auto cur_time = std::chrono::steady_clock::now();
     auto elapsed_time = cur_time - m_cur_time;
     m_cur_time = cur_time;

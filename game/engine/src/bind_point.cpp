@@ -45,7 +45,7 @@ void BindPointsComponentManager::ToggleDebugDraw() {
 }
 
 void BindPointsComponentManager::RenderDebug(TimeType delta_time) const {
-    PROFILE_DEBUG_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     TL_RETURN_IF_FALSE(IsEnableDebugDraw());
 

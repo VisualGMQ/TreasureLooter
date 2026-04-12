@@ -827,7 +827,7 @@ bool PhysicsScene::IsEnableDebugDraw() const {
 }
 
 void PhysicsScene::RenderDebug() const {
-    PROFILE_DEBUG_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
 
     TL_RETURN_IF_FALSE(IsEnableDebugDraw());
 
@@ -837,11 +837,11 @@ void PhysicsScene::RenderDebug() const {
         auto &shape = actor->GetShape();
         switch (shape.GetType()) {
             case PhysicsShapeType::Rect:
-                debug_drawer->DrawRect(*shape.AsRect(), Color::Red, 
+                debug_drawer->DrawRect(*shape.AsRect(), Color::Red,
                                        DebugDrawer::kOneFrame, true);
                 break;
             case PhysicsShapeType::Circle:
-                debug_drawer->DrawCircle(*shape.AsCircle(), Color::Red, 
+                debug_drawer->DrawCircle(*shape.AsCircle(), Color::Red,
                                          DebugDrawer::kOneFrame, true);
                 break;
             default:;
@@ -864,13 +864,14 @@ void PhysicsScene::RenderDebug() const {
                                 auto &shape = actor->GetShape();
                                 switch (shape.GetType()) {
                                     case PhysicsShapeType::Rect:
-                                        debug_drawer->DrawRect(*shape.AsRect(),
-                                                               Color::Red,
-                                                               DebugDrawer::kOneFrame, true);
+                                        debug_drawer->DrawRect(
+                                            *shape.AsRect(), Color::Red,
+                                            DebugDrawer::kOneFrame, true);
                                         break;
                                     case PhysicsShapeType::Circle:
                                         debug_drawer->DrawCircle(
-                                            *shape.AsCircle(), Color::Red, DebugDrawer::kOneFrame, true);
+                                            *shape.AsCircle(), Color::Red,
+                                            DebugDrawer::kOneFrame, true);
                                         break;
                                     default:;
                                 }
@@ -896,7 +897,8 @@ void PhysicsScene::RenderDebug() const {
                                     rect.m_half_size +
                                     tilemap_collision->m_topleft;
 
-                    debug_drawer->DrawRect(rect, Color::Green, DebugDrawer::kOneFrame, true);
+                    debug_drawer->DrawRect(rect, Color::Green,
+                                           DebugDrawer::kOneFrame, true);
                 }
             }
         }

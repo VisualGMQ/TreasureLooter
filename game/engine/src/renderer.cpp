@@ -228,17 +228,19 @@ void Renderer::Clear() {
 }
 
 void Renderer::ApplyDrawcall() {
-    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
+
     sortDrawCommands();
     applyDrawCommands();
-    
+
     m_draw_commands.clear();
     m_y_sorting_range.clear();
     m_is_y_sorting_range_close = true;
 }
 
 void Renderer::Present() {
-    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
+
     SDL_CALL(SDL_RenderPresent(m_renderer));
 }
 
@@ -552,7 +554,8 @@ private:
 };
 
 void Renderer::applyDrawCommands() {
-    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
+
     for (auto& cmd : m_draw_commands) {
         ApplyDrawCmdVisitor visitor{m_renderer, cmd.m_color};
         std::visit(visitor, cmd.m_cmd);
@@ -560,7 +563,8 @@ void Renderer::applyDrawCommands() {
 }
 
 void Renderer::sortDrawCommands() {
-    PROFILE_RENDERING_SECTION(__FUNCTION__);
+    PROFILE_SECTION();
+
     for (auto& range : m_y_sorting_range) {
         TL_CONTINUE_IF_FALSE(range.first < range.second);
 

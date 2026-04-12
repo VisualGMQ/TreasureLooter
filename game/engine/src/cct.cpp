@@ -1,10 +1,11 @@
 #include "engine/cct.hpp"
 
 #include "engine/context.hpp"
-#include "imgui.h"
 #include "engine/profile.hpp"
+#include "imgui.h"
 
-CharacterController::CharacterController(Entity entity, const CCTDefinition& create_info)
+CharacterController::CharacterController(Entity entity,
+                                         const CCTDefinition& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
     m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(
         entity, create_info.m_physics_actor);
@@ -24,8 +25,8 @@ bool CharacterController::EnableDebugOutput = false;
     } while (0)
 
 void CharacterController::MoveAndSlide(const Vec2& dir) {
-    PROFILE_PHYSICS_SECTION(__FUNCTION__);
-    
+    PROFILE_SECTION();
+
     if (!m_actor) {
         CCT_DEBUG_LOG("actor is nullptr");
         return;
@@ -65,8 +66,7 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
 
         for (int i = 0; i < hitted; i++) {
             CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
-                          hit.m_actor->GetPosition(), hit.m_normal,
-                          hit.m_t);
+                          hit.m_actor->GetPosition(), hit.m_normal, hit.m_t);
         }
 
         if (!hitted) {
@@ -89,8 +89,7 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
             actual_move_dist = hit.m_t - m_skin;
             m_actor->Move(actual_move_dist * disp_normalized);
             CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
-                          hit.m_t, m_skin, hit.m_t < m_skin,
-                          actual_move_dist);
+                          hit.m_t, m_skin, hit.m_t < m_skin, actual_move_dist);
             CCT_DEBUG_LOG("move to {}", m_actor->GetPosition());
         }
 

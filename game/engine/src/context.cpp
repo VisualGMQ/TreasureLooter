@@ -225,6 +225,8 @@ std::string_view CommonContext::GetAppPath() const {
 }
 
 void CommonContext::beginImGui() {
+    PROFILE_SECTION();
+
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
@@ -232,6 +234,8 @@ void CommonContext::beginImGui() {
 }
 
 void CommonContext::endImGui() {
+    PROFILE_SECTION();
+
     ImGui::SetCurrentContext(m_imgui_context);
     ImGui::Render();
     auto& io = ImGui::GetIO();
@@ -331,7 +335,8 @@ void GameContext::Initialize(int argc, char** argv) {
 }
 
 void GameContext::Update() {
-    PROFILE_MAIN_FRAME();
+    PROFILE_FRAME_NAMED("main_loop");
+
     m_time->Begin();
 
     auto elapse_time = m_time->GetElapseTime();
@@ -376,7 +381,7 @@ void GameContext::logicPostUpdate(TimeType elapse) {
 }
 
 void GameContext::renderUpdate(TimeType elapse) {
-    PROFILE_RENDERING_SECTION("renderUpdate");
+    PROFILE_SECTION();
 
     m_renderer->Clear();
     beginImGui();
@@ -401,5 +406,4 @@ void GameContext::renderUpdate(TimeType elapse) {
 }
 
 GameContext::~GameContext() {
-    PROFILE_SHUTDOWN();
 }

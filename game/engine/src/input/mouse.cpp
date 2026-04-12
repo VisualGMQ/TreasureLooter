@@ -101,8 +101,8 @@ void Mouse::HandleEvent(const SDL_Event& event) {
 }
 
 void Mouse::Update() {
-    PROFILE_INPUT_SECTION(__FUNCTION__);
-    
+    PROFILE_SECTION();
+
     for (auto& button : m_buttons) {
         button.update();
     }
