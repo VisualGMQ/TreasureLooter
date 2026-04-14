@@ -1,7 +1,7 @@
 #include "engine/controller.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/input/mouse.hpp"
-#include "engine/level.hpp"
+#include "engine/scene.hpp"
 #include "engine/relationship.hpp"
 
 ControllerAxis::ControllerAxis(SDL_JoystickID joystick_id, const Axis& axis)
@@ -90,7 +90,7 @@ ControllerAxises PlayerController::MakeAxises(const std::string& x_name,
                             m_input_mgr.MakeAxises(x_name, y_name));
 }
 
-void PlayerController::RegisterVirtualController(LevelHandle level, const GameConfig& game_config) {
+void PlayerController::RegisterVirtualController(SceneHandle level, const GameConfig& game_config) {
 #ifdef TL_ANDROID
     if (level) {
         initVirualJoystick(level, game_config);
@@ -130,7 +130,7 @@ void PlayerController::RegisterVirtualController(LevelHandle level, const GameCo
 #endif
 }
 
-void PlayerController::DestroyVirtualController(LevelHandle level) {
+void PlayerController::DestroyVirtualController(SceneHandle level) {
 #ifdef TL_ANDROID
     if (level) {
 		m_event_system.RemoveListener<UIDragEvent>(
@@ -148,7 +148,7 @@ void PlayerController::DestroyVirtualController(LevelHandle level) {
 #endif
 }
 
-void PlayerController::initVirualJoystick(LevelHandle level, const GameConfig& game_config) {
+void PlayerController::initVirualJoystick(SceneHandle level, const GameConfig& game_config) {
     PrefabHandle joystick_prefab = m_assets_mgr.GetManager<Prefab>().Load(
         "assets/gpa/ui/android_joystick.prefab.xml");
     Transform transform;
@@ -183,7 +183,7 @@ void PlayerController::initVirualJoystick(LevelHandle level, const GameConfig& g
                   std::placeholders::_1, std::placeholders::_2));
 }
 
-void PlayerController::initVirualAttackButton(LevelHandle level,
+void PlayerController::initVirualAttackButton(SceneHandle level,
                                               const GameConfig& game_config) {
     PrefabHandle button_prefab = m_assets_mgr.GetManager<Prefab>().Load(
         "assets/gpa/ui/attack_button.prefab.xml");

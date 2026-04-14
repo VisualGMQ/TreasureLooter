@@ -56,13 +56,13 @@ function GameEntry.OnInit(self: GameEntry)
     end
 
     -- put monsters into level
-    local level = ctx:GetLevelManager():GetCurrentLevel()
-    if level == nil then
+    local scene = ctx:GetSceneManager():GetCurrentScene()
+    if scene == nil then
         TL.Log("current level is nil")
         return
     end
 
-    local root_entity = level:GetRootEntity()
+    local root_entity = scene:GetRootEntity()
     local relationship_mgr = ctx:GetRelationshipManager()
 
     local root_relationship = relationship_mgr:Get(root_entity)

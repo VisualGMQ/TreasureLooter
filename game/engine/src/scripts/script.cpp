@@ -122,7 +122,7 @@ ScriptComponentManager::~ScriptComponentManager() = default;
 void ScriptComponentManager::Update() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_FALSE(level);
 
     doUpdate(level->GetRootEntity());
@@ -132,7 +132,7 @@ void ScriptComponentManager::Update() {
 void ScriptComponentManager::Render() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_FALSE(level);
 
     doRender(level->GetRootEntity());

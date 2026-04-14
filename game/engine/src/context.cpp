@@ -11,7 +11,7 @@
 #include "engine/input/finger_touch.hpp"
 #include "engine/input/keyboard.hpp"
 #include "engine/input/mouse.hpp"
-#include "engine/level.hpp"
+#include "engine/scene.hpp"
 #include "engine/log.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
@@ -101,7 +101,7 @@ void CommonContext::Initialize(int argc, char** argv) {
     m_time = std::make_unique<Time>();
     m_physics_scene = std::make_unique<PhysicsScene>();
     m_cct_manager = std::make_unique<CCTManager>();
-    m_level_manager = std::make_unique<LevelManager>();
+    m_scene_manager = std::make_unique<SceneManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
     m_timer_manager = std::make_unique<TimerManager>();
     m_bind_point_component_manager =
@@ -124,10 +124,10 @@ void CommonContext::Shutdown() {
     m_should_exit = true;
     m_is_inited = false;
 
-    if (m_level_manager) {
-        m_level_manager->Switch({});
+    if (m_scene_manager) {
+        m_scene_manager->Switch({});
     }
-    m_level_manager.reset();
+    m_scene_manager.reset();
 
     m_script_component_manager.reset();
 
@@ -178,7 +178,7 @@ void CommonContext::HandleEvents(const SDL_Event& event) {
     } else if (event.type == SDL_EVENT_WINDOW_RESIZED ||
                event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
                event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
-        if (m_level_manager && event.window.windowID == m_window->GetID()) {
+        if (m_scene_manager && event.window.windowID == m_window->GetID()) {
             m_event_system->EnqueueEvent(event.window);
         }
     }
@@ -322,12 +322,12 @@ void GameContext::Initialize(int argc, char** argv) {
 
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
-            GetGameConfig().m_input_config_asset),
+            GetGameConfig().m_input_config),
         *this);
 
-    LevelHandle level = m_assets_manager->GetManager<Level>().Load(
-        GetGameConfig().m_basic_level_asset);
-    m_level_manager->Switch(level);
+    SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
+        GetGameConfig().m_entry_scene);
+    m_scene_manager->Switch(level);
 
     m_player_controller->RegisterVirtualController(level, GetGameConfig());
 
@@ -345,7 +345,7 @@ void GameContext::Update() {
     renderUpdate(elapse_time);
     logicPostUpdate(elapse_time);
 
-    m_level_manager->PoseUpdate();
+    m_scene_manager->PoseUpdate();
 
     m_time->End();
 }

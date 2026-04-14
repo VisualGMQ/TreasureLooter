@@ -9,7 +9,7 @@
 void DrawCommandSubmitter::Submit() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
     submit(level->GetRootEntity());
@@ -18,7 +18,7 @@ void DrawCommandSubmitter::Submit() {
 void DrawCommandSubmitter::SubmitUI() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
     auto relationship =

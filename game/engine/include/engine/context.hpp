@@ -19,7 +19,7 @@ class TransformManager;
 class SpriteManager;
 class DrawOrderManager;
 class AssetsManager;
-class Level;
+class Scene;
 struct GameConfig;
 class PlayerController;
 class UIComponentManager;
@@ -33,7 +33,7 @@ class PhysicsScene;
 class GameplayConfigManager;
 class TilemapLayerComponent;
 class TilemapLayerComponentManager;
-class LevelManager;
+class SceneManager;
 
 class CommonContext {
 public:
@@ -96,7 +96,7 @@ public:
     std::unique_ptr<Time> m_time;
     std::unique_ptr<PhysicsScene> m_physics_scene;
     std::unique_ptr<CCTManager> m_cct_manager;
-    std::unique_ptr<LevelManager> m_level_manager;
+    std::unique_ptr<SceneManager> m_scene_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<TimerManager> m_timer_manager;
     std::unique_ptr<UIComponentManager> m_ui_manager;

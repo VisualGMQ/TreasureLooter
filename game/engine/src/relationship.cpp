@@ -1,14 +1,14 @@
 #include "engine/relationship.hpp"
 
 #include "engine/context.hpp"
-#include "engine/level.hpp"
+#include "engine/scene.hpp"
 #include "engine/profile.hpp"
 #include "engine/transform.hpp"
 
 void RelationshipManager::Update() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     if (!level) {
         return;
     }

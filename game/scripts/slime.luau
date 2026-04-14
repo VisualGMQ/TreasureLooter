@@ -143,8 +143,8 @@ function Slime.Hurt(self: Slime, dir: TL.Vec2, damage: number)
 
 	if self.m_hp <= 0 then
 		local ctx: TL.GameContext = TL.GetContext()
-		local level = ctx:GetLevelManager():GetCurrentLevel()
-		level:RemoveEntity(self:GetEntity())
+		local scene = ctx:GetSceneManager():GetCurrentScene()
+		scene:RemoveEntity(self:GetEntity())
 	end
 end
 

@@ -16,8 +16,8 @@ add_3rdlib(Lyra)
 add_3rdlib(Mustache)
 add_3rdlib(stduuid)
 
-set(TRACY_ENABLE ON)
-set(TRACY_ON_DEMAND ON)
+option(TRACY_ENABLE "" ON)
+option(TRACY_ON_DEMAND "" ON)
 add_3rdlib(tracy)
 
 set(TMXLITE_STATIC_LIB ON)

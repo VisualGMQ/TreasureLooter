@@ -1,4 +1,4 @@
-<LevelContent>
+<SceneDefinition>
 	<uuid>99725f59-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<entities>
@@ -10,5 +10,5 @@
 			</elem>
 		</entities>
 	</payload>
-</LevelContent>
+</SceneDefinition>
 

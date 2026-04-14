@@ -1,7 +1,7 @@
 <schema>
-    <import>level_content</import>
+    <import>scene_definition</import>
     <import>input</import>
-    <include>level.hpp</include>
+    <include>scene.hpp</include>
     <include>path.hpp</include>
     <include>text.hpp</include>
 
@@ -18,8 +18,9 @@
 
     <asset name="GameConfig" extension=".game_config">
         <!-- don't use handle, due to asset rely on GameConfig itself! -->
-        <element name="basic_level_asset" type="Path"/>
-        <element name="input_config_asset" type="Path"/>
+        <element name="entry_scene" type="Path"/>
+        <element name="input_config" type="Path"/>
+
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
         <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
         <element name="logic_size" type="Vec2UI" default="{1024, 720}"/>

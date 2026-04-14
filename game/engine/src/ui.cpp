@@ -271,7 +271,7 @@ UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
 void UIComponentManager::Update() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     if (!level) {
         return;
     }
@@ -296,7 +296,7 @@ void UIComponentManager::SubmitDrawCommand(Entity entity) {
 void UIComponentManager::HandleEvent() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     if (!level) {
         return;
     }

@@ -1,4 +1,4 @@
-<LevelContent>
+<SceneDefinition>
 	<uuid>8785ce65-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<script_path>scripts/game_entry.luau</script_path>
@@ -11,5 +11,5 @@
 			</elem>
 		</entities>
 	</payload>
-</LevelContent>
+</SceneDefinition>
 

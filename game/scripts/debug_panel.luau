@@ -65,11 +65,11 @@ local COLLAPSE_FLAGS = bit32.bor(
 
 local function draw_hierarchy_section(ctx: TL.GameContext)
 	if ImGui.TreeNodeEx("Hierarchy###debug_panel_hierarchy", COLLAPSE_FLAGS) then
-		local level = ctx:GetLevelManager():GetCurrentLevel()
-		if level == nil then
+		local scene = ctx:GetSceneManager():GetCurrentScene()
+		if scene == nil then
 			ImGui.Text("(no active level)")
 		else
-			local root = level:GetRootEntity()
+			local root = scene:GetRootEntity()
 			local relationship_mgr = ctx:GetRelationshipManager()
 			draw_entity_tree(root, "Root", relationship_mgr)
 		end

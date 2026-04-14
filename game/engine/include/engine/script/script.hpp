@@ -133,7 +133,7 @@ public:
 
     template <typename T>
     void HandleEvent(const T& event, std::string_view event_name) {
-        auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+        auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
         TL_RETURN_IF_FALSE(level);
 
         doHandleEvent(level->GetRootEntity(), event, event_name);

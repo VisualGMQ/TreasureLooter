@@ -88,11 +88,11 @@ export type Image = {
 	ChangeColorMask: (self: Image, color: Color) -> (),
 } & (r: number, g: number, b: number, a: number) -> Color
 
-export type Level = {
-	Instantiate: (self: Level, prefab: PrefabHandle) -> Entity,
-	RemoveEntity: (self: Level, entity: Entity) -> (),
-	GetRootEntity: (self: Level) -> Entity,
-	GetUIRootEntity: (self: Level) -> Entity,
+export type Scene = {
+	Instantiate: (self: Scene, prefab: PrefabHandle) -> Entity,
+	RemoveEntity: (self: Scene, entity: Entity) -> (),
+	GetRootEntity: (self: Scene) -> Entity,
+	GetUIRootEntity: (self: Scene) -> Entity,
 }
 
 export type BindPoint = {
@@ -113,7 +113,7 @@ export type Tilemap = {}
 export type ScriptBinaryData = {}
 
 export type ImageHandle = { IsValid: (self: ImageHandle) -> boolean, GetAssetPath: (self: ImageHandle) -> string } & Image
-export type LevelHandle = { IsValid: (self: LevelHandle) -> boolean, GetAssetPath: (self: LevelHandle) -> string } & Level
+export type SceneHandle = { IsValid: (self: SceneHandle) -> boolean, GetAssetPath: (self: SceneHandle) -> string } & Scene
 export type AnimationHandle = { IsValid: (self: AnimationHandle) -> boolean, GetAssetPath: (self: AnimationHandle) -> string } & Animation
 export type TilemapHandle = { IsValid: (self: TilemapHandle) -> boolean, GetAssetPath: (self: TilemapHandle) -> string } & Tilemap
 export type FontHandle = { IsValid: (self: FontHandle) -> boolean, GetAssetPath: (self: FontHandle) -> string } & Font
@@ -157,11 +157,11 @@ export type AnimationManager = {
 	Load: (self: AnimationManager, path: string, force: boolean?) -> AnimationHandle,
 	Find: (self: AnimationManager, path: string) -> AnimationHandle?,
 }
-export type LevelManager = {
-	Load: (self: LevelManager, path: string, force: boolean?) -> LevelHandle,
-	Find: (self: LevelManager, path: string) -> LevelHandle?,
-	GetCurrentLevel: (self: LevelManager) -> Level?,
-	Switch: (self: LevelManager, level: LevelHandle) -> (),
+export type SceneManager = {
+	Load: (self: SceneManager, path: string, force: boolean?) -> SceneHandle,
+	Find: (self: SceneManager, path: string) -> SceneHandle?,
+	GetCurrentScene: (self: SceneManager) -> Scene?,
+	Switch: (self: SceneManager, level: SceneHandle) -> (),
 }
 export type FontManager = {
 	Load: (self: FontManager, path: string, force: boolean?) -> FontHandle,
@@ -172,7 +172,7 @@ export type AssetsManager = {
 	GetImageManager: (self: AssetsManager) -> ImageManager,
 	GetTilemapManager: (self: AssetsManager) -> TilemapManager,
 	GetAnimationManager: (self: AssetsManager) -> AnimationManager,
-	GetLevelManager: (self: AssetsManager) -> LevelManager,
+	GetSceneManager: (self: AssetsManager) -> SceneManager,
 	GetFontManager: (self: AssetsManager) -> FontManager,
 
 	-- from schema
@@ -181,7 +181,7 @@ export type AssetsManager = {
 	GetWeaponDefinitionManager: (self: AssetsManager) -> WeaponDefinitionAssetManager,
 	GetCharacterDefinitionManager: (self: AssetsManager) -> CharacterDefinitionAssetManager,
 	GetInputConfigManager: (self: AssetsManager) -> InputConfigAssetManager,
-	GetLevelContentManager: (self: AssetsManager) -> LevelContentAssetManager,
+	GetSceneDefinitionManager: (self: AssetsManager) -> SceneDefinitionAssetManager,
 	GetPhysicsActorInfoManager: (self: AssetsManager) -> PhysicsActorInfoAssetManager,
 	GetUIWidgetDefinitionManager: (self: AssetsManager) -> UIWidgetDefinitionAssetManager,
 }
@@ -413,7 +413,7 @@ export type GameContext = {
 	GetCamera: (self: GameContext) -> Camera,
 	GetScriptManager: (self: GameContext) -> ScriptComponentManager,
 	GetAssetsManager: (self: GameContext) -> AssetsManager,
-	GetLevelManager: (self: GameContext) -> LevelManager,
+	GetSceneManager: (self: GameContext) -> SceneManager,
 	GetTime: (self: GameContext) -> Time,
 	GetTimerManager: (self: GameContext) -> TimerManager,
 	GetTransformManager: (self: GameContext) -> TransformManager,

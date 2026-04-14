@@ -14,7 +14,6 @@
 #include "engine/image.hpp"
 #include "engine/input/input.hpp"
 #include "engine/input/mouse.hpp"
-#include "engine/level.hpp"
 #include "engine/log.hpp"
 #include "engine/macros.hpp"
 #include "engine/math.hpp"
@@ -22,6 +21,7 @@
 #include "engine/physics.hpp"
 #include "engine/relationship.hpp"
 #include "engine/renderer.hpp"
+#include "engine/scene.hpp"
 #include "engine/script/script.hpp"
 #include "engine/script/script_handle_binding.hpp"
 #include "engine/script/script_imgui_binding.hpp"
@@ -49,9 +49,6 @@
         ScriptEventRegistry::Register<EventType>(EventName);             \
         CURRENT_CONTEXT.m_event_system->AddListener<EventType>(          \
             [](EventListenerID, const EventType& event) {                \
-                auto level =                                             \
-                    CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();  \
-                TL_RETURN_IF_NULL(level);                                \
                 CURRENT_CONTEXT.m_script_component_manager->HandleEvent( \
                     event, EventName);                                   \
             });                                                          \
@@ -342,14 +339,14 @@ void bindMath(lua_State* L) {
         .endNamespace();
 }
 
-void bindLevel(lua_State* L) {
+void bindScene(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<Level>("Level")
-                .addFunction("Instantiate", &Level::Instantiate)
-                .addFunction("RemoveEntity", &Level::RemoveEntity)
-                .addFunction("GetRootEntity", &Level::GetRootEntity)
-                .addFunction("GetUIRootEntity", &Level::GetUIRootEntity)
+            .beginClass<Scene>("Scene")
+                .addFunction("Instantiate", &Scene::Instantiate)
+                .addFunction("RemoveEntity", &Scene::RemoveEntity)
+                .addFunction("GetRootEntity", &Scene::GetRootEntity)
+                .addFunction("GetUIRootEntity", &Scene::GetUIRootEntity)
             .endClass()
         .endNamespace();
 }
@@ -485,9 +482,9 @@ void bindContext(lua_State* L) {
                              +[](GameContext* ctx) -> AssetsManager* {
                                  return ctx->m_assets_manager.get();
                              })
-                .addFunction("GetLevelManager",
-                             +[](GameContext* ctx) -> LevelManager* {
-                                 return ctx->m_level_manager.get();
+                .addFunction("GetSceneManager",
+                             +[](GameContext* ctx) -> SceneManager* {
+                                 return ctx->m_scene_manager.get();
                              })
                 .addFunction("GetTime",
                              +[](GameContext* ctx) -> Time* {
@@ -592,9 +589,9 @@ void bindAssetsManager(lua_State* L) {
                              +[](AssetsManager* m) -> AnimationManager* {
                                  return &m->GetManager<Animation>();
                              })
-                .addFunction("GetLevelManager",
-                             +[](AssetsManager* m) -> LevelManager* {
-                                 return &m->GetManager<Level>();
+                .addFunction("GetSceneManager",
+                             +[](AssetsManager* m) -> SceneManager* {
+                                 return &m->GetManager<Scene>();
                              })
                 .addFunction("GetFontManager",
                              +[](AssetsManager* m) -> FontManager* {
@@ -1214,18 +1211,18 @@ void bindBindPoint(lua_State* L) {
     .endNamespace();
 }
 
-void bindLevelManager(lua_State* L) {
+void bindSceneManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<LevelManager>("LevelManager")
-                .addFunction("Load", +[](LevelManager* m, const std::string& path, bool force) {
+            .beginClass<SceneManager>("SceneManager")
+                .addFunction("Load", +[](SceneManager* m, const std::string& path, bool force) {
                     return m->Load(Path(path), force);
                 })
-                .addFunction("Find", +[](LevelManager* m, const std::string& path) {
+                .addFunction("Find", +[](SceneManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
-                .addFunction("GetCurrentLevel", &LevelManager::GetCurrentLevel)
-                .addFunction("Switch", &LevelManager::Switch)
+                .addFunction("GetCurrentScene", &SceneManager::GetCurrentScene)
+                .addFunction("Switch", &SceneManager::Switch)
             .endClass()
         .endNamespace();
 }
@@ -1234,7 +1231,7 @@ void bindLevelManager(lua_State* L) {
 
 void bindHandleTypes(lua_State* L) {
     BindHandle<Image>("ImageHandle", L, "Image");
-    BindHandle<Level>("LevelHandle", L, "Level");
+    BindHandle<Scene>("SceneHandle", L, "Scene");
     BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
     BindHandle<TilemapHandle>("TilemapHandle", L, "Tilemap");
@@ -1255,7 +1252,7 @@ void bindAllTypes(lua_State* L) {
     bindScriptBinaryDataManager(L);
     bindPath(L);
     bindMath(L);
-    bindLevel(L);
+    bindScene(L);
     bindImage(L);
     bindDebugDraw(L);
     bindContext(L);
@@ -1272,7 +1269,7 @@ void bindAllTypes(lua_State* L) {
     bindTilemapComponent(L);
     bindTrigger(L);
     bindRelationship(L);
-    bindLevelManager(L);
+    bindSceneManager(L);
     bindFontManager(L);
     bindAnimationManager(L);
     bindTilemapManager(L);

@@ -13,7 +13,7 @@
         <handle type="Prefab" name="prefab"/>
     </class>
 
-    <asset name="LevelContent" extension=".level">
+    <asset name="SceneDefinition" extension=".scene">
         <element type="Path" name="script_path"/>
         <array type="EntityInstance" name="entities"/>
     </asset>

@@ -1,4 +1,4 @@
-<LevelContent>
+<SceneDefinition>
 	<uuid>e112e8a6-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<script_path></script_path>
@@ -35,4 +35,4 @@
 			</elem>
 		</entities>
 	</payload>
-</LevelContent>
+</SceneDefinition>

@@ -3,44 +3,47 @@
     <include>animation.hpp</include>
     <import>common</import>
     <import>physics_schema</import>
-    
+
     <enum name="TeamID">
-        <item name="invalid"/>
-        <item name="neutral"/>
-        <item name="team1"/>
-        <item name="team2"/>
+        <item name="invalid" />
+        <item name="neutral" />
+        <item name="team1" />
+        <item name="team2" />
     </enum>
 
     <enum name="WeaponType">
-        <item name="Sweep"/>
-        <item name="Stab"/>
+        <item name="Sweep" />
+        <item name="Stab" />
     </enum>
 
     <asset name="WeaponDefinition" extension=".weapon_def">
-        <element name="type" type="WeaponType"/>
-        <handle name="sprite" type="Image"/>
-        <element name="cooldown" type="float" default="1"/>
-        <element name="attack_speed" type="float" default="1"/>
+        <element name="type" type="WeaponType" />
+        <handle name="sprite" type="Image" />
+        <element name="cooldown" type="float" default="1" />
+        <element name="attack_speed" type="float" default="1" />
 
-        <handle name="attack_animation" type="Animation"/>
-        <array name="hit_shapes" type="TriggerDefinition"/>
-        <array name="bind_points" type="BindPointDefinition"/>
+        <handle name="attack_animation" type="Animation" />
+        <array name="hit_shapes" type="TriggerDefinition" />
+        <array name="bind_points" type="BindPointDefinition" />
     </asset>
 
     <asset name="CharacterDefinition" extension=".character_def">
-        <handle name="sprite_sheet" type="Image"/>
-        <handle name="faceset" type="Image"/>
-        <element name="speed" type="float" default="100"/>
-        
-        <element name="cct" type="CCTDefinition"/>
+        <handle name="sprite_sheet" type="Image" />
+        <handle name="faceset" type="Image" />
+        <element name="speed" type="float" default="100" />
 
-        <handle name="move_left_animation" type="Animation"/>
-        <handle name="move_right_animation" type="Animation"/>
-        <handle name="move_up_animation" type="Animation"/>
-        <handle name="move_down_animation" type="Animation"/>
-        
-        <element name="script" type="Path"/>
-        
-        <handle name="weapon" type="WeaponDefinition"/>
+        <element name="cct" type="CCTDefinition" />
+
+        <handle name="move_left_animation" type="Animation" />
+        <handle name="move_right_animation" type="Animation" />
+        <handle name="move_up_animation" type="Animation" />
+        <handle name="move_down_animation" type="Animation" />
+
+        <element name="script" type="Path" />
+
+        <handle name="weapon" type="WeaponDefinition" />
+    </asset>
+
+    <asset name="LevelDefinition" extension=".level">
     </asset>
 </schema>

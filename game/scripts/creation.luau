@@ -8,8 +8,8 @@ local _M = {}
 function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
     local ctx: TL.GameContext = TL.GetContext()
 
-    local level = ctx:GetLevelManager():GetCurrentLevel()
-    if not level then
+    local scene = ctx:GetSceneManager():GetCurrentScene()
+    if not scene then
         return TL.null_entity
     end
 
@@ -29,7 +29,7 @@ function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
     trigger_def.m_bind_point_name = config.m_bind_point_name
     prefab_handle.m_trigger = trigger_def
 
-    local entity = level:Instantiate(prefab_handle)
+    local entity = scene:Instantiate(prefab_handle)
     prefab_mgr:Unload(prefab_handle)
 
     return entity
@@ -44,8 +44,8 @@ function _M.CreateWeapon(config: TL.WeaponDefinitionHandle) : Config.WeaponConfi
 
     local ctx: TL.GameContext = TL.GetContext()
 
-    local level = ctx:GetLevelManager():GetCurrentLevel()
-    if not level then
+    local scene = ctx:GetSceneManager():GetCurrentScene()
+    if not scene then
         return self
     end
 
@@ -86,7 +86,7 @@ function _M.CreateWeapon(config: TL.WeaponDefinitionHandle) : Config.WeaponConfi
 
     prefab_handle.m_bind_points = config.m_bind_points
 
-    self.m_entity = level:Instantiate(prefab_handle)
+    self.m_entity = scene:Instantiate(prefab_handle)
     prefab_manager:Unload(prefab_handle)
 
     local relationship_mgr = ctx:GetRelationshipManager()
@@ -123,8 +123,8 @@ function _M.CreateCharacter(transform: TL.Transform, config: TL.CharacterDefinit
 
     local ctx: TL.GameContext = TL.GetContext()
 
-    local level = ctx:GetLevelManager():GetCurrentLevel()
-    if not level then
+    local scene = ctx:GetSceneManager():GetCurrentScene()
+    if not scene then
         return self
     end
 
@@ -180,7 +180,7 @@ function _M.CreateCharacter(transform: TL.Transform, config: TL.CharacterDefinit
     local physics_actor_info_mgr = ctx:GetAssetsManager():GetPhysicsActorInfoManager()
     prefab_handle.m_cct = config.m_cct
 
-    self.m_entity = level:Instantiate(prefab_handle)
+    self.m_entity = scene:Instantiate(prefab_handle)
     physics_actor_info_mgr:Unload(prefab_handle.m_cct.m_physics_actor)
     prefab_manager:Unload(prefab_handle)
 
