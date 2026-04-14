@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="25">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="27">
  <tileset firstgid="1" source="TilesetFloor.tsx"/>
  <tileset firstgid="573" source="TilesetNature.tsx"/>
  <tileset firstgid="1077" source="TilesetHouse.tsx"/>
@@ -76,7 +76,12 @@
 647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646,647,646
 </data>
  </layer>
- <imagelayer id="11" name="test_image" offsetx="181.333" offsety="185">
-  <image source="../UI/Emote/emote2.png" width="14" height="13"/>
- </imagelayer>
+ <objectgroup id="12" name="spawn_points">
+  <object id="25" name="player_spawn_point" x="184" y="197.5">
+   <point/>
+  </object>
+  <object id="26" name="slime_spawn_point" x="279" y="198">
+   <point/>
+  </object>
+ </objectgroup>
 </map>

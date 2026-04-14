@@ -259,6 +259,10 @@ AssetManagerBase<Scene>::HandleType SceneManager::Load(const Path& filename,
                  std::make_unique<Scene>(filename));
 }
 
+SceneHandle SceneManager::Create(SceneDefinitionHandle handle) {
+    return store(nullptr, UUID::CreateV4(), std::make_unique<Scene>(handle));
+}
+
 void SceneManager::Switch(SceneHandle level) {
     if (m_level) {
         m_level->OnQuit();

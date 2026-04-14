@@ -27,7 +27,7 @@ export type Vec2UI = {
 
 	ZERO: Vec2UI,
 	X_UNIT: Vec2UI,
-	Y_UNIT: Vec2UI 
+	Y_UNIT: Vec2UI
 } & ((x: number, y: number) -> Vec2UI)
 
 export type Color = {
@@ -109,7 +109,79 @@ export type BindPointsComponentManager = {
 	ToggleDebugDraw: (self: BindPointsComponentManager) -> (),
 }
 
-export type Tilemap = {}
+export type Tile = {
+	m_image: ImageHandle,
+	m_region: Region,
+	m_id: number,
+	m_tile_size: Vec2,
+}
+
+export type TilemapLayerTile = {
+	m_gid: number,
+	GetFlipValue: (self: TilemapLayerTile) -> number,
+}
+
+export type Tileset = {
+	GetTile: (self: Tileset, gid: number) -> Tile?,
+	HasTile: (self: Tileset, gid: number) -> boolean,
+	GetTileSize: (self: Tileset) -> Vec2,
+}
+
+export type TilemapLayer = {
+	GetType: (self: TilemapLayer) -> TilemapLayerType,
+	AsTiledLayer: (self: TilemapLayer) -> TilemapTileLayer?,
+	AsImageLayer: (self: TilemapLayer) -> TilemapImageLayer?,
+	AsObjectLayer: (self: TilemapLayer) -> TilemapObjectLayer?,
+	GetName: (self: TilemapLayer) -> string,
+}
+
+export type TilemapTileLayer = {
+	GetTile: (self: TilemapTileLayer, x: number, y: number) -> TilemapLayerTile?,
+	GetSize: (self: TilemapTileLayer) -> Vec2,
+}
+
+export type TilemapObjectLayer = {
+	GetObjectCount: (self: TilemapObjectLayer) -> number,
+	GetObject: (self: TilemapObjectLayer, index: number) -> TilemapObject?,
+}
+
+export type TilemapImageLayer = {
+	GetImage: (self: TilemapImageLayer) -> ImageHandle?,
+	GetPosition: (self: TilemapImageLayer) -> Vec2,
+}
+
+export type TilemapObject = {
+	GetType: (self: TilemapObject) -> TilemapObjectType,
+	IsVisiable: (self: TilemapObject) -> boolean,
+	AsCircle: (self: TilemapObject) -> Circle?,
+	AsRect: (self: TilemapObject) -> Rect?,
+	AsPolygon: (self: TilemapObject) -> Polygon?,
+	AsPoint: (self: TilemapObject) -> Vec2?,
+}
+
+export type TilemapLayerType = {
+	Tiled: number,
+	Object: number,
+	Image: number,
+}
+
+export type TilemapObjectType = {
+	None: number,
+	Point: number,
+	Circle: number,
+	Rect: number,
+	Polygon: number,
+}
+
+export type Tilemap = {
+	GetLayerCount: (self: Tilemap) -> number,
+	GetLayer: (self: Tilemap, index: number) -> TilemapLayer?,
+	GetTilesetCount: (self: Tilemap) -> number,
+	GetTileset: (self: Tilemap, index: number) -> Tileset?,
+	GetTile: (self: Tilemap, gid: number) -> Tile?,
+	GetTileSize: (self: Tilemap) -> Vec2,
+	GetFilename: (self: Tilemap) -> string,
+}
 export type ScriptBinaryData = {}
 
 export type ImageHandle = { IsValid: (self: ImageHandle) -> boolean, GetAssetPath: (self: ImageHandle) -> string } & Image
@@ -133,7 +205,7 @@ export type Relationship = { m_children: { Entity } }
 
 export type ScriptBinaryDataManager = {
 	Load: (self: ScriptBinaryDataManager, path: string, force: boolean?) -> ScriptBinaryDataHandle,
-	Find: (self: ScriptBinaryDataManager, path: string) -> ScriptBinaryDataHandle?,
+	Find: (self: ScriptBinaryDataManager, path: string) -> ScriptBinaryDataHandle,
 }
 export type ScriptComponentManager = {
 	Get: (self: ScriptComponentManager, entity: Entity) -> unknown,
@@ -147,32 +219,33 @@ export type TransformManager = {
 }
 export type ImageManager = {
 	Load: (self: ImageManager, path: string, force: boolean?) -> ImageHandle,
-	Find: (self: ImageManager, path: string) -> ImageHandle?,
+	Find: (self: ImageManager, path: string) -> ImageHandle,
 }
 export type TilemapManager = {
 	Load: (self: TilemapManager, path: string, force: boolean?) -> TilemapHandle,
-	Find: (self: TilemapManager, path: string) -> TilemapHandle?,
+	Find: (self: TilemapManager, path: string) -> TilemapHandle,
 }
 export type AnimationManager = {
 	Load: (self: AnimationManager, path: string, force: boolean?) -> AnimationHandle,
-	Find: (self: AnimationManager, path: string) -> AnimationHandle?,
+	Find: (self: AnimationManager, path: string) -> AnimationHandle,
 }
 export type SceneManager = {
 	Load: (self: SceneManager, path: string, force: boolean?) -> SceneHandle,
-	Find: (self: SceneManager, path: string) -> SceneHandle?,
+	Find: (self: SceneManager, path: string) -> SceneHandle,
+    Create: (self: SceneManager, definition: SceneDefinitionHandle) -> SceneHandle,
+    Unload: (self: SceneManager, handle: SceneHandle) -> (),
 	GetCurrentScene: (self: SceneManager) -> Scene?,
-	Switch: (self: SceneManager, level: SceneHandle) -> (),
+	Switch: (self: SceneManager, scene: SceneHandle) -> (),
 }
 export type FontManager = {
 	Load: (self: FontManager, path: string, force: boolean?) -> FontHandle,
-	Find: (self: FontManager, path: string) -> FontHandle?,
+	Find: (self: FontManager, path: string) -> FontHandle,
 }
 export type AssetsManager = {
 	GetScriptBinaryDataManager: (self: AssetsManager) -> ScriptBinaryDataManager,
 	GetImageManager: (self: AssetsManager) -> ImageManager,
 	GetTilemapManager: (self: AssetsManager) -> TilemapManager,
 	GetAnimationManager: (self: AssetsManager) -> AnimationManager,
-	GetSceneManager: (self: AssetsManager) -> SceneManager,
 	GetFontManager: (self: AssetsManager) -> FontManager,
 
 	-- from schema
@@ -180,6 +253,7 @@ export type AssetsManager = {
 	GetGameConfigManager: (self: AssetsManager) -> GameConfigAssetManager,
 	GetWeaponDefinitionManager: (self: AssetsManager) -> WeaponDefinitionAssetManager,
 	GetCharacterDefinitionManager: (self: AssetsManager) -> CharacterDefinitionAssetManager,
+	GetLevelDefinitionManager: (self: AssetsManager) -> LevelDefinitionAssetManager,
 	GetInputConfigManager: (self: AssetsManager) -> InputConfigAssetManager,
 	GetSceneDefinitionManager: (self: AssetsManager) -> SceneDefinitionAssetManager,
 	GetPhysicsActorInfoManager: (self: AssetsManager) -> PhysicsActorInfoAssetManager,

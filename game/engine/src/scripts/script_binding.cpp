@@ -41,8 +41,8 @@
 #include <string>
 #include <type_traits>
 
-#include "engine/script/luabridge_include.hpp"
 #include "engine/script/script_event_registry.hpp"
+#include "schema/scene_definition.hpp"
 
 #define TL_REGISTER_SCRIPT_UI_EVENT(EventType, EventName)                \
     do {                                                                 \
@@ -149,6 +149,14 @@ void bindScriptBinaryDataManager(lua_State* L) {
         .beginNamespace("TL")
         .beginClass<ScriptBinaryDataManager>("ScriptBinaryDataManager")
         .addFunction("Load",
+                     +[](ScriptBinaryDataManager* m, const std::string& path) {
+                         return m->Load(Path(path), false);
+                     },
+                     +[](ScriptBinaryDataManager* m, const Path& path) {
+                         return m->Load(path, false);
+                     },
+                     +[](ScriptBinaryDataManager* m, const Path& path,
+                         bool force) { return m->Load(path, force); },
                      +[](ScriptBinaryDataManager* m, const std::string& path,
                          bool force) {
                          return m->Load(Path(path), force);
@@ -206,10 +214,18 @@ void bindPath(lua_State* L) {
                 .addFunction("__eq", +[](const Path& a, const Path& b) {
                     return a == b;
                 })
+                .addFunction("__eq", +[](const Path& a, const std::string& b) {
+                    return a == b;
+                })
                 .addFunction("__div",
                              +[](const Path& a, const Path& b) { return a / b; })
                 .addFunction("__div",
                              +[](const Path& p, const std::string& s) { return p / s; })
+                .addFunction("__tostring", +[](const Path& v) {
+                    std::stringstream ss;
+                    ss << "Path(" << v << ")";
+                    return ss.str();
+                })
             .endClass()
         .endNamespace();
 }
@@ -359,9 +375,19 @@ void bindImage(lua_State* L) {
                 .addFunction("ChangeColorMask", &Image::ChangeColorMask)
             .endClass()
             .beginClass<ImageManager>("ImageManager")
-                .addFunction("Load", +[](ImageManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](ImageManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](ImageManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](ImageManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](ImageManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](ImageManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -589,13 +615,24 @@ void bindAssetsManager(lua_State* L) {
                              +[](AssetsManager* m) -> AnimationManager* {
                                  return &m->GetManager<Animation>();
                              })
-                .addFunction("GetSceneManager",
-                             +[](AssetsManager* m) -> SceneManager* {
-                                 return &m->GetManager<Scene>();
+                .addFunction("GetSceneDefinitionManager",
+                             +[](AssetsManager* m) -> GenericAssetManager<SceneDefinition>* {
+                                 return &m->GetManager<SceneDefinition>();
                              })
                 .addFunction("GetFontManager",
                              +[](AssetsManager* m) -> FontManager* {
                                  return &m->GetManager<Font>();
+                             })
+                .addFunction("GetLevelDefinitionManager",
+                             +[](AssetsManager* m)
+                                 -> GenericAssetManager<LevelDefinition>* {
+                                 return &m->GetManager<LevelDefinition>();
+                             })
+                // Keep a typo-compatible alias for existing scripts.
+                .addFunction("GetLevelDefintionManager",
+                             +[](AssetsManager* m)
+                                 -> GenericAssetManager<LevelDefinition>* {
+                                 return &m->GetManager<LevelDefinition>();
                              })
             .endClass()
         .endNamespace();
@@ -961,6 +998,42 @@ void bindEvent(lua_State* L) {
 void bindTilemap(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
+            .beginNamespace("TilemapLayerType")
+                .addProperty("Tiled",
+                             +[]() {
+                                 return static_cast<int>(TilemapLayer::Type::Tiled);
+                             })
+                .addProperty("Object",
+                             +[]() {
+                                 return static_cast<int>(TilemapLayer::Type::Object);
+                             })
+                .addProperty("Image",
+                             +[]() {
+                                 return static_cast<int>(TilemapLayer::Type::Image);
+                             })
+            .endNamespace()
+            .beginNamespace("TilemapObjectType")
+                .addProperty("None",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::None);
+                             })
+                .addProperty("Point",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Point);
+                             })
+                .addProperty("Circle",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Circle);
+                             })
+                .addProperty("Rect",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Rect);
+                             })
+                .addProperty("Polygon",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Polygon);
+                             })
+            .endNamespace()
             .beginClass<Tile>("Tile")
                 .addProperty("m_image", &Tile::m_image, true)
                 .addProperty("m_region", &Tile::m_region, true)
@@ -1011,10 +1084,7 @@ void bindTilemap(lua_State* L) {
                              +[](const Tilemap* m) { return m->GetFilename().string(); })
             .endClass()
             .beginClass<TilemapLayer>("TilemapLayer")
-                .addFunction("GetType",
-                             +[](const TilemapLayer* l) {
-                                 return static_cast<int>(l->GetType());
-                             })
+                .addFunction("GetType", &TilemapLayer::GetType)
                 .addFunction("AsTiledLayer", &TilemapLayer::AsTiledLayer)
                 .addFunction("AsImageLayer", &TilemapLayer::AsImageLayer)
                 .addFunction("AsObjectLayer", &TilemapLayer::AsObjectLayer)
@@ -1057,10 +1127,8 @@ void bindTilemap(lua_State* L) {
                 .addFunction("GetPosition", &TilemapImageLayer::GetPosition)
             .endClass()
             .beginClass<TilemapObject>("TilemapObject")
-                .addFunction("GetType",
-                             +[](const TilemapObject* o) {
-                                 return static_cast<int>(o->GetType());
-                             })
+                .addFunction("GetType", &TilemapObject::GetType)
+                .addFunction("GetName", &TilemapObject::GetName)
                 .addFunction("IsVisiable", &TilemapObject::IsVisiable)
                 .addFunction("AsCircle",
                              +[](const TilemapObject* o) { return o->AsCircle(); })
@@ -1142,9 +1210,19 @@ void bindFontManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<FontManager>("FontManager")
-                .addFunction("Load", +[](FontManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](FontManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](FontManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](FontManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](FontManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](FontManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -1165,9 +1243,19 @@ void bindAnimationManager(lua_State* L) {
                 SaveAsset(handle.GetUUID(), *handle, path);
             })
             .beginClass<AnimationManager>("AnimationManager")
-                .addFunction("Load", +[](AnimationManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](AnimationManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](AnimationManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](AnimationManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](AnimationManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](AnimationManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -1179,9 +1267,19 @@ void bindTilemapManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<TilemapManager>("TilemapManager")
-                .addFunction("Load", +[](TilemapManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](TilemapManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](TilemapManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](TilemapManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](TilemapManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](TilemapManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -1215,14 +1313,26 @@ void bindSceneManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<SceneManager>("SceneManager")
-                .addFunction("Load", +[](SceneManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](SceneManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](SceneManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](SceneManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](SceneManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](SceneManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
                 .addFunction("GetCurrentScene", &SceneManager::GetCurrentScene)
                 .addFunction("Switch", &SceneManager::Switch)
+                .addFunction("Create", static_cast<SceneHandle (SceneManager::*)(SceneDefinitionHandle)>(&SceneManager::Create))
+                .addFunction("Unload", &SceneManager::Unload)
             .endClass()
         .endNamespace();
 }
@@ -1234,7 +1344,7 @@ void bindHandleTypes(lua_State* L) {
     BindHandle<Scene>("SceneHandle", L, "Scene");
     BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
-    BindHandle<TilemapHandle>("TilemapHandle", L, "Tilemap");
+    BindHandle<Tilemap>("TilemapHandle", L, "Tilemap");
 }
 
 void bindEntity(lua_State* L) {

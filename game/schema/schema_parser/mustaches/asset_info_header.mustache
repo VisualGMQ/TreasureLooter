@@ -38,6 +38,20 @@ constexpr std::string_view {{extension_var}} = "{{extension}}.xml";
 class CommonContext;
     
 struct AssetInfoManager {
+    {{#type_check}}
+    static bool FilenameIs{{type}}(const Path& filename) {
+        const std::string path_string = filename.string();
+        const std::string_view path_view = path_string;
+        if (path_view.size() < {{extension_var}}.size()) {
+            return false;
+        }
+        return path_view.compare(path_view.size() - {{extension_var}}.size(),
+                                 {{extension_var}}.size(),
+                                 {{extension_var}}) == 0;
+    }
+
+    {{/type_check}}
+
     template <typename T>
     static std::string_view GetExtension() {
         {{#type_check}}

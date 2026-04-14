@@ -2,14 +2,6 @@
 	<uuid>8785ce65-0000-0000-0000-000000000000</uuid>
 	<payload>
 		<script_path>scripts/game_entry.luau</script_path>
-		<entities>
-			<elem>
-				<prefab>assets/gpa/tilemap_land_layer.prefab.xml</prefab>
-			</elem>
-			<elem>
-				<prefab>assets/gpa/tilemap_arch_layer.prefab.xml</prefab>
-			</elem>
-		</entities>
 	</payload>
 </SceneDefinition>
 

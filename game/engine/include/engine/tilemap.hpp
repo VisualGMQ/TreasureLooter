@@ -113,13 +113,13 @@ public:
     };
 
     TilemapObject() = default;
-    TilemapObject(const Circle&, const std::vector<TilemapProperty>&,
+    TilemapObject(const std::string& name, const Circle&, const std::vector<TilemapProperty>&,
                   bool visiable) noexcept;
-    TilemapObject(const Rect&, const std::vector<TilemapProperty>&,
+    TilemapObject(const std::string& name, const Rect&, const std::vector<TilemapProperty>&,
                   bool visiable) noexcept;
-    TilemapObject(const Polygon&, const std::vector<TilemapProperty>&,
+    TilemapObject(const std::string& name, const Polygon&, const std::vector<TilemapProperty>&,
                   bool visiable) noexcept;
-    TilemapObject(const Vec2&, const std::vector<TilemapProperty>&,
+    TilemapObject(const std::string& name, const Vec2&, const std::vector<TilemapProperty>&,
                   bool visiable) noexcept;
     explicit TilemapObject(const tmx::Object&);
 
@@ -136,11 +136,14 @@ public:
     Type GetType() const;
     bool IsVisiable() const;
 
+    const std::string& GetName() const;
+
 private:
     using Data = std::variant<std::monostate, Circle, Rect, Polygon, Vec2>;
 
     bool m_visiable{false};
     Data m_data;
+    std::string m_name;
     std::vector<TilemapProperty> m_properties;
 };
 

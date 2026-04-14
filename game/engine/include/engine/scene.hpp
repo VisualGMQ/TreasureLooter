@@ -67,6 +67,7 @@ using SceneHandle = Handle<Scene>;
 class SceneManager final : public AssetManagerBase<Scene> {
 public:
     HandleType Load(const Path& filename, bool force = false) override;
+    SceneHandle Create(SceneDefinitionHandle);
 
     void Switch(SceneHandle);
 

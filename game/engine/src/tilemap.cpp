@@ -174,27 +174,41 @@ TilemapProperty::Type TilemapProperty::GetType() const {
     return std::visit(Visitor{}, m_data);
 }
 
-TilemapObject::TilemapObject(const Circle& value,
+TilemapObject::TilemapObject(const std::string& name, const Circle& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
-TilemapObject::TilemapObject(const Rect& value,
+TilemapObject::TilemapObject(const std::string& name, const Rect& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
-TilemapObject::TilemapObject(const Polygon& value,
+TilemapObject::TilemapObject(const std::string& name, const Polygon& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
-TilemapObject::TilemapObject(const Vec2& value,
+TilemapObject::TilemapObject(const std::string& name, const Vec2& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
 TilemapObject::TilemapObject(const tmx::Object& obj) {
+    m_name = obj.getName();
+
     for (auto& prop : obj.getProperties()) {
         m_properties.emplace_back(TilemapProperty{prop});
     }
@@ -307,6 +321,10 @@ TilemapObject::Type TilemapObject::GetType() const {
 
 bool TilemapObject::IsVisiable() const {
     return m_visiable;
+}
+
+const std::string& TilemapObject::GetName() const {
+    return m_name;
 }
 
 TilemapObjectLayer::TilemapObjectLayer(const std::string& name,
@@ -672,10 +690,10 @@ void TilemapLayerComponentManager::drawTilemapLayer(
                 dst_region.m_topleft = dst_rect.m_center - dst_rect.m_half_size;
                 dst_region.m_size = dst_rect.m_half_size * 2.0;
 
-                renderer->DrawImage(*tile->m_image, tile->m_region, dst_region,
-                                    Color::White, 0, {0, 0}, layer_tile.m_flip,
-                                    draw_order->GetGlobalOrder(), true,
-                                    dst_rect.m_center.y + dst_rect.m_half_size.y);
+                renderer->DrawImage(
+                    *tile->m_image, tile->m_region, dst_region, Color::White, 0,
+                    {0, 0}, layer_tile.m_flip, draw_order->GetGlobalOrder(),
+                    true, dst_rect.m_center.y + dst_rect.m_half_size.y);
             }
         }
     } else if (tilemap_layer->GetType() == TilemapLayer::Type::Image) {
@@ -686,8 +704,7 @@ void TilemapLayerComponentManager::drawTilemapLayer(
                 *image, Region{Vec2::ZERO, image->GetSize()},
                 Region{image_layer->GetPosition(), image->GetSize()},
                 Color::White, 0, Vec2::ZERO, Flip::None,
-                draw_order->GetGlobalOrder(),
-                true, 0);
+                draw_order->GetGlobalOrder(), true, 0);
         }
     }
 }

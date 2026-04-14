@@ -3,6 +3,8 @@
     <include>animation.hpp</include>
     <import>common</import>
     <import>physics_schema</import>
+    <import>scene_definition</import>
+    <import>tilemap_schema</import>
 
     <enum name="TeamID">
         <item name="invalid" />
@@ -44,6 +46,28 @@
         <handle name="weapon" type="WeaponDefinition" />
     </asset>
 
+    <class name="MapLayerDefinition">
+        <element name="name" type="std::string"/>
+        <element name="draw_order" type="DrawOrderDefinition"/>
+    </class>
+
+    <class name="MapDefinition">
+        <handle name="map" type="Tilemap" />
+        <array name="layers" type="MapLayerDefinition" />
+
+        <element name="player_put_on_layer" type="std::string" />
+        <element name="player_spawn_point" type="std::string" />
+        <element name="player_team_id" type="TeamID" default="TeamID::neutral"/>
+    </class>
+
+    <class name="ObjectSpawnDefinition">
+        <element name="asset" type="Path"/>
+        <option name="team_id" type="TeamID"/>
+    </class>
+
     <asset name="LevelDefinition" extension=".level">
+        <element name="map_definition" type="MapDefinition" />
+        <!-- key is spawn point name in map, value is gameplay relate asset(Character, Prefab...) -->
+        <unordered_map name="spawn_objects" key="std::string" value="ObjectSpawnDefinition" />
     </asset>
 </schema>
