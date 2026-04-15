@@ -11,15 +11,8 @@ type WaggoData = {
 	m_sprite: TL.Sprite?,
 	m_cct : TL.CharacterController?,
 	m_transform : TL.Transform?,
-	m_image_sheet : TL.ImageHandle?,
-	m_move_left_anim : TL.AnimationHandle?,
-	m_move_right_anim : TL.AnimationHandle?,
-	m_move_up_anim : TL.AnimationHandle?,
-	m_move_down_anim : TL.AnimationHandle?,
 	m_anim_player : TL.AnimationPlayer?,
 	m_direction : CharacterBehavior.Direction,
-	m_move_speed : number,
-	m_weapon_behavior : WeaponBehavior.WeaponBehavior?,
 }
 
 export type Waggo = typeof(setmetatable({}::WaggoData, Waggo)) & CharacterBehavior.CharacterBehavior
@@ -40,16 +33,6 @@ function Waggo.OnInit(self: Waggo)
 	self.m_transform = ctx:GetTransformManager():Get(entity)
 	self.m_anim_player = ctx:GetAnimationPlayerManager():Get(entity)
 
-	local config = self:GetCharacterConfig()
-
-	self.m_weapon_behavior = ctx:GetScriptManager():Get(config.m_weapon_entity) :: WeaponBehavior.WeaponBehavior
-	self.m_image_sheet = config.m_sprite_sheet
-	self.m_move_left_anim = config.m_move_left_anim
-	self.m_move_right_anim = config.m_move_right_anim
-	self.m_move_up_anim = config.m_move_up_anim
-	self.m_move_down_anim = config.m_move_down_anim
-	self.m_move_speed = config.m_move_speed
-
 	self:SubscribeDebugEvent()
 	self:SubscribeTriggerEnterEvent()
 end
@@ -67,7 +50,7 @@ function Waggo.OnUpdate(self: Waggo, elapse_time: number)
 end
 
 function Waggo.attack(self: Waggo)
-	self.m_weapon_behavior:Attack()
+	self.m_weapon:Attack()
 end
 
 function Waggo.move(self: Waggo, dir, duration: number)
@@ -75,8 +58,8 @@ function Waggo.move(self: Waggo, dir, duration: number)
 		if self.m_anim_player ~= nil then
 			self.m_anim_player:Stop()
 		end
-	elseif self.m_weapon_behavior and not self.m_weapon_behavior.m_anim_player:IsPlaying() then
-		self.m_weapon_behavior:ChangeDir(dir:Normalize())
+	elseif self.m_weapon and not self.m_weapon.m_anim_player:IsPlaying() then
+		self.m_weapon:ChangeDir(dir:Normalize())
 	end
 
 	local old_dir = self.m_direction
@@ -123,13 +106,6 @@ function Waggo.move(self: Waggo, dir, duration: number)
 			self.m_sprite.m_region.m_topleft = TL.Vec2(0, 0)
 		end
 	end
-
-    -- TODO set draw order
-    --[[
-    TL.GetZOrderByYSorting(
-		self.m_transform.m_position.y + self.m_sprite.m_size.y * 0.5,
-		TL.RenderLayer.TilemapArch)
-    --]]
 end
 
 function Waggo.OnQuit(self: Waggo)
@@ -152,7 +128,7 @@ function Waggo.OnTriggerEnterEvent(self: Waggo, event: TL.TriggerEnterEvent)
 	local script_mgr = ctx:GetScriptManager()
 	local dst_script = script_mgr:Get(dst_entity) :: Slime.Slime
 
-	dst_script:Hurt(self.m_weapon_behavior:GetDir(), 1)
+	dst_script:Hurt(self.m_weapon:GetDir(), 1)
 end
 
 

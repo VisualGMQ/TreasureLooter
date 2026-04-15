@@ -5,6 +5,7 @@
 		<sprite>assets/Items/Weapons/Rapier/Sprite.png</sprite>
 		<cooldown>1000.000000</cooldown>
 		<attack_speed>500.000000</attack_speed>
+		<damage>1</damage>
 		<hit_shapes>
 			<elem>
 				<event_type>WeaponAttack</event_type>

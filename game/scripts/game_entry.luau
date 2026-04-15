@@ -108,12 +108,12 @@ function GameEntry.OnInit(self: GameEntry)
 
     local player_spawn_point = spawn_point_infos[level_definition.m_map_definition.m_player_spawn_point]
     if player_spawn_point then
-        local config = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load("assets/gpa/monsters/waggo/waggo.character_def.xml")
+        local definition = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load("assets/gpa/monsters/waggo/waggo.character_def.xml")
         local transform: TL.Transform = TL.Transform()
         transform.m_position = player_spawn_point
-        local character = Creation.CreateCharacter(transform, config)
+        local character = Creation.CreateCharacter(transform, definition)
 
-        if character == nil then
+        if not character then
             TL.Log("failed to create player, entity is null")
             return
         end
@@ -123,7 +123,7 @@ function GameEntry.OnInit(self: GameEntry)
         end
         TL.Log("create player")
 
-        player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = character.m_entity
+        player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = character:GetEntity()
         TL.Log("put player on layer ", level_definition.m_map_definition.m_player_put_on_layer)
     else
         TL.Log("no player spawn point")
@@ -161,7 +161,7 @@ function GameEntry.OnInit(self: GameEntry)
             end
             TL.Log("create object ", asset_path)
 
-            player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = character.m_entity
+            player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = character:GetEntity()
             TL.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
         elseif TL.FilenameIsPrefab(asset_path) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(asset_path)

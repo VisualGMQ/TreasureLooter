@@ -11,14 +11,8 @@ type SlimeData = {
 	m_sprite: TL.Sprite?,
 	m_cct : TL.CharacterController?,
 	m_transform : TL.Transform?,
-	m_image_sheet : TL.ImageHandle?,
-	m_move_left_anim : TL.AnimationHandle?,
-	m_move_right_anim : TL.AnimationHandle?,
-	m_move_up_anim : TL.AnimationHandle?,
-	m_move_down_anim : TL.AnimationHandle?,
 	m_anim_player : TL.AnimationPlayer?,
 	m_direction : number, -- CharacterBehavior.Direction
-	m_move_speed : number,
 
     m_move_cooldown: number,
     m_move_dir: TL.Vec2,
@@ -46,17 +40,8 @@ function Slime.OnInit(self: Slime)
 	self.m_transform = ctx:GetTransformManager():Get(entity)
 	self.m_anim_player = ctx:GetAnimationPlayerManager():Get(entity)
 
-	local config = self:GetCharacterConfig()
-
-	self.m_image_sheet = config.m_sprite_sheet
-	self.m_move_left_anim = config.m_move_left_anim
-	self.m_move_right_anim = config.m_move_right_anim
-	self.m_move_up_anim = config.m_move_up_anim
-	self.m_move_down_anim = config.m_move_down_anim
-	self.m_move_speed = config.m_move_speed
-
     self.m_move_dir = TL.Vec2.ZERO
-
+	
 	self.m_change_move_dir_timer = ctx:GetTimerManager():Create(3, TL.TimerEventType.Unknown, -1)
 	self.m_change_move_dir_timer:Start()
 
@@ -120,12 +105,6 @@ function Slime.move(self: Slime, dir: TL.Vec2, duration: number)
 			self.m_sprite.m_region.m_topleft = TL.Vec2(0, 0)
 		end
 	end
-
-    --[[ TODO set z order
-	self.m_sprite.m_z_order = TL.GetZOrderByYSorting(
-		self.m_transform.m_position.y + self.m_sprite.m_size.y * 0.5,
-		TL.RenderLayer.TilemapArch)
-    --]]
 end
 
 function Slime.OnQuit(self: Slime)

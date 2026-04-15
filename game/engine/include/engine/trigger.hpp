@@ -6,7 +6,8 @@
 
 class TriggerEnterEvent {
 public:
-    explicit TriggerEnterEvent(Entity src_entity, TriggerEventType, OverlapResult);
+    explicit TriggerEnterEvent(Entity src_entity, TriggerEventType,
+                               OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
     [[nodiscard]] Entity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
@@ -19,7 +20,8 @@ private:
 
 class TriggerLeaveEvent {
 public:
-    explicit TriggerLeaveEvent(Entity src_entity, TriggerEventType, OverlapResult);
+    explicit TriggerLeaveEvent(Entity src_entity, TriggerEventType,
+                               OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
     [[nodiscard]] Entity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
@@ -32,7 +34,8 @@ private:
 
 class TriggerTouchEvent {
 public:
-    explicit TriggerTouchEvent(Entity src_entity, TriggerEventType, OverlapResult);
+    explicit TriggerTouchEvent(Entity src_entity, TriggerEventType,
+                               OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
     [[nodiscard]] Entity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
@@ -64,7 +67,7 @@ public:
 
     void EnableTriggerEveryFrameWhenTouch(bool);
     bool IsTriggerEveryFrameWhenTouch() const;
-    
+
     void ChangeBindPointName(const std::string& name);
     std::string_view GetBindPointName() const;
 

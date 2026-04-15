@@ -4,6 +4,7 @@
 		<sprite_sheet>assets/Characters/Statue/SpriteSheet.png</sprite_sheet>
 		<faceset>assets/Characters/Statue/Faceset.png</faceset>
 		<speed>150.000000</speed>
+		<hp>3</hp>
 		<cct>
 			<skin>0.100000</skin>
 			<min_disp>0.001000</min_disp>

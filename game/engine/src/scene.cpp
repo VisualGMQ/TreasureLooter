@@ -246,6 +246,7 @@ void Scene::doRemoveEntityWithChildren(Entity entity) {
     CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_ui_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_script_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_draw_order_manager->RemoveEntity(entity);
 
     m_entities.erase(entity);
 }

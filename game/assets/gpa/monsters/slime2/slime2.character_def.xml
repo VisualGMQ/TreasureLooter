@@ -4,6 +4,7 @@
 		<sprite_sheet>assets/Characters/Slime2/Slime2.png</sprite_sheet>
 		<faceset>assets/Characters/Slime2/Faceset.png</faceset>
 		<speed>30.000000</speed>
+		<hp>3</hp>
 		<cct>
 			<skin>0.100000</skin>
 			<min_disp>0.001000</min_disp>

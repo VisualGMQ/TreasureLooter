@@ -23,6 +23,7 @@
         <handle name="sprite" type="Image" />
         <element name="cooldown" type="float" default="1" />
         <element name="attack_speed" type="float" default="1" />
+        <element name="damage" type="uint32_t" default="1" />
 
         <handle name="attack_animation" type="Animation" />
         <array name="hit_shapes" type="TriggerDefinition" />
@@ -33,6 +34,7 @@
         <handle name="sprite_sheet" type="Image" />
         <handle name="faceset" type="Image" />
         <element name="speed" type="float" default="100" />
+        <element name="hp" type="uint32_t" default="1" />
 
         <element name="cct" type="CCTDefinition" />
 

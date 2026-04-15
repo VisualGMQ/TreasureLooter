@@ -1,5 +1,4 @@
 local TL = require("@game/tl_types")
-local Config = require("@game/config")
 local CharacterBehavior = require("@game/character_behavior")
 local WeaponBehavior = require("@game/weapon_behavior")
 
@@ -35,47 +34,42 @@ function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
     return entity
 end
 
-function _M.CreateWeapon(config: TL.WeaponDefinitionHandle) : Config.WeaponConfig?
-    if not config:IsValid() then
+function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior.WeaponBehavior?
+    if not definition:IsValid() then
         return nil
     end
-
-    local self = {} :: Config.WeaponConfig
 
     local ctx: TL.GameContext = TL.GetContext()
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
-        return self
+        return nil
     end
 
-    -- fill member properties
-    self.m_type = config.m_type
-    self.m_image = config.m_sprite
-    self.m_cooldown = config.m_cooldown
-    self.m_attack_speed = config.m_attack_speed
-    -- self.m_attack_regions = config.m_attack_regions
-
-    -- fill prefab
     local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
+    -- create control node
     local prefab_handle = prefab_manager:Create()
-    if not prefab_handle:IsValid() then
-        return self
-    end
 
     prefab_handle.m_transform = TL.Transform()
     prefab_handle.m_script = TL.Path("scripts/weapon_behavior.luau")
+    local control_entity = scene:Instantiate(prefab_handle)
+    prefab_manager:Unload(prefab_handle)
+
+    -- fill weapon prefab
+    prefab_handle = prefab_manager:Create()
+    if not prefab_handle:IsValid() then
+        return nil
+    end
+
+    prefab_handle.m_transform = TL.Transform()
     prefab_handle.m_sprite = TL.Sprite()
-    prefab_handle.m_sprite.m_image = self.m_image
+    prefab_handle.m_sprite.m_image = definition.m_sprite
+    prefab_handle.m_sprite.m_size = definition.m_sprite:GetSize()
+    prefab_handle.m_sprite.m_region.m_size = definition.m_sprite:GetSize()
 
     prefab_handle.m_draw_order = TL.DrawOrderDefinition()
     prefab_handle.m_draw_order.m_enable_y_sorting = false
     prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
-
-    -- prefab_handle.m_sprite.m_size.x = 0
-    -- prefab_handle.m_sprite.m_size.y = 0
-    -- prefab_handle.m_sprite.m_region.m_size.x = 0
-    -- prefab_handle.m_sprite.m_region.m_size.y = 0
 
     local anim_mgr = ctx:GetAssetsManager():GetAnimationManager()
     prefab_handle.m_animation = TL.AnimationPlayerDefinition()
@@ -84,84 +78,86 @@ function _M.CreateWeapon(config: TL.WeaponDefinitionHandle) : Config.WeaponConfi
     prefab_handle.m_animation.m_loop = 0
     prefab_handle.m_animation.m_rate = 1.0
 
-    prefab_handle.m_bind_points = config.m_bind_points
 
-    self.m_entity = scene:Instantiate(prefab_handle)
+    prefab_handle.m_bind_points = definition.m_bind_points
+
+    local weapon_entity = scene:Instantiate(prefab_handle)
     prefab_manager:Unload(prefab_handle)
 
-    local relationship_mgr = ctx:GetRelationshipManager()
-    relationship_mgr:RegisterEntity(self.m_entity)
-    local relationship = relationship_mgr:Get(self.m_entity)
+    -- put weapon entity under control node
+
+    ctx:GetRelationshipManager():RegisterEntity(control_entity)
+    local control_relationship = ctx:GetRelationshipManager():Get(control_entity)
+    do
+        local children = control_relationship.m_children
+        children[#children + 1] = weapon_entity
+        control_relationship.m_children = children
+    end
 
     -- create hit shape as child entity
-    for i, shape in ipairs(config.m_hit_shapes) do
-        local entity = _M.createHitShape(shape)
-        if entity == TL.null_entity then
+    local relationship_mgr = ctx:GetRelationshipManager()
+    relationship_mgr:RegisterEntity(weapon_entity)
+    local relationship = relationship_mgr:Get(weapon_entity)
+
+    for i, shape in ipairs(definition.m_hit_shapes) do
+        local shape_entity = _M.createHitShape(shape)
+        if shape_entity == TL.null_entity then
             TL.Log("create hit shape entity ", i , " failed")
         else
             local children = relationship.m_children
-            children[#children + 1] = entity
+            children[#children + 1] = shape_entity
             relationship.m_children = children
         end
     end
 
-    local script = ctx:GetScriptManager():Get(self.m_entity)
-    if script then
-        (script :: WeaponBehavior.WeaponBehavior):__attach_config(config)
-    end
 
-    return self
-end
+    -- init script by definition
+    local script = ctx:GetScriptManager():Get(control_entity) :: WeaponBehavior.WeaponBehavior
 
-function _M.CreateCharacter(transform: TL.Transform, config: TL.CharacterDefinitionHandle) : Config.CharacterConfig?
-    if not config:IsValid()  then
-        TL.Log("invalid character config")
+    if not script then
+        TL.Log("no script binding")
         return nil
     end
 
-    local self = {} :: Config.CharacterConfig
+    script:_initFromDefinition(definition)
+
+    return script
+end
+
+function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDefinitionHandle) : CharacterBehavior.CharacterBehavior?
+    if not definition:IsValid()  then
+        TL.Log("invalid character config")
+        return nil
+    end
 
     local ctx: TL.GameContext = TL.GetContext()
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
-        return self
+        TL.Log("scene not exists")
+        return nil
     end
 
     local prefab = ctx:GetAssetsManager():GetPrefabManager():Create()
 
     if not prefab:IsValid() then
-        return self
+        return nil
     end
 
-    -- fill member properties
-    self.m_move_speed = config.m_speed
-    self.m_move_left_anim = config.m_move_left_animation
-    self.m_move_right_anim = config.m_move_right_animation
-    self.m_move_up_anim = config.m_move_up_animation
-    self.m_move_down_anim = config.m_move_down_animation
-
     -- create weapon as child entity
-    self.m_weapon_entity = TL.null_entity
-    if config.m_weapon ~= nil then
-        local weapon = _M.CreateWeapon(config.m_weapon)
-        if weapon then
-            self.m_weapon_entity = weapon.m_entity
-            if self.m_weapon_entity == TL.null_entity then
-                TL.Log("failed to create weapon")
-            end
-        end
+    local weapon = nil
+    if definition.m_weapon ~= nil then
+        weapon = _M.CreateWeapon(definition.m_weapon)
     end
 
     -- fill prefab
-    local ctx : TL.GameContext = TL.GetContext()
     local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
     local prefab_handle = prefab_manager:Create()
 
     prefab_handle.m_transform = transform
-    prefab_handle.m_script = config.m_script
+    prefab_handle.m_script = definition.m_script
     prefab_handle.m_sprite = TL.Sprite()
-    prefab_handle.m_sprite.m_image = config.m_sprite_sheet
+    prefab_handle.m_sprite.m_image = definition.m_sprite_sheet
     prefab_handle.m_sprite.m_size.x = 16
     prefab_handle.m_sprite.m_size.y = 16
     prefab_handle.m_sprite.m_region.m_size.x = 16
@@ -172,35 +168,35 @@ function _M.CreateCharacter(transform: TL.Transform, config: TL.CharacterDefinit
     prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
 
     prefab_handle.m_animation = TL.AnimationPlayerDefinition()
-    prefab_handle.m_animation.m_animation = config.m_move_down_animation
+    prefab_handle.m_animation.m_animation = definition.m_move_down_animation
     prefab_handle.m_animation.m_auto_play = true
     prefab_handle.m_animation.m_loop = -1
     prefab_handle.m_animation.m_rate = 1.0
 
     local physics_actor_info_mgr = ctx:GetAssetsManager():GetPhysicsActorInfoManager()
-    prefab_handle.m_cct = config.m_cct
+    prefab_handle.m_cct = definition.m_cct
 
-    self.m_entity = scene:Instantiate(prefab_handle)
+    local entity = scene:Instantiate(prefab_handle)
     physics_actor_info_mgr:Unload(prefab_handle.m_cct.m_physics_actor)
     prefab_manager:Unload(prefab_handle)
 
     -- set weapon as children
-    if self.m_weapon_entity ~= TL.null_entity then
-        ctx:GetRelationshipManager():RegisterEntity(self.m_entity)
-        local relationship = ctx:GetRelationshipManager():Get(self.m_entity)
+    if weapon and weapon:GetEntity() ~= TL.null_entity then
+        ctx:GetRelationshipManager():RegisterEntity(entity)
+        local relationship = ctx:GetRelationshipManager():Get(entity)
         local children = relationship.m_children
-        children[#children + 1] = self.m_weapon_entity
+        children[#children + 1] = weapon:GetEntity()
         relationship.m_children = children
     end
 
     ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
 
-    local script = ctx:GetScriptManager():Get(self.m_entity)
+    local script = (ctx:GetScriptManager():Get(entity) :: CharacterBehavior.CharacterBehavior)
     if script then
-        (script :: CharacterBehavior.CharacterBehavior):__attach_config(self, self.m_weapon_entity)
+        script:_initByDefinition(definition, weapon)
     end
 
-    return self
+    return script
 end
 
 

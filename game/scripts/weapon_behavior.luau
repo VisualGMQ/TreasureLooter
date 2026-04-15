@@ -1,19 +1,33 @@
 local TL = require("@game/tl_types")
-local Config = require("@game/config")
 local ScriptBehavior = require("@game/script_behavior")
 
 local WeaponBehavior = {}
 WeaponBehavior.__index = WeaponBehavior
 setmetatable(WeaponBehavior, { __index = ScriptBehavior })
 
+--[[
+Weapon node tree:
+
+---- weapon controler (for play attack animation, WeaponBehavior's entity)
+  |---- weapon sprite
+    |---- weapon collision_1
+    |---- weapon collision_i
+    |---- weapon collision_n
+--]]
+
 type WeaponBehaviorData = {
-    __config: Config.WeaponConfig,
+    m_type : TL.WeaponType,
+    m_image : TL.ImageHandle,
+    m_attack_speed : number,
+    m_cooldown: number,
 
     m_transform: TL.Transform,
     m_anim_player: TL.AnimationPlayer,
     m_bind_points: TL.BindPoints,
     m_relationship: TL.Relationship,
     m_dir : TL.Vec2,
+
+    m_control_node_transform: TL.Transform
 }
 
 export type WeaponBehavior = typeof(setmetatable({} :: WeaponBehaviorData, WeaponBehavior)) & ScriptBehavior.ScriptBehavior
@@ -29,40 +43,60 @@ end
 function WeaponBehavior.OnInit(self: WeaponBehavior)
     local ctx: TL.GameContext = TL.GetContext()
 
-    local transform = ctx:GetTransformManager():Get(self:GetEntity())
+    local entity = self:GetEntity()
+    local transform = ctx:GetTransformManager():Get(entity)
+    TL.Log("controller entity = ", entity)
+    if transform then
+        self.m_control_node_transform = transform
+    end
+
+    local relationship = ctx:GetRelationshipManager():Get(entity)
+
+    if relationship and #relationship.m_children > 0 then
+        local weapon_entity = relationship.m_children[1]
+        self:_initWeapon(weapon_entity)
+    else
+        TL.Log("weapon controller don't has children")
+        return
+    end
+end
+
+function WeaponBehavior._initWeapon(self: WeaponBehavior, entity: TL.Entity)
+    local ctx: TL.GameContext = TL.GetContext()
+
+    local transform = ctx:GetTransformManager():Get(entity)
     if transform then
         self.m_transform = transform
     end
 
-    local anim_player = ctx:GetAnimationPlayerManager():Get(self:GetEntity())
+    local anim_player = ctx:GetAnimationPlayerManager():Get(entity)
     if anim_player then
         self.m_anim_player = anim_player
     end
 
     self.m_dir = TL.Vec2.X_UNIT
 
-    local bind_point_component = ctx:GetBindPointsComponentManager():Get(self:GetEntity())
+    local bind_point_component = ctx:GetBindPointsComponentManager():Get(entity)
     if bind_point_component then
         self.m_bind_points = bind_point_component
     end
 
-    local relationship = ctx:GetRelationshipManager():Get(self:GetEntity())
+    local relationship = ctx:GetRelationshipManager():Get(entity)
     if relationship then
         self.m_relationship = relationship
     end
 end
 
-function WeaponBehavior.__attach_config(self: WeaponBehavior, config: Config.WeaponConfig)
-    self.__config = config
-end
-
-function WeaponBehavior.GetWeaponConfig(self: WeaponBehavior): Config.WeaponConfig
-    return self.__config
+function WeaponBehavior._initFromDefinition(self: WeaponBehavior, definition: TL.WeaponDefinitionHandle)
+    self.m_type = definition.m_type
+    self.m_image = definition.m_sprite
+    self.m_attack_speed = definition.m_attack_speed
+    self.m_cooldown = definition.m_cooldown
 end
 
 function WeaponBehavior.ChangeDir(self: WeaponBehavior, dir: TL.Vec2)
     self.m_dir = dir
-    self.m_transform.m_rotation = TL.Degrees(TL.GetAngle(self.m_dir, TL.Vec2.Y_UNIT * -1))
+    self.m_control_node_transform.m_rotation = TL.Degrees(TL.GetAngle(self.m_dir, TL.Vec2.Y_UNIT * -1))
 end
 
 function WeaponBehavior.GetDir(self: WeaponBehavior): TL.Vec2
@@ -76,7 +110,7 @@ function WeaponBehavior.Attack(self: WeaponBehavior)
     end
 
     local angle = TL.GetAngle(self.m_dir, TL.Vec2.Y_UNIT * -1)
-    self.m_transform.m_rotation = TL.Degrees(angle);
+    self.m_control_node_transform.m_rotation = TL.Degrees(angle)
 end
 
 function WeaponBehavior.OnUpdate(self: WeaponBehavior, elapse_time: number)
