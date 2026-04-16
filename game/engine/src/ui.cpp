@@ -323,7 +323,8 @@ void UIComponentManager::HandleEvent() {
             continue;
         }
 
-        for (auto child : relationship->m_children) {
+        for (uint32_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            Entity child = relationship->Get(i);
             UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
             if (child_ui->m_focus_index && child_ui->m_focus_index != i) {
                 continue;
