@@ -134,6 +134,7 @@ std::string GenerateEnumCode(const EnumInfo& enum_info) {
     kainjow::mustache::data enum_data;
     enum_data.set("items", item_datas);
     enum_data.set("name", enum_info.m_name);
+    enum_data.set("count", std::to_string(enum_info.m_items.size()));
 
     if (!enum_info.m_type.empty()) {
         enum_data.set("type", " : " + enum_info.m_type);

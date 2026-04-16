@@ -1,8 +1,8 @@
 #include "engine/controller.hpp"
 #include "engine/asset_manager.hpp"
 #include "engine/input/mouse.hpp"
-#include "engine/scene.hpp"
 #include "engine/relationship.hpp"
+#include "engine/scene.hpp"
 
 ControllerAxis::ControllerAxis(SDL_JoystickID joystick_id, const Axis& axis)
     : m_joystick_id{joystick_id}, m_axis{axis} {}
@@ -73,7 +73,8 @@ PlayerController::PlayerController(InputManager& input_mgr,
 
 PlayerController::~PlayerController() {
     m_event_system.RemoveListener<SDL_GamepadDeviceEvent>(m_gamepad_event);
-    m_event_system.RemoveListener<SDL_WindowEvent>(m_window_resize_event_listener);
+    m_event_system.RemoveListener<SDL_WindowEvent>(
+        m_window_resize_event_listener);
 }
 
 ControllerAxis PlayerController::GetAxis(const std::string& name) const {
@@ -90,7 +91,8 @@ ControllerAxises PlayerController::MakeAxises(const std::string& x_name,
                             m_input_mgr.MakeAxises(x_name, y_name));
 }
 
-void PlayerController::RegisterVirtualController(SceneHandle level, const GameConfig& game_config) {
+void PlayerController::RegisterVirtualController(
+    SceneHandle level, const GameConfig& game_config) {
 #ifdef TL_ANDROID
     if (level) {
         initVirualJoystick(level, game_config);
@@ -133,14 +135,14 @@ void PlayerController::RegisterVirtualController(SceneHandle level, const GameCo
 void PlayerController::DestroyVirtualController(SceneHandle level) {
 #ifdef TL_ANDROID
     if (level) {
-		m_event_system.RemoveListener<UIDragEvent>(
-			m_virtual_joystick.m_drag_event);
-		m_event_system.RemoveListener<UIMouseUpEvent>(
-			m_virtual_joystick.m_release_event);
-		m_event_system.RemoveListener<UIMouseDownEvent>(
-			m_virtual_attack_button.m_press_event);
-		m_event_system.RemoveListener<UIMouseUpEvent>(
-			m_virtual_attack_button.m_release_event);
+        m_event_system.RemoveListener<UIDragEvent>(
+            m_virtual_joystick.m_drag_event);
+        m_event_system.RemoveListener<UIMouseUpEvent>(
+            m_virtual_joystick.m_release_event);
+        m_event_system.RemoveListener<UIMouseDownEvent>(
+            m_virtual_attack_button.m_press_event);
+        m_event_system.RemoveListener<UIMouseUpEvent>(
+            m_virtual_attack_button.m_release_event);
 
         level->RemoveEntity(m_virtual_joystick.m_ui_entity);
         level->RemoveEntity(m_virtual_attack_button.m_ui_entity);
@@ -148,7 +150,8 @@ void PlayerController::DestroyVirtualController(SceneHandle level) {
 #endif
 }
 
-void PlayerController::initVirualJoystick(SceneHandle level, const GameConfig& game_config) {
+void PlayerController::initVirualJoystick(SceneHandle level,
+                                          const GameConfig& game_config) {
     PrefabHandle joystick_prefab = m_assets_mgr.GetManager<Prefab>().Load(
         "assets/gpa/ui/android_joystick.prefab.xml");
     Transform transform;
@@ -158,18 +161,17 @@ void PlayerController::initVirualJoystick(SceneHandle level, const GameConfig& g
                            game_config.m_virtual_joystick.m_offset;
     Entity virtual_joystick_entity = level->Instantiate(joystick_prefab);
 
-	SDL_WindowEvent resize_event{};
+    SDL_WindowEvent resize_event{};
     resize_event.data1 = CURRENT_CONTEXT.m_window->GetWindowSize().w;
     resize_event.data2 = CURRENT_CONTEXT.m_window->GetWindowSize().h;
     resize_event.type = SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED;
     m_event_system.EnqueueEvent(resize_event);
 
-    *GAME_CONTEXT.m_transform_manager->Get(virtual_joystick_entity) =
-        transform;
+    *GAME_CONTEXT.m_transform_manager->Get(virtual_joystick_entity) = transform;
 
     Relationship* ui_relationship =
         m_relationship_mgr.Get(level->GetUIRootEntity());
-    ui_relationship->m_children.push_back(virtual_joystick_entity);
+    ui_relationship->AddChild(virtual_joystick_entity);
     m_virtual_joystick.m_ui_entity = virtual_joystick_entity;
     m_virtual_joystick.m_max_drag_dist =
         game_config.m_virtual_joystick.m_max_drag_dist;
@@ -178,9 +180,9 @@ void PlayerController::initVirualJoystick(SceneHandle level, const GameConfig& g
         std::bind(&PlayerController::handleJoystickDragEvent, this,
                   std::placeholders::_1, std::placeholders::_2));
     m_virtual_joystick.m_release_event =
-    m_event_system.AddListener<UIMouseUpEvent>(
-        std::bind(&PlayerController::handleJoystickReleaseEvent, this,
-                  std::placeholders::_1, std::placeholders::_2));
+        m_event_system.AddListener<UIMouseUpEvent>(
+            std::bind(&PlayerController::handleJoystickReleaseEvent, this,
+                      std::placeholders::_1, std::placeholders::_2));
 }
 
 void PlayerController::initVirualAttackButton(SceneHandle level,
@@ -197,18 +199,18 @@ void PlayerController::initVirualAttackButton(SceneHandle level,
 
     Relationship* ui_relationship =
         m_relationship_mgr.Get(level->GetUIRootEntity());
-    ui_relationship->m_children.push_back(entity);
+    ui_relationship->AddChild(entity);
     m_virtual_attack_button.m_ui_entity = entity;
     m_virtual_attack_button.m_action_name = "Attack";
 
-    m_virtual_attack_button.m_press_event = 
-    m_event_system.AddListener<UIMouseDownEvent>(
-        std::bind(&PlayerController::handleVirtualAttackButtonPressedEvent,
-                  this, std::placeholders::_1, std::placeholders::_2));
-    m_virtual_attack_button.m_release_event = 
-    m_event_system.AddListener<UIMouseUpEvent>(
-        std::bind(&PlayerController::handleVirtualAttackButtonReleasedEvent,
-                  this, std::placeholders::_1, std::placeholders::_2));
+    m_virtual_attack_button.m_press_event =
+        m_event_system.AddListener<UIMouseDownEvent>(
+            std::bind(&PlayerController::handleVirtualAttackButtonPressedEvent,
+                      this, std::placeholders::_1, std::placeholders::_2));
+    m_virtual_attack_button.m_release_event =
+        m_event_system.AddListener<UIMouseUpEvent>(
+            std::bind(&PlayerController::handleVirtualAttackButtonReleasedEvent,
+                      this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void PlayerController::handleJoystickDragEvent(EventListenerID id,
@@ -274,4 +276,3 @@ void PlayerController::handleVirtualAttackButtonReleasedEvent(
     m_input_mgr.AcceptFingerButton(m_virtual_attack_button.m_action_name,
                                    Action::State::Released);
 }
-

@@ -103,13 +103,15 @@ void Scene::initRootEntity(const Path& script_path) {
     m_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
-    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity,
+                                                           m_root_entity);
     CURRENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_root_entity);
 
     m_ui_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_ui_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_ui_root_entity);
-    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity,
+                                                           m_ui_root_entity);
     CURRENT_CONTEXT.m_ui_manager->RegisterEntity(m_ui_root_entity);
     UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(m_ui_root_entity);
     ui->m_anchor = UIAnchor::None;
@@ -181,13 +183,12 @@ void Scene::createEntityByPrefab(Entity entity, const Transform* transform,
             entity, entity, handle);
     }
 
-    if (!prefab.m_children.empty()) {
-        CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);
-        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-        for (auto child : prefab.m_children) {
-            Entity child_entity = Instantiate(child);
-            relationship->m_children.push_back(child_entity);
-        }
+    // every entity has relationship
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity, entity);
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    for (auto child : prefab.m_children) {
+        Entity child_entity = Instantiate(child);
+        relationship->AddChild(child_entity);
     }
 }
 
@@ -210,7 +211,7 @@ void Scene::initByDescription(SceneDefinitionHandle level_content) {
             relationship =
                 CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
         }
-        relationship->m_children.emplace_back(entity);
+        relationship->AddChild(entity);
     }
 }
 
@@ -218,21 +219,32 @@ void Scene::doRemoveEntities() {
     std::vector<PrefabHandle> remove_prefabs;
 
     for (auto entity : m_pending_delete_entities) {
+        doRemoveEntityFromParent(entity);
         doRemoveEntityWithChildren(entity);
     }
 
     m_pending_delete_entities.clear();
 }
 
+void Scene::doRemoveEntityFromParent(Entity entity) {
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    TL_RETURN_IF_NULL(relationship);
+
+    Entity parent_entity = relationship->GetParent();
+    TL_RETURN_IF_FALSE(parent_entity != null_entity);
+
+    auto parent_relationship = CURRENT_CONTEXT.m_relationship_manager->Get(parent_entity);
+    TL_RETURN_IF_NULL(parent_relationship);
+    parent_relationship->RemoveChild(entity);
+}
+
 void Scene::doRemoveEntityWithChildren(Entity entity) {
     TL_RETURN_IF_FALSE(entity != null_entity);
 
-    // TODO: remove entity from parent
-
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     if (relationship) {
-        for (auto child : relationship->m_children) {
-            doRemoveEntityWithChildren(child);
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            doRemoveEntityWithChildren(relationship->Get(i));
         }
     }
 

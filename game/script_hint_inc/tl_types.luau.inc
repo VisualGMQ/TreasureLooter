@@ -201,7 +201,13 @@ export type Sprite = {
 	m_flip: number,
 } & () -> Sprite
 
-export type Relationship = { m_children: { Entity } }
+export type Relationship = {
+    AddChild: (self: Relationship, entity: Entity) -> (),
+    Get: (self: Relationship, index: number) -> Entity,
+    GetChildrenCount: (self: Relationship) -> number,
+    GetParent: (self: Relationship) -> Entity,
+    RemoveChild: (self: Relationship) -> (),
+}
 
 export type ScriptBinaryDataManager = {
 	Load: (self: ScriptBinaryDataManager, path: string, force: boolean?) -> ScriptBinaryDataHandle,

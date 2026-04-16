@@ -32,8 +32,8 @@ void DrawOrderManager::update(Entity entity) {
     TL_RETURN_IF_NULL(relationship);
     auto order = CURRENT_CONTEXT.m_draw_order_manager->Get(entity);
 
-    for (auto child : relationship->m_children) {
-        updateRecursive(order, child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        updateRecursive(order, relationship->Get(i));
     }
 }
 
@@ -58,8 +58,8 @@ void DrawOrderManager::updateRecursive(const DrawOrder* parent_order,
 
     if (auto relationship =
             CURRENT_CONTEXT.m_relationship_manager->Get(entity)) {
-        for (auto child : relationship->m_children) {
-            updateRecursive(order, child);
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            updateRecursive(order, relationship->Get(i));
         }
     }
 }

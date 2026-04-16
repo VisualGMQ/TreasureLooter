@@ -1188,7 +1188,11 @@ void bindRelationship(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<Relationship>("Relationship")
-                .addProperty("m_children", &Relationship::m_children)
+                .addFunction("AddChild", &Relationship::AddChild)
+                .addFunction("Get", &Relationship::Get)
+                .addFunction("GetChildrenCount", &Relationship::GetChildrenCount)
+                .addFunction("GetParent", &Relationship::GetParent)
+                .addFunction("RemoveChild", &Relationship::RemoveChild)
             .endClass()
             .beginClass<RelationshipManager>("RelationshipManager")
                 .addFunction("Get", +[](RelationshipManager* m, Entity e) {
@@ -1199,7 +1203,7 @@ void bindRelationship(lua_State* L) {
                 })
                 .addFunction("RegisterEntity",
                              +[](RelationshipManager* m, Entity e) {
-                                 m->RegisterEntity(e);
+                                 m->RegisterEntity(e, e);
                              })
             .endClass()
         .endNamespace();

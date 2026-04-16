@@ -94,11 +94,7 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
 
     ctx:GetRelationshipManager():RegisterEntity(control_entity)
     local control_relationship = ctx:GetRelationshipManager():Get(control_entity)
-    do
-        local children = control_relationship.m_children
-        children[#children + 1] = weapon_entity
-        control_relationship.m_children = children
-    end
+    control_relationship:AddChild(weapon_entity)
 
     -- create hit shape as child entity
     local relationship_mgr = ctx:GetRelationshipManager()
@@ -111,9 +107,7 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
         if shape_entity == TL.null_entity then
             TL.Log("create hit shape entity ", i , " failed")
         else
-            local children = relationship.m_children
-            children[#children + 1] = shape_entity
-            relationship.m_children = children
+            relationship:AddChild(shape_entity)
         end
     end
 
@@ -191,9 +185,7 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
     if weapon and weapon:GetEntity() ~= TL.null_entity then
         ctx:GetRelationshipManager():RegisterEntity(entity)
         local relationship = ctx:GetRelationshipManager():Get(entity)
-        local children = relationship.m_children
-        children[#children + 1] = weapon:GetEntity()
-        relationship.m_children = children
+        relationship:AddChild(weapon:GetEntity())
     end
 
     ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)

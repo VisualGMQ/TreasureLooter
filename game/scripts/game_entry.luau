@@ -37,7 +37,6 @@ function GameEntry.OnInit(self: GameEntry)
 
     local root_entity = scene:GetRootEntity()
     local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
-    local root_children = root_relationship.m_children
 
     local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
 
@@ -58,12 +57,10 @@ function GameEntry.OnInit(self: GameEntry)
 
         local entity = scene:Instantiate(prefab)
         map_layer_entities[layer.m_name] = entity
-        root_children[#root_children + 1] = entity
+        root_relationship:AddChild(entity)
 
         prefab_manager:Unload(prefab)
     end
-
-    root_relationship.m_children = root_children
 
     -- record all spawn points
     local spawn_point_infos = {}
@@ -101,7 +98,6 @@ function GameEntry.OnInit(self: GameEntry)
 
     ctx:GetRelationshipManager():RegisterEntity(player_put_on_layer_entity)
     local player_put_on_layer_relationship = ctx:GetRelationshipManager():Get(player_put_on_layer_entity)
-    local player_put_on_layer_entity_children = player_put_on_layer_relationship.m_children
 
     -- create player
     local script_mgr = ctx:GetScriptManager()
@@ -123,7 +119,7 @@ function GameEntry.OnInit(self: GameEntry)
         end
         TL.Log("create player")
 
-        player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = character:GetEntity()
+        player_put_on_layer_relationship:AddChild(character:GetEntity())
         TL.Log("put player on layer ", level_definition.m_map_definition.m_player_put_on_layer)
     else
         TL.Log("no player spawn point")
@@ -161,7 +157,7 @@ function GameEntry.OnInit(self: GameEntry)
             end
             TL.Log("create object ", asset_path)
 
-            player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = character:GetEntity()
+            player_put_on_layer_relationship:AddChild(character:GetEntity())
             TL.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
         elseif TL.FilenameIsPrefab(asset_path) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(asset_path)
@@ -172,13 +168,10 @@ function GameEntry.OnInit(self: GameEntry)
 
             local entity = scene:Instantiate(prefab)
             TL.Log("create prefab  ", asset_path)
-            player_put_on_layer_entity_children[#player_put_on_layer_entity_children + 1] = entity
+            player_put_on_layer_relationship:AddChild(entity)
             TL.Log("put prefab on layer ", level_definition.m_map_definition.m_player_put_on_layer)
         end
     end
-
-    -- finish creation
-    player_put_on_layer_relationship.m_children = player_put_on_layer_entity_children
 end
 
 function GameEntry.OnRender(self: GameEntry)

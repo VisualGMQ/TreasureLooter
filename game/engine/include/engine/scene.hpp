@@ -60,6 +60,7 @@ private:
 
     void doRemoveEntities();
     void doRemoveEntityWithChildren(Entity);
+    void doRemoveEntityFromParent(Entity);
 };
 
 using SceneHandle = Handle<Scene>;

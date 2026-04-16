@@ -41,7 +41,7 @@ function Slime.OnInit(self: Slime)
 	self.m_anim_player = ctx:GetAnimationPlayerManager():Get(entity)
 
     self.m_move_dir = TL.Vec2.ZERO
-	
+
 	self.m_change_move_dir_timer = ctx:GetTimerManager():Create(3, TL.TimerEventType.Unknown, -1)
 	self.m_change_move_dir_timer:Start()
 

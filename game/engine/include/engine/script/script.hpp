@@ -156,8 +156,8 @@ private:
 
         auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
         TL_RETURN_IF_FALSE(relationship);
-        for (auto child : relationship->m_children) {
-            doHandleEvent(child, event, event_name);
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            doHandleEvent(relationship->Get(i), event, event_name);
         }
     }
 };

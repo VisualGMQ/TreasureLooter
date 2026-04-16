@@ -2,6 +2,7 @@
 
 #include "engine/asset_manager.hpp"
 #include "engine/cct.hpp"
+#include "engine/collision_group.hpp"
 #include "engine/dialog.hpp"
 #include "engine/image.hpp"
 #include "engine/math.hpp"
@@ -10,6 +11,7 @@
 #include "schema/display/bind_point_schema.hpp"
 #include "schema/display/collision_group_schema.hpp"
 #include "schema/display/common.hpp"
+#include <type_traits>
 
 void InstanceDisplay(const char* name, int& value) {
     ImGui::PushID(&value);
@@ -775,118 +777,38 @@ void InstanceDisplay(const char* name, CharacterController& cct) {
 }
 
 void InstanceDisplay(const char* name, CollisionGroup& group) {
-    ImGui::Text("%s", name);
-    ImGui::PushID(&group);
+    // NOTE: use static cached_data to trace CollisionGroupTypes. I know it will
+    // be larger with different group then make memory increase, but
+    // this is only a small tool, it won't out of use your memory :-)
+    static std::unordered_map<uintptr_t, std::vector<CollisionGroupType>>
+        cached_data;
 
-    std::vector<CollisionGroupType> collision_groups;
-    for (int i = 0; i < sizeof(CollisionGroupType); i++) {
-        auto type = static_cast<CollisionGroupType>(i);
-        if (group.Has(type)) {
-            collision_groups.push_back(type);
+    uintptr_t address = reinterpret_cast<uintptr_t>(std::addressof(group));
+    if (auto it = cached_data.find(address); it == cached_data.end()) {
+        auto& collision_group_types = cached_data[address];
+        for (uint32_t i = 0; i < kCollisionGroupType_Count; i++) {
+            CollisionGroupType type = static_cast<CollisionGroupType>(i);
+            if (group.Has(type)) {
+                collision_group_types.push_back(type);
+            }
         }
     }
 
-    static constexpr CollisionGroupType all_types[] = {
-        CollisionGroupType::CCT,
-        CollisionGroupType::Obstacle,
-        CollisionGroupType::Coin,
-        CollisionGroupType::WeaponAttack,
-    };
-    static constexpr const char* all_type_names[] = {
-        "CCT",
-        "Obstacle",
-        "Coin",
-        "WeaponAttack",
-    };
+    auto underlying = group.GetUnderlying();
+    std::vector<CollisionGroupType>& collision_group_types =
+        cached_data[address];
 
-    std::vector<size_t> available_type_indices;
-    for (size_t i = 0; i < sizeof(all_types) / sizeof(all_types[0]); i++) {
-        auto type = all_types[i];
-        bool exists = false;
-        for (auto existing : collision_groups) {
-            if (existing == type) {
-                exists = true;
-                break;
-            }
-        }
-        if (!exists) {
-            available_type_indices.push_back(i);
+    auto old_data = collision_group_types;
+    InstanceDisplay("CollisionGroup", collision_group_types);
+
+    if (!std::equal(old_data.begin(), old_data.end(),
+                    collision_group_types.begin(),
+                    collision_group_types.end())) {
+        group.Clear();
+        for (auto collision_group_type : collision_group_types) {
+            group.Add(collision_group_type);
         }
     }
-
-    static std::unordered_map<const void*, CollisionGroupType> add_type_cache;
-    auto& add_type = add_type_cache[&group];
-    if (!available_type_indices.empty()) {
-        bool add_type_is_available = false;
-        for (auto type_idx : available_type_indices) {
-            auto available = all_types[type_idx];
-            if (available == add_type) {
-                add_type_is_available = true;
-                break;
-            }
-        }
-        if (!add_type_is_available) {
-            add_type = all_types[available_type_indices.front()];
-        }
-
-        const char* preview = "Unknown";
-        for (size_t i = 0; i < sizeof(all_types) / sizeof(all_types[0]); i++) {
-            if (all_types[i] == add_type) {
-                preview = all_type_names[i];
-                break;
-            }
-        }
-        if (ImGui::BeginCombo("add type", preview)) {
-            for (auto type_idx : available_type_indices) {
-                auto available = all_types[type_idx];
-                const bool selected = (available == add_type);
-                const char* label = all_type_names[type_idx];
-                if (ImGui::Selectable(label, selected)) {
-                    add_type = available;
-                }
-                if (selected) {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-            ImGui::EndCombo();
-        }
-        if (ImGui::Button("add")) {
-            collision_groups.push_back(add_type);
-        }
-    } else {
-        ImGui::BeginDisabled(true);
-        ImGui::TextUnformatted("all collision group types have been added");
-        ImGui::EndDisabled();
-    }
-
-    for (size_t i = 0; i < collision_groups.size(); i++) {
-        ImGui::PushID(static_cast<int>(i));
-        if (ImGui::Button("del")) {
-            collision_groups.erase(collision_groups.begin() + i);
-            ImGui::PopID();
-            break;
-        }
-        ImGui::SameLine();
-        InstanceDisplay("group", collision_groups[i]);
-        ImGui::PopID();
-    }
-
-    group.Clear();
-    for (size_t i = 0; i < collision_groups.size(); i++) {
-        bool duplicate = false;
-        for (size_t j = 0; j < i; j++) {
-            if (collision_groups[i] == collision_groups[j]) {
-                duplicate = true;
-                break;
-            }
-        }
-        if (duplicate) {
-            continue;
-        }
-        auto type = collision_groups[i];
-        group.Add(type);
-    }
-    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const CollisionGroup& group) {

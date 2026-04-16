@@ -51,8 +51,8 @@ function WeaponBehavior.OnInit(self: WeaponBehavior)
 
     local relationship = ctx:GetRelationshipManager():Get(entity)
 
-    if relationship and #relationship.m_children > 0 then
-        local weapon_entity = relationship.m_children[1]
+    if relationship:GetChildrenCount() > 0 then
+        local weapon_entity = relationship:Get(0)
         self:_initWeapon(weapon_entity)
     else
         TL.Log("weapon controller don't has children")

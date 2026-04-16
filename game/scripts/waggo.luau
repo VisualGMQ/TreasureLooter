@@ -1,5 +1,4 @@
 local TL = require("@game/tl_types")
-local WeaponBehavior = require("@game/weapon_behavior")
 local CharacterBehavior = require("@game/character_behavior")
 local Slime = require("@game/slime")
 

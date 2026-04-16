@@ -27,17 +27,13 @@ end
 local function draw_entity_tree(entity: TL.Entity, display_name: string, relationship_mgr: TL.RelationshipManager)
 	ImGui.PushID(entity)
 
-	local rel = relationship_mgr:Get(entity)
-	local children: { TL.Entity } = {}
-	if rel and rel.m_children then
-		children = rel.m_children
-	end
+	local relationship = relationship_mgr:Get(entity)
 
 	local sel_mark = (selected_entity == entity) and " *" or ""
 	local label = string.format("%s [%d]%s###hierarchy_%d", display_name, entity, sel_mark, entity)
 
 	local flags = bit32.bor(ImGui.TreeNodeFlags_OpenOnDoubleClick, ImGui.TreeNodeFlags_OpenOnArrow)
-	if #children == 0 then
+	if relationship:GetChildrenCount() == 0 then
 		flags = bit32.bor(flags, ImGui.TreeNodeFlags_Leaf)
 	end
 	if selected_entity == entity then
@@ -49,7 +45,8 @@ local function draw_entity_tree(entity: TL.Entity, display_name: string, relatio
 		selected_entity = entity
 	end
 	if open then
-		for _, child in ipairs(children) do
+		for i = 0, relationship:GetChildrenCount() - 1 do
+			local child = relationship:Get(i)
 			draw_entity_tree(child, "Entity", relationship_mgr)
 		end
 		ImGui.TreePop()

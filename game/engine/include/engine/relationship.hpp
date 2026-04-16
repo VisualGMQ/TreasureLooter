@@ -5,7 +5,21 @@
 
 class Transform;
 
-struct Relationship {
+class Relationship {
+public:
+    explicit Relationship(Entity);
+
+    size_t GetChildrenCount() const;
+    Entity Get(size_t index) const;
+    Entity GetParent() const;
+    void AddChild(Entity);
+    bool HasChildren() const;
+
+    void RemoveChild(Entity);
+
+private:
+    Entity m_owner = null_entity;
+    Entity m_parent = null_entity;
     std::vector<Entity> m_children;
 };
 
