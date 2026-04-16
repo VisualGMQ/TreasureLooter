@@ -1176,7 +1176,6 @@ void bindTrigger(lua_State* L) {
                 .addFunction("GetActor", static_cast<PhysicsActor*(Trigger::*)()>(&Trigger::GetActor))
                 .addFunction("EnableTriggerEveryFrameWhenTouch", &Trigger::EnableTriggerEveryFrameWhenTouch)
                 .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
-                .addFunction("GetBindPointName", &Trigger::GetBindPointName)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))

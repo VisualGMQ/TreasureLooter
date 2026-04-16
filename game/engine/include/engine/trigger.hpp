@@ -68,14 +68,10 @@ public:
     void EnableTriggerEveryFrameWhenTouch(bool);
     bool IsTriggerEveryFrameWhenTouch() const;
 
-    void ChangeBindPointName(const std::string& name);
-    std::string_view GetBindPointName() const;
-
     void Update();
 
 private:
     PhysicsActor* m_actor = nullptr;
-    std::string m_bind_point_name;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 

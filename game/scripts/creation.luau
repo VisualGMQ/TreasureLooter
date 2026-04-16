@@ -20,12 +20,18 @@ function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
     end
 
     prefab_handle.m_transform = TL.Transform()
+    if config.m_physics_actor.m_is_rect then
+        prefab_handle.m_transform.m_position = config.m_physics_actor.m_rect.m_center
+    else
+        prefab_handle.m_transform.m_position = config.m_physics_actor.m_circle.m_center
+    end
+
+    TL.Log("position = ", prefab_handle.m_transform.m_position)
 
     local trigger_def : TL.TriggerDefinition = TL.TriggerDefinition()
     trigger_def.m_event_type = config.m_event_type
     trigger_def.m_trig_every_frame_when_touch = config.m_trig_every_frame_when_touch
     trigger_def.m_physics_actor = config.m_physics_actor
-    trigger_def.m_bind_point_name = config.m_bind_point_name
     prefab_handle.m_trigger = trigger_def
 
     local entity = scene:Instantiate(prefab_handle)
@@ -100,6 +106,7 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
     local relationship = relationship_mgr:Get(weapon_entity)
 
     for i, shape in ipairs(definition.m_hit_shapes) do
+        TL.Log("create hit shape ", i)
         local shape_entity = _M.createHitShape(shape)
         if shape_entity == TL.null_entity then
             TL.Log("create hit shape entity ", i , " failed")

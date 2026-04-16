@@ -1,6 +1,7 @@
 #include "engine/trigger.hpp"
 
 #include "engine/context.hpp"
+#include "engine/macros.hpp"
 #include "engine/profile.hpp"
 
 TriggerEnterEvent::TriggerEnterEvent(Entity src_entity, TriggerEventType type,
@@ -53,8 +54,7 @@ const OverlapResult& TriggerTouchEvent::GetOverlapResult() const {
 
 Trigger::Trigger(Entity entity, const TriggerDefinition& info)
     : m_event_type{info.m_event_type},
-      m_trig_every_frame_when_touch{info.m_trig_every_frame_when_touch},
-      m_bind_point_name{info.m_bind_point_name} {
+      m_trig_every_frame_when_touch{info.m_trig_every_frame_when_touch} {
     m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(
         entity, info.m_physics_actor);
 }
@@ -108,14 +108,6 @@ void Trigger::EnableTriggerEveryFrameWhenTouch(bool enable) {
 
 bool Trigger::IsTriggerEveryFrameWhenTouch() const {
     return m_trig_every_frame_when_touch;
-}
-
-void Trigger::ChangeBindPointName(const std::string& name) {
-    m_bind_point_name = name;
-}
-
-std::string_view Trigger::GetBindPointName() const {
-    return m_bind_point_name;
 }
 
 void Trigger::Update() {
@@ -174,14 +166,10 @@ void TriggerComponentManager::Update() {
     PROFILE_SECTION();
 
     for (auto& [entity, trigger] : m_components) {
-        if (!trigger.m_enable || !trigger.m_component->m_actor) {
-            continue;
-        }
+        TL_CONTINUE_IF_FALSE(trigger.m_enable && trigger.m_component->m_actor);
 
         auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
-        if (!transform) {
-            continue;
-        }
+        TL_CONTINUE_IF_FALSE(transform);
 
         auto& global_mat = transform->GetGlobalMat();
         trigger.m_component->m_actor->MoveTo(GetPosition(global_mat));

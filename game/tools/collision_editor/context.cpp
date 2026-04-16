@@ -1,5 +1,4 @@
 #include "engine/asset_manager.hpp"
-#include "engine/bind_point.hpp"
 #include "engine/camera.hpp"
 #include "engine/cct.hpp"
 #include "engine/controller.hpp"
@@ -18,7 +17,6 @@
 #include "instance_display.hpp"
 #include "lyra/lyra.hpp"
 #include "rapidxml.hpp"
-#include "schema/display/bind_point_schema.hpp"
 #include "schema/display/physics_schema.hpp"
 #include "schema/physics_schema.hpp"
 #include "schema/serialize/physics_schema.hpp"
@@ -77,19 +75,6 @@ std::optional<CollisionAstKind> detectCollisionAstKind(
     return detectCollisionAstKindFromXmlRoot(absolute_path);
 }
 
-Vec2 weaponBindPointOffset(const WeaponDefinition& weapon,
-                           const std::string& bind_name) {
-    if (bind_name.empty()) {
-        return Vec2{0.0f, 0.0f};
-    }
-    for (const auto& bp : weapon.m_bind_points) {
-        if (bp.m_name == bind_name) {
-            return bp.m_position;
-        }
-    }
-    return Vec2{0.0f, 0.0f};
-}
-
 void SaveExternalPhysicsActorIfNeeded(const PhysicsActorInfoHandle& handle) {
     if (!handle || handle.IsEmbed()) {
         return;
@@ -112,30 +97,25 @@ void SaveReferencedExternalPhysicsActors(const CharacterDefinition& character) {
 }
 
 void drawPhysicsShapeForPreview(Renderer& renderer,
-                                const PhysicsActorInfo& info,
-                                Vec2 shape_center_world, float z_base,
+                                const PhysicsActorInfo& info, float z_base,
                                 const Color& outline, const Color& fill) {
     if (info.m_is_rect) {
-        Rect r;
-        r.m_center = shape_center_world;
-        r.m_half_size = info.m_rect.m_half_size;
+        Rect r = info.m_rect;
         renderer.FillRect(r, fill, z_base, true);
         renderer.DrawRect(r, outline, z_base + 1.0f, true);
     } else {
-        Circle c;
-        c.m_center = shape_center_world;
-        c.m_radius = info.m_circle.m_radius;
+        Circle c = info.m_circle;
         if (c.m_radius > 0.0f) {
             renderer.DrawCircle(c, outline, 32, z_base + 1.0f, true);
         }
     }
 }
 
-void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 bind_offset,
+void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 pos,
                                    float z_base, const Color& edge) {
     constexpr float kHalf = 6.0f;
     Rect r;
-    r.m_center = bind_offset;
+    r.m_center = pos;
     r.m_half_size = {kHalf, kHalf};
     renderer.FillRect(
         r, Color{edge.r * 0.35f, edge.g * 0.35f, edge.b * 0.35f, 0.45f}, z_base,
@@ -143,17 +123,14 @@ void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 bind_offset,
     renderer.DrawRect(r, edge, z_base + 1.0f, true);
 }
 
-void drawBindPointScreenFixedMarker(Renderer& renderer, const Camera& camera,
-                                    const Vec2& window_size, Vec2 world_pos,
-                                    float z_order) {
-    Vec2 screen_center =
-        (world_pos - camera.GetPosition()) * camera.GetScale() +
-        window_size * 0.5f;
-    constexpr float kHalfPx = 5.0f;
-    Rect r;
-    r.m_center = screen_center;
-    r.m_half_size = {kHalfPx, kHalfPx};
-    renderer.FillRect(r, Color{1.0f, 0.15f, 0.12f, 1.0f}, z_order, false);
+void drawReferenceImageForPreview(Renderer& renderer, const Image& image,
+                                  float z_order) {
+    const Vec2 size = image.GetSize();
+    const Vec2 half = size * 0.5f;
+    const Region src{{0.0f, 0.0f}, size};
+    renderer.DrawImageEx(image, src, Vec2{-half.x, -half.y},
+                         Vec2{half.x, -half.y}, Vec2{-half.x, half.y},
+                         Color::White, z_order, true);
 }
 
 void CollisionEditorContext::Init() {
@@ -399,40 +376,12 @@ void CollisionEditorContext::showMainMenu() {
     ImGui::EndMainMenuBar();
 }
 
-void CollisionEditorContext::showWeaponHitShapesAndBindPointsUi() {
+void CollisionEditorContext::showWeaponHitShapesUi() {
     auto& weapon = *m_weapon;
-    auto& bps = weapon.m_bind_points;
-
-    ImGui::SeparatorText("Bind points");
-    if (ImGui::Button("Add bind point")) {
-        BindPointDefinition bp{};
-        bp.m_name = "bind_" + std::to_string(bps.size());
-        bp.m_position = {0.0f, 0.0f};
-        bps.push_back(std::move(bp));
-    }
-    for (size_t bi = 0; bi < bps.size(); ++bi) {
-        ImGui::PushID(static_cast<int>(bi + 9000));
-        char bp_title[160];
-        std::snprintf(bp_title, sizeof(bp_title), "%zu: %s###bp%zu", bi,
-                      bps[bi].m_name.c_str(), bi);
-        if (ImGui::TreeNodeEx(bp_title, ImGuiTreeNodeFlags_DefaultOpen)) {
-            if (ImGui::Button("Remove")) {
-                bps.erase(bps.begin() + static_cast<ptrdiff_t>(bi));
-                ImGui::TreePop();
-                ImGui::PopID();
-                break;
-            }
-            InstanceDisplay("Bind point", bps[bi]);
-            ImGui::TreePop();
-        }
-        ImGui::PopID();
-    }
-
     ImGui::SeparatorText("Hit shapes (triggers)");
     if (ImGui::Button("Add hit shape")) {
         TriggerDefinition td{};
         td.m_event_type = TriggerEventType::WeaponAttack;
-        td.m_bind_point_name = {};
         weapon.m_hit_shapes.push_back(std::move(td));
     }
     ImGui::SameLine();
@@ -485,28 +434,6 @@ void CollisionEditorContext::showWeaponHitShapesAndBindPointsUi() {
             m_selected_hit_shape_index = i;
         }
         if (open) {
-            if (!bps.empty()) {
-                ImGui::TextUnformatted("Attach to bind point");
-                ImGui::SameLine();
-                const char* preview = trig.m_bind_point_name.empty()
-                                          ? "(sprite origin)"
-                                          : trig.m_bind_point_name.c_str();
-                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                if (ImGui::BeginCombo("##bind_pick", preview)) {
-                    const bool origin_sel = trig.m_bind_point_name.empty();
-                    if (ImGui::Selectable("(sprite origin)", origin_sel)) {
-                        trig.m_bind_point_name.clear();
-                    }
-                    for (const auto& bp : bps) {
-                        const bool sel = (trig.m_bind_point_name == bp.m_name);
-                        if (ImGui::Selectable(bp.m_name.c_str(), sel)) {
-                            trig.m_bind_point_name = bp.m_name;
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::Spacing();
-            }
             InstanceDisplay("Trigger", trig);
             if (trig.m_physics_actor && !trig.m_physics_actor.IsEmbed()) {
                 ImGui::SeparatorText("External PhysicsActorInfo");
@@ -550,13 +477,17 @@ void CollisionEditorContext::showCollisionPanel() {
             ImGui::End();
             return;
         }
-        showWeaponHitShapesAndBindPointsUi();
+        ImGui::SeparatorText("WeaponDefinition");
+        InstanceDisplay("sprite", m_weapon->m_sprite);
+        showWeaponHitShapesUi();
     } else {
         if (!m_character) {
             ImGui::TextUnformatted("Internal error: no character asset.");
             ImGui::End();
             return;
         }
+        ImGui::SeparatorText("CharacterDefinition");
+        InstanceDisplay("sprite_sheet", m_character->m_sprite_sheet);
         ImGui::SeparatorText("CharacterDefinition — CCTDefinition");
         InstanceDisplay("cct", m_character->m_cct);
     }
@@ -612,15 +543,6 @@ void CollisionEditorContext::ensurePreviewSprite() {
 }
 
 void CollisionEditorContext::renderScenePreview() {
-    ensurePreviewSprite();
-    if (m_preview_entity == null_entity) {
-        return;
-    }
-    auto* sprite = m_sprite_manager->Get(m_preview_entity);
-    if (!sprite || !sprite->m_image) {
-        return;
-    }
-
     ImGuiIO& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
         if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
@@ -659,9 +581,8 @@ void CollisionEditorContext::renderScenePreview() {
     DrawCommandSubmitter draw_cmd_submitter;
     draw_cmd_submitter.Submit();
 
-    // z: sprite default 0 → bind point markers → hit shapes (see
-    // Renderer::sortDrawCommands).
-    constexpr float kBindMarkerZ = 40.0f;
+    // z: reference image at 0, hit shapes above it.
+    constexpr float kReferenceImageZ = 0.0f;
     constexpr float kShapeZ = 50.0f;
 
     const Color unsel_outline{0.35f, 0.75f, 0.95f, 1.0f};
@@ -669,36 +590,38 @@ void CollisionEditorContext::renderScenePreview() {
     const Color sel_outline{0.55f, 0.35f, 0.12f, 1.0f};
     const Color sel_fill{0.55f, 0.35f, 0.12f, 0.22f};
 
-    if (m_kind && *m_kind == CollisionAstKind::Weapon && m_weapon) {
-        const Vec2 window_size = m_window->GetWindowSize();
-        for (const auto& bp : m_weapon->m_bind_points) {
-            drawBindPointScreenFixedMarker(*m_renderer, m_camera, window_size,
-                                           bp.m_position, kBindMarkerZ);
-        }
+    if (m_kind && *m_kind == CollisionAstKind::Weapon && m_weapon &&
+        m_weapon->m_sprite) {
+        drawReferenceImageForPreview(*m_renderer, *m_weapon->m_sprite,
+                                     kReferenceImageZ);
+    } else if (m_kind && *m_kind == CollisionAstKind::Character &&
+               m_character && m_character->m_sprite_sheet) {
+        drawReferenceImageForPreview(*m_renderer, *m_character->m_sprite_sheet,
+                                     kReferenceImageZ);
+    }
 
+    if (m_kind && *m_kind == CollisionAstKind::Weapon && m_weapon) {
         const int n = static_cast<int>(m_weapon->m_hit_shapes.size());
         for (int i = 0; i < n; ++i) {
             const auto& trig = m_weapon->m_hit_shapes[static_cast<size_t>(i)];
-            const Vec2 bind_offset =
-                weaponBindPointOffset(*m_weapon, trig.m_bind_point_name);
             const bool is_sel = (m_selected_hit_shape_index == i);
             const Color& outline = is_sel ? sel_outline : unsel_outline;
             const Color& fill = is_sel ? sel_fill : unsel_fill;
             if (trig.m_physics_actor) {
                 drawPhysicsShapeForPreview(*m_renderer, *trig.m_physics_actor,
-                                           bind_offset, kShapeZ, outline, fill);
+                                           kShapeZ, outline, fill);
             } else {
-                drawMissingPhysicsPlaceholder(*m_renderer, bind_offset, kShapeZ,
+                drawMissingPhysicsPlaceholder(*m_renderer, Vec2{0.0f, 0.0f},
+                                              kShapeZ,
                                               outline);
             }
         }
     } else if (m_kind && *m_kind == CollisionAstKind::Character &&
                m_character && m_character->m_cct.m_physics_actor) {
-        const Vec2 origin{0.0f, 0.0f};
         const Color cct_outline{0.35f, 0.85f, 0.45f, 1.0f};
         const Color cct_fill{0.35f, 0.85f, 0.45f, 0.18f};
         drawPhysicsShapeForPreview(*m_renderer,
-                                   *m_character->m_cct.m_physics_actor, origin,
+                                   *m_character->m_cct.m_physics_actor,
                                    kShapeZ, cct_outline, cct_fill);
     }
 

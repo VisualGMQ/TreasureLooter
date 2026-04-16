@@ -250,7 +250,6 @@ function _M.DisplayTrigger(tr: TL.Trigger)
 	ImGui.PushID("Trigger")
 	ImGui.Text("GetEventType: " .. tostring(tr:GetEventType()))
 	readonly_checkbox("IsTriggerEveryFrameWhenTouch", tr:IsTriggerEveryFrameWhenTouch())
-	ImGui.Text("GetBindPointName: " .. tostring((tr :: any):GetBindPointName()))
 	local actor = tr:GetActor()
 	if actor then
 		ImGui.Text("actor")

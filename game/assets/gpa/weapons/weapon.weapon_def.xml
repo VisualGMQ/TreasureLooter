@@ -1,44 +1,61 @@
 <WeaponDefinition>
-	<uuid>d37b41f7-0000-0000-0000-000000000000</uuid>
-	<payload>
-		<type>Stab</type>
-		<sprite>assets/Items/Weapons/Rapier/Sprite.png</sprite>
-		<cooldown>1000.000000</cooldown>
-		<attack_speed>500.000000</attack_speed>
-		<damage>1</damage>
-		<hit_shapes>
-			<elem>
-				<event_type>WeaponAttack</event_type>
-				<physics_actor>
-					<uuid>6fca79f9-0000-0000-0000-000000000000</uuid>
-					<payload>
-						<is_rect>false</is_rect>
-						<rect>
-							<center x="0.000000" y="0.000000"/>
-							<half_size x="0.000000" y="0.000000"/>
-						</rect>
-						<circle>
-							<center x="0.000000" y="-20.000000"/>
-							<radius>3.000000</radius>
-						</circle>
-						<collision_layer>
-							<elem>WeaponAttack</elem>
-						</collision_layer>
-						<collision_mask>
-							<elem>CCT</elem>
-						</collision_mask>
-					</payload>
-				</physics_actor>
-				<bind_point_name>weapon_hitshape_01</bind_point_name>
-				<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
-			</elem>
-		</hit_shapes>
-		<bind_points>
-			<elem>
-				<name>weapon_hitshape_01</name>
-				<position x="0.000000" y="0.000000"/>
-			</elem>
-		</bind_points>
-	</payload>
+    <uuid>430C877C-1547-5F94-D41C-A42763569D58</uuid>
+    <payload>
+        <type>Stab</type>
+        <sprite>assets/Items/Weapons/Rapier/Sprite.png</sprite>
+        <cooldown>1000.000000</cooldown>
+        <attack_speed>500.000000</attack_speed>
+        <damage>1</damage>
+        <hit_shapes>
+            <elem>
+                <event_type>WeaponAttack</event_type>
+                <physics_actor>
+                    <uuid>4DFDC30A-FD6B-1934-656A-9DFDC004753B</uuid>
+                    <payload>
+                        <is_rect>false</is_rect>
+                        <rect>
+                            <center x="0.000000" y="0.000000" />
+                            <half_size x="0.000000" y="0.000000" />
+                        </rect>
+                        <circle>
+                            <center x="0.000000" y="0.000000" />
+                            <radius>3.000000</radius>
+                        </circle>
+                        <collision_layer>
+                            <elem>WeaponAttack</elem>
+                        </collision_layer>
+                        <collision_mask>
+                            <elem>CCT</elem>
+                        </collision_mask>
+                    </payload>
+                </physics_actor>
+                <trig_every_frame_when_touch>false</trig_every_frame_when_touch>
+            </elem>
+            <elem>
+                <event_type>WeaponAttack</event_type>
+                <physics_actor>
+                    <uuid>37372909-E5D4-CE7A-7370-5A64A2FF3511</uuid>
+                    <payload>
+                        <is_rect>false</is_rect>
+                        <rect>
+                            <center x="0.000000" y="0.000000" />
+                            <half_size x="0.000000" y="0.000000" />
+                        </rect>
+                        <circle>
+                            <center x="0.000000" y="-6.000000" />
+                            <radius>3.000000</radius>
+                        </circle>
+                        <collision_layer>
+                            <elem>WeaponAttack</elem>
+                        </collision_layer>
+                        <collision_mask>
+                            <elem>CCT</elem>
+                        </collision_mask>
+                    </payload>
+                </physics_actor>
+                <trig_every_frame_when_touch>false</trig_every_frame_when_touch>
+            </elem>
+        </hit_shapes>
+    </payload>
 </WeaponDefinition>
 

@@ -23,7 +23,6 @@ type WeaponBehaviorData = {
 
     m_transform: TL.Transform,
     m_anim_player: TL.AnimationPlayer,
-    m_bind_points: TL.BindPoints,
     m_relationship: TL.Relationship,
     m_dir : TL.Vec2,
 
@@ -76,11 +75,6 @@ function WeaponBehavior._initWeapon(self: WeaponBehavior, entity: TL.Entity)
 
     self.m_dir = TL.Vec2.X_UNIT
 
-    local bind_point_component = ctx:GetBindPointsComponentManager():Get(entity)
-    if bind_point_component then
-        self.m_bind_points = bind_point_component
-    end
-
     local relationship = ctx:GetRelationshipManager():Get(entity)
     if relationship then
         self.m_relationship = relationship
@@ -114,28 +108,6 @@ function WeaponBehavior.Attack(self: WeaponBehavior)
 end
 
 function WeaponBehavior.OnUpdate(self: WeaponBehavior, elapse_time: number)
-    local ctx: TL.GameContext = TL.GetContext()
-
-    for i, entity in ipairs(self.m_relationship.m_children) do
-        local transform = ctx:GetTransformManager():Get(entity)
-        local trigger = ctx:GetTriggerComponentManager():Get(entity)
-
-        if not transform or not trigger then
-            continue
-        end
-
-        local bind_point_name = trigger:GetBindPointName()
-        if bind_point_name == "" then
-            continue
-        end
-
-        local bind_point: TL.BindPoint = self.m_bind_points.m_bind_points[bind_point_name]
-        if not bind_point then
-            continue
-        end
-
-        transform.m_position = bind_point.m_position
-    end
 end
 
 return WeaponBehavior

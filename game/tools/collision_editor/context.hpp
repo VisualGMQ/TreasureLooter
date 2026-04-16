@@ -39,7 +39,7 @@ private:
     void parseCmdArgs(int argc, char** argv);
     void showMainMenu();
     void showCollisionPanel();
-    void showWeaponHitShapesAndBindPointsUi();
+    void showWeaponHitShapesUi();
     void changeWindowTitle(const Path& path);
 
     void loadAsset(Path absolute_path);

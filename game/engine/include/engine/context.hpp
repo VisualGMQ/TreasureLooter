@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/bind_point.hpp"
 #include "engine/camera.hpp"
 #include "engine/draw_order.hpp"
 #include "engine/entity.hpp"

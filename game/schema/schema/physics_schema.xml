@@ -26,7 +26,6 @@
     <class name="TriggerDefinition">
         <element name="event_type" type="TriggerEventType"/>
         <handle name="physics_actor" type="PhysicsActorInfo"/>
-        <element name="bind_point_name" type="std::string"/>
         <element name="trig_every_frame_when_touch" type="bool" default="false"/>
     </class>
 </schema>
