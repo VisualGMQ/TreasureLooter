@@ -4,5 +4,6 @@
         <item name="Obstacle"/>
         <item name="Coin"/>
         <item name="WeaponAttack"/>
+        <item name="Interactable" />
     </enum>
 </schema>

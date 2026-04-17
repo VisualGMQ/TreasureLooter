@@ -75,7 +75,7 @@ std::optional<CollisionAstKind> detectCollisionAstKind(
     return detectCollisionAstKindFromXmlRoot(absolute_path);
 }
 
-void SaveExternalPhysicsActorIfNeeded(const PhysicsActorInfoHandle& handle) {
+void SaveExternalPhysicsActorIfNeeded(const PhysicsActorDefinitionHandle& handle) {
     if (!handle || handle.IsEmbed()) {
         return;
     }
@@ -97,7 +97,7 @@ void SaveReferencedExternalPhysicsActors(const CharacterDefinition& character) {
 }
 
 void drawPhysicsShapeForPreview(Renderer& renderer,
-                                const PhysicsActorInfo& info, float z_base,
+                                const PhysicsActorDefinition& info, float z_base,
                                 const Color& outline, const Color& fill) {
     if (info.m_is_rect) {
         Rect r = info.m_rect;

@@ -427,7 +427,7 @@ PhysicsScene::PhysicsScene() {
 }
 
 PhysicsActor *PhysicsScene::CreateActor(Entity entity,
-                                        PhysicsActorInfoHandle info) {
+                                        PhysicsActorDefinitionHandle info) {
     TL_RETURN_DEFAULT_IF_FALSE(info);
 
     PhysicsActor *actor{};
@@ -447,15 +447,17 @@ PhysicsActor *PhysicsScene::CreateActor(Entity entity,
 }
 
 PhysicsActor *PhysicsScene::CreateActorInChunk(
-    Entity entity, TilemapCollision *tilemap_collision, uint32_t layer,
-    const PhysicsShape &shape) {
+    Entity entity, TilemapCollision *tilemap_collision, const PhysicsShape &shape) {
     if (!tilemap_collision) {
+        return nullptr;
+    }
+    if (tilemap_collision->m_layers.empty()) {
         return nullptr;
     }
 
     auto bounding = computeShapeBoundingBox(shape);
 
-    auto &chunks = tilemap_collision->m_layers[layer];
+    auto &chunks = tilemap_collision->m_layers.front();
     Range2D<int> chunk_range, tile_range;
     chunks.getOverlapChunkRange(bounding, chunk_range, tile_range);
 
@@ -539,13 +541,13 @@ void PhysicsScene::RemoveActor(PhysicsActor *actor) {
     } else {
         for (auto &tilemap_collision : m_tilemap_collisions) {
             for (size_t i = 0; i < tilemap_collision->m_layers.size(); i++) {
-                RemoveActorInChunk(tilemap_collision.get(), i, actor);
+                removeActorInChunk(tilemap_collision.get(), i, actor);
             }
         }
     }
 }
 
-void PhysicsScene::RemoveActorInChunk(TilemapCollision *tilemap_collision,
+void PhysicsScene::removeActorInChunk(TilemapCollision *tilemap_collision,
                                       uint32_t layer, PhysicsActor *actor) {
     if (!tilemap_collision || layer >= tilemap_collision->m_layers.size() ||
         !actor) {

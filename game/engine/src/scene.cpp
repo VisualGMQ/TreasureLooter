@@ -12,6 +12,7 @@
 #include "engine/tilemap.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
+#include "engine/static_collision.hpp"
 #include "schema/scene_definition.hpp"
 
 Scene::Scene(SceneDefinitionHandle level_content) {
@@ -113,6 +114,7 @@ void Scene::initRootEntity(const Path& script_path) {
     CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity,
                                                            m_ui_root_entity);
     CURRENT_CONTEXT.m_ui_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_ui_root_entity);
     UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(m_ui_root_entity);
     ui->m_anchor = UIAnchor::None;
     ui->m_panel = std::make_unique<UIPanelComponent>();
@@ -182,6 +184,10 @@ void Scene::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(
             entity, entity, handle);
     }
+    if (prefab.m_static_collision.has_value()) {
+        CURRENT_CONTEXT.m_static_collision_manager->RegisterEntity(
+            entity, entity, prefab.m_static_collision.value());
+    }
 
     // every entity has relationship
     CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity, entity);
@@ -233,7 +239,8 @@ void Scene::doRemoveEntityFromParent(Entity entity) {
     Entity parent_entity = relationship->GetParent();
     TL_RETURN_IF_FALSE(parent_entity != null_entity);
 
-    auto parent_relationship = CURRENT_CONTEXT.m_relationship_manager->Get(parent_entity);
+    auto parent_relationship =
+        CURRENT_CONTEXT.m_relationship_manager->Get(parent_entity);
     TL_RETURN_IF_NULL(parent_relationship);
     parent_relationship->RemoveChild(entity);
 }
@@ -255,6 +262,7 @@ void Scene::doRemoveEntityWithChildren(Entity entity) {
     CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_static_collision_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_ui_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_script_component_manager->RemoveEntity(entity);

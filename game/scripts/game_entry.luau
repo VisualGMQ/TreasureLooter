@@ -131,45 +131,64 @@ function GameEntry.OnInit(self: GameEntry)
 
         local asset_path = spawn_object_info.m_asset
 
+        TL.Log("spawning ", asset_path, " at spawn point ", spawn_point_name)
+
         if not spawn_point then
-            TL.Log("spawn ", asset_path, " failed: no spawn point ", spawn_point_name)
+            TL.Log("spawn failed: no spaw point")
             continue
         end
 
         if TL.FilenameIsCharacterDefinition(spawn_object_info.m_asset) then
             local transform = TL.Transform()
             transform.m_position = spawn_point
-            TL.Log("spawning ", asset_path)
             local handle = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load(asset_path, false)
             if not handle:IsValid() then
-                TL.Log("can't load ", asset_path)
+                TL.Log("spawn failed: can't load asset")
                 continue
             end
 
             local character = Creation.CreateCharacter(transform, handle)
             if character == nil then
-                TL.Log("failed to spawn ", asset_path, ", entity is null")
+                TL.Log("spawn failed: create character failed")
                 continue
             end
             local player_script = script_mgr:Get(character.m_entity)
             if player_script then
                 (player_script :: CharacterBehavior.CharacterBehavior):SetTeamID(spawn_object_info.m_team_id)
             end
-            TL.Log("create object ", asset_path)
 
             player_put_on_layer_relationship:AddChild(character:GetEntity())
             TL.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
         elseif TL.FilenameIsPrefab(asset_path) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(asset_path)
             if not prefab:IsValid() then
-                TL.Log("load prefab ", asset_path, " failed")
+                TL.Log("spawn failed: can't load prefab")
                 continue
             end
 
             local entity = scene:Instantiate(prefab)
-            TL.Log("create prefab  ", asset_path)
             player_put_on_layer_relationship:AddChild(entity)
             TL.Log("put prefab on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+        elseif TL.FilenameIsItemDefinition(asset_path) then
+            local transform = TL.Transform()
+            transform.m_position = spawn_point
+            local handle = ctx:GetAssetsManager():GetItemDefinitionManager():Load(asset_path, false)
+            if not handle:IsValid() then
+                TL.Log("spawn failed: can't load asset")
+                continue
+            end
+
+            local item_entity = Creation.CreateItem(transform, handle)
+            if item_entity == TL.null_entity then
+                TL.Log("spawn failed: create item failed")
+                continue
+            end
+
+            player_put_on_layer_relationship:AddChild(item_entity)
+            TL.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+
+        else
+            TL.Log("spawn failed: no support file type")
         end
     end
 end

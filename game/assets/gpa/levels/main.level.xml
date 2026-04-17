@@ -33,6 +33,24 @@
 					</team_id>
 				</value>
 			</elem>
+			<elem>
+				<key>mine_spawn_point1</key>
+				<value>
+					<asset>assets/gpa/items/mine.item.xml</asset>
+				</value>
+			</elem>
+            <elem>
+				<key>mine_spawn_point2</key>
+				<value>
+					<asset>assets/gpa/items/mine.item.xml</asset>
+				</value>
+			</elem>
+            <elem>
+				<key>mine_spawn_point3</key>
+				<value>
+					<asset>assets/gpa/items/mine.item.xml</asset>
+				</value>
+			</elem>
 		</spawn_objects>
 	</payload>
 </LevelDefinition>

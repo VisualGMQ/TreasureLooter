@@ -35,6 +35,7 @@ class GameplayConfigManager;
 class TilemapLayerComponent;
 class TilemapLayerComponentManager;
 class SceneManager;
+class StaticCollisionManager;
 
 class CommonContext {
 public:
@@ -42,6 +43,7 @@ public:
 
     static CommonContext& GetInst();
 
+    CommonContext();
     virtual ~CommonContext();
 
     /**
@@ -103,6 +105,7 @@ public:
     std::unique_ptr<UIComponentManager> m_ui_manager;
     std::unique_ptr<BindPointsComponentManager> m_bind_point_component_manager;
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
+    std::unique_ptr<StaticCollisionManager> m_static_collision_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapLayerComponentManager>
         m_tilemap_layer_component_manager;

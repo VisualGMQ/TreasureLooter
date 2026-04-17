@@ -62,6 +62,7 @@
 
     <asset name = "UIWidgetDefinition" extension=".ui">
         <flags name="anchor" type="UIAnchor"/>
+        <element name="enable_draw" type="bool" default="true"/>
         <element name="use_clip" type="bool" default="true"/>
         <element name="disabled" type="bool" default="false"/>
         <element name="selected" type="bool" default="false"/>

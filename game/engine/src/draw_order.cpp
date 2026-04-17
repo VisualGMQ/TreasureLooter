@@ -21,33 +21,17 @@ void DrawOrderManager::Update() {
     auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
-    update(level->GetRootEntity());
-    update(level->GetUIRootEntity());
+    updateRecursive(false, level->GetRootEntity());
+    updateRecursive(false, level->GetUIRootEntity());
 }
 
-void DrawOrderManager::update(Entity entity) {
-    m_id = 0;
-
-    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-    TL_RETURN_IF_NULL(relationship);
-    auto order = CURRENT_CONTEXT.m_draw_order_manager->Get(entity);
-
-    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-        updateRecursive(order, relationship->Get(i));
-    }
-}
-
-void DrawOrderManager::updateRecursive(const DrawOrder* parent_order,
+void DrawOrderManager::updateRecursive(bool is_parent_enable_y_sorting,
                                        Entity entity) {
     auto order = Get(entity);
     if (order) {
         order->m_global_order = LayerFactor * order->m_z_order;
-        if (parent_order) {
-            order->m_inherit_y_sorting =
-                order->m_enable_y_sorting || parent_order->m_inherit_y_sorting;
-        } else {
-            order->m_inherit_y_sorting = order->m_enable_y_sorting;
-        }
+        order->m_inherit_y_sorting =
+            order->m_enable_y_sorting || is_parent_enable_y_sorting;
 
         if (order->m_inherit_y_sorting) {
             order->m_global_order += m_id;
@@ -59,7 +43,9 @@ void DrawOrderManager::updateRecursive(const DrawOrder* parent_order,
     if (auto relationship =
             CURRENT_CONTEXT.m_relationship_manager->Get(entity)) {
         for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            updateRecursive(order, relationship->Get(i));
+            updateRecursive(
+                order ? order->m_inherit_y_sorting : is_parent_enable_y_sorting,
+                relationship->Get(i));
         }
     }
 }

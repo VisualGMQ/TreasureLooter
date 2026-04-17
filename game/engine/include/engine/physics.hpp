@@ -220,11 +220,11 @@ public:
 
     PhysicsActor *CreateActorInChunk(Entity,
                                      TilemapCollision *tilemap_collision,
-                                     uint32_t layer, const PhysicsShape &);
+                                     const PhysicsShape &);
 
     TilemapCollision *CreateTilemapCollision(const Vec2 &topleft);
 
-    PhysicsActor *CreateActor(Entity, PhysicsActorInfoHandle info);
+    PhysicsActor *CreateActor(Entity, PhysicsActorDefinitionHandle info);
 
     PhysicsActor *CreateActor(Entity, const Circle &);
 
@@ -233,9 +233,6 @@ public:
     void RemoveTilemapCollision(TilemapCollision *);
 
     void RemoveActor(PhysicsActor *);
-
-    void RemoveActorInChunk(TilemapCollision *, uint32_t layer,
-                            PhysicsActor *actor);
 
     /*
      * @param dir is normalized vector
@@ -305,4 +302,7 @@ private:
     [[nodiscard]] bool checkNeedQuery(const PhysicsShape &a,
                                       CollisionGroup mask,
                                       const PhysicsActor &b) const;
+
+    void removeActorInChunk(TilemapCollision *, uint32_t layer,
+                            PhysicsActor *actor);
 };

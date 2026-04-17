@@ -262,8 +262,9 @@ export type AssetsManager = {
 	GetLevelDefinitionManager: (self: AssetsManager) -> LevelDefinitionAssetManager,
 	GetInputConfigManager: (self: AssetsManager) -> InputConfigAssetManager,
 	GetSceneDefinitionManager: (self: AssetsManager) -> SceneDefinitionAssetManager,
-	GetPhysicsActorInfoManager: (self: AssetsManager) -> PhysicsActorInfoAssetManager,
+	GetPhysicsActorDefinitionManager: (self: AssetsManager) -> PhysicsActorDefinitionAssetManager,
 	GetUIWidgetDefinitionManager: (self: AssetsManager) -> UIWidgetDefinitionAssetManager,
+    GetItemDefinitionManager: (self: AssetsManager) -> ItemDefinitionAssetManager,
 }
 
 export type Renderer = {}
@@ -282,6 +283,8 @@ export type TilemapComponent = {
 	GetTilemap: (self: TilemapComponent) -> TilemapHandle,
 	GetTilemapCollision: (self: TilemapComponent) -> TilemapCollisionInfo?,
 }
+export type StaticCollision = {}
+export type StaticCollisionManager = { Get: (self: StaticCollisionManager, entity: Entity) -> StaticCollision?, Has: (self: StaticCollisionManager, entity: Entity) -> boolean }
 export type TriggerComponentManager = { Get: (self: TriggerComponentManager, entity: Entity) -> Trigger, Has: (self: TriggerComponentManager, entity: Entity) -> boolean }
 export type UIComponentManager = { Get: (self: UIComponentManager, entity: Entity) -> UIWidget?, Has: (self: UIComponentManager, entity: Entity) -> boolean }
 export type TilemapComponentManager = { Get: (self: TilemapComponentManager, entity: Entity) -> TilemapComponent?, Has: (self: TilemapComponentManager, entity: Entity) -> boolean }
@@ -510,6 +513,7 @@ export type GameContext = {
 	GetTilemapComponentManager: (self: GameContext) -> TilemapComponentManager,
 	GetCCTManager: (self: GameContext) -> CCTManager,
 	GetPhysicsScene: (self: GameContext) -> PhysicsScene,
+	GetStaticCollisionManager: (self: GameContext) -> StaticCollisionManager,
 	GetEventDebugger: (self: GameContext) -> EventDebugger,
 	GetDebugDraw: (self: GameContext) -> DebugDraw?,
 }

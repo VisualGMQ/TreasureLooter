@@ -1,7 +1,7 @@
 <GameConfig>
 	<uuid>18855be3-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<entry_scene>assets/gpa/game.scene.xml</entry_scene>
+        <entry_scene>assets/gpa/scenes/game.scene.xml</entry_scene>
 		<input_config>assets/gpa/input_config.input_config.xml</input_config>
 		<tile_in_chunk_size x="10" y="10"/>
 		<camera_scale x="4.000000" y="4.000000"/>
@@ -24,4 +24,3 @@
 		</lua_paths>
 	</payload>
 </GameConfig>
-

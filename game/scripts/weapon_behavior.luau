@@ -44,7 +44,6 @@ function WeaponBehavior.OnInit(self: WeaponBehavior)
 
     local entity = self:GetEntity()
     local transform = ctx:GetTransformManager():Get(entity)
-    TL.Log("controller entity = ", entity)
     if transform then
         self.m_control_node_transform = transform
     end

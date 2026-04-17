@@ -26,8 +26,6 @@ function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
         prefab_handle.m_transform.m_position = config.m_physics_actor.m_circle.m_center
     end
 
-    TL.Log("position = ", prefab_handle.m_transform.m_position)
-
     local trigger_def : TL.TriggerDefinition = TL.TriggerDefinition()
     trigger_def.m_event_type = config.m_event_type
     trigger_def.m_trig_every_frame_when_touch = config.m_trig_every_frame_when_touch
@@ -102,7 +100,6 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
     local relationship = relationship_mgr:Get(weapon_entity)
 
     for i, shape in ipairs(definition.m_hit_shapes) do
-        TL.Log("create hit shape ", i)
         local shape_entity = _M.createHitShape(shape)
         if shape_entity == TL.null_entity then
             TL.Log("create hit shape entity ", i , " failed")
@@ -174,7 +171,7 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
     prefab_handle.m_animation.m_loop = -1
     prefab_handle.m_animation.m_rate = 1.0
 
-    local physics_actor_info_mgr = ctx:GetAssetsManager():GetPhysicsActorInfoManager()
+    local physics_actor_info_mgr = ctx:GetAssetsManager():GetPhysicsActorDefinitionManager()
     prefab_handle.m_cct = definition.m_cct
 
     local entity = scene:Instantiate(prefab_handle)
@@ -198,6 +195,49 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
     return script
 end
 
+function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHandle): TL.Entity
+    if not definition:IsValid()  then
+        TL.Log("invalid item definition")
+        return TL.null_entity
+    end
+
+    local ctx: TL.GameContext = TL.GetContext()
+
+    local scene = ctx:GetSceneManager():GetCurrentScene()
+    if not scene then
+        TL.Log("scene not exists")
+        return TL.null_entity
+    end
+
+    local prefab = ctx:GetAssetsManager():GetPrefabManager():Create()
+
+    if not prefab:IsValid() then
+        return TL.null_entity
+    end
+
+    -- fill prefab
+    local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
+    local prefab_handle = prefab_manager:Create()
+
+    prefab_handle.m_transform = transform
+    prefab_handle.m_sprite = TL.Sprite()
+    prefab_handle.m_sprite = definition.m_sprite
+
+    prefab_handle.m_draw_order = TL.DrawOrderDefinition()
+    prefab_handle.m_draw_order.m_enable_y_sorting = false
+    prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
+
+    local collisions = prefab_handle.m_static_collision.m_collisions
+    table.insert(collisions, definition.m_collision)
+    prefab_handle.m_static_collision.m_collisions = collisions
+
+    local entity = scene:Instantiate(prefab_handle)
+    prefab_manager:Unload(prefab_handle)
+
+    ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
+
+    return entity
+end
 
 
 return _M

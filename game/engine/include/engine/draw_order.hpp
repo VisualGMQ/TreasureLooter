@@ -28,8 +28,7 @@ public:
     void Update();
 
 private:
-    void update(Entity entity);
-    void updateRecursive(const DrawOrder* parent_order, Entity entity);
+    void updateRecursive(bool is_parent_enable_y_sorting, Entity entity);
 
     static constexpr uint32_t LayerFactor = 1000000;
     uint32_t m_id = 0;

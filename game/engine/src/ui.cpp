@@ -233,6 +233,7 @@ UIWidget::UIWidget() {
 UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
     m_old_transform.m_size = Vec2::ZERO;
 
+    m_enable_draw = info->m_enable_draw;
     m_selected = info->m_selected;
     m_disabled = info->m_disabled;
     m_anchor = info->m_anchor;
@@ -493,7 +494,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
-    TL_RETURN_IF_FALSE(transform && ui && IsEnable(entity));
+    TL_RETURN_IF_FALSE(transform && ui && IsEnable(entity) && ui->m_enable_draw);
 
     if (ui->m_use_clip) {
         SDL_Rect rect;

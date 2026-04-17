@@ -22,6 +22,7 @@
 #include "engine/relationship.hpp"
 #include "engine/renderer.hpp"
 #include "engine/scene.hpp"
+#include "engine/static_collision.hpp"
 #include "engine/script/script.hpp"
 #include "engine/script/script_handle_binding.hpp"
 #include "engine/script/script_imgui_binding.hpp"
@@ -576,6 +577,10 @@ void bindContext(lua_State* L) {
                              +[](GameContext* ctx) -> PhysicsScene* {
                                  return ctx->m_physics_scene.get();
                              })
+                .addFunction("GetStaticCollisionManager",
+                             +[](GameContext* ctx) -> StaticCollisionManager* {
+                                 return ctx->m_static_collision_manager.get();
+                             })
                 .addFunction("GetEventDebugger",
                              +[](GameContext* ctx) -> EventDebugger* {
                                  return ctx->m_event_debugger_system.get();
@@ -902,6 +907,14 @@ void bindPhysics(lua_State* L) {
             .beginClass<OverlapResult>("OverlapResult")
                 .addProperty("m_dst_entity", &OverlapResult::m_dst_entity)
                 .addProperty("m_dst_actor", &OverlapResult::m_dst_actor)
+            .endClass()
+            .beginClass<StaticCollision>("StaticCollision")
+            .endClass()
+            .beginClass<StaticCollisionManager>("StaticCollisionManager")
+                .addFunction("Get", +[](StaticCollisionManager* m, Entity e) {
+                    return m->Get(e);
+                })
+                .addFunction("Has", &StaticCollisionManager::Has)
             .endClass()
         .endNamespace();
 }

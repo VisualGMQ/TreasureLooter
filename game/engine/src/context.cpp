@@ -7,32 +7,34 @@
 #include "engine/cct.hpp"
 #include "engine/controller.hpp"
 #include "engine/debug_drawer.hpp"
+#include "engine/draw.hpp"
+#include "engine/draw_order.hpp"
 #include "engine/event.hpp"
 #include "engine/input/finger_touch.hpp"
 #include "engine/input/keyboard.hpp"
 #include "engine/input/mouse.hpp"
-#include "engine/scene.hpp"
 #include "engine/log.hpp"
 #include "engine/profile.hpp"
 #include "engine/relationship.hpp"
+#include "engine/scene.hpp"
 #include "engine/script/script.hpp"
 #include "engine/sdl_call.hpp"
 #include "engine/serialize.hpp"
 #include "engine/sprite.hpp"
+#include "engine/static_collision.hpp"
 #include "engine/storage.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/transform.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
 #include "engine/uuid.hpp"
-#include "engine/draw_order.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
-#include "engine/draw.hpp"
+#include <memory>
 
 std::unique_ptr<GameContext> GameContext::instance;
 
@@ -45,6 +47,8 @@ void CommonContext::ChangeContext(CommonContext& ctx) {
 CommonContext& CommonContext::GetInst() {
     return *m_current_context;
 }
+
+CommonContext::CommonContext() {}
 
 CommonContext::~CommonContext() {}
 
@@ -99,15 +103,21 @@ void CommonContext::Initialize(int argc, char** argv) {
         *m_transform_manager, *m_relationship_manager);
 
     m_time = std::make_unique<Time>();
+
+    // physics related
     m_physics_scene = std::make_unique<PhysicsScene>();
     m_cct_manager = std::make_unique<CCTManager>();
-    m_scene_manager = std::make_unique<SceneManager>();
     m_trigger_component_manager = std::make_unique<TriggerComponentManager>();
+    m_static_collision_manager = std::make_unique<StaticCollisionManager>();
+
+    // misc
+    m_scene_manager = std::make_unique<SceneManager>();
     m_timer_manager = std::make_unique<TimerManager>();
     m_bind_point_component_manager =
         std::make_unique<BindPointsComponentManager>();
     m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
-    m_tilemap_layer_component_manager = std::make_unique<TilemapLayerComponentManager>();
+    m_tilemap_layer_component_manager =
+        std::make_unique<TilemapLayerComponentManager>();
     m_ui_manager = std::make_unique<UIComponentManager>();
     m_script_component_manager = std::make_unique<ScriptComponentManager>();
 
@@ -137,6 +147,7 @@ void CommonContext::Shutdown() {
     m_timer_manager.reset();
     m_debug_drawer.reset();
     m_cct_manager.reset();
+    m_static_collision_manager.reset();
     m_physics_scene.reset();
     m_time.reset();
 
@@ -368,6 +379,7 @@ void GameContext::logicUpdate(TimeType elapse) {
     m_ui_manager->Update();
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
+    m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
     m_event_system->Update();
     m_timer_manager->Update(elapse);
@@ -405,5 +417,4 @@ void GameContext::renderUpdate(TimeType elapse) {
     m_renderer->Present();
 }
 
-GameContext::~GameContext() {
-}
+GameContext::~GameContext() {}

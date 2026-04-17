@@ -582,51 +582,46 @@ TilemapLayerComponent::TilemapLayerComponent(
     m_tilemap_collision =
         physics_scene->CreateTilemapCollision(create_info.m_position);
 
-    auto& layers = tilemap->GetLayers();
-    for (size_t i = 0; i < layers.size(); i++) {
-        auto& layer = layers[i];
-        if (layer->GetType() == TilemapLayer::Type::Tiled) {
-            auto tiled_layer = layer->AsTiledLayer();
-            m_tilemap_collision->CreateLayer(Vec2UI(tile_size.w, tile_size.h),
-                                             game_config.m_tile_in_chunk_size);
-            auto& size = tiled_layer->GetSize();
-            for (size_t y = 0; y < size.y; y++) {
-                for (size_t x = 0; x < size.x; x++) {
-                    auto& layer_tile = tiled_layer->GetTile(x, y);
-                    auto tile = tilemap->GetTile(layer_tile.m_gid);
-                    if (!tile ||
-                        tile->m_collision_rect.m_half_size == Vec2::ZERO) {
-                        continue;
-                    }
-
-                    Rect rect = tile->m_collision_rect;
-
-                    auto flip = layer_tile.m_flip;
-                    if (flip & Flip::Vertical) {
-                        float offset_y =
-                            tile->m_tile_size.h * 0.5 - rect.m_center.y;
-                        rect.m_center.y += offset_y * 2.0;
-                    }
-                    if (flip & Flip::Horizontal) {
-                        float offset_x =
-                            tile->m_tile_size.w * 0.5 - rect.m_center.x;
-                        rect.m_center.x += offset_x * 2.0;
-                    }
-
-                    rect.m_center += create_info.m_position +
-                                     Vec2(x, y + 1) * tilemap->GetTileSize() +
-                                     Vec2(0, -tile->m_tile_size.h);
-
-                    PhysicsShape shape{rect};
-                    auto actor = physics_scene->CreateActorInChunk(
-                        entity, m_tilemap_collision, i, shape);
-                    CollisionGroup collision_layer;
-                    collision_layer.Add(CollisionGroupType::Obstacle);
-                    actor->SetCollisionLayer(collision_layer);
-                    CollisionGroup collision_mask;
-                    collision_mask.Add(CollisionGroupType::CCT);
-                    actor->SetCollisionMask(collision_mask);
+    if (m_tilemap_layer->GetType() == TilemapLayer::Type::Tiled) {
+        auto tiled_layer = m_tilemap_layer->AsTiledLayer();
+        m_tilemap_collision->CreateLayer(Vec2UI(tile_size.w, tile_size.h),
+                                         game_config.m_tile_in_chunk_size);
+        auto& size = tiled_layer->GetSize();
+        for (size_t y = 0; y < size.y; y++) {
+            for (size_t x = 0; x < size.x; x++) {
+                auto& layer_tile = tiled_layer->GetTile(x, y);
+                auto tile = tilemap->GetTile(layer_tile.m_gid);
+                if (!tile || tile->m_collision_rect.m_half_size == Vec2::ZERO) {
+                    continue;
                 }
+
+                Rect rect = tile->m_collision_rect;
+
+                auto flip = layer_tile.m_flip;
+                if (flip & Flip::Vertical) {
+                    float offset_y =
+                        tile->m_tile_size.h * 0.5 - rect.m_center.y;
+                    rect.m_center.y += offset_y * 2.0;
+                }
+                if (flip & Flip::Horizontal) {
+                    float offset_x =
+                        tile->m_tile_size.w * 0.5 - rect.m_center.x;
+                    rect.m_center.x += offset_x * 2.0;
+                }
+
+                rect.m_center += create_info.m_position +
+                                 Vec2(x, y + 1) * tilemap->GetTileSize() +
+                                 Vec2(0, -tile->m_tile_size.h);
+
+                PhysicsShape shape{rect};
+                auto actor = physics_scene->CreateActorInChunk(
+                    entity, m_tilemap_collision, shape);
+                CollisionGroup collision_layer;
+                collision_layer.Add(CollisionGroupType::Obstacle);
+                actor->SetCollisionLayer(collision_layer);
+                CollisionGroup collision_mask;
+                collision_mask.Add(CollisionGroupType::CCT);
+                actor->SetCollisionMask(collision_mask);
             }
         }
     }
