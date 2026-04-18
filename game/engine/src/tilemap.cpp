@@ -174,27 +174,41 @@ TilemapProperty::Type TilemapProperty::GetType() const {
     return std::visit(Visitor{}, m_data);
 }
 
-TilemapObject::TilemapObject(const Circle& value,
+TilemapObject::TilemapObject(const std::string& name, const Circle& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
-TilemapObject::TilemapObject(const Rect& value,
+TilemapObject::TilemapObject(const std::string& name, const Rect& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
-TilemapObject::TilemapObject(const Polygon& value,
+TilemapObject::TilemapObject(const std::string& name, const Polygon& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
-TilemapObject::TilemapObject(const Vec2& value,
+TilemapObject::TilemapObject(const std::string& name, const Vec2& value,
                              const std::vector<TilemapProperty>& properties,
                              bool visiable) noexcept
-    : m_data{value}, m_properties{properties}, m_visiable{visiable} {}
+    : m_data{value},
+      m_name{name},
+      m_properties{properties},
+      m_visiable{visiable} {}
 
 TilemapObject::TilemapObject(const tmx::Object& obj) {
+    m_name = obj.getName();
+
     for (auto& prop : obj.getProperties()) {
         m_properties.emplace_back(TilemapProperty{prop});
     }
@@ -307,6 +321,10 @@ TilemapObject::Type TilemapObject::GetType() const {
 
 bool TilemapObject::IsVisiable() const {
     return m_visiable;
+}
+
+const std::string& TilemapObject::GetName() const {
+    return m_name;
 }
 
 TilemapObjectLayer::TilemapObjectLayer(const std::string& name,
@@ -561,54 +579,48 @@ TilemapLayerComponent::TilemapLayerComponent(
     auto tilemap = create_info.m_tilemap;
 
     auto tile_size = tilemap->GetTileSize();
-    m_tilemap_collision =
-        physics_scene->CreateTilemapCollision(create_info.m_position);
+    m_tilemap_collision = PhysicsScene::TilemapCollision::Proxy{
+        physics_scene->CreateTilemapCollision(create_info.m_position)};
 
-    auto& layers = tilemap->GetLayers();
-    for (size_t i = 0; i < layers.size(); i++) {
-        auto& layer = layers[i];
-        if (layer->GetType() == TilemapLayer::Type::Tiled) {
-            auto tiled_layer = layer->AsTiledLayer();
-            m_tilemap_collision->CreateLayer(Vec2UI(tile_size.w, tile_size.h),
-                                             game_config.m_tile_in_chunk_size);
-            auto& size = tiled_layer->GetSize();
-            for (size_t y = 0; y < size.y; y++) {
-                for (size_t x = 0; x < size.x; x++) {
-                    auto& layer_tile = tiled_layer->GetTile(x, y);
-                    auto tile = tilemap->GetTile(layer_tile.m_gid);
-                    if (!tile ||
-                        tile->m_collision_rect.m_half_size == Vec2::ZERO) {
-                        continue;
-                    }
-
-                    Rect rect = tile->m_collision_rect;
-
-                    auto flip = layer_tile.m_flip;
-                    if (flip & Flip::Vertical) {
-                        float offset_y =
-                            tile->m_tile_size.h * 0.5 - rect.m_center.y;
-                        rect.m_center.y += offset_y * 2.0;
-                    }
-                    if (flip & Flip::Horizontal) {
-                        float offset_x =
-                            tile->m_tile_size.w * 0.5 - rect.m_center.x;
-                        rect.m_center.x += offset_x * 2.0;
-                    }
-
-                    rect.m_center += create_info.m_position +
-                                     Vec2(x, y + 1) * tilemap->GetTileSize() +
-                                     Vec2(0, -tile->m_tile_size.h);
-
-                    PhysicsShape shape{rect};
-                    auto actor = physics_scene->CreateActorInChunk(
-                        entity, m_tilemap_collision, i, shape);
-                    CollisionGroup collision_layer;
-                    collision_layer.Add(CollisionGroupType::Obstacle);
-                    actor->SetCollisionLayer(collision_layer);
-                    CollisionGroup collision_mask;
-                    collision_mask.Add(CollisionGroupType::CCT);
-                    actor->SetCollisionMask(collision_mask);
+    if (m_tilemap_layer->GetType() == TilemapLayer::Type::Tiled) {
+        auto tiled_layer = m_tilemap_layer->AsTiledLayer();
+        m_tilemap_collision->CreateLayer(Vec2UI(tile_size.w, tile_size.h),
+                                         game_config.m_tile_in_chunk_size);
+        auto& size = tiled_layer->GetSize();
+        for (size_t y = 0; y < size.y; y++) {
+            for (size_t x = 0; x < size.x; x++) {
+                auto& layer_tile = tiled_layer->GetTile(x, y);
+                auto tile = tilemap->GetTile(layer_tile.m_gid);
+                if (!tile || tile->m_collision_rect.m_half_size == Vec2::ZERO) {
+                    continue;
                 }
+
+                Rect rect = tile->m_collision_rect;
+
+                auto flip = layer_tile.m_flip;
+                if (flip & Flip::Vertical) {
+                    float offset_y =
+                        tile->m_tile_size.h * 0.5 - rect.m_center.y;
+                    rect.m_center.y += offset_y * 2.0;
+                }
+                if (flip & Flip::Horizontal) {
+                    float offset_x =
+                        tile->m_tile_size.w * 0.5 - rect.m_center.x;
+                    rect.m_center.x += offset_x * 2.0;
+                }
+
+                rect.m_center += create_info.m_position +
+                                 Vec2(x, y + 1) * tilemap->GetTileSize() +
+                                 Vec2(0, -tile->m_tile_size.h);
+
+                PhysicsShapeDefinition definition;
+                definition.m_is_rect = true;
+                definition.m_rect = rect;
+                definition.m_collision_layer.Add(CollisionGroupType::Obstacle);
+                definition.m_collision_mask.Add(CollisionGroupType::CCT);
+
+                physics_scene->CreateShapeInChunk(
+                    entity, m_tilemap_collision.get(), definition);
             }
         }
     }
@@ -624,7 +636,7 @@ const Tilemap* TilemapLayerComponent::GetTilemap() const {
 
 const PhysicsScene::TilemapCollision*
 TilemapLayerComponent::GetTilemapCollision() const {
-    return m_tilemap_collision;
+    return m_tilemap_collision.get();
 }
 
 void TilemapLayerComponentManager::SubmitDrawCommand(Entity entity) {
@@ -672,10 +684,10 @@ void TilemapLayerComponentManager::drawTilemapLayer(
                 dst_region.m_topleft = dst_rect.m_center - dst_rect.m_half_size;
                 dst_region.m_size = dst_rect.m_half_size * 2.0;
 
-                renderer->DrawImage(*tile->m_image, tile->m_region, dst_region,
-                                    Color::White, 0, {0, 0}, layer_tile.m_flip,
-                                    draw_order->GetGlobalOrder(), true,
-                                    dst_rect.m_center.y + dst_rect.m_half_size.y);
+                renderer->DrawImage(
+                    *tile->m_image, tile->m_region, dst_region, Color::White, 0,
+                    {0, 0}, layer_tile.m_flip, draw_order->GetGlobalOrder(),
+                    true, dst_rect.m_center.y + dst_rect.m_half_size.y);
             }
         }
     } else if (tilemap_layer->GetType() == TilemapLayer::Type::Image) {
@@ -686,8 +698,7 @@ void TilemapLayerComponentManager::drawTilemapLayer(
                 *image, Region{Vec2::ZERO, image->GetSize()},
                 Region{image_layer->GetPosition(), image->GetSize()},
                 Color::White, 0, Vec2::ZERO, Flip::None,
-                draw_order->GetGlobalOrder(),
-                true, 0);
+                draw_order->GetGlobalOrder(), true, 0);
         }
     }
 }

@@ -14,7 +14,6 @@
 #include "engine/image.hpp"
 #include "engine/input/input.hpp"
 #include "engine/input/mouse.hpp"
-#include "engine/level.hpp"
 #include "engine/log.hpp"
 #include "engine/macros.hpp"
 #include "engine/math.hpp"
@@ -22,6 +21,8 @@
 #include "engine/physics.hpp"
 #include "engine/relationship.hpp"
 #include "engine/renderer.hpp"
+#include "engine/scene.hpp"
+#include "engine/static_collision.hpp"
 #include "engine/script/script.hpp"
 #include "engine/script/script_handle_binding.hpp"
 #include "engine/script/script_imgui_binding.hpp"
@@ -41,17 +42,14 @@
 #include <string>
 #include <type_traits>
 
-#include "engine/script/luabridge_include.hpp"
 #include "engine/script/script_event_registry.hpp"
+#include "schema/scene_definition.hpp"
 
 #define TL_REGISTER_SCRIPT_UI_EVENT(EventType, EventName)                \
     do {                                                                 \
         ScriptEventRegistry::Register<EventType>(EventName);             \
         CURRENT_CONTEXT.m_event_system->AddListener<EventType>(          \
             [](EventListenerID, const EventType& event) {                \
-                auto level =                                             \
-                    CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();  \
-                TL_RETURN_IF_NULL(level);                                \
                 CURRENT_CONTEXT.m_script_component_manager->HandleEvent( \
                     event, EventName);                                   \
             });                                                          \
@@ -152,6 +150,14 @@ void bindScriptBinaryDataManager(lua_State* L) {
         .beginNamespace("TL")
         .beginClass<ScriptBinaryDataManager>("ScriptBinaryDataManager")
         .addFunction("Load",
+                     +[](ScriptBinaryDataManager* m, const std::string& path) {
+                         return m->Load(Path(path), false);
+                     },
+                     +[](ScriptBinaryDataManager* m, const Path& path) {
+                         return m->Load(path, false);
+                     },
+                     +[](ScriptBinaryDataManager* m, const Path& path,
+                         bool force) { return m->Load(path, force); },
                      +[](ScriptBinaryDataManager* m, const std::string& path,
                          bool force) {
                          return m->Load(Path(path), force);
@@ -209,10 +215,18 @@ void bindPath(lua_State* L) {
                 .addFunction("__eq", +[](const Path& a, const Path& b) {
                     return a == b;
                 })
+                .addFunction("__eq", +[](const Path& a, const std::string& b) {
+                    return a == b;
+                })
                 .addFunction("__div",
                              +[](const Path& a, const Path& b) { return a / b; })
                 .addFunction("__div",
                              +[](const Path& p, const std::string& s) { return p / s; })
+                .addFunction("__tostring", +[](const Path& v) {
+                    std::stringstream ss;
+                    ss << "Path(" << v << ")";
+                    return ss.str();
+                })
             .endClass()
         .endNamespace();
 }
@@ -342,14 +356,14 @@ void bindMath(lua_State* L) {
         .endNamespace();
 }
 
-void bindLevel(lua_State* L) {
+void bindScene(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<Level>("Level")
-                .addFunction("Instantiate", &Level::Instantiate)
-                .addFunction("RemoveEntity", &Level::RemoveEntity)
-                .addFunction("GetRootEntity", &Level::GetRootEntity)
-                .addFunction("GetUIRootEntity", &Level::GetUIRootEntity)
+            .beginClass<Scene>("Scene")
+                .addFunction("Instantiate", &Scene::Instantiate)
+                .addFunction("RemoveEntity", &Scene::RemoveEntity)
+                .addFunction("GetRootEntity", &Scene::GetRootEntity)
+                .addFunction("GetUIRootEntity", &Scene::GetUIRootEntity)
             .endClass()
         .endNamespace();
 }
@@ -362,9 +376,19 @@ void bindImage(lua_State* L) {
                 .addFunction("ChangeColorMask", &Image::ChangeColorMask)
             .endClass()
             .beginClass<ImageManager>("ImageManager")
-                .addFunction("Load", +[](ImageManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](ImageManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](ImageManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](ImageManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](ImageManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](ImageManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -485,9 +509,9 @@ void bindContext(lua_State* L) {
                              +[](GameContext* ctx) -> AssetsManager* {
                                  return ctx->m_assets_manager.get();
                              })
-                .addFunction("GetLevelManager",
-                             +[](GameContext* ctx) -> LevelManager* {
-                                 return ctx->m_level_manager.get();
+                .addFunction("GetSceneManager",
+                             +[](GameContext* ctx) -> SceneManager* {
+                                 return ctx->m_scene_manager.get();
                              })
                 .addFunction("GetTime",
                              +[](GameContext* ctx) -> Time* {
@@ -553,6 +577,10 @@ void bindContext(lua_State* L) {
                              +[](GameContext* ctx) -> PhysicsScene* {
                                  return ctx->m_physics_scene.get();
                              })
+                .addFunction("GetStaticCollisionManager",
+                             +[](GameContext* ctx) -> StaticCollisionManager* {
+                                 return ctx->m_static_collision_manager.get();
+                             })
                 .addFunction("GetEventDebugger",
                              +[](GameContext* ctx) -> EventDebugger* {
                                  return ctx->m_event_debugger_system.get();
@@ -592,13 +620,24 @@ void bindAssetsManager(lua_State* L) {
                              +[](AssetsManager* m) -> AnimationManager* {
                                  return &m->GetManager<Animation>();
                              })
-                .addFunction("GetLevelManager",
-                             +[](AssetsManager* m) -> LevelManager* {
-                                 return &m->GetManager<Level>();
+                .addFunction("GetSceneDefinitionManager",
+                             +[](AssetsManager* m) -> GenericAssetManager<SceneDefinition>* {
+                                 return &m->GetManager<SceneDefinition>();
                              })
                 .addFunction("GetFontManager",
                              +[](AssetsManager* m) -> FontManager* {
                                  return &m->GetManager<Font>();
+                             })
+                .addFunction("GetLevelDefinitionManager",
+                             +[](AssetsManager* m)
+                                 -> GenericAssetManager<LevelDefinition>* {
+                                 return &m->GetManager<LevelDefinition>();
+                             })
+                // Keep a typo-compatible alias for existing scripts.
+                .addFunction("GetLevelDefintionManager",
+                             +[](AssetsManager* m)
+                                 -> GenericAssetManager<LevelDefinition>* {
+                                 return &m->GetManager<LevelDefinition>();
                              })
             .endClass()
         .endNamespace();
@@ -824,6 +863,9 @@ void bindCCT(lua_State* L) {
                 .addFunction("SetMinDisp", &CharacterController::SetMinDisp)
                 .addFunction("GetMinDisp", &CharacterController::GetMinDisp)
                 .addFunction("Teleport", &CharacterController::Teleport)
+                .addFunction("GetPhysicsShape",
+                             static_cast<PhysicsShape* (CharacterController::*)()>(
+                                 &CharacterController::GetPhysicsShape))
             .endClass()
             .beginClass<CCTManager>("CCTManager")
                 .addFunction("Get", +[](CCTManager* m, Entity e) {
@@ -839,35 +881,42 @@ void bindCCT(lua_State* L) {
 void bindPhysics(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<PhysicsActor>("PhysicsActor")
-                .addFunction("GetPosition", &PhysicsActor::GetPosition)
-                .addFunction("SetCollisionLayer", &PhysicsActor::SetCollisionLayer)
-                .addFunction("GetCollisionLayer", &PhysicsActor::GetCollisionLayer)
-                .addFunction("SetCollisionMask", &PhysicsActor::SetCollisionMask)
-                .addFunction("GetCollisionMask", &PhysicsActor::GetCollisionMask)
-                .addFunction("GetEntity", &PhysicsActor::GetEntity)
-                .addFunction("MoveTo", &PhysicsActor::MoveTo)
-                .addFunction("Move", &PhysicsActor::Move)
-                .addFunction("GetStorageType",
-                             +[](const PhysicsActor* actor) {
-                                 return static_cast<int>(actor->GetStorageType());
-                             })
+            .beginClass<PhysicsShape>("PhysicsShape")
+                .addFunction("GetPosition", &PhysicsShape::GetPosition)
+                .addFunction("SetCollisionLayer", &PhysicsShape::SetCollisionLayer)
+                .addFunction("GetCollisionLayer", &PhysicsShape::GetCollisionLayer)
+                .addFunction("SetCollisionMask", &PhysicsShape::SetCollisionMask)
+                .addFunction("GetCollisionMask", &PhysicsShape::GetCollisionMask)
+                .addFunction("GetType", &PhysicsShape::GetType)
+                .addFunction("GetOwner", &PhysicsShape::GetOwner)
+                .addFunction("MoveTo", &PhysicsShape::MoveTo)
+                .addFunction("Move", &PhysicsShape::Move)
+                .addFunction("GetStorageType", &PhysicsShape::GetStorageType)
+                .addFunction("SetQueryEnable", &PhysicsShape::SetQueryEnable)
+                .addFunction("IsQueryEnabled", &PhysicsShape::IsQueryEnabled)
             .endClass()
             .beginClass<PhysicsScene>("PhysicsScene")
                 .addFunction("IsEnableDebugDraw", &PhysicsScene::IsEnableDebugDraw)
                 .addFunction("ToggleDebugDraw", &PhysicsScene::ToggleDebugDraw)
-                .addFunction("OverlapActors",
-                             +[](PhysicsScene* scene, const PhysicsActor* lhs,
-                                 const PhysicsActor* rhs) {
-                                 if (!lhs || !rhs) {
-                                     return false;
-                                 }
-                                 return scene->Overlap(*lhs, *rhs);
-                             })
+                .addFunction("Overlap",
+                             static_cast<uint32_t (PhysicsScene::*)(
+                                 const PhysicsShape&, OverlapResult*, size_t)>(
+                                 &PhysicsScene::Overlap),
+                             static_cast<bool (PhysicsScene::*)(
+                                 const PhysicsShape&, const PhysicsShape&) const>(
+                                 &PhysicsScene::Overlap))
             .endClass()
             .beginClass<OverlapResult>("OverlapResult")
                 .addProperty("m_dst_entity", &OverlapResult::m_dst_entity)
-                .addProperty("m_dst_actor", &OverlapResult::m_dst_actor)
+                .addProperty("m_dst_shape", &OverlapResult::m_dst_shape)
+            .endClass()
+            .beginClass<StaticCollision>("StaticCollision")
+            .endClass()
+            .beginClass<StaticCollisionManager>("StaticCollisionManager")
+                .addFunction("Get", +[](StaticCollisionManager* m, Entity e) {
+                    return m->Get(e);
+                })
+                .addFunction("Has", &StaticCollisionManager::Has)
             .endClass()
         .endNamespace();
 }
@@ -964,6 +1013,42 @@ void bindEvent(lua_State* L) {
 void bindTilemap(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
+            .beginNamespace("TilemapLayerType")
+                .addProperty("Tiled",
+                             +[]() {
+                                 return static_cast<int>(TilemapLayer::Type::Tiled);
+                             })
+                .addProperty("Object",
+                             +[]() {
+                                 return static_cast<int>(TilemapLayer::Type::Object);
+                             })
+                .addProperty("Image",
+                             +[]() {
+                                 return static_cast<int>(TilemapLayer::Type::Image);
+                             })
+            .endNamespace()
+            .beginNamespace("TilemapObjectType")
+                .addProperty("None",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::None);
+                             })
+                .addProperty("Point",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Point);
+                             })
+                .addProperty("Circle",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Circle);
+                             })
+                .addProperty("Rect",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Rect);
+                             })
+                .addProperty("Polygon",
+                             +[]() {
+                                 return static_cast<int>(TilemapObject::Type::Polygon);
+                             })
+            .endNamespace()
             .beginClass<Tile>("Tile")
                 .addProperty("m_image", &Tile::m_image, true)
                 .addProperty("m_region", &Tile::m_region, true)
@@ -1014,10 +1099,7 @@ void bindTilemap(lua_State* L) {
                              +[](const Tilemap* m) { return m->GetFilename().string(); })
             .endClass()
             .beginClass<TilemapLayer>("TilemapLayer")
-                .addFunction("GetType",
-                             +[](const TilemapLayer* l) {
-                                 return static_cast<int>(l->GetType());
-                             })
+                .addFunction("GetType", &TilemapLayer::GetType)
                 .addFunction("AsTiledLayer", &TilemapLayer::AsTiledLayer)
                 .addFunction("AsImageLayer", &TilemapLayer::AsImageLayer)
                 .addFunction("AsObjectLayer", &TilemapLayer::AsObjectLayer)
@@ -1060,10 +1142,8 @@ void bindTilemap(lua_State* L) {
                 .addFunction("GetPosition", &TilemapImageLayer::GetPosition)
             .endClass()
             .beginClass<TilemapObject>("TilemapObject")
-                .addFunction("GetType",
-                             +[](const TilemapObject* o) {
-                                 return static_cast<int>(o->GetType());
-                             })
+                .addFunction("GetType", &TilemapObject::GetType)
+                .addFunction("GetName", &TilemapObject::GetName)
                 .addFunction("IsVisiable", &TilemapObject::IsVisiable)
                 .addFunction("AsCircle",
                              +[](const TilemapObject* o) { return o->AsCircle(); })
@@ -1108,14 +1188,15 @@ void bindTrigger(lua_State* L) {
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
                 .addFunction("SetEventType", &Trigger::SetEventType)
-                .addFunction("GetActor", static_cast<PhysicsActor*(Trigger::*)()>(&Trigger::GetActor))
                 .addFunction("EnableTriggerEveryFrameWhenTouch", &Trigger::EnableTriggerEveryFrameWhenTouch)
                 .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
-                .addFunction("GetBindPointName", &Trigger::GetBindPointName)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
                 .addFunction("Has", &TriggerComponentManager::Has)
+                .addFunction("Enable", &TriggerComponentManager::Enable)
+                .addFunction("Disable", &TriggerComponentManager::Disable)
+                .addFunction("IsEnable", &TriggerComponentManager::IsEnable)
             .endClass()
         .endNamespace();
 }
@@ -1124,7 +1205,11 @@ void bindRelationship(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<Relationship>("Relationship")
-                .addProperty("m_children", &Relationship::m_children)
+                .addFunction("AddChild", &Relationship::AddChild)
+                .addFunction("Get", &Relationship::Get)
+                .addFunction("GetChildrenCount", &Relationship::GetChildrenCount)
+                .addFunction("GetParent", &Relationship::GetParent)
+                .addFunction("RemoveChild", &Relationship::RemoveChild)
             .endClass()
             .beginClass<RelationshipManager>("RelationshipManager")
                 .addFunction("Get", +[](RelationshipManager* m, Entity e) {
@@ -1135,7 +1220,7 @@ void bindRelationship(lua_State* L) {
                 })
                 .addFunction("RegisterEntity",
                              +[](RelationshipManager* m, Entity e) {
-                                 m->RegisterEntity(e);
+                                 m->RegisterEntity(e, e);
                              })
             .endClass()
         .endNamespace();
@@ -1145,9 +1230,19 @@ void bindFontManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<FontManager>("FontManager")
-                .addFunction("Load", +[](FontManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](FontManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](FontManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](FontManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](FontManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](FontManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -1168,9 +1263,19 @@ void bindAnimationManager(lua_State* L) {
                 SaveAsset(handle.GetUUID(), *handle, path);
             })
             .beginClass<AnimationManager>("AnimationManager")
-                .addFunction("Load", +[](AnimationManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](AnimationManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](AnimationManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](AnimationManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](AnimationManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](AnimationManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -1182,9 +1287,19 @@ void bindTilemapManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
             .beginClass<TilemapManager>("TilemapManager")
-                .addFunction("Load", +[](TilemapManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](TilemapManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](TilemapManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](TilemapManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](TilemapManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](TilemapManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
@@ -1214,18 +1329,30 @@ void bindBindPoint(lua_State* L) {
     .endNamespace();
 }
 
-void bindLevelManager(lua_State* L) {
+void bindSceneManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<LevelManager>("LevelManager")
-                .addFunction("Load", +[](LevelManager* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
-                .addFunction("Find", +[](LevelManager* m, const std::string& path) {
+            .beginClass<SceneManager>("SceneManager")
+                .addFunction("Load",
+                             +[](SceneManager* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](SceneManager* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](SceneManager* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](SceneManager* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
+                .addFunction("Find", +[](SceneManager* m, const std::string& path) {
                     return m->Find(Path(path));
                 })
-                .addFunction("GetCurrentLevel", &LevelManager::GetCurrentLevel)
-                .addFunction("Switch", &LevelManager::Switch)
+                .addFunction("GetCurrentScene", &SceneManager::GetCurrentScene)
+                .addFunction("Switch", &SceneManager::Switch)
+                .addFunction("Create", static_cast<SceneHandle (SceneManager::*)(SceneDefinitionHandle)>(&SceneManager::Create))
+                .addFunction("Unload", &SceneManager::Unload)
             .endClass()
         .endNamespace();
 }
@@ -1234,10 +1361,10 @@ void bindLevelManager(lua_State* L) {
 
 void bindHandleTypes(lua_State* L) {
     BindHandle<Image>("ImageHandle", L, "Image");
-    BindHandle<Level>("LevelHandle", L, "Level");
+    BindHandle<Scene>("SceneHandle", L, "Scene");
     BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
-    BindHandle<TilemapHandle>("TilemapHandle", L, "Tilemap");
+    BindHandle<Tilemap>("TilemapHandle", L, "Tilemap");
 }
 
 void bindEntity(lua_State* L) {
@@ -1255,7 +1382,7 @@ void bindAllTypes(lua_State* L) {
     bindScriptBinaryDataManager(L);
     bindPath(L);
     bindMath(L);
-    bindLevel(L);
+    bindScene(L);
     bindImage(L);
     bindDebugDraw(L);
     bindContext(L);
@@ -1272,7 +1399,7 @@ void bindAllTypes(lua_State* L) {
     bindTilemapComponent(L);
     bindTrigger(L);
     bindRelationship(L);
-    bindLevelManager(L);
+    bindSceneManager(L);
     bindFontManager(L);
     bindAnimationManager(L);
     bindTilemapManager(L);

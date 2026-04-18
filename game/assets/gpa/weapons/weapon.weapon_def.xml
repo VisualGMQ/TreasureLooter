@@ -1,15 +1,16 @@
 <WeaponDefinition>
-	<uuid>d37b41f7-0000-0000-0000-000000000000</uuid>
+	<uuid>430c877c-1547-5f94-d41c-a42763569d58</uuid>
 	<payload>
 		<type>Stab</type>
 		<sprite>assets/Items/Weapons/Rapier/Sprite.png</sprite>
 		<cooldown>1000.000000</cooldown>
 		<attack_speed>500.000000</attack_speed>
+		<damage>1</damage>
 		<hit_shapes>
-			<elem>
-				<event_type>WeaponAttack</event_type>
-				<physics_actor>
-					<uuid>6fca79f9-0000-0000-0000-000000000000</uuid>
+			<event_type>WeaponAttack</event_type>
+			<physics_shapes>
+				<elem>
+					<uuid>ab03e721-04af-4f91-90c1-1eb2081aa80f</uuid>
 					<payload>
 						<is_rect>false</is_rect>
 						<rect>
@@ -17,7 +18,7 @@
 							<half_size x="0.000000" y="0.000000"/>
 						</rect>
 						<circle>
-							<center x="0.000000" y="-20.000000"/>
+							<center x="0.000000" y="0.000000"/>
 							<radius>3.000000</radius>
 						</circle>
 						<collision_layer>
@@ -27,17 +28,30 @@
 							<elem>CCT</elem>
 						</collision_mask>
 					</payload>
-				</physics_actor>
-				<bind_point_name>weapon_hitshape_01</bind_point_name>
-				<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
-			</elem>
+				</elem>
+				<elem>
+					<uuid>c630b846-fe35-4d60-b450-f16ff0bf3b75</uuid>
+					<payload>
+						<is_rect>false</is_rect>
+						<rect>
+							<center x="0.000000" y="0.000000"/>
+							<half_size x="0.000000" y="0.000000"/>
+						</rect>
+						<circle>
+							<center x="0.000000" y="-6.000000"/>
+							<radius>3.000000</radius>
+						</circle>
+						<collision_layer>
+							<elem>WeaponAttack</elem>
+						</collision_layer>
+						<collision_mask>
+							<elem>CCT</elem>
+						</collision_mask>
+					</payload>
+				</elem>
+			</physics_shapes>
+			<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
 		</hit_shapes>
-		<bind_points>
-			<elem>
-				<name>weapon_hitshape_01</name>
-				<position x="0.000000" y="0.000000"/>
-			</elem>
-		</bind_points>
 	</payload>
 </WeaponDefinition>
 

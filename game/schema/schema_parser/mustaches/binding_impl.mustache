@@ -4,11 +4,17 @@
 
 #include "schema/binding/binding.hpp"
 #include "engine/asset_manager.hpp"
+#include "schema/asset_info.hpp"
 #include <string>
 
 void bindSchemaAssetManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
+            {{#asset_filename_checks}}
+            .addFunction("FilenameIs{{{type}}}", +[](const Path& filename) {
+                return AssetInfoManager::FilenameIs{{{type}}}(filename);
+            })
+            {{/asset_filename_checks}}
             .beginClass<AssetsManager>("AssetsManager")
             {{#asset_manager_getters}}
                 .addFunction("Get{{{type}}}Manager",
@@ -22,9 +28,19 @@ void bindSchemaAssetManager(lua_State* L) {
                 .addFunction("Create", +[](GenericAssetManager<{{{type}}}>* m) {
                     return m->Create();
                 })
-                .addFunction("Load", +[](GenericAssetManager<{{{type}}}>* m, const std::string& path, bool force) {
-                    return m->Load(Path(path), force);
-                })
+                .addFunction("Load",
+                             +[](GenericAssetManager<{{{type}}}>* m, const std::string& path) {
+                                 return m->Load(Path(path), false);
+                             },
+                             +[](GenericAssetManager<{{{type}}}>* m, const Path& path) {
+                                 return m->Load(path, false);
+                             },
+                             +[](GenericAssetManager<{{{type}}}>* m, const Path& path, bool force) {
+                                 return m->Load(path, force);
+                             },
+                             +[](GenericAssetManager<{{{type}}}>* m, const std::string& path, bool force) {
+                                 return m->Load(Path(path), force);
+                             })
                 .addFunction("Find", +[](GenericAssetManager<{{{type}}}>* m, const std::string& path) {
                     return m->Find(Path(path));
                 })

@@ -4,7 +4,7 @@
 #include "engine/asset_manager_interface.hpp"
 #include "engine/context.hpp"
 #include "engine/image.hpp"
-#include "engine/level.hpp"
+#include "engine/scene.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/script/script.hpp"
@@ -23,8 +23,8 @@ public:
             return ensureManager<TilemapManager>(index);
         } else if constexpr (std::is_same_v<T, Animation>) {
             return ensureManager<AnimationManager>(index);
-        } else if constexpr (std::is_same_v<T, Level>) {
-            return *CURRENT_CONTEXT.m_level_manager;
+        } else if constexpr (std::is_same_v<T, Scene>) {
+            return *CURRENT_CONTEXT.m_scene_manager;
         } else if constexpr (std::is_same_v<T, Font>) {
             return ensureManager<FontManager>(index);
         } else if constexpr (std::is_same_v<T, ScriptBinaryData>) {

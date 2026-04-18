@@ -2,21 +2,21 @@
 #include "engine/animation.hpp"
 #include "engine/event.hpp"
 #include "engine/image.hpp"
-#include "schema/level_content.hpp"
+#include "schema/scene_definition.hpp"
 
 #include <unordered_set>
 
-class Level {
+class Scene {
 public:
-    friend class LevelManager;
+    friend class SceneManager;
 
-    Level() = default;
+    Scene() = default;
 
-    explicit Level(LevelContentHandle);
+    explicit Scene(SceneDefinitionHandle);
 
-    explicit Level(const Path& filename);
+    explicit Scene(const Path& filename);
 
-    ~Level();
+    ~Scene();
 
     void Initialize();
     void OnEnter();
@@ -40,7 +40,7 @@ public:
 private:
     bool m_visible = false;
     bool m_inited = false;
-    LevelContentHandle m_pending_init_content;
+    SceneDefinitionHandle m_pending_init_description;
 
     Entity m_root_entity{};
     Entity m_ui_root_entity{};
@@ -56,24 +56,26 @@ private:
     void createEntityByPrefab(Entity entity, const Transform*,
                               const Prefab& prefab);
 
-    void initByLevelContent(LevelContentHandle);
+    void initByDescription(SceneDefinitionHandle);
 
     void doRemoveEntities();
     void doRemoveEntityWithChildren(Entity);
+    void doRemoveEntityFromParent(Entity);
 };
 
-using LevelHandle = Handle<Level>;
+using SceneHandle = Handle<Scene>;
 
-class LevelManager final : public AssetManagerBase<Level> {
+class SceneManager final : public AssetManagerBase<Scene> {
 public:
     HandleType Load(const Path& filename, bool force = false) override;
+    SceneHandle Create(SceneDefinitionHandle);
 
-    void Switch(LevelHandle);
+    void Switch(SceneHandle);
 
     void PoseUpdate();
 
-    LevelHandle GetCurrentLevel() const;
+    SceneHandle GetCurrentScene() const;
 
 private:
-    LevelHandle m_level;
+    SceneHandle m_level;
 };

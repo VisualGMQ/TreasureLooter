@@ -6,7 +6,8 @@
 
 class TriggerEnterEvent {
 public:
-    explicit TriggerEnterEvent(Entity src_entity, TriggerEventType, OverlapResult);
+    explicit TriggerEnterEvent(Entity src_entity, TriggerEventType,
+                               OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
     [[nodiscard]] Entity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
@@ -19,7 +20,8 @@ private:
 
 class TriggerLeaveEvent {
 public:
-    explicit TriggerLeaveEvent(Entity src_entity, TriggerEventType, OverlapResult);
+    explicit TriggerLeaveEvent(Entity src_entity, TriggerEventType,
+                               OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
     [[nodiscard]] Entity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
@@ -32,7 +34,8 @@ private:
 
 class TriggerTouchEvent {
 public:
-    explicit TriggerTouchEvent(Entity src_entity, TriggerEventType, OverlapResult);
+    explicit TriggerTouchEvent(Entity src_entity, TriggerEventType,
+                               OverlapResult);
     [[nodiscard]] TriggerEventType GetType() const;
     [[nodiscard]] Entity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
@@ -47,39 +50,38 @@ class Trigger {
 public:
     friend class TriggerComponentManager;
 
+    struct PhysicsData {
+        PhysicsShape::Proxy m_shape;
+        Vec2 m_local_position;
+    };
+
     Trigger() = default;
     Trigger(Entity, const TriggerDefinition&);
-    Trigger(Entity, const Circle&, TriggerEventType event_type,
-            const CollisionGroup& collision_layer,
-            const CollisionGroup& collision_mask);
-    Trigger(Entity, const Rect&, TriggerEventType event_type,
-            const CollisionGroup& collision_layer,
-            const CollisionGroup& collision_mask);
-    [[nodiscard]] const PhysicsActor* GetActor() const;
-    [[nodiscard]] PhysicsActor* GetActor();
-    ~Trigger();
+    [[nodiscard]] const std::vector<PhysicsData>& GetPhysicsData() const;
+    [[nodiscard]] std::vector<PhysicsData>& GetPhysicsData();
 
     void SetEventType(TriggerEventType type);
     [[nodiscard]] TriggerEventType GetEventType() const;
 
     void EnableTriggerEveryFrameWhenTouch(bool);
     bool IsTriggerEveryFrameWhenTouch() const;
-    
-    void ChangeBindPointName(const std::string& name);
-    std::string_view GetBindPointName() const;
 
     void Update();
 
 private:
-    PhysicsActor* m_actor = nullptr;
-    std::string m_bind_point_name;
+    Entity m_entity = null_entity;
+    std::vector<PhysicsData> m_physics_data;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 
-    std::vector<PhysicsActor*> m_touch_actors;
+    std::vector<PhysicsShape*> m_touch_shapes;
 };
 
 class TriggerComponentManager : public ComponentManager<Trigger> {
 public:
     void Update();
+
+private:
+    void updatePhysicsShapePosition(const Transform& parent_global_transform,
+                                    Trigger::PhysicsData& physics_data) const;
 };

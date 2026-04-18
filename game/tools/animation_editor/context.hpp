@@ -3,7 +3,7 @@
 #include "engine/entity.hpp"
 #include "engine/animation.hpp"
 #include "engine/animation_player.hpp"
-#include "schema/level_content.hpp"
+#include "schema/scene_definition.hpp"
 #include "tool_context.hpp"
 #include <memory>
 #include <optional>

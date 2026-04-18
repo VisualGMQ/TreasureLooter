@@ -1,4 +1,4 @@
-#include "engine/level.hpp"
+#include "engine/scene.hpp"
 
 #include "SDL3/SDL.h"
 #include "engine/asset_manager.hpp"
@@ -12,28 +12,30 @@
 #include "engine/tilemap.hpp"
 #include "engine/trigger.hpp"
 #include "engine/ui.hpp"
+#include "engine/static_collision.hpp"
+#include "schema/scene_definition.hpp"
 
-Level::Level(LevelContentHandle level_content) {
-    m_pending_init_content = level_content;
+Scene::Scene(SceneDefinitionHandle level_content) {
+    m_pending_init_description = level_content;
 }
 
-Level::Level(const Path& filename) {
+Scene::Scene(const Path& filename) {
     auto handle =
-        CURRENT_CONTEXT.m_assets_manager->GetManager<LevelContent>().Load(
+        CURRENT_CONTEXT.m_assets_manager->GetManager<SceneDefinition>().Load(
             filename, true);
-    m_pending_init_content = handle;
+    m_pending_init_description = handle;
 }
 
-Level::~Level() {
+Scene::~Scene() {
     OnQuit();
 }
 
-void Level::Initialize() {
-    initByLevelContent(m_pending_init_content);
-    m_pending_init_content = {};
+void Scene::Initialize() {
+    initByDescription(m_pending_init_description);
+    m_pending_init_description = {};
 }
 
-void Level::OnEnter() {
+void Scene::OnEnter() {
     if (!m_inited) {
         Initialize();
         m_inited = true;
@@ -60,7 +62,7 @@ void Level::OnEnter() {
             });
 }
 
-void Level::OnQuit() {
+void Scene::OnQuit() {
     CURRENT_CONTEXT.m_event_system->RemoveListener<SDL_WindowEvent>(
         m_window_resize_event_listener_id);
 
@@ -71,45 +73,48 @@ void Level::OnQuit() {
     m_entities.clear();
 }
 
-void Level::PoseUpdate() {
+void Scene::PoseUpdate() {
     doRemoveEntities();
 }
 
-bool Level::IsInited() const {
+bool Scene::IsInited() const {
     return m_inited;
 }
 
-Entity Level::Instantiate(PrefabHandle prefab) {
+Entity Scene::Instantiate(PrefabHandle prefab) {
     Entity entity = CURRENT_CONTEXT.CreateEntity();
     registerEntity(entity, {prefab->m_transform.value_or(Transform{}), prefab});
     m_entities.insert(entity);
     return entity;
 }
 
-void Level::RemoveEntity(Entity entity) {
+void Scene::RemoveEntity(Entity entity) {
     m_pending_delete_entities.push_back(entity);
 }
 
-Entity Level::GetRootEntity() const {
+Entity Scene::GetRootEntity() const {
     return m_root_entity;
 }
 
-Entity Level::GetUIRootEntity() const {
+Entity Scene::GetUIRootEntity() const {
     return m_ui_root_entity;
 }
 
-void Level::initRootEntity(const Path& script_path) {
+void Scene::initRootEntity(const Path& script_path) {
     m_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
-    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity);
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity,
+                                                           m_root_entity);
     CURRENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_root_entity);
 
     m_ui_root_entity = CURRENT_CONTEXT.CreateEntity();
     m_entities.insert(m_ui_root_entity);
     CURRENT_CONTEXT.m_transform_manager->RegisterEntity(m_ui_root_entity);
-    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity,
+                                                           m_ui_root_entity);
     CURRENT_CONTEXT.m_ui_manager->RegisterEntity(m_ui_root_entity);
+    CURRENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_ui_root_entity);
     UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(m_ui_root_entity);
     ui->m_anchor = UIAnchor::None;
     ui->m_panel = std::make_unique<UIPanelComponent>();
@@ -126,13 +131,13 @@ void Level::initRootEntity(const Path& script_path) {
     }
 }
 
-void Level::registerEntity(Entity entity, const EntityInstance& instance) {
+void Scene::registerEntity(Entity entity, const EntityInstance& instance) {
     createEntityByPrefab(
         entity, instance.m_transform ? &instance.m_transform.value() : nullptr,
         *instance.m_prefab);
 }
 
-void Level::createEntityByPrefab(Entity entity, const Transform* transform,
+void Scene::createEntityByPrefab(Entity entity, const Transform* transform,
                                  const Prefab& prefab) {
     if (prefab.m_sprite) {
         CURRENT_CONTEXT.m_sprite_manager->RegisterEntity(
@@ -179,18 +184,21 @@ void Level::createEntityByPrefab(Entity entity, const Transform* transform,
         CURRENT_CONTEXT.m_script_component_manager->RegisterEntity(
             entity, entity, handle);
     }
+    if (prefab.m_static_collision.has_value()) {
+        CURRENT_CONTEXT.m_static_collision_manager->RegisterEntity(
+            entity, entity, prefab.m_static_collision.value());
+    }
 
-    if (!prefab.m_children.empty()) {
-        CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity);
-        auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
-        for (auto child : prefab.m_children) {
-            Entity child_entity = Instantiate(child);
-            relationship->m_children.push_back(child_entity);
-        }
+    // every entity has relationship
+    CURRENT_CONTEXT.m_relationship_manager->RegisterEntity(entity, entity);
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    for (auto child : prefab.m_children) {
+        Entity child_entity = Instantiate(child);
+        relationship->AddChild(child_entity);
     }
 }
 
-void Level::initByLevelContent(LevelContentHandle level_content) {
+void Scene::initByDescription(SceneDefinitionHandle level_content) {
     initRootEntity(level_content->m_script_path);
 
     for (auto& instance : level_content->m_entities) {
@@ -209,29 +217,41 @@ void Level::initByLevelContent(LevelContentHandle level_content) {
             relationship =
                 CURRENT_CONTEXT.m_relationship_manager->Get(GetUIRootEntity());
         }
-        relationship->m_children.emplace_back(entity);
+        relationship->AddChild(entity);
     }
 }
 
-void Level::doRemoveEntities() {
+void Scene::doRemoveEntities() {
     std::vector<PrefabHandle> remove_prefabs;
 
     for (auto entity : m_pending_delete_entities) {
+        doRemoveEntityFromParent(entity);
         doRemoveEntityWithChildren(entity);
     }
 
     m_pending_delete_entities.clear();
 }
 
-void Level::doRemoveEntityWithChildren(Entity entity) {
-    TL_RETURN_IF_FALSE(entity != null_entity);
+void Scene::doRemoveEntityFromParent(Entity entity) {
+    auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
+    TL_RETURN_IF_NULL(relationship);
 
-    // TODO: remove entity from parent
+    Entity parent_entity = relationship->GetParent();
+    TL_RETURN_IF_FALSE(parent_entity != null_entity);
+
+    auto parent_relationship =
+        CURRENT_CONTEXT.m_relationship_manager->Get(parent_entity);
+    TL_RETURN_IF_NULL(parent_relationship);
+    parent_relationship->RemoveChild(entity);
+}
+
+void Scene::doRemoveEntityWithChildren(Entity entity) {
+    TL_RETURN_IF_FALSE(entity != null_entity);
 
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     if (relationship) {
-        for (auto child : relationship->m_children) {
-            doRemoveEntityWithChildren(child);
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            doRemoveEntityWithChildren(relationship->Get(i));
         }
     }
 
@@ -242,23 +262,29 @@ void Level::doRemoveEntityWithChildren(Entity entity) {
     CURRENT_CONTEXT.m_animation_player_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_cct_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_trigger_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_static_collision_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_bind_point_component_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_ui_manager->RemoveEntity(entity);
     CURRENT_CONTEXT.m_script_component_manager->RemoveEntity(entity);
+    CURRENT_CONTEXT.m_draw_order_manager->RemoveEntity(entity);
 
     m_entities.erase(entity);
 }
 
-AssetManagerBase<Level>::HandleType LevelManager::Load(const Path& filename,
+AssetManagerBase<Scene>::HandleType SceneManager::Load(const Path& filename,
                                                        bool force) {
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }
     return store(&filename, UUID::CreateV4(),
-                 std::make_unique<Level>(filename));
+                 std::make_unique<Scene>(filename));
 }
 
-void LevelManager::Switch(LevelHandle level) {
+SceneHandle SceneManager::Create(SceneDefinitionHandle handle) {
+    return store(nullptr, UUID::CreateV4(), std::make_unique<Scene>(handle));
+}
+
+void SceneManager::Switch(SceneHandle level) {
     if (m_level) {
         m_level->OnQuit();
     }
@@ -269,13 +295,13 @@ void LevelManager::Switch(LevelHandle level) {
     }
 }
 
-void LevelManager::PoseUpdate() {
+void SceneManager::PoseUpdate() {
     if (!m_level) {
         return;
     }
     m_level->PoseUpdate();
 }
 
-LevelHandle LevelManager::GetCurrentLevel() const {
+SceneHandle SceneManager::GetCurrentScene() const {
     return m_level;
 }

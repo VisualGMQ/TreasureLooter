@@ -36,6 +36,47 @@ local function readonly_checkbox(label: string, v: boolean?)
 	ImGui.EndDisabled()
 end
 
+-- Names must match `CollisionGroupType` in schema / TL bindings.
+local COLLISION_GROUP_TYPE_NAMES: { string } =
+	{ "CCT", "Obstacle", "Coin", "WeaponAttack", "Interactable" }
+
+local function collision_group_active_names(g: TL.CollisionGroup): string
+	local cgt = (TL :: any).CollisionGroupType
+	if type(cgt) ~= "table" then
+		return ""
+	end
+	local parts: { string } = {}
+	for _, name in ipairs(COLLISION_GROUP_TYPE_NAMES) do
+		local ty = (cgt :: any)[name]
+		if ty ~= nil then
+			local ok, has = pcall(function()
+				return g:Has(ty)
+			end)
+			if ok and has then
+				table.insert(parts, name)
+			end
+		end
+	end
+	return table.concat(parts, ", ")
+end
+
+function _M.DisplayPhysicsShapeReadonly(id_suffix: string, shape: TL.PhysicsShape)
+	ImGui.PushID(id_suffix)
+	readonly_drag_int("GetOwner (entity)", shape:GetOwner())
+	readonly_drag_int("GetType", shape:GetType())
+	readonly_drag_int("GetStorageType", shape:GetStorageType())
+	local p = shape:GetPosition()
+	readonly_drag_float("position.x", p.x)
+	readonly_drag_float("position.y", p.y)
+	local layer = shape:GetCollisionLayer()
+	readonly_drag_int("collision_layer (underlying)", layer:GetUnderlying())
+	ImGui.Text("collision_layer groups: " .. collision_group_active_names(layer))
+	local mask = shape:GetCollisionMask()
+	readonly_drag_int("collision_mask (underlying)", mask:GetUnderlying())
+	ImGui.Text("collision_mask groups: " .. collision_group_active_names(mask))
+	ImGui.PopID()
+end
+
 function _M.TransformWorldPosition(t: TL.Transform): TL.Vec2
 	local ok, w = pcall(function()
 		return (t :: any):GetGlobalPosition()
@@ -250,14 +291,35 @@ function _M.DisplayTrigger(tr: TL.Trigger)
 	ImGui.PushID("Trigger")
 	ImGui.Text("GetEventType: " .. tostring(tr:GetEventType()))
 	readonly_checkbox("IsTriggerEveryFrameWhenTouch", tr:IsTriggerEveryFrameWhenTouch())
-	ImGui.Text("GetBindPointName: " .. tostring((tr :: any):GetBindPointName()))
-	local actor = tr:GetActor()
-	if actor then
-		ImGui.Text("actor")
-		local p = actor:GetPosition()
-		readonly_drag_float("position.x", p.x)
-		readonly_drag_float("position.y", p.y)
-		readonly_drag_int("GetStorageType", actor:GetStorageType())
+	local ok, list = pcall(function()
+		return tr:GetPhysicsData()
+	end)
+	if not ok then
+		ImGui.Text("GetPhysicsData: [error]")
+	elseif list == nil then
+		ImGui.Text("GetPhysicsData: nil")
+	else
+		local n = #(list :: any)
+		if n == 0 then
+			ImGui.Text("GetPhysicsData: (empty)")
+		else
+			for i = 1, n do
+				local pd = (list :: any)[i] :: TL.TriggerPhysicsData
+				if ImGui.TreeNode("PhysicsData #" .. tostring(i)) then
+					_M.DisplayVec2("m_local_position", pd.m_local_position)
+					local sh = pd.m_shape
+					if sh then
+						if ImGui.TreeNode("m_shape") then
+							_M.DisplayPhysicsShapeReadonly("tr_ph_" .. tostring(i), sh)
+							ImGui.TreePop()
+						end
+					else
+						ImGui.Text("m_shape: nil")
+					end
+					ImGui.TreePop()
+				end
+			end
+		end
 	end
 	ImGui.PopID()
 end
@@ -296,6 +358,15 @@ function _M.DisplayCharacterController(cct: TL.CharacterController)
 	readonly_drag_float("GetPosition.x", cct:GetPosition().x)
 	readonly_drag_float("GetPosition.y", cct:GetPosition().y)
 	readonly_drag_float("GetMinDisp", cct:GetMinDisp())
+	local shape = cct:GetPhysicsShape()
+	if shape then
+		if ImGui.TreeNode("PhysicsShape (body)") then
+			_M.DisplayPhysicsShapeReadonly("cct_shape", shape)
+			ImGui.TreePop()
+		end
+	else
+		ImGui.Text("GetPhysicsShape: nil")
+	end
 	ImGui.PopID()
 end
 

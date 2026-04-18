@@ -27,7 +27,7 @@ export type Vec2UI = {
 
 	ZERO: Vec2UI,
 	X_UNIT: Vec2UI,
-	Y_UNIT: Vec2UI 
+	Y_UNIT: Vec2UI
 } & ((x: number, y: number) -> Vec2UI)
 
 export type Color = {
@@ -88,11 +88,11 @@ export type Image = {
 	ChangeColorMask: (self: Image, color: Color) -> (),
 } & (r: number, g: number, b: number, a: number) -> Color
 
-export type Level = {
-	Instantiate: (self: Level, prefab: PrefabHandle) -> Entity,
-	RemoveEntity: (self: Level, entity: Entity) -> (),
-	GetRootEntity: (self: Level) -> Entity,
-	GetUIRootEntity: (self: Level) -> Entity,
+export type Scene = {
+	Instantiate: (self: Scene, prefab: PrefabHandle) -> Entity,
+	RemoveEntity: (self: Scene, entity: Entity) -> (),
+	GetRootEntity: (self: Scene) -> Entity,
+	GetUIRootEntity: (self: Scene) -> Entity,
 }
 
 export type BindPoint = {
@@ -109,11 +109,83 @@ export type BindPointsComponentManager = {
 	ToggleDebugDraw: (self: BindPointsComponentManager) -> (),
 }
 
-export type Tilemap = {}
+export type Tile = {
+	m_image: ImageHandle,
+	m_region: Region,
+	m_id: number,
+	m_tile_size: Vec2,
+}
+
+export type TilemapLayerTile = {
+	m_gid: number,
+	GetFlipValue: (self: TilemapLayerTile) -> number,
+}
+
+export type Tileset = {
+	GetTile: (self: Tileset, gid: number) -> Tile?,
+	HasTile: (self: Tileset, gid: number) -> boolean,
+	GetTileSize: (self: Tileset) -> Vec2,
+}
+
+export type TilemapLayer = {
+	GetType: (self: TilemapLayer) -> TilemapLayerType,
+	AsTiledLayer: (self: TilemapLayer) -> TilemapTileLayer?,
+	AsImageLayer: (self: TilemapLayer) -> TilemapImageLayer?,
+	AsObjectLayer: (self: TilemapLayer) -> TilemapObjectLayer?,
+	GetName: (self: TilemapLayer) -> string,
+}
+
+export type TilemapTileLayer = {
+	GetTile: (self: TilemapTileLayer, x: number, y: number) -> TilemapLayerTile?,
+	GetSize: (self: TilemapTileLayer) -> Vec2,
+}
+
+export type TilemapObjectLayer = {
+	GetObjectCount: (self: TilemapObjectLayer) -> number,
+	GetObject: (self: TilemapObjectLayer, index: number) -> TilemapObject?,
+}
+
+export type TilemapImageLayer = {
+	GetImage: (self: TilemapImageLayer) -> ImageHandle?,
+	GetPosition: (self: TilemapImageLayer) -> Vec2,
+}
+
+export type TilemapObject = {
+	GetType: (self: TilemapObject) -> TilemapObjectType,
+	IsVisiable: (self: TilemapObject) -> boolean,
+	AsCircle: (self: TilemapObject) -> Circle?,
+	AsRect: (self: TilemapObject) -> Rect?,
+	AsPolygon: (self: TilemapObject) -> Polygon?,
+	AsPoint: (self: TilemapObject) -> Vec2?,
+}
+
+export type TilemapLayerType = {
+	Tiled: number,
+	Object: number,
+	Image: number,
+}
+
+export type TilemapObjectType = {
+	None: number,
+	Point: number,
+	Circle: number,
+	Rect: number,
+	Polygon: number,
+}
+
+export type Tilemap = {
+	GetLayerCount: (self: Tilemap) -> number,
+	GetLayer: (self: Tilemap, index: number) -> TilemapLayer?,
+	GetTilesetCount: (self: Tilemap) -> number,
+	GetTileset: (self: Tilemap, index: number) -> Tileset?,
+	GetTile: (self: Tilemap, gid: number) -> Tile?,
+	GetTileSize: (self: Tilemap) -> Vec2,
+	GetFilename: (self: Tilemap) -> string,
+}
 export type ScriptBinaryData = {}
 
 export type ImageHandle = { IsValid: (self: ImageHandle) -> boolean, GetAssetPath: (self: ImageHandle) -> string } & Image
-export type LevelHandle = { IsValid: (self: LevelHandle) -> boolean, GetAssetPath: (self: LevelHandle) -> string } & Level
+export type SceneHandle = { IsValid: (self: SceneHandle) -> boolean, GetAssetPath: (self: SceneHandle) -> string } & Scene
 export type AnimationHandle = { IsValid: (self: AnimationHandle) -> boolean, GetAssetPath: (self: AnimationHandle) -> string } & Animation
 export type TilemapHandle = { IsValid: (self: TilemapHandle) -> boolean, GetAssetPath: (self: TilemapHandle) -> string } & Tilemap
 export type FontHandle = { IsValid: (self: FontHandle) -> boolean, GetAssetPath: (self: FontHandle) -> string } & Font
@@ -129,11 +201,17 @@ export type Sprite = {
 	m_flip: number,
 } & () -> Sprite
 
-export type Relationship = { m_children: { Entity } }
+export type Relationship = {
+    AddChild: (self: Relationship, entity: Entity) -> (),
+    Get: (self: Relationship, index: number) -> Entity,
+    GetChildrenCount: (self: Relationship) -> number,
+    GetParent: (self: Relationship) -> Entity,
+    RemoveChild: (self: Relationship) -> (),
+}
 
 export type ScriptBinaryDataManager = {
 	Load: (self: ScriptBinaryDataManager, path: string, force: boolean?) -> ScriptBinaryDataHandle,
-	Find: (self: ScriptBinaryDataManager, path: string) -> ScriptBinaryDataHandle?,
+	Find: (self: ScriptBinaryDataManager, path: string) -> ScriptBinaryDataHandle,
 }
 export type ScriptComponentManager = {
 	Get: (self: ScriptComponentManager, entity: Entity) -> unknown,
@@ -147,32 +225,33 @@ export type TransformManager = {
 }
 export type ImageManager = {
 	Load: (self: ImageManager, path: string, force: boolean?) -> ImageHandle,
-	Find: (self: ImageManager, path: string) -> ImageHandle?,
+	Find: (self: ImageManager, path: string) -> ImageHandle,
 }
 export type TilemapManager = {
 	Load: (self: TilemapManager, path: string, force: boolean?) -> TilemapHandle,
-	Find: (self: TilemapManager, path: string) -> TilemapHandle?,
+	Find: (self: TilemapManager, path: string) -> TilemapHandle,
 }
 export type AnimationManager = {
 	Load: (self: AnimationManager, path: string, force: boolean?) -> AnimationHandle,
-	Find: (self: AnimationManager, path: string) -> AnimationHandle?,
+	Find: (self: AnimationManager, path: string) -> AnimationHandle,
 }
-export type LevelManager = {
-	Load: (self: LevelManager, path: string, force: boolean?) -> LevelHandle,
-	Find: (self: LevelManager, path: string) -> LevelHandle?,
-	GetCurrentLevel: (self: LevelManager) -> Level?,
-	Switch: (self: LevelManager, level: LevelHandle) -> (),
+export type SceneManager = {
+	Load: (self: SceneManager, path: string, force: boolean?) -> SceneHandle,
+	Find: (self: SceneManager, path: string) -> SceneHandle,
+    Create: (self: SceneManager, definition: SceneDefinitionHandle) -> SceneHandle,
+    Unload: (self: SceneManager, handle: SceneHandle) -> (),
+	GetCurrentScene: (self: SceneManager) -> Scene?,
+	Switch: (self: SceneManager, scene: SceneHandle) -> (),
 }
 export type FontManager = {
 	Load: (self: FontManager, path: string, force: boolean?) -> FontHandle,
-	Find: (self: FontManager, path: string) -> FontHandle?,
+	Find: (self: FontManager, path: string) -> FontHandle,
 }
 export type AssetsManager = {
 	GetScriptBinaryDataManager: (self: AssetsManager) -> ScriptBinaryDataManager,
 	GetImageManager: (self: AssetsManager) -> ImageManager,
 	GetTilemapManager: (self: AssetsManager) -> TilemapManager,
 	GetAnimationManager: (self: AssetsManager) -> AnimationManager,
-	GetLevelManager: (self: AssetsManager) -> LevelManager,
 	GetFontManager: (self: AssetsManager) -> FontManager,
 
 	-- from schema
@@ -180,10 +259,12 @@ export type AssetsManager = {
 	GetGameConfigManager: (self: AssetsManager) -> GameConfigAssetManager,
 	GetWeaponDefinitionManager: (self: AssetsManager) -> WeaponDefinitionAssetManager,
 	GetCharacterDefinitionManager: (self: AssetsManager) -> CharacterDefinitionAssetManager,
+	GetLevelDefinitionManager: (self: AssetsManager) -> LevelDefinitionAssetManager,
 	GetInputConfigManager: (self: AssetsManager) -> InputConfigAssetManager,
-	GetLevelContentManager: (self: AssetsManager) -> LevelContentAssetManager,
-	GetPhysicsActorInfoManager: (self: AssetsManager) -> PhysicsActorInfoAssetManager,
+	GetSceneDefinitionManager: (self: AssetsManager) -> SceneDefinitionAssetManager,
+	GetPhysicsShapeDefinitionManager: (self: AssetsManager) -> PhysicsShapeDefinitionAssetManager,
 	GetUIWidgetDefinitionManager: (self: AssetsManager) -> UIWidgetDefinitionAssetManager,
+    GetItemDefinitionManager: (self: AssetsManager) -> ItemDefinitionAssetManager,
 }
 
 export type Renderer = {}
@@ -202,7 +283,15 @@ export type TilemapComponent = {
 	GetTilemap: (self: TilemapComponent) -> TilemapHandle,
 	GetTilemapCollision: (self: TilemapComponent) -> TilemapCollisionInfo?,
 }
-export type TriggerComponentManager = { Get: (self: TriggerComponentManager, entity: Entity) -> Trigger, Has: (self: TriggerComponentManager, entity: Entity) -> boolean }
+export type StaticCollision = {}
+export type StaticCollisionManager = { Get: (self: StaticCollisionManager, entity: Entity) -> StaticCollision?, Has: (self: StaticCollisionManager, entity: Entity) -> boolean }
+export type TriggerComponentManager = {
+    Get: (self: TriggerComponentManager, entity: Entity) -> Trigger,
+    Has: (self: TriggerComponentManager, entity: Entity) -> boolean,
+    IsEnable: (self: TriggerComponentManager, entity: Entity) -> boolean,
+    Enable: (self: TriggerComponentManager, entity: Entity) -> (),
+    Disable: (self: TriggerComponentManager, entity: Entity) -> (),
+}
 export type UIComponentManager = { Get: (self: UIComponentManager, entity: Entity) -> UIWidget?, Has: (self: UIComponentManager, entity: Entity) -> boolean }
 export type TilemapComponentManager = { Get: (self: TilemapComponentManager, entity: Entity) -> TilemapComponent?, Has: (self: TilemapComponentManager, entity: Entity) -> boolean }
 
@@ -329,6 +418,20 @@ export type AnimationPlayerManager = {
 	Get: (self: AnimationPlayerManager, entity: Entity) -> AnimationPlayer?,
 	Has: (self: AnimationPlayerManager, entity: Entity) -> boolean,
 }
+
+export type PhysicsShape = {
+	GetPosition: (self: PhysicsShape) -> Vec2,
+	SetCollisionLayer: (self: PhysicsShape, collision_group: CollisionGroup) -> (),
+	GetCollisionLayer: (self: PhysicsShape) -> CollisionGroup,
+	SetCollisionMask: (self: PhysicsShape, collision_group: CollisionGroup) -> (),
+	GetCollisionMask: (self: PhysicsShape) -> CollisionGroup,
+	GetType: (self: PhysicsShape) -> number,
+	GetOwner: (self: PhysicsShape) -> Entity,
+	MoveTo: (self: PhysicsShape, position: Vec2) -> (),
+	Move: (self: PhysicsShape, offset: Vec2) -> (),
+	GetStorageType: (self: PhysicsShape) -> number,
+}
+
 export type CharacterController = {
 	MoveAndSlide: (self: CharacterController, dir: Vec2) -> (),
 	GetPosition: (self: CharacterController) -> Vec2,
@@ -337,37 +440,30 @@ export type CharacterController = {
 	SetMinDisp: (self: CharacterController, disp: number) -> (),
 	GetMinDisp: (self: CharacterController) -> number,
 	Teleport: (self: CharacterController, pos: Vec2) -> (),
+	GetPhysicsShape: (self: CharacterController) -> PhysicsShape?,
 }
 export type CCTManager = {
 	Get: (self: CCTManager, entity: Entity) -> CharacterController?,
 	Has: (self: CCTManager, entity: Entity) -> boolean,
 }
 
-export type PhysicsActor = {
-	GetPosition: (self: PhysicsActor) -> Vec2,
-	SetCollisionLayer: (self: PhysicsActor, collision_group: CollisionGroup) -> (),
-	GetCollisionLayer: (self: PhysicsActor) -> CollisionGroup,
-	SetCollisionMask: (self: PhysicsActor, collision_group: CollisionGroup) -> (),
-	GetCollisionMask: (self: PhysicsActor) -> CollisionGroup,
-	GetEntity: (self: PhysicsActor) -> Entity,
-	MoveTo: (self: PhysicsActor, position: Vec2) -> (),
-	Move: (self: PhysicsActor, offset: Vec2) -> (),
-	GetStorageType: (self: PhysicsActor) -> number,
+export type OverlapResult = {
+	m_dst_entity: Entity,
+	m_dst_shape: PhysicsShape?,
 }
 
 export type PhysicsScene = {
 	IsEnableDebugDraw: (self: PhysicsScene) -> boolean,
 	ToggleDebugDraw: (self: PhysicsScene) -> (),
-	OverlapActors: (self: PhysicsScene, lhs: PhysicsActor, rhs: PhysicsActor) -> boolean,
+	Overlap: ((self: PhysicsScene, shape: PhysicsShape, out_result: {OverlapResult}, out_size: number) -> number)
+		& ((self: PhysicsScene, lhs: PhysicsShape, rhs: PhysicsShape) -> boolean),
 }
 
 export type Trigger = {
 	GetEventType: (self: Trigger) -> TriggerEventType,
 	SetEventType: (self: Trigger, type: TriggerEventType) -> (),
-	GetActor: (self: Trigger) -> PhysicsActor,
-	EnableTriggerEveryFrameWhenTouch: (self: Trigger) -> (),
+	EnableTriggerEveryFrameWhenTouch: (self: Trigger, enable: boolean) -> (),
 	IsTriggerEveryFrameWhenTouch: (self: Trigger) -> boolean,
-	GetBindPointName: (self: PhysicsActor) -> string,
 }
 
 export type TriggerEnterEvent = {
@@ -386,11 +482,6 @@ export type TriggerTouchEvent = {
 	GetType: (self: TriggerTouchEvent) -> TriggerEventType,
 	GetOverlapResult: (self: TriggerTouchEvent) -> OverlapResult,
 	GetSrcEntity: (self: TriggerTouchEvent) -> Entity,
-}
-
-export type OverlapResult = {
-	m_dst_entity: Entity,
-	m_dst_actor: PhysicsActor,
 }
 
 export type RelationshipManager = {
@@ -413,7 +504,7 @@ export type GameContext = {
 	GetCamera: (self: GameContext) -> Camera,
 	GetScriptManager: (self: GameContext) -> ScriptComponentManager,
 	GetAssetsManager: (self: GameContext) -> AssetsManager,
-	GetLevelManager: (self: GameContext) -> LevelManager,
+	GetSceneManager: (self: GameContext) -> SceneManager,
 	GetTime: (self: GameContext) -> Time,
 	GetTimerManager: (self: GameContext) -> TimerManager,
 	GetTransformManager: (self: GameContext) -> TransformManager,
@@ -430,6 +521,7 @@ export type GameContext = {
 	GetTilemapComponentManager: (self: GameContext) -> TilemapComponentManager,
 	GetCCTManager: (self: GameContext) -> CCTManager,
 	GetPhysicsScene: (self: GameContext) -> PhysicsScene,
+	GetStaticCollisionManager: (self: GameContext) -> StaticCollisionManager,
 	GetEventDebugger: (self: GameContext) -> EventDebugger,
 	GetDebugDraw: (self: GameContext) -> DebugDraw?,
 }

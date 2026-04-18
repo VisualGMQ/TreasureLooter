@@ -27,17 +27,13 @@ end
 local function draw_entity_tree(entity: TL.Entity, display_name: string, relationship_mgr: TL.RelationshipManager)
 	ImGui.PushID(entity)
 
-	local rel = relationship_mgr:Get(entity)
-	local children: { TL.Entity } = {}
-	if rel and rel.m_children then
-		children = rel.m_children
-	end
+	local relationship = relationship_mgr:Get(entity)
 
 	local sel_mark = (selected_entity == entity) and " *" or ""
 	local label = string.format("%s [%d]%s###hierarchy_%d", display_name, entity, sel_mark, entity)
 
 	local flags = bit32.bor(ImGui.TreeNodeFlags_OpenOnDoubleClick, ImGui.TreeNodeFlags_OpenOnArrow)
-	if #children == 0 then
+	if relationship:GetChildrenCount() == 0 then
 		flags = bit32.bor(flags, ImGui.TreeNodeFlags_Leaf)
 	end
 	if selected_entity == entity then
@@ -49,7 +45,8 @@ local function draw_entity_tree(entity: TL.Entity, display_name: string, relatio
 		selected_entity = entity
 	end
 	if open then
-		for _, child in ipairs(children) do
+		for i = 0, relationship:GetChildrenCount() - 1 do
+			local child = relationship:Get(i)
 			draw_entity_tree(child, "Entity", relationship_mgr)
 		end
 		ImGui.TreePop()
@@ -65,11 +62,11 @@ local COLLAPSE_FLAGS = bit32.bor(
 
 local function draw_hierarchy_section(ctx: TL.GameContext)
 	if ImGui.TreeNodeEx("Hierarchy###debug_panel_hierarchy", COLLAPSE_FLAGS) then
-		local level = ctx:GetLevelManager():GetCurrentLevel()
-		if level == nil then
+		local scene = ctx:GetSceneManager():GetCurrentScene()
+		if scene == nil then
 			ImGui.Text("(no active level)")
 		else
-			local root = level:GetRootEntity()
+			local root = scene:GetRootEntity()
 			local relationship_mgr = ctx:GetRelationshipManager()
 			draw_entity_tree(root, "Root", relationship_mgr)
 		end

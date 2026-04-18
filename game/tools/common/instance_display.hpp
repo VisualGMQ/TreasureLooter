@@ -8,10 +8,13 @@
 #include "engine/handle.hpp"
 #include "engine/math.hpp"
 #include "engine/text.hpp"
+#include "engine/trigger.hpp"
 #include "engine/tilemap.hpp"
+#include "schema/serialize/physics_schema.hpp"
 #include "imgui.h"
 #include "schema/asset_info.hpp"
 #include "schema/display/display.hpp"
+#include "schema/physics_schema.hpp"
 
 #include <array>
 #include <optional>
@@ -23,7 +26,7 @@ enum class Flip;
 class Animation;
 class AnimationPlayer;
 struct Image9Grid;
-class PhysicsActor;
+class PhysicsShape;
 class CollisionGroup;
 class CharacterController;
 class Trigger;
@@ -82,7 +85,8 @@ void InstanceDisplay(const char* name, CharacterController&);
 void InstanceDisplay(const char* name, CollisionGroup&);
 void InstanceDisplay(const char* name, const CollisionGroup&);
 void InstanceDisplay(const char* name, const Trigger&);
-void InstanceDisplay(const char* name, PhysicsActor&);
+void InstanceDisplay(const char* name, const Trigger::PhysicsData&);
+void InstanceDisplay(const char* name, PhysicsShape&);
 void InstanceDisplay(const char* name, const Color&);
 void InstanceDisplay(const char* name, Color&);
 void InstanceDisplay(const char* name, Image9Grid&);
@@ -305,10 +309,55 @@ void InstanceDisplay(const char* name, std::array<T, Size>& values) {
 template <typename Key, typename Value>
 void InstanceDisplay(const char* name, std::unordered_map<Key, Value>& m) {
     ImGui::Text("%s", name);
+    ImGui::SameLine();
+    ImGui::PushID(name);
+    bool add_item = ImGui::Button("add");
+
+    std::optional<Key> delete_key = std::nullopt;
+    std::optional<std::pair<Key, Key>> rename_key = std::nullopt;
+
+    size_t idx = 0;
     for (auto&& [key, value] : m) {
-        InstanceDisplay("Key", key);
-        InstanceDisplay("Val", value);
+        ImGui::PushID(static_cast<int>(idx));
+        if (ImGui::Button("del")) {
+            delete_key = key;
+            ImGui::PopID();
+            break;
+        }
+        ImGui::SameLine();
+
+        if (ImGui::TreeNode("item", "item %zu", idx)) {
+            Key edited_key = key;
+            InstanceDisplay("key", edited_key);
+            InstanceDisplay("value", value);
+            if (!(edited_key == key)) {
+                rename_key = std::make_pair(key, std::move(edited_key));
+            }
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+        idx++;
     }
+
+    if (delete_key) {
+        m.erase(delete_key.value());
+    }
+
+    if (rename_key) {
+        auto from = rename_key->first;
+        auto to = rename_key->second;
+        auto iter = m.find(from);
+        if (iter != m.end()) {
+            Value moved_value = std::move(iter->second);
+            m.erase(iter);
+            m[to] = std::move(moved_value);
+        }
+    }
+
+    if (add_item) {
+        m.emplace(Key{}, Value{});
+    }
+    ImGui::PopID();
 }
 
 template <typename Key, typename Value>
@@ -316,9 +365,16 @@ void InstanceDisplay(const char* name,
                      const std::unordered_map<Key, Value>& m) {
     ImGui::BeginDisabled(true);
     ImGui::Text("%s", name);
+    size_t idx = 0;
     for (auto&& [key, value] : m) {
-        InstanceDisplay("Key", key);
-        InstanceDisplay("Val", value);
+        ImGui::PushID(static_cast<int>(idx));
+        if (ImGui::TreeNode("item", "item %zu", idx)) {
+            InstanceDisplay("key", key);
+            InstanceDisplay("value", value);
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+        idx++;
     }
     ImGui::EndDisabled();
 }

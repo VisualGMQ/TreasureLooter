@@ -9,7 +9,7 @@
 void DrawCommandSubmitter::Submit() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
     submit(level->GetRootEntity());
@@ -18,7 +18,7 @@ void DrawCommandSubmitter::Submit() {
 void DrawCommandSubmitter::SubmitUI() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
     auto relationship =
@@ -27,8 +27,8 @@ void DrawCommandSubmitter::SubmitUI() {
         relationship, LOGE,
         "[DrawCommandSubmitter]: ui root entity don't has relationship!");
 
-    for (auto child : relationship->m_children) {
-        submitUI(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        submitUI(relationship->Get(i));
     }
 }
 
@@ -59,8 +59,8 @@ void DrawCommandSubmitter::submitRecursive(Entity entity) {
         entity);
 
     TL_RETURN_IF_NULL(relationship);
-    for (auto child : relationship->m_children) {
-        submitRecursive(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        submitRecursive(relationship->Get(i));
     }
 
     if (should_enable_y_sorting) {
@@ -85,8 +85,8 @@ void DrawCommandSubmitter::submitUIRecursive(Entity entity) {
     CURRENT_CONTEXT.m_ui_manager->SubmitDrawCommand(entity);
 
     TL_RETURN_IF_NULL(relationship);
-    for (auto child : relationship->m_children) {
-        submitUIRecursive(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        submitUIRecursive(relationship->Get(i));
     }
 
     if (should_enable_y_sorting) {

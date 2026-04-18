@@ -53,7 +53,8 @@ void UIPanelComponent::UpdateSize(const Transform& old_transform,
         return;
     }
 
-    for (auto child : relationship.m_children) {
+    for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
+        Entity child = relationship.Get(i);
         Transform* transform = CURRENT_CONTEXT.m_transform_manager->Get(child);
         UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
 
@@ -94,7 +95,8 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
         return;
     }
 
-    for (auto child : relationship.m_children) {
+    for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
+        Entity child = relationship.Get(i);
         Transform* child_transform =
             CURRENT_CONTEXT.m_transform_manager->Get(child);
         UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
@@ -161,10 +163,10 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
     }
 
     Vec2 ceil_size;
-    if (!relationship.m_children.empty()) {
+    if (!relationship.HasChildren()) {
         ceil_size = new_transform.m_size - ui.m_padding * 2.0;
         float totle_spacing =
-            m_spacing * std::max((int)relationship.m_children.size() - 1, 0);
+            m_spacing * std::max((int)relationship.GetChildrenCount() - 1, 0);
         if (m_type == UIBoxPanelType::Vertical) {
             ceil_size.h -= totle_spacing;
         } else {
@@ -173,14 +175,14 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
         ceil_size -= ui.m_margin * 2.0;
 
         if (m_type == UIBoxPanelType::Vertical) {
-            ceil_size.h /= relationship.m_children.size();
+            ceil_size.h /= relationship.GetChildrenCount();
         } else {
-            ceil_size.w /= relationship.m_children.size();
+            ceil_size.w /= relationship.GetChildrenCount();
         }
     }
 
-    for (int i = 0; i < relationship.m_children.size(); i++) {
-        Entity entity = relationship.m_children[i];
+    for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
+        Entity entity = relationship.Get(i);
         UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(entity);
         Transform* child_transform =
             CURRENT_CONTEXT.m_transform_manager->Get(entity);
@@ -202,8 +204,8 @@ void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
 
     Vec2 start_position = new_transform.m_position + ui.m_padding;
 
-    for (int i = 0; i < relationship.m_children.size(); i++) {
-        Entity entity = relationship.m_children[i];
+    for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
+        Entity entity = relationship.Get(i);
         UIWidget* ui = CURRENT_CONTEXT.m_ui_manager->Get(entity);
         Transform* child_transform =
             CURRENT_CONTEXT.m_transform_manager->Get(entity);
@@ -231,6 +233,7 @@ UIWidget::UIWidget() {
 UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
     m_old_transform.m_size = Vec2::ZERO;
 
+    m_enable_draw = info->m_enable_draw;
     m_selected = info->m_selected;
     m_disabled = info->m_disabled;
     m_anchor = info->m_anchor;
@@ -271,7 +274,7 @@ UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
 void UIComponentManager::Update() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     if (!level) {
         return;
     }
@@ -296,7 +299,7 @@ void UIComponentManager::SubmitDrawCommand(Entity entity) {
 void UIComponentManager::HandleEvent() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     if (!level) {
         return;
     }
@@ -309,8 +312,9 @@ void UIComponentManager::HandleEvent() {
     const Button& left_button = mouse->Get(MouseButtonType::Left);
 
 #ifndef TL_ANDROID
-    for (auto child : relationship->m_children) {
-        handleEvent(child, -1, left_button, mouse->Position(), mouse->Offset());
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        handleEvent(relationship->Get(i), -1, left_button, mouse->Position(),
+                    mouse->Offset());
     }
 #else
     auto& touches = CURRENT_CONTEXT.m_touches;
@@ -320,7 +324,8 @@ void UIComponentManager::HandleEvent() {
             continue;
         }
 
-        for (auto child : relationship->m_children) {
+        for (uint32_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            Entity child = relationship->Get(i);
             UIWidget* child_ui = CURRENT_CONTEXT.m_ui_manager->Get(child);
             if (child_ui->m_focus_index && child_ui->m_focus_index != i) {
                 continue;
@@ -348,8 +353,8 @@ void UIComponentManager::updateSize(Entity entity) {
                                 *ui, m_is_first_update);
     }
 
-    for (auto child : relationship->m_children) {
-        updateSize(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        updateSize(relationship->Get(i));
     }
 }
 
@@ -374,8 +379,8 @@ void UIComponentManager::updateTransform(Entity entity) {
                                     *relationship, *ui, m_is_first_update);
     }
 
-    for (auto child : relationship->m_children) {
-        updateTransform(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        updateTransform(relationship->Get(i));
     }
 
     ui->m_old_transform = *transform;
@@ -394,7 +399,8 @@ void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
     bool need_handle_event = true;
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     if (!isFocus(*ui, finger_index) && relationship) {
-        for (auto child : relationship->m_children) {
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            Entity child = relationship->Get(i);
             auto child_transform =
                 CURRENT_CONTEXT.m_transform_manager->Get(child);
             if (!child_transform) {
@@ -418,8 +424,9 @@ void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
 
     if (!need_handle_event) {
         if (relationship) {
-            for (auto child : relationship->m_children) {
-                handleEvent(child, finger_index, button, position, offset);
+            for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+                handleEvent(relationship->Get(i), finger_index, button,
+                            position, offset);
             }
         }
         return;
@@ -487,7 +494,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
-    TL_RETURN_IF_FALSE(transform && ui && IsEnable(entity));
+    TL_RETURN_IF_FALSE(transform && ui && IsEnable(entity) && ui->m_enable_draw);
 
     if (ui->m_use_clip) {
         SDL_Rect rect;
@@ -521,7 +528,8 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     dst.m_size = transform->m_size;
     dst.m_topleft = transform->m_position;
 
-    const DrawOrder* draw_order = CURRENT_CONTEXT.m_draw_order_manager->Get(entity);
+    const DrawOrder* draw_order =
+        CURRENT_CONTEXT.m_draw_order_manager->Get(entity);
     double z_order = draw_order ? draw_order->GetGlobalOrder() : 0;
     float y = transform->m_position.y;
 
@@ -584,8 +592,8 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         return;
     }
 
-    for (auto child : relationship->m_children) {
-        render(renderer, child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        render(renderer, relationship->Get(i));
     }
 }
 

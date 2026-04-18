@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/bind_point.hpp"
 #include "engine/camera.hpp"
 #include "engine/draw_order.hpp"
 #include "engine/entity.hpp"
@@ -19,7 +20,7 @@ class TransformManager;
 class SpriteManager;
 class DrawOrderManager;
 class AssetsManager;
-class Level;
+class Scene;
 struct GameConfig;
 class PlayerController;
 class UIComponentManager;
@@ -33,7 +34,8 @@ class PhysicsScene;
 class GameplayConfigManager;
 class TilemapLayerComponent;
 class TilemapLayerComponentManager;
-class LevelManager;
+class SceneManager;
+class StaticCollisionManager;
 
 class CommonContext {
 public:
@@ -41,6 +43,7 @@ public:
 
     static CommonContext& GetInst();
 
+    CommonContext();
     virtual ~CommonContext();
 
     /**
@@ -96,12 +99,13 @@ public:
     std::unique_ptr<Time> m_time;
     std::unique_ptr<PhysicsScene> m_physics_scene;
     std::unique_ptr<CCTManager> m_cct_manager;
-    std::unique_ptr<LevelManager> m_level_manager;
+    std::unique_ptr<SceneManager> m_scene_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<TimerManager> m_timer_manager;
     std::unique_ptr<UIComponentManager> m_ui_manager;
     std::unique_ptr<BindPointsComponentManager> m_bind_point_component_manager;
     std::unique_ptr<TriggerComponentManager> m_trigger_component_manager;
+    std::unique_ptr<StaticCollisionManager> m_static_collision_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<TilemapLayerComponentManager>
         m_tilemap_layer_component_manager;

@@ -83,6 +83,7 @@ struct UIWidget {
     friend class UIComponentManager;
     
     Flags<UIAnchor> m_anchor = UIAnchor::Center;
+    bool m_enable_draw = true;
     bool m_use_clip = false;
     bool m_disabled = false;
     bool m_selected = false;

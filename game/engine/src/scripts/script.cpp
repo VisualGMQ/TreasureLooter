@@ -122,7 +122,7 @@ ScriptComponentManager::~ScriptComponentManager() = default;
 void ScriptComponentManager::Update() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_FALSE(level);
 
     doUpdate(level->GetRootEntity());
@@ -132,7 +132,7 @@ void ScriptComponentManager::Update() {
 void ScriptComponentManager::Render() {
     PROFILE_SECTION();
 
-    auto level = CURRENT_CONTEXT.m_level_manager->GetCurrentLevel();
+    auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_FALSE(level);
 
     doRender(level->GetRootEntity());
@@ -149,8 +149,8 @@ void ScriptComponentManager::doUpdate(Entity entity) {
 
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     TL_RETURN_IF_FALSE(relationship);
-    for (auto child : relationship->m_children) {
-        doUpdate(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        doUpdate(relationship->Get(i));
     }
 }
 
@@ -164,8 +164,8 @@ void ScriptComponentManager::doRender(Entity entity) {
 
     auto relationship = CURRENT_CONTEXT.m_relationship_manager->Get(entity);
     TL_RETURN_IF_FALSE(relationship);
-    for (auto child : relationship->m_children) {
-        doRender(child);
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        doRender(relationship->Get(i));
     }
 }
 

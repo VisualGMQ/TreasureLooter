@@ -2,7 +2,7 @@
 #include "engine/asset_manager.hpp"
 #include "engine/entity.hpp"
 #include "engine/event.hpp"
-#include "engine/level.hpp"
+#include "engine/scene.hpp"
 #include "engine/input/input.hpp"
 #include "engine/ui.hpp"
 #include "schema/common.hpp"
@@ -77,8 +77,8 @@ public:
     ControllerAxises MakeAxises(const std::string& x_name,
                                 const std::string& y_name);
 
-    void RegisterVirtualController(LevelHandle level, const GameConfig&);
-    void DestroyVirtualController(LevelHandle level);
+    void RegisterVirtualController(SceneHandle level, const GameConfig&);
+    void DestroyVirtualController(SceneHandle level);
 
 private:
     SDL_JoystickID m_joystick_id = 0;
@@ -99,8 +99,8 @@ private:
     VirtualJoystick m_virtual_joystick;
     VirtualButton m_virtual_attack_button;
 
-    void initVirualJoystick(LevelHandle level, const GameConfig&);
-    void initVirualAttackButton(LevelHandle level, const GameConfig&);
+    void initVirualJoystick(SceneHandle level, const GameConfig&);
+    void initVirualAttackButton(SceneHandle level, const GameConfig&);
 
     void handleJoystickDragEvent(EventListenerID id, const UIDragEvent&);
     void handleJoystickReleaseEvent(EventListenerID id, const UIMouseUpEvent&);

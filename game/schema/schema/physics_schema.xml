@@ -4,7 +4,7 @@
     <import>collision_group_schema</import>
     <include>collision_group.hpp</include>
 
-    <asset name="PhysicsActorInfo" extension=".physics_actor">
+    <asset name="PhysicsShapeDefinition" extension=".physics_shape">
         <element name="is_rect" type="bool"/>
         <element name="rect" type="Rect"/>
         <element name="circle" type="Circle"/>
@@ -15,7 +15,7 @@
     <class name="CCTDefinition">
         <element name="skin" type="float" default="0.1"/>
         <element name="min_disp" type="float" default="0.001"/>
-        <handle  name="physics_actor" type="PhysicsActorInfo"/>
+        <handle  name="physics_shape" type="PhysicsShapeDefinition"/>
     </class>
 
     <enum name="TriggerEventType">
@@ -25,8 +25,11 @@
 
     <class name="TriggerDefinition">
         <element name="event_type" type="TriggerEventType"/>
-        <handle name="physics_actor" type="PhysicsActorInfo"/>
-        <element name="bind_point_name" type="std::string"/>
+        <array name="physics_shapes" type="PhysicsShapeDefinitionHandle"/>
         <element name="trig_every_frame_when_touch" type="bool" default="false"/>
+    </class>
+
+    <class name="StaticCollisionDefinition">
+        <array name="collisions" type="PhysicsShapeDefinitionHandle"/>
     </class>
 </schema>

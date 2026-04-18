@@ -21,6 +21,7 @@
         <option type="TilemapLayerDefinition" name="tilemap_layer"/>
         <option type="CCTDefinition" name="cct"/>
         <option type="TriggerDefinition" name="trigger"/>
+        <option type="StaticCollisionDefinition" name="static_collision" />
         <array type="BindPointDefinition" name="bind_points"/>
         <element type="Path" name="script" />
         <handle type="UIWidgetDefinition" name="ui"/>
