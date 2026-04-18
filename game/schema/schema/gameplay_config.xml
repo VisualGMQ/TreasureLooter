@@ -26,7 +26,7 @@
         <element name="damage" type="uint32_t" default="1" />
 
         <handle name="attack_animation" type="Animation" />
-        <array name="hit_shapes" type="TriggerDefinition" />
+        <element name="hit_shapes" type="TriggerDefinition" />
         <array name="bind_points" type="BindPointDefinition" />
     </asset>
 

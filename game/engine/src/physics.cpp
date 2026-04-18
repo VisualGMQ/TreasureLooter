@@ -312,6 +312,10 @@ std::optional<HitResult> SweepCircleRect(const Circle &c, const Rect &r,
     return *it;
 }
 
+void PhysicsShape::DeletorForProxy::operator()(PhysicsShape * shape) const {
+    CURRENT_CONTEXT.m_physics_scene->RemoveShape(shape);
+}
+
 PhysicsShape::PhysicsShape(Entity entity, PhysicsShapeDefinitionHandle handle,
                            PhysicsStorageType storage_type) {
     TL_RETURN_IF_FALSE(handle);
@@ -431,6 +435,11 @@ void PhysicsScene::Chunks::getTileRangeInCurrentChunk(
         y == chunk_range.m_y.m_end - 1 ? tile_range.m_y.m_end : m_chunk_size.h;
 }
 
+void PhysicsScene::TilemapCollision::DeletorForProxy::operator()(
+    TilemapCollision *tilemap_collision) const {
+    CURRENT_CONTEXT.m_physics_scene->RemoveTilemapCollision(tilemap_collision);
+}
+
 PhysicsScene::PhysicsScene() {
     m_cached_sweep_results.reserve(100);
 }
@@ -516,6 +525,7 @@ PhysicsScene::TilemapCollision *PhysicsScene::CreateTilemapCollision(
 }
 
 void PhysicsScene::RemoveTilemapCollision(TilemapCollision *collision) {
+    TL_RETURN_IF_NULL(collision);
     m_tilemap_collisions.erase(
         std::remove_if(m_tilemap_collisions.begin(), m_tilemap_collisions.end(),
                        [=](auto &value) { return value.get() == collision; }),

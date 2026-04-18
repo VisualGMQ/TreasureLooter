@@ -285,7 +285,13 @@ export type TilemapComponent = {
 }
 export type StaticCollision = {}
 export type StaticCollisionManager = { Get: (self: StaticCollisionManager, entity: Entity) -> StaticCollision?, Has: (self: StaticCollisionManager, entity: Entity) -> boolean }
-export type TriggerComponentManager = { Get: (self: TriggerComponentManager, entity: Entity) -> Trigger, Has: (self: TriggerComponentManager, entity: Entity) -> boolean }
+export type TriggerComponentManager = {
+    Get: (self: TriggerComponentManager, entity: Entity) -> Trigger,
+    Has: (self: TriggerComponentManager, entity: Entity) -> boolean,
+    IsEnable: (self: TriggerComponentManager, entity: Entity) -> boolean,
+    Enable: (self: TriggerComponentManager, entity: Entity) -> (),
+    Disable: (self: TriggerComponentManager, entity: Entity) -> (),
+}
 export type UIComponentManager = { Get: (self: UIComponentManager, entity: Entity) -> UIWidget?, Has: (self: UIComponentManager, entity: Entity) -> boolean }
 export type TilemapComponentManager = { Get: (self: TilemapComponentManager, entity: Entity) -> TilemapComponent?, Has: (self: TilemapComponentManager, entity: Entity) -> boolean }
 
@@ -456,7 +462,6 @@ export type PhysicsScene = {
 export type Trigger = {
 	GetEventType: (self: Trigger) -> TriggerEventType,
 	SetEventType: (self: Trigger, type: TriggerEventType) -> (),
-	GetPhysicsShape: (self: Trigger) -> PhysicsShape?,
 	EnableTriggerEveryFrameWhenTouch: (self: Trigger, enable: boolean) -> (),
 	IsTriggerEveryFrameWhenTouch: (self: Trigger) -> boolean,
 }

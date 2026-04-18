@@ -17,6 +17,7 @@ bool DrawOrder::IsEnableYSorting() const {
 
 void DrawOrderManager::Update() {
     PROFILE_SECTION();
+    m_id = 0;
 
     auto level = CURRENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);

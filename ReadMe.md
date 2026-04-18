@@ -67,6 +67,13 @@ It will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
 
 ## For Developer
 
+### AI Coding Note
+
+Some projects are entirely written by AI, I didn't review code, so you can ignore them when you read code:
+
+* CollisionEditor: `tools/colision_editor`
+* AnimationEditor: `tools/animation_editor`
+
 ### Luau developer
 
 For best development experience, open vscode under `TreasureLooter/game`.

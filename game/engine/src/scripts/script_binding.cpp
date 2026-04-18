@@ -1188,13 +1188,15 @@ void bindTrigger(lua_State* L) {
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
                 .addFunction("SetEventType", &Trigger::SetEventType)
-                .addFunction("GetPhysicsShape", static_cast<PhysicsShape*(Trigger::*)()>(&Trigger::GetPhysicsShape))
                 .addFunction("EnableTriggerEveryFrameWhenTouch", &Trigger::EnableTriggerEveryFrameWhenTouch)
                 .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
                 .addFunction("Has", &TriggerComponentManager::Has)
+                .addFunction("Enable", &TriggerComponentManager::Enable)
+                .addFunction("Disable", &TriggerComponentManager::Disable)
+                .addFunction("IsEnable", &TriggerComponentManager::IsEnable)
             .endClass()
         .endNamespace();
 }

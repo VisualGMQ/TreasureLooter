@@ -97,6 +97,13 @@ enum class PhysicsStorageType {
 
 class PhysicsShape {
 public:
+    // for std::unique_ptr
+    struct DeletorForProxy {
+        void operator()(PhysicsShape *) const;
+    };
+    
+    using Proxy = std::unique_ptr<PhysicsShape, DeletorForProxy>;
+    
     enum class Type {
         Unknown = 0,
         Rect,
@@ -129,7 +136,6 @@ public:
 
     void SetQueryEnable(bool enable);
     bool IsQueryEnabled() const;
-
 
     Entity GetOwner() const;
 
@@ -176,6 +182,13 @@ public:
     };
 
     struct TilemapCollision {
+        // for std::unique_ptr
+        struct DeletorForProxy {
+            void operator()(TilemapCollision *tilemap_collision) const;
+        };
+        
+        using Proxy = std::unique_ptr<TilemapCollision, DeletorForProxy>;
+
         Vec2 m_topleft;
         std::vector<Chunks> m_layers;
         std::vector<std::unique_ptr<PhysicsShape> > m_physics_shapes;
@@ -267,8 +280,8 @@ private:
                                                          const PhysicsShape &,
                                                          const Vec2 &dir) const;
 
-    [[nodiscard]] bool checkNeedQuery(const PhysicsShape & src,
-                                      const PhysicsShape & target) const;
+    [[nodiscard]] bool checkNeedQuery(const PhysicsShape &src,
+                                      const PhysicsShape &target) const;
 
     void removeShapeInChunk(TilemapCollision *, uint32_t layer,
                             PhysicsShape *actor);

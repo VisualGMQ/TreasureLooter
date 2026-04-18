@@ -34,7 +34,7 @@ private:
 
     Entity m_preview_entity = null_entity;
     int m_selected_hit_shape_index = -1;
-    int m_prev_weapon_hit_shape_count = 0;
+    int m_prev_weapon_physics_shape_count = 0;
 
     void parseCmdArgs(int argc, char** argv);
     void showMainMenu();

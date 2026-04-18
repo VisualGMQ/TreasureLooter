@@ -827,10 +827,20 @@ void InstanceDisplay(const char* name, const CollisionGroup& group) {
     ImGui::PopID();
 }
 
+void InstanceDisplay(const char* name, const Trigger::PhysicsData& data) {
+    ImGui::Text("%s", name);
+    InstanceDisplay("m_local_position", data.m_local_position);
+    if (data.m_shape) {
+        InstanceDisplay("m_shape", *data.m_shape);
+    } else {
+        ImGui::Text("m_shape: (null)");
+    }
+}
+
 void InstanceDisplay(const char* name, const Trigger& trigger) {
     ImGui::Text("%s", name);
 
-    InstanceDisplay("physics shape", trigger.GetPhysicsShape());
+    InstanceDisplay("physics_data", trigger.GetPhysicsData());
     InstanceDisplay("trigger every frame when touch", trigger.IsTriggerEveryFrameWhenTouch());
     InstanceDisplay("event type", trigger.GetEventType());
 }

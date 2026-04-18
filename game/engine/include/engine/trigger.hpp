@@ -50,15 +50,15 @@ class Trigger {
 public:
     friend class TriggerComponentManager;
 
+    struct PhysicsData {
+        PhysicsShape::Proxy m_shape;
+        Vec2 m_local_position;
+    };
+
     Trigger() = default;
     Trigger(Entity, const TriggerDefinition&);
-    Trigger(const Trigger&) = delete;
-    Trigger& operator=(const Trigger&) = delete;
-    Trigger(Trigger&&) = default;
-    Trigger& operator=(Trigger&&) = default;
-    [[nodiscard]] const PhysicsShape* GetPhysicsShape() const;
-    [[nodiscard]] PhysicsShape* GetPhysicsShape();
-    ~Trigger();
+    [[nodiscard]] const std::vector<PhysicsData>& GetPhysicsData() const;
+    [[nodiscard]] std::vector<PhysicsData>& GetPhysicsData();
 
     void SetEventType(TriggerEventType type);
     [[nodiscard]] TriggerEventType GetEventType() const;
@@ -69,7 +69,8 @@ public:
     void Update();
 
 private:
-    PhysicsShape* m_shape = nullptr;
+    Entity m_entity = null_entity;
+    std::vector<PhysicsData> m_physics_data;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 
@@ -79,4 +80,8 @@ private:
 class TriggerComponentManager : public ComponentManager<Trigger> {
 public:
     void Update();
+
+private:
+    void updatePhysicsShapePosition(const Transform& parent_global_transform,
+                                    Trigger::PhysicsData& physics_data) const;
 };

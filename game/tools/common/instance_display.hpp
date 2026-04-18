@@ -8,10 +8,13 @@
 #include "engine/handle.hpp"
 #include "engine/math.hpp"
 #include "engine/text.hpp"
+#include "engine/trigger.hpp"
 #include "engine/tilemap.hpp"
+#include "schema/serialize/physics_schema.hpp"
 #include "imgui.h"
 #include "schema/asset_info.hpp"
 #include "schema/display/display.hpp"
+#include "schema/physics_schema.hpp"
 
 #include <array>
 #include <optional>
@@ -82,6 +85,7 @@ void InstanceDisplay(const char* name, CharacterController&);
 void InstanceDisplay(const char* name, CollisionGroup&);
 void InstanceDisplay(const char* name, const CollisionGroup&);
 void InstanceDisplay(const char* name, const Trigger&);
+void InstanceDisplay(const char* name, const Trigger::PhysicsData&);
 void InstanceDisplay(const char* name, PhysicsShape&);
 void InstanceDisplay(const char* name, const Color&);
 void InstanceDisplay(const char* name, Color&);

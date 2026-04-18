@@ -25,7 +25,7 @@
 
     <class name="TriggerDefinition">
         <element name="event_type" type="TriggerEventType"/>
-        <handle name="physics_shape" type="PhysicsShapeDefinition"/>
+        <array name="physics_shapes" type="PhysicsShapeDefinitionHandle"/>
         <element name="trig_every_frame_when_touch" type="bool" default="false"/>
     </class>
 

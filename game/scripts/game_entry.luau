@@ -96,7 +96,6 @@ function GameEntry.OnInit(self: GameEntry)
         return
     end
 
-    ctx:GetRelationshipManager():RegisterEntity(player_put_on_layer_entity)
     local player_put_on_layer_relationship = ctx:GetRelationshipManager():Get(player_put_on_layer_entity)
 
     -- create player

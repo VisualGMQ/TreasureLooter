@@ -4,40 +4,6 @@ local WeaponBehavior = require("@game/weapon_behavior")
 
 local _M = {}
 
-function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
-    local ctx: TL.GameContext = TL.GetContext()
-
-    local scene = ctx:GetSceneManager():GetCurrentScene()
-    if not scene then
-        return TL.null_entity
-    end
-
-    local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
-    local prefab_handle = prefab_mgr:Create()
-
-    if not prefab_handle:IsValid() then
-        return TL.null_entity
-    end
-
-    prefab_handle.m_transform = TL.Transform()
-    if config.m_physics_shape.m_is_rect then
-        prefab_handle.m_transform.m_position = config.m_physics_shape.m_rect.m_center
-    else
-        prefab_handle.m_transform.m_position = config.m_physics_shape.m_circle.m_center
-    end
-
-    local trigger_def : TL.TriggerDefinition = TL.TriggerDefinition()
-    trigger_def.m_event_type = config.m_event_type
-    trigger_def.m_trig_every_frame_when_touch = config.m_trig_every_frame_when_touch
-    trigger_def.m_physics_shape = config.m_physics_shape
-    prefab_handle.m_trigger = trigger_def
-
-    local entity = scene:Instantiate(prefab_handle)
-    prefab_mgr:Unload(prefab_handle)
-
-    return entity
-end
-
 function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior.WeaponBehavior?
     if not definition:IsValid() then
         return nil
@@ -82,6 +48,7 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
     prefab_handle.m_animation.m_loop = 0
     prefab_handle.m_animation.m_rate = 1.0
 
+    prefab_handle.m_trigger = definition.m_hit_shapes
 
     prefab_handle.m_bind_points = definition.m_bind_points
 
@@ -90,24 +57,8 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
 
     -- put weapon entity under control node
 
-    ctx:GetRelationshipManager():RegisterEntity(control_entity)
     local control_relationship = ctx:GetRelationshipManager():Get(control_entity)
     control_relationship:AddChild(weapon_entity)
-
-    -- create hit shape as child entity
-    local relationship_mgr = ctx:GetRelationshipManager()
-    relationship_mgr:RegisterEntity(weapon_entity)
-    local relationship = relationship_mgr:Get(weapon_entity)
-
-    for i, shape in ipairs(definition.m_hit_shapes) do
-        local shape_entity = _M.createHitShape(shape)
-        if shape_entity == TL.null_entity then
-            TL.Log("create hit shape entity ", i , " failed")
-        else
-            relationship:AddChild(shape_entity)
-        end
-    end
-
 
     -- init script by definition
     local script = ctx:GetScriptManager():Get(control_entity) :: WeaponBehavior.WeaponBehavior
@@ -180,7 +131,6 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
 
     -- set weapon as children
     if weapon and weapon:GetEntity() ~= TL.null_entity then
-        ctx:GetRelationshipManager():RegisterEntity(entity)
         local relationship = ctx:GetRelationshipManager():Get(entity)
         relationship:AddChild(weapon:GetEntity())
     end

@@ -9,10 +9,7 @@ setmetatable(WeaponBehavior, { __index = ScriptBehavior })
 Weapon node tree:
 
 ---- weapon controler (for play attack animation, WeaponBehavior's entity)
-  |---- weapon sprite
-    |---- weapon collision_1
-    |---- weapon collision_i
-    |---- weapon collision_n
+  |---- weapon sprite & collision
 --]]
 
 type WeaponBehaviorData = {
@@ -21,6 +18,7 @@ type WeaponBehaviorData = {
     m_attack_speed : number,
     m_cooldown: number,
 
+    m_weapon_entity: TL.Entity,
     m_transform: TL.Transform,
     m_anim_player: TL.AnimationPlayer,
     m_relationship: TL.Relationship,
@@ -51,8 +49,8 @@ function WeaponBehavior.OnInit(self: WeaponBehavior)
     local relationship = ctx:GetRelationshipManager():Get(entity)
 
     if relationship:GetChildrenCount() > 0 then
-        local weapon_entity = relationship:Get(0)
-        self:_initWeapon(weapon_entity)
+        self.m_weapon_entity = relationship:Get(0)
+        self:_initWeapon(self.m_weapon_entity)
     else
         TL.Log("weapon controller don't has children")
         return
@@ -78,6 +76,8 @@ function WeaponBehavior._initWeapon(self: WeaponBehavior, entity: TL.Entity)
     if relationship then
         self.m_relationship = relationship
     end
+    
+    ctx:GetTriggerComponentManager():Disable(self.m_weapon_entity)
 end
 
 function WeaponBehavior._initFromDefinition(self: WeaponBehavior, definition: TL.WeaponDefinitionHandle)
@@ -97,6 +97,10 @@ function WeaponBehavior.GetDir(self: WeaponBehavior): TL.Vec2
 end
 
 function WeaponBehavior.Attack(self: WeaponBehavior)
+    local ctx: TL.GameContext = TL.GetContext()
+    
+    ctx:GetTriggerComponentManager():Enable(self.m_weapon_entity)
+    
     if not self.m_anim_player:IsPlaying() then
         self.m_anim_player:Stop()
         self.m_anim_player:Play()
@@ -107,6 +111,12 @@ function WeaponBehavior.Attack(self: WeaponBehavior)
 end
 
 function WeaponBehavior.OnUpdate(self: WeaponBehavior, elapse_time: number)
+    local ctx: TL.GameContext = TL.GetContext()
+    
+    -- FIXME: set state every frame may cause performance down
+    if not self.m_anim_player:IsPlaying() then
+        ctx:GetTriggerComponentManager():Disable(self.m_weapon_entity)
+    end
 end
 
 return WeaponBehavior

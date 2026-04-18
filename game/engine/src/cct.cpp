@@ -6,12 +6,8 @@
 CharacterController::CharacterController(Entity entity,
                                          const CCTDefinition& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
-    m_shape = CURRENT_CONTEXT.m_physics_scene->CreateShape(
-        entity, create_info.m_physics_shape);
-}
-
-CharacterController::~CharacterController() {
-    CURRENT_CONTEXT.m_physics_scene->RemoveShape(m_shape);
+    m_shape = PhysicsShape::Proxy{CURRENT_CONTEXT.m_physics_scene->CreateShape(
+        entity, create_info.m_physics_shape)};
 }
 
 bool CharacterController::EnableDebugOutput = false;
@@ -141,9 +137,9 @@ void CharacterController::Teleport(const Vec2& pos) {
 }
 
 const PhysicsShape* CharacterController::GetPhysicsShape() const {
-    return m_shape;
+    return m_shape.get();
 }
 
 PhysicsShape* CharacterController::GetPhysicsShape() {
-    return m_shape;
+    return m_shape.get();
 }

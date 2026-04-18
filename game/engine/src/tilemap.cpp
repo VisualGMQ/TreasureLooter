@@ -579,8 +579,8 @@ TilemapLayerComponent::TilemapLayerComponent(
     auto tilemap = create_info.m_tilemap;
 
     auto tile_size = tilemap->GetTileSize();
-    m_tilemap_collision =
-        physics_scene->CreateTilemapCollision(create_info.m_position);
+    m_tilemap_collision = PhysicsScene::TilemapCollision::Proxy{
+        physics_scene->CreateTilemapCollision(create_info.m_position)};
 
     if (m_tilemap_layer->GetType() == TilemapLayer::Type::Tiled) {
         auto tiled_layer = m_tilemap_layer->AsTiledLayer();
@@ -619,15 +619,11 @@ TilemapLayerComponent::TilemapLayerComponent(
                 definition.m_collision_layer.Add(CollisionGroupType::Obstacle);
                 definition.m_collision_mask.Add(CollisionGroupType::CCT);
 
-                auto shape = physics_scene->CreateShapeInChunk(
-                    entity, m_tilemap_collision, definition);
+                physics_scene->CreateShapeInChunk(
+                    entity, m_tilemap_collision.get(), definition);
             }
         }
     }
-}
-
-TilemapLayerComponent::~TilemapLayerComponent() {
-    CURRENT_CONTEXT.m_physics_scene->RemoveTilemapCollision(m_tilemap_collision);
 }
 
 const TilemapLayer* TilemapLayerComponent::GetLayer() const {
@@ -640,7 +636,7 @@ const Tilemap* TilemapLayerComponent::GetTilemap() const {
 
 const PhysicsScene::TilemapCollision*
 TilemapLayerComponent::GetTilemapCollision() const {
-    return m_tilemap_collision;
+    return m_tilemap_collision.get();
 }
 
 void TilemapLayerComponentManager::SubmitDrawCommand(Entity entity) {

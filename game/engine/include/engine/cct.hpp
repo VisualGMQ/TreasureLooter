@@ -8,11 +8,6 @@ class CharacterController {
 public:
     explicit CharacterController(Entity entity,
                                  const CCTDefinition& create_info);
-    CharacterController(const CharacterController&) = delete;
-    CharacterController& operator=(const CharacterController&) = delete;
-    CharacterController(CharacterController&&) = default;
-    CharacterController& operator=(CharacterController&&) = default;
-    ~CharacterController();
 
     void MoveAndSlide(const Vec2& dir);
     [[nodiscard]] Vec2 GetPosition() const;
@@ -29,7 +24,7 @@ public:
 private:
     float m_skin = 0.1;
     float m_min_disp = 1;
-    PhysicsShape* m_shape;
+    PhysicsShape::Proxy m_shape;
 
     static constexpr uint32_t MaxIter = 10;
 
