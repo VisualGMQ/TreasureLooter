@@ -52,14 +52,8 @@ public:
 
     Trigger() = default;
     Trigger(Entity, const TriggerDefinition&);
-    Trigger(Entity, const Circle&, TriggerEventType event_type,
-            const CollisionGroup& collision_layer,
-            const CollisionGroup& collision_mask);
-    Trigger(Entity, const Rect&, TriggerEventType event_type,
-            const CollisionGroup& collision_layer,
-            const CollisionGroup& collision_mask);
-    [[nodiscard]] const PhysicsActor* GetActor() const;
-    [[nodiscard]] PhysicsActor* GetActor();
+    [[nodiscard]] const PhysicsShape* GetPhysicsShape() const;
+    [[nodiscard]] PhysicsShape* GetPhysicsShape();
     ~Trigger();
 
     void SetEventType(TriggerEventType type);
@@ -71,11 +65,11 @@ public:
     void Update();
 
 private:
-    PhysicsActor* m_actor = nullptr;
+    PhysicsShape* m_shape = nullptr;
     TriggerEventType m_event_type;
     bool m_trig_every_frame_when_touch = false;
 
-    std::vector<PhysicsActor*> m_touch_actors;
+    std::vector<PhysicsShape*> m_touch_shapes;
 };
 
 class TriggerComponentManager : public ComponentManager<Trigger> {

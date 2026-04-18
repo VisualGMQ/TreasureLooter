@@ -2,17 +2,16 @@
 
 #include "engine/context.hpp"
 #include "engine/profile.hpp"
-#include "imgui.h"
 
 CharacterController::CharacterController(Entity entity,
                                          const CCTDefinition& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
-    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(
-        entity, create_info.m_physics_actor);
+    m_shape = CURRENT_CONTEXT.m_physics_scene->CreateShape(
+        entity, create_info.m_physics_shape);
 }
 
 CharacterController::~CharacterController() {
-    CURRENT_CONTEXT.m_physics_scene->RemoveActor(m_actor);
+    CURRENT_CONTEXT.m_physics_scene->RemoveShape(m_shape);
 }
 
 bool CharacterController::EnableDebugOutput = false;
@@ -27,8 +26,8 @@ bool CharacterController::EnableDebugOutput = false;
 void CharacterController::MoveAndSlide(const Vec2& dir) {
     PROFILE_SECTION();
 
-    if (!m_actor) {
-        CCT_DEBUG_LOG("actor is nullptr");
+    if (!m_shape) {
+        CCT_DEBUG_LOG("physics shape is nullptr");
         return;
     }
 
@@ -48,7 +47,7 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     auto& physics_scene = CURRENT_CONTEXT.m_physics_scene;
 
     CCT_DEBUG_LOG("max iter = {}, begin iter", max_iter);
-    CCT_DEBUG_LOG("start position: {}", m_actor->GetPosition());
+    CCT_DEBUG_LOG("start position: {}", m_shape->GetPosition());
 
     while (max_iter--) {
         if (disp_length <= m_min_disp) {
@@ -61,23 +60,23 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
             break;
         }
 
-        uint32_t hitted = physics_scene->Sweep(*m_actor, disp_normalized,
+        uint32_t hitted = physics_scene->Sweep(*m_shape, disp_normalized,
                                                disp_length + m_skin, &hit, 1);
 
         for (int i = 0; i < hitted; i++) {
             CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
-                          hit.m_actor->GetPosition(), hit.m_normal, hit.m_t);
+                          hit.m_shape->GetPosition(), hit.m_normal, hit.m_t);
         }
 
         if (!hitted) {
             CCT_DEBUG_LOG("not hitted, move along {}", disp);
-            m_actor->Move(disp);
+            m_shape->Move(disp);
             break;
         }
 
         if (hit.m_is_initial_overlap) {
             CCT_DEBUG_LOG("initial overlap, move along {}", disp);
-            m_actor->Move(disp);
+            m_shape->Move(disp);
             break;
         }
 
@@ -87,10 +86,10 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
         float actual_move_dist = 0;
         if (hit.m_t > m_skin) {
             actual_move_dist = hit.m_t - m_skin;
-            m_actor->Move(actual_move_dist * disp_normalized);
+            m_shape->Move(actual_move_dist * disp_normalized);
             CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
                           hit.m_t, m_skin, hit.m_t < m_skin, actual_move_dist);
-            CCT_DEBUG_LOG("move to {}", m_actor->GetPosition());
+            CCT_DEBUG_LOG("move to {}", m_shape->GetPosition());
         }
 
         disp_length -= actual_move_dist;
@@ -107,14 +106,14 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
         disp_normalized = disp / disp_length;
     }
 
-    CCT_DEBUG_LOG("end iter, final position: {}", m_actor->GetPosition());
+    CCT_DEBUG_LOG("end iter, final position: {}", m_shape->GetPosition());
 
-    m_actor->MoveTo(m_actor->GetPosition());
+    m_shape->MoveTo(m_shape->GetPosition());
 }
 
 Vec2 CharacterController::GetPosition() const {
-    if (m_actor) {
-        return m_actor->GetPosition();
+    if (m_shape) {
+        return m_shape->GetPosition();
     }
     return {};
 }
@@ -136,15 +135,15 @@ float CharacterController::GetMinDisp() const {
 }
 
 void CharacterController::Teleport(const Vec2& pos) {
-    if (m_actor) {
-        m_actor->MoveTo(pos);
+    if (m_shape) {
+        m_shape->MoveTo(pos);
     }
 }
 
-const PhysicsActor* CharacterController::GetActor() const {
-    return m_actor;
+const PhysicsShape* CharacterController::GetPhysicsShape() const {
+    return m_shape;
 }
 
-PhysicsActor* CharacterController::GetActor() {
-    return m_actor;
+PhysicsShape* CharacterController::GetPhysicsShape() {
+    return m_shape;
 }

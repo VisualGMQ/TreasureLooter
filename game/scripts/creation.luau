@@ -20,16 +20,16 @@ function _M.createHitShape(config: TL.TriggerDefinition) : TL.Entity
     end
 
     prefab_handle.m_transform = TL.Transform()
-    if config.m_physics_actor.m_is_rect then
-        prefab_handle.m_transform.m_position = config.m_physics_actor.m_rect.m_center
+    if config.m_physics_shape.m_is_rect then
+        prefab_handle.m_transform.m_position = config.m_physics_shape.m_rect.m_center
     else
-        prefab_handle.m_transform.m_position = config.m_physics_actor.m_circle.m_center
+        prefab_handle.m_transform.m_position = config.m_physics_shape.m_circle.m_center
     end
 
     local trigger_def : TL.TriggerDefinition = TL.TriggerDefinition()
     trigger_def.m_event_type = config.m_event_type
     trigger_def.m_trig_every_frame_when_touch = config.m_trig_every_frame_when_touch
-    trigger_def.m_physics_actor = config.m_physics_actor
+    trigger_def.m_physics_shape = config.m_physics_shape
     prefab_handle.m_trigger = trigger_def
 
     local entity = scene:Instantiate(prefab_handle)
@@ -171,11 +171,11 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
     prefab_handle.m_animation.m_loop = -1
     prefab_handle.m_animation.m_rate = 1.0
 
-    local physics_actor_info_mgr = ctx:GetAssetsManager():GetPhysicsActorDefinitionManager()
+    local physics_shape_info_mgr = ctx:GetAssetsManager():GetPhysicsShapeDefinitionManager()
     prefab_handle.m_cct = definition.m_cct
 
     local entity = scene:Instantiate(prefab_handle)
-    physics_actor_info_mgr:Unload(prefab_handle.m_cct.m_physics_actor)
+    physics_shape_info_mgr:Unload(prefab_handle.m_cct.m_physics_shape)
     prefab_manager:Unload(prefab_handle)
 
     -- set weapon as children

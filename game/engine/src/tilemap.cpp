@@ -613,15 +613,14 @@ TilemapLayerComponent::TilemapLayerComponent(
                                  Vec2(x, y + 1) * tilemap->GetTileSize() +
                                  Vec2(0, -tile->m_tile_size.h);
 
-                PhysicsShape shape{rect};
-                auto actor = physics_scene->CreateActorInChunk(
-                    entity, m_tilemap_collision, shape);
-                CollisionGroup collision_layer;
-                collision_layer.Add(CollisionGroupType::Obstacle);
-                actor->SetCollisionLayer(collision_layer);
-                CollisionGroup collision_mask;
-                collision_mask.Add(CollisionGroupType::CCT);
-                actor->SetCollisionMask(collision_mask);
+                PhysicsShapeDefinition definition;
+                definition.m_is_rect = true;
+                definition.m_rect = rect;
+                definition.m_collision_layer.Add(CollisionGroupType::Obstacle);
+                definition.m_collision_mask.Add(CollisionGroupType::CCT);
+
+                auto actor = physics_scene->CreateShapeInChunk(
+                    entity, m_tilemap_collision, definition);
             }
         }
     }

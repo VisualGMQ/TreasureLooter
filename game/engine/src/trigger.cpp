@@ -55,43 +55,20 @@ const OverlapResult& TriggerTouchEvent::GetOverlapResult() const {
 Trigger::Trigger(Entity entity, const TriggerDefinition& info)
     : m_event_type{info.m_event_type},
       m_trig_every_frame_when_touch{info.m_trig_every_frame_when_touch} {
-    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(
-        entity, info.m_physics_actor);
+    m_shape = CURRENT_CONTEXT.m_physics_scene->CreateShape(
+        entity, info.m_physics_shape);
 }
 
-Trigger::Trigger(Entity entity, const Rect& rect, TriggerEventType event_type,
-                 const CollisionGroup& collision_layer,
-                 const CollisionGroup& collision_mask)
-    : m_event_type{event_type} {
-    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(entity, rect);
-    if (m_actor) {
-        m_actor->SetCollisionLayer(collision_layer);
-        m_actor->SetCollisionMask(collision_mask);
-    }
+const PhysicsShape* Trigger::GetPhysicsShape() const {
+    return m_shape;
 }
 
-Trigger::Trigger(Entity entity, const Circle& circle,
-                 TriggerEventType event_type,
-                 const CollisionGroup& collision_layer,
-                 const CollisionGroup& collision_mask)
-    : m_event_type{event_type} {
-    m_actor = CURRENT_CONTEXT.m_physics_scene->CreateActor(entity, circle);
-    if (m_actor) {
-        m_actor->SetCollisionLayer(collision_layer);
-        m_actor->SetCollisionMask(collision_mask);
-    }
-}
-
-const PhysicsActor* Trigger::GetActor() const {
-    return m_actor;
-}
-
-PhysicsActor* Trigger::GetActor() {
-    return m_actor;
+PhysicsShape* Trigger::GetPhysicsShape() {
+    return m_shape;
 }
 
 Trigger::~Trigger() {
-    CURRENT_CONTEXT.m_physics_scene->RemoveActor(m_actor);
+    CURRENT_CONTEXT.m_physics_scene->RemoveShape(m_shape);
 }
 
 void Trigger::SetEventType(TriggerEventType type) {
@@ -111,51 +88,51 @@ bool Trigger::IsTriggerEveryFrameWhenTouch() const {
 }
 
 void Trigger::Update() {
-    TL_RETURN_IF_NULL(m_actor);
+    TL_RETURN_IF_NULL(m_shape);
 
-    // check has actor leaved
-    int i = m_touch_actors.size();
+    // check has shape leaved
+    int i = m_touch_shapes.size();
     while (--i >= 0) {
-        PhysicsActor* actor = m_touch_actors[i];
-        if (!CURRENT_CONTEXT.m_physics_scene->Overlap(*m_actor, *actor)) {
+        PhysicsShape* shape = m_touch_shapes[i];
+        if (!CURRENT_CONTEXT.m_physics_scene->Overlap(*m_shape, *shape)) {
             OverlapResult result;
-            result.m_dst_entity = actor->GetEntity();
-            result.m_dst_actor = actor;
-            TriggerLeaveEvent event{m_actor->GetEntity(), GetEventType(),
+            result.m_dst_entity = shape->GetOwner();
+            result.m_dst_shape = shape;
+            TriggerLeaveEvent event{m_shape->GetOwner(), GetEventType(),
                                     result};
             CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
-            m_touch_actors.erase(m_touch_actors.begin() + i);
+            m_touch_shapes.erase(m_touch_shapes.begin() + i);
         }
     }
 
-    // send still touch actors
+    // send still touch shape
     if (m_trig_every_frame_when_touch) {
-        for (auto actor : m_touch_actors) {
+        for (auto shape : m_touch_shapes) {
             OverlapResult result;
-            result.m_dst_entity = actor->GetEntity();
-            result.m_dst_actor = actor;
-            TriggerTouchEvent event{m_actor->GetEntity(), GetEventType(),
+            result.m_dst_entity = shape->GetOwner();
+            result.m_dst_shape = shape;
+            TriggerTouchEvent event{m_shape->GetOwner(), GetEventType(),
                                     result};
             CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
         }
     }
 
-    // check entered actors
+    // check entered shapes
     OverlapResult results[16];
     uint32_t count = CURRENT_CONTEXT.m_physics_scene->Overlap(
-        *m_actor, results, std::size(results));
+        *m_shape, results, std::size(results));
     for (size_t i = 0; i < count; i++) {
         auto& result = results[i];
         if (result.m_dst_entity == null_entity ||
-            result.m_dst_actor == nullptr) {
+            result.m_dst_shape == nullptr) {
             continue;
         }
 
-        auto it = std::find(m_touch_actors.begin(), m_touch_actors.end(),
-                            result.m_dst_actor);
-        if (it == m_touch_actors.end()) {
-            m_touch_actors.push_back(result.m_dst_actor);
-            TriggerEnterEvent event{m_actor->GetEntity(), GetEventType(),
+        auto it = std::find(m_touch_shapes.begin(), m_touch_shapes.end(),
+                            result.m_dst_shape);
+        if (it == m_touch_shapes.end()) {
+            m_touch_shapes.push_back(result.m_dst_shape);
+            TriggerEnterEvent event{m_shape->GetOwner(), GetEventType(),
                                     result};
             CURRENT_CONTEXT.m_event_system->EnqueueEvent(event);
         }
@@ -166,17 +143,17 @@ void TriggerComponentManager::Update() {
     PROFILE_SECTION();
 
     for (auto& [entity, trigger] : m_components) {
-        TL_CONTINUE_IF_FALSE(trigger.m_enable && trigger.m_component->m_actor);
+        TL_CONTINUE_IF_FALSE(trigger.m_enable && trigger.m_component->m_shape);
 
         auto transform = CURRENT_CONTEXT.m_transform_manager->Get(entity);
         TL_CONTINUE_IF_FALSE(transform);
 
         auto& global_mat = transform->GetGlobalMat();
-        trigger.m_component->m_actor->MoveTo(GetPosition(global_mat));
+        trigger.m_component->m_shape->MoveTo(GetPosition(global_mat));
     }
 
     for (auto& [entity, trigger] : m_components) {
-        if (!trigger.m_enable || !trigger.m_component->m_actor) {
+        if (!trigger.m_enable || !trigger.m_component->m_shape) {
             continue;
         }
 

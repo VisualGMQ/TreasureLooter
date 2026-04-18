@@ -11,12 +11,12 @@ public:
     ~StaticCollision();
 
 private:
-    struct ActorInfo {
+    struct ShapeInfo {
         Vec2 m_local_position;
-        PhysicsActor* m_actor;
+        PhysicsShape* m_shape;
     };
 
-    std::vector<ActorInfo> m_actors;
+    std::vector<ShapeInfo> m_shapes;
 };
 
 class StaticCollisionManager : public ComponentManager<StaticCollision> {

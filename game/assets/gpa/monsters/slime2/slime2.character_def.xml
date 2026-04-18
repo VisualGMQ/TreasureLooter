@@ -8,7 +8,7 @@
 		<cct>
 			<skin>0.100000</skin>
 			<min_disp>0.001000</min_disp>
-			<physics_actor>
+			<physics_shape>
 				<uuid>3e203e9e-e09b-43c8-8ca4-93ae06757e9d</uuid>
 				<payload>
 					<is_rect>false</is_rect>
@@ -28,7 +28,7 @@
 						<elem>Obstacle</elem>
 					</collision_mask>
 				</payload>
-			</physics_actor>
+			</physics_shape>
 		</cct>
 		<move_left_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_left_animation>
 		<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>

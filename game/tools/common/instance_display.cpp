@@ -1,11 +1,11 @@
 #include "instance_display.hpp"
 
-#include "engine/asset_manager.hpp"
 #include "engine/cct.hpp"
 #include "engine/collision_group.hpp"
 #include "engine/dialog.hpp"
 #include "engine/image.hpp"
 #include "engine/math.hpp"
+#include "engine/trigger.hpp"
 #include "imgui.h"
 #include "schema/display/anim.hpp"
 #include "schema/display/bind_point_schema.hpp"
@@ -770,7 +770,7 @@ void InstanceDisplay(const char* name, CharacterController& cct) {
 
     ImGui::PushID(&cct);
     if (ImGui::TreeNode(name)) {
-        InstanceDisplay("actor", *cct.GetActor());
+        InstanceDisplay("physics shape", *cct.GetPhysicsShape());
         ImGui::TreePop();
     }
     ImGui::PopID();
@@ -829,34 +829,36 @@ void InstanceDisplay(const char* name, const CollisionGroup& group) {
 
 void InstanceDisplay(const char* name, const Trigger& trigger) {
     ImGui::Text("%s", name);
-    // TODO:
+
+    InstanceDisplay("physics shape", trigger.GetPhysicsShape());
+    InstanceDisplay("trigger every frame when touch", trigger.IsTriggerEveryFrameWhenTouch());
+    InstanceDisplay("event type", trigger.GetEventType());
 }
 
-void InstanceDisplay(const char* name, PhysicsActor& actor) {
+void InstanceDisplay(const char* name, PhysicsShape& shape) {
     ImGui::Text("%s", name);
 
-    auto& shape = actor.GetShape();
     switch (shape.GetType()) {
-        case PhysicsShapeType::Unknown:
+        case PhysicsShape::Type::Unknown:
             ImGui::Text("Unknown type");
             break;
-        case PhysicsShapeType::Rect: {
+        case PhysicsShape::Type::Rect: {
             auto underlying = shape.AsRect();
             InstanceDisplay("rect", *underlying);
         } break;
-        case PhysicsShapeType::Circle: {
+        case PhysicsShape::Type::Circle: {
             auto underlying = shape.AsCircle();
             InstanceDisplay("rect", *underlying);
         } break;
     }
 
-    CollisionGroup mask = actor.GetCollisionMask();
+    CollisionGroup mask = shape.GetCollisionMask();
     InstanceDisplay("collision mask", mask);
-    actor.SetCollisionMask(mask);
+    shape.SetCollisionMask(mask);
 
-    CollisionGroup layer = actor.GetCollisionLayer();
+    CollisionGroup layer = shape.GetCollisionLayer();
     InstanceDisplay("collision layer", layer);
-    actor.SetCollisionLayer(layer);
+    shape.SetCollisionLayer(layer);
 }
 
 void InstanceDisplay(const char* name, const Color& color) {

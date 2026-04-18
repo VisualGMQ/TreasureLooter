@@ -9,7 +9,7 @@
         <hit_shapes>
             <elem>
                 <event_type>WeaponAttack</event_type>
-                <physics_actor>
+                <physics_shape>
                     <uuid>4DFDC30A-FD6B-1934-656A-9DFDC004753B</uuid>
                     <payload>
                         <is_rect>false</is_rect>
@@ -28,12 +28,12 @@
                             <elem>CCT</elem>
                         </collision_mask>
                     </payload>
-                </physics_actor>
+                </physics_shape>
                 <trig_every_frame_when_touch>false</trig_every_frame_when_touch>
             </elem>
             <elem>
                 <event_type>WeaponAttack</event_type>
-                <physics_actor>
+                <physics_shape>
                     <uuid>37372909-E5D4-CE7A-7370-5A64A2FF3511</uuid>
                     <payload>
                         <is_rect>false</is_rect>
@@ -52,7 +52,7 @@
                             <elem>CCT</elem>
                         </collision_mask>
                     </payload>
-                </physics_actor>
+                </physics_shape>
                 <trig_every_frame_when_touch>false</trig_every_frame_when_touch>
             </elem>
         </hit_shapes>

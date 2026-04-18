@@ -75,7 +75,7 @@ std::optional<CollisionAstKind> detectCollisionAstKind(
     return detectCollisionAstKindFromXmlRoot(absolute_path);
 }
 
-void SaveExternalPhysicsActorIfNeeded(const PhysicsActorDefinitionHandle& handle) {
+void SaveExternalPhysicsActorIfNeeded(const PhysicsShapeDefinitionHandle& handle) {
     if (!handle || handle.IsEmbed()) {
         return;
     }
@@ -88,16 +88,16 @@ void SaveExternalPhysicsActorIfNeeded(const PhysicsActorDefinitionHandle& handle
 
 void SaveReferencedExternalPhysicsActors(const WeaponDefinition& weapon) {
     for (const auto& trigger : weapon.m_hit_shapes) {
-        SaveExternalPhysicsActorIfNeeded(trigger.m_physics_actor);
+        SaveExternalPhysicsActorIfNeeded(trigger.m_physics_shape);
     }
 }
 
 void SaveReferencedExternalPhysicsActors(const CharacterDefinition& character) {
-    SaveExternalPhysicsActorIfNeeded(character.m_cct.m_physics_actor);
+    SaveExternalPhysicsActorIfNeeded(character.m_cct.m_physics_shape);
 }
 
 void drawPhysicsShapeForPreview(Renderer& renderer,
-                                const PhysicsActorDefinition& info, float z_base,
+                                const PhysicsShapeDefinition& info, float z_base,
                                 const Color& outline, const Color& fill) {
     if (info.m_is_rect) {
         Rect r = info.m_rect;
@@ -435,9 +435,9 @@ void CollisionEditorContext::showWeaponHitShapesUi() {
         }
         if (open) {
             InstanceDisplay("Trigger", trig);
-            if (trig.m_physics_actor && !trig.m_physics_actor.IsEmbed()) {
+            if (trig.m_physics_shape && !trig.m_physics_shape.IsEmbed()) {
                 ImGui::SeparatorText("External PhysicsActorInfo");
-                InstanceDisplay("physics actor payload", *trig.m_physics_actor);
+                InstanceDisplay("physics actor payload", *trig.m_physics_shape);
             }
             ImGui::TreePop();
         }
@@ -607,8 +607,8 @@ void CollisionEditorContext::renderScenePreview() {
             const bool is_sel = (m_selected_hit_shape_index == i);
             const Color& outline = is_sel ? sel_outline : unsel_outline;
             const Color& fill = is_sel ? sel_fill : unsel_fill;
-            if (trig.m_physics_actor) {
-                drawPhysicsShapeForPreview(*m_renderer, *trig.m_physics_actor,
+            if (trig.m_physics_shape) {
+                drawPhysicsShapeForPreview(*m_renderer, *trig.m_physics_shape,
                                            kShapeZ, outline, fill);
             } else {
                 drawMissingPhysicsPlaceholder(*m_renderer, Vec2{0.0f, 0.0f},
@@ -617,11 +617,11 @@ void CollisionEditorContext::renderScenePreview() {
             }
         }
     } else if (m_kind && *m_kind == CollisionAstKind::Character &&
-               m_character && m_character->m_cct.m_physics_actor) {
+               m_character && m_character->m_cct.m_physics_shape) {
         const Color cct_outline{0.35f, 0.85f, 0.45f, 1.0f};
         const Color cct_fill{0.35f, 0.85f, 0.45f, 0.18f};
         drawPhysicsShapeForPreview(*m_renderer,
-                                   *m_character->m_cct.m_physics_actor,
+                                   *m_character->m_cct.m_physics_shape,
                                    kShapeZ, cct_outline, cct_fill);
     }
 

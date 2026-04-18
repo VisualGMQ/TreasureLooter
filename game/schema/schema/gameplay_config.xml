@@ -57,7 +57,7 @@
 
     <asset name="ItemDefinition" extension=".item">
         <element name="sprite" type="SpriteDefinition" />
-        <handle name="collision" type="PhysicsActorDefinition" />
+        <handle name="collision" type="PhysicsShapeDefinition" />
         <element name="behavior" type="ItemBehavior" default="ItemBehavior::None" />
         <element name="stackable" type="bool" default="false" />
         <element name="pickupable" type="bool" default="false" />

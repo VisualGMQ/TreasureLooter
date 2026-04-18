@@ -863,6 +863,9 @@ void bindCCT(lua_State* L) {
                 .addFunction("SetMinDisp", &CharacterController::SetMinDisp)
                 .addFunction("GetMinDisp", &CharacterController::GetMinDisp)
                 .addFunction("Teleport", &CharacterController::Teleport)
+                .addFunction("GetPhysicsShape",
+                             static_cast<PhysicsShape* (CharacterController::*)()>(
+                                 &CharacterController::GetPhysicsShape))
             .endClass()
             .beginClass<CCTManager>("CCTManager")
                 .addFunction("Get", +[](CCTManager* m, Entity e) {
@@ -878,35 +881,32 @@ void bindCCT(lua_State* L) {
 void bindPhysics(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
-            .beginClass<PhysicsActor>("PhysicsActor")
-                .addFunction("GetPosition", &PhysicsActor::GetPosition)
-                .addFunction("SetCollisionLayer", &PhysicsActor::SetCollisionLayer)
-                .addFunction("GetCollisionLayer", &PhysicsActor::GetCollisionLayer)
-                .addFunction("SetCollisionMask", &PhysicsActor::SetCollisionMask)
-                .addFunction("GetCollisionMask", &PhysicsActor::GetCollisionMask)
-                .addFunction("GetEntity", &PhysicsActor::GetEntity)
-                .addFunction("MoveTo", &PhysicsActor::MoveTo)
-                .addFunction("Move", &PhysicsActor::Move)
-                .addFunction("GetStorageType",
-                             +[](const PhysicsActor* actor) {
-                                 return static_cast<int>(actor->GetStorageType());
-                             })
+            .beginClass<PhysicsShape>("PhysicsShape")
+                .addFunction("GetPosition", &PhysicsShape::GetPosition)
+                .addFunction("SetCollisionLayer", &PhysicsShape::SetCollisionLayer)
+                .addFunction("GetCollisionLayer", &PhysicsShape::GetCollisionLayer)
+                .addFunction("SetCollisionMask", &PhysicsShape::SetCollisionMask)
+                .addFunction("GetCollisionMask", &PhysicsShape::GetCollisionMask)
+                .addFunction("GetType", &PhysicsShape::GetType)
+                .addFunction("GetOwner", &PhysicsShape::GetOwner)
+                .addFunction("MoveTo", &PhysicsShape::MoveTo)
+                .addFunction("Move", &PhysicsShape::Move)
+                .addFunction("GetStorageType", &PhysicsShape::GetStorageType)
             .endClass()
             .beginClass<PhysicsScene>("PhysicsScene")
                 .addFunction("IsEnableDebugDraw", &PhysicsScene::IsEnableDebugDraw)
                 .addFunction("ToggleDebugDraw", &PhysicsScene::ToggleDebugDraw)
-                .addFunction("OverlapActors",
-                             +[](PhysicsScene* scene, const PhysicsActor* lhs,
-                                 const PhysicsActor* rhs) {
-                                 if (!lhs || !rhs) {
-                                     return false;
-                                 }
-                                 return scene->Overlap(*lhs, *rhs);
-                             })
+                .addFunction("Overlap",
+                             static_cast<uint32_t (PhysicsScene::*)(
+                                 const PhysicsShape&, OverlapResult*, size_t)>(
+                                 &PhysicsScene::Overlap),
+                             static_cast<bool (PhysicsScene::*)(
+                                 const PhysicsShape&, const PhysicsShape&) const>(
+                                 &PhysicsScene::Overlap))
             .endClass()
             .beginClass<OverlapResult>("OverlapResult")
                 .addProperty("m_dst_entity", &OverlapResult::m_dst_entity)
-                .addProperty("m_dst_actor", &OverlapResult::m_dst_actor)
+                .addProperty("m_dst_shape", &OverlapResult::m_dst_shape)
             .endClass()
             .beginClass<StaticCollision>("StaticCollision")
             .endClass()
@@ -1186,7 +1186,7 @@ void bindTrigger(lua_State* L) {
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
                 .addFunction("SetEventType", &Trigger::SetEventType)
-                .addFunction("GetActor", static_cast<PhysicsActor*(Trigger::*)()>(&Trigger::GetActor))
+                .addFunction("GetPhysicsShape", static_cast<PhysicsShape*(Trigger::*)()>(&Trigger::GetPhysicsShape))
                 .addFunction("EnableTriggerEveryFrameWhenTouch", &Trigger::EnableTriggerEveryFrameWhenTouch)
                 .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
             .endClass()

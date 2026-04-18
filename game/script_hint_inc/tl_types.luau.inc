@@ -262,7 +262,7 @@ export type AssetsManager = {
 	GetLevelDefinitionManager: (self: AssetsManager) -> LevelDefinitionAssetManager,
 	GetInputConfigManager: (self: AssetsManager) -> InputConfigAssetManager,
 	GetSceneDefinitionManager: (self: AssetsManager) -> SceneDefinitionAssetManager,
-	GetPhysicsActorDefinitionManager: (self: AssetsManager) -> PhysicsActorDefinitionAssetManager,
+	GetPhysicsShapeDefinitionManager: (self: AssetsManager) -> PhysicsShapeDefinitionAssetManager,
 	GetUIWidgetDefinitionManager: (self: AssetsManager) -> UIWidgetDefinitionAssetManager,
     GetItemDefinitionManager: (self: AssetsManager) -> ItemDefinitionAssetManager,
 }
@@ -412,6 +412,20 @@ export type AnimationPlayerManager = {
 	Get: (self: AnimationPlayerManager, entity: Entity) -> AnimationPlayer?,
 	Has: (self: AnimationPlayerManager, entity: Entity) -> boolean,
 }
+
+export type PhysicsShape = {
+	GetPosition: (self: PhysicsShape) -> Vec2,
+	SetCollisionLayer: (self: PhysicsShape, collision_group: CollisionGroup) -> (),
+	GetCollisionLayer: (self: PhysicsShape) -> CollisionGroup,
+	SetCollisionMask: (self: PhysicsShape, collision_group: CollisionGroup) -> (),
+	GetCollisionMask: (self: PhysicsShape) -> CollisionGroup,
+	GetType: (self: PhysicsShape) -> number,
+	GetOwner: (self: PhysicsShape) -> Entity,
+	MoveTo: (self: PhysicsShape, position: Vec2) -> (),
+	Move: (self: PhysicsShape, offset: Vec2) -> (),
+	GetStorageType: (self: PhysicsShape) -> number,
+}
+
 export type CharacterController = {
 	MoveAndSlide: (self: CharacterController, dir: Vec2) -> (),
 	GetPosition: (self: CharacterController) -> Vec2,
@@ -420,37 +434,31 @@ export type CharacterController = {
 	SetMinDisp: (self: CharacterController, disp: number) -> (),
 	GetMinDisp: (self: CharacterController) -> number,
 	Teleport: (self: CharacterController, pos: Vec2) -> (),
+	GetPhysicsShape: (self: CharacterController) -> PhysicsShape?,
 }
 export type CCTManager = {
 	Get: (self: CCTManager, entity: Entity) -> CharacterController?,
 	Has: (self: CCTManager, entity: Entity) -> boolean,
 }
 
-export type PhysicsActor = {
-	GetPosition: (self: PhysicsActor) -> Vec2,
-	SetCollisionLayer: (self: PhysicsActor, collision_group: CollisionGroup) -> (),
-	GetCollisionLayer: (self: PhysicsActor) -> CollisionGroup,
-	SetCollisionMask: (self: PhysicsActor, collision_group: CollisionGroup) -> (),
-	GetCollisionMask: (self: PhysicsActor) -> CollisionGroup,
-	GetEntity: (self: PhysicsActor) -> Entity,
-	MoveTo: (self: PhysicsActor, position: Vec2) -> (),
-	Move: (self: PhysicsActor, offset: Vec2) -> (),
-	GetStorageType: (self: PhysicsActor) -> number,
+export type OverlapResult = {
+	m_dst_entity: Entity,
+	m_dst_shape: PhysicsShape?,
 }
 
 export type PhysicsScene = {
 	IsEnableDebugDraw: (self: PhysicsScene) -> boolean,
 	ToggleDebugDraw: (self: PhysicsScene) -> (),
-	OverlapActors: (self: PhysicsScene, lhs: PhysicsActor, rhs: PhysicsActor) -> boolean,
+	Overlap: ((self: PhysicsScene, shape: PhysicsShape, out_result: {OverlapResult}, out_size: number) -> number)
+		& ((self: PhysicsScene, lhs: PhysicsShape, rhs: PhysicsShape) -> boolean),
 }
 
 export type Trigger = {
 	GetEventType: (self: Trigger) -> TriggerEventType,
 	SetEventType: (self: Trigger, type: TriggerEventType) -> (),
-	GetActor: (self: Trigger) -> PhysicsActor,
-	EnableTriggerEveryFrameWhenTouch: (self: Trigger) -> (),
+	GetPhysicsShape: (self: Trigger) -> PhysicsShape?,
+	EnableTriggerEveryFrameWhenTouch: (self: Trigger, enable: boolean) -> (),
 	IsTriggerEveryFrameWhenTouch: (self: Trigger) -> boolean,
-	GetBindPointName: (self: PhysicsActor) -> string,
 }
 
 export type TriggerEnterEvent = {
@@ -469,11 +477,6 @@ export type TriggerTouchEvent = {
 	GetType: (self: TriggerTouchEvent) -> TriggerEventType,
 	GetOverlapResult: (self: TriggerTouchEvent) -> OverlapResult,
 	GetSrcEntity: (self: TriggerTouchEvent) -> Entity,
-}
-
-export type OverlapResult = {
-	m_dst_entity: Entity,
-	m_dst_actor: PhysicsActor,
 }
 
 export type RelationshipManager = {

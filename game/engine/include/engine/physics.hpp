@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-class PhysicsActor;
+class PhysicsShape;
 
 enum class HitType {
     None = 0,
@@ -41,20 +41,21 @@ struct HitResult {
 
 struct SweepResult : HitResult {
     Entity m_entity = null_entity;
-    PhysicsActor *m_actor = nullptr;
+    PhysicsShape *m_shape = nullptr;
 };
 
 struct OverlapResult {
     Entity m_dst_entity = null_entity;
-    PhysicsActor *m_dst_actor = nullptr;
+    PhysicsShape *m_dst_shape = nullptr;
 };
 
-Rect RectUnion(const Rect& r1, const Rect& r2);
+Rect RectUnion(const Rect &r1, const Rect &r2);
 
 // nearest point
 Vec2 NearestRectPoint(const Rect &, const Vec2 &);
 Vec2 NearestCirclePoint(const Circle &, const Vec2 &);
-Vec2 NearestCapsulePoint(const Vec2& q, float r, const Vec2& p1, const Vec2& p2);
+Vec2 NearestCapsulePoint(const Vec2 &q, float r, const Vec2 &p1,
+                         const Vec2 &p2);
 
 // overlap
 bool IsPointInRect(const Vec2 &, const Rect &);
@@ -89,23 +90,36 @@ std::optional<HitResult> SweepCircles(const Circle &c1, const Circle &c2,
 std::optional<HitResult> SweepCircleRect(const Circle &c, const Rect &r,
                                          const Vec2 &dir);
 
-enum class PhysicsShapeType {
-    Unknown = 0,
-    Rect,
-    Circle,
+enum class PhysicsStorageType {
+    InChunk,
+    Normal,
 };
 
 class PhysicsShape {
 public:
-    explicit PhysicsShape(const Rect &r);
+    enum class Type {
+        Unknown = 0,
+        Rect,
+        Circle,
+    };
 
-    explicit PhysicsShape(const Circle &c);
+    explicit PhysicsShape(Entity, PhysicsShapeDefinitionHandle,
+                          PhysicsStorageType);
+    explicit PhysicsShape(Entity, const PhysicsShapeDefinition &,
+                          PhysicsStorageType);
 
     [[nodiscard]] const Rect *AsRect() const;
 
     [[nodiscard]] const Circle *AsCircle() const;
 
-    [[nodiscard]] PhysicsShapeType GetType() const;
+    [[nodiscard]] Type GetType() const;
+
+    [[nodiscard]] PhysicsStorageType GetStorageType() const;
+
+    [[nodiscard]] CollisionGroup GetCollisionLayer() const;
+    void SetCollisionLayer(CollisionGroup);
+    void SetCollisionMask(CollisionGroup);
+    [[nodiscard]] CollisionGroup GetCollisionMask() const;
 
     [[nodiscard]] const Vec2 &GetPosition() const;
 
@@ -113,8 +127,14 @@ public:
 
     void Move(const Vec2 &offset);
 
+    Entity GetOwner() const;
+
 private:
-    PhysicsShapeType m_type = PhysicsShapeType::Unknown;
+    Entity m_owner = null_entity;
+    Type m_type = Type::Unknown;
+    PhysicsStorageType m_storage_type;
+    CollisionGroup m_collision_layer;
+    CollisionGroup m_collision_mask;
 
     union {
         Rect m_rect{};
@@ -122,51 +142,9 @@ private:
     };
 };
 
-class PhysicsActor {
-public:
-    enum class StorageType {
-        InChunk,
-        Normal,
-    };
-
-    explicit PhysicsActor(Entity entity, const Rect &r, StorageType storage);
-
-    explicit PhysicsActor(Entity entity, const Circle &c, StorageType storage);
-
-    explicit PhysicsActor(Entity entity, const PhysicsShape &,
-                          StorageType storage);
-
-    [[nodiscard]] const PhysicsShape &GetShape() const;
-
-    [[nodiscard]] StorageType GetStorageType() const;
-
-    [[nodiscard]] const Vec2 &GetPosition() const;
-
-    void SetCollisionLayer(CollisionGroup collision_group);
-
-    [[nodiscard]] auto GetCollisionLayer() const { return m_collision_layer; }
-
-    void SetCollisionMask(CollisionGroup collision_group);
-
-    [[nodiscard]] auto GetCollisionMask() const { return m_collision_mask; }
-
-    [[nodiscard]] Entity GetEntity() const { return m_owner; }
-
-    void MoveTo(const Vec2 &position);
-
-    void Move(const Vec2 &offset);
-
-private:
-    PhysicsShape m_shape;
-    Entity m_owner = null_entity;
-    StorageType m_storage_type;
-    CollisionGroup m_collision_layer;
-    CollisionGroup m_collision_mask;
-};
-
 class PhysicsScene {
 public:
-    using Chunk = MatStorage<std::vector<PhysicsActor *> >;
+    using Chunk = MatStorage<std::vector<PhysicsShape *> >;
 
     struct Chunks {
         Vec2UI m_chunk_size{};
@@ -195,10 +173,9 @@ public:
     struct TilemapCollision {
         Vec2 m_topleft;
         std::vector<Chunks> m_layers;
-        std::vector<std::unique_ptr<PhysicsActor> > m_actors;
+        std::vector<std::unique_ptr<PhysicsShape> > m_physics_shapes;
 
-        explicit TilemapCollision(const Vec2 &topleft) : m_topleft(topleft) {
-        }
+        explicit TilemapCollision(const Vec2 &topleft) : m_topleft(topleft) {}
 
         TilemapCollision(const TilemapCollision &) = delete;
 
@@ -218,40 +195,32 @@ public:
 
     PhysicsScene();
 
-    PhysicsActor *CreateActorInChunk(Entity,
+    PhysicsShape *CreateShapeInChunk(Entity,
                                      TilemapCollision *tilemap_collision,
-                                     const PhysicsShape &);
+                                     PhysicsShapeDefinitionHandle);
+    PhysicsShape *CreateShapeInChunk(Entity entity,
+                                     TilemapCollision *tilemap_collision,
+                                     const PhysicsShapeDefinition &);
 
     TilemapCollision *CreateTilemapCollision(const Vec2 &topleft);
 
-    PhysicsActor *CreateActor(Entity, PhysicsActorDefinitionHandle info);
-
-    PhysicsActor *CreateActor(Entity, const Circle &);
-
-    PhysicsActor *CreateActor(Entity, const Rect &);
+    PhysicsShape *CreateShape(Entity, PhysicsShapeDefinitionHandle);
 
     void RemoveTilemapCollision(TilemapCollision *);
 
-    void RemoveActor(PhysicsActor *);
+    void RemoveShape(PhysicsShape *);
 
     /*
      * @param dir is normalized vector
      */
-    uint32_t Sweep(const PhysicsShape &, CollisionGroup mask, const Vec2 &dir,
-                   float dist, SweepResult *out_result, size_t out_size);
-
-    uint32_t Sweep(const PhysicsActor &, const Vec2 &dir, float dist,
+    uint32_t Sweep(const PhysicsShape &, const Vec2 &dir, float dist,
                    SweepResult *out_result, size_t out_size);
 
-    uint32_t Overlap(const PhysicsShape &, CollisionGroup mask,
-                     OverlapResult *out_result, size_t out_size);
-
-    uint32_t Overlap(const PhysicsActor &, OverlapResult *out_result,
+    uint32_t Overlap(const PhysicsShape &, OverlapResult *out_result,
                      size_t out_size);
 
-    [[nodiscard]] bool Overlap(const PhysicsActor &, const PhysicsActor &) const;
-
-    [[nodiscard]] bool Overlap(const PhysicsShape &, const PhysicsShape &) const;
+    [[nodiscard]] bool Overlap(const PhysicsShape &,
+                               const PhysicsShape &) const;
 
     [[nodiscard]] bool IsEnableDebugDraw() const;
 
@@ -262,7 +231,7 @@ public:
 private:
     std::vector<std::unique_ptr<TilemapCollision> > m_tilemap_collisions;
 
-    std::vector<std::unique_ptr<PhysicsActor> > m_actors; // actors not in chunk
+    std::vector<std::unique_ptr<PhysicsShape> > m_shapes;  // shapes in chunk
     std::vector<SweepResult> m_cached_sweep_results;
     std::vector<OverlapResult> m_cached_overlaps_results;
     bool m_should_debug_draw = false;
@@ -277,32 +246,25 @@ private:
                                                const Vec2 &dir,
                                                float dist) const;
 
-    [[nodiscard]] Rect computeSweepBoundingBox(const PhysicsActor &,
-                                               const Vec2 &dir,
-                                               float dist) const;
-
-    [[nodiscard]] Rect computeActorBoundingBox(const PhysicsActor &) const;
-
     [[nodiscard]] Rect computeShapeBoundingBox(const PhysicsShape &) const;
-
-    [[nodiscard]] std::optional<HitResult> sweepActor(const PhysicsActor &,
-                                                      const PhysicsActor &,
-                                                      const Vec2 &dir) const;
+    [[nodiscard]] Rect computeShapeBoundingBox(
+        const PhysicsShapeDefinition &) const;
 
     [[nodiscard]] std::optional<HitResult> sweepShape(const PhysicsShape &,
-                                                      const PhysicsActor &actor,
+                                                      const PhysicsShape &actor,
                                                       const Vec2 &dir) const;
 
-    [[nodiscard]] std::optional<HitResult> sweepGeometry(
-        const Circle &, const PhysicsActor &actor, const Vec2 &dir) const;
+    [[nodiscard]] std::optional<HitResult> sweepGeometry(const Circle &,
+                                                         const PhysicsShape &,
+                                                         const Vec2 &dir) const;
 
-    [[nodiscard]] std::optional<HitResult> sweepGeometry(
-        const Rect &, const PhysicsActor &actor, const Vec2 &dir) const;
+    [[nodiscard]] std::optional<HitResult> sweepGeometry(const Rect &,
+                                                         const PhysicsShape &,
+                                                         const Vec2 &dir) const;
 
-    [[nodiscard]] bool checkNeedQuery(const PhysicsShape &a,
-                                      CollisionGroup mask,
-                                      const PhysicsActor &b) const;
+    [[nodiscard]] bool checkNeedQuery(const PhysicsShape & src,
+                                      const PhysicsShape & target) const;
 
-    void removeActorInChunk(TilemapCollision *, uint32_t layer,
-                            PhysicsActor *actor);
+    void removeShapeInChunk(TilemapCollision *, uint32_t layer,
+                            PhysicsShape *actor);
 };
