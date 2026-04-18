@@ -383,6 +383,14 @@ void PhysicsShape::Move(const Vec2 &offset) {
     m_rect.m_center += offset;
 }
 
+void PhysicsShape::SetQueryEnable(bool enable) {
+    m_enable_query = enable;
+}
+
+bool PhysicsShape::IsQueryEnabled() const {
+    return m_enable_query;
+}
+
 void PhysicsScene::Chunks::getOverlapChunkRange(const Rect &bounding_box,
                                                 Range2D<int> &out_chunk_range,
                                                 Range2D<int> &out_tile_range) {
@@ -472,9 +480,9 @@ PhysicsShape *PhysicsScene::CreateShapeInChunk(
         chunks.m_chunks.ExpandTo(chunk_range.m_x.m_end, chunk_range.m_y.m_end);
     }
 
-    auto &actor =
-        tilemap_collision->m_physics_shapes.emplace_back(std::make_unique<PhysicsShape>(
-            entity, definition, PhysicsStorageType::InChunk));
+    auto &actor = tilemap_collision->m_physics_shapes.emplace_back(
+        std::make_unique<PhysicsShape>(entity, definition,
+                                       PhysicsStorageType::InChunk));
 
     for (int y = chunk_range.m_y.m_begin; y < chunk_range.m_y.m_end; y++) {
         for (int x = chunk_range.m_x.m_begin; x < chunk_range.m_x.m_end; x++) {
@@ -591,24 +599,21 @@ uint32_t PhysicsScene::Sweep(const PhysicsShape &shape, const Vec2 &dir,
 
     // sweep normal actor
     for (auto &target_shape : m_shapes) {
-        if (!checkNeedQuery(shape, *target_shape)) {
-            continue;
-        }
+        TL_CONTINUE_IF_FALSE(checkNeedQuery(shape, *target_shape));
         Rect bounding_rect = computeShapeBoundingBox(*target_shape);
-        if (IsRectsIntersect(bounding_rect, sweep_rect)) {
-            auto result = sweepShape(shape, *target_shape, dir);
-            if (!result || result->m_t > dist) {
-                continue;
-            }
-            SweepResult sweep_result;
-            sweep_result.m_t = result->m_t;
-            sweep_result.m_normal = result->m_normal;
-            sweep_result.m_flags = result->m_flags;
-            sweep_result.m_entity = target_shape->GetOwner();
-            sweep_result.m_is_initial_overlap = result->m_is_initial_overlap;
-            sweep_result.m_shape = target_shape.get();
-            m_cached_sweep_results.push_back(sweep_result);
-        }
+
+        TL_CONTINUE_IF_FALSE(IsRectsIntersect(bounding_rect, sweep_rect));
+        auto result = sweepShape(shape, *target_shape, dir);
+        TL_CONTINUE_IF_FALSE(result && result->m_t <= dist);
+
+        SweepResult sweep_result;
+        sweep_result.m_t = result->m_t;
+        sweep_result.m_normal = result->m_normal;
+        sweep_result.m_flags = result->m_flags;
+        sweep_result.m_entity = target_shape->GetOwner();
+        sweep_result.m_is_initial_overlap = result->m_is_initial_overlap;
+        sweep_result.m_shape = target_shape.get();
+        m_cached_sweep_results.push_back(sweep_result);
     }
 
     // sweep chunk actor
@@ -628,9 +633,7 @@ uint32_t PhysicsScene::Sweep(const PhysicsShape &shape, const Vec2 &dir,
         tilemap_rect.m_center =
             tilemap_collision->m_topleft + tilemap_rect.m_half_size;
 
-        if (!IsRectsIntersect(tilemap_rect, sweep_rect)) {
-            continue;
-        }
+        TL_CONTINUE_IF_FALSE(IsRectsIntersect(tilemap_rect, sweep_rect));
 
         for (auto &layer : tilemap_collision->m_layers) {
             Range2D<int> chunk_range, tile_range;
@@ -640,9 +643,8 @@ uint32_t PhysicsScene::Sweep(const PhysicsShape &shape, const Vec2 &dir,
                  y++) {
                 for (int x = chunk_range.m_x.m_begin; x < chunk_range.m_x.m_end;
                      x++) {
-                    if (!layer.m_chunks.InRange(x, y)) {
-                        continue;
-                    }
+                    TL_CONTINUE_IF_FALSE(layer.m_chunks.InRange(x, y));
+
                     auto &chunk = layer.m_chunks.Get(x, y);
                     Range2D<int> cur_tile_range;
                     layer.getTileRangeInCurrentChunk(chunk_range, tile_range, x,
@@ -652,25 +654,22 @@ uint32_t PhysicsScene::Sweep(const PhysicsShape &shape, const Vec2 &dir,
                          sy < cur_tile_range.m_y.m_end; sy++) {
                         for (int sx = cur_tile_range.m_x.m_begin;
                              sx < cur_tile_range.m_x.m_end; sx++) {
-                            if (!chunk.InRange(sx, sy)) {
-                                continue;
-                            }
+                            TL_CONTINUE_IF_FALSE(chunk.InRange(sx, sy));
 
                             auto &shapes = chunk.Get(sx, sy);
                             for (auto &target_shape : shapes) {
-                                if (!checkNeedQuery(shape, *target_shape)) {
-                                    continue;
-                                }
+                                TL_CONTINUE_IF_FALSE(
+                                    checkNeedQuery(shape, *target_shape));
                                 std::optional<HitResult> result =
                                     sweepShape(shape, *target_shape, dir);
-                                if (!result || result->m_t > dist) {
-                                    continue;
-                                }
+                                TL_CONTINUE_IF_FALSE(result &&
+                                                     result->m_t <= dist);
                                 SweepResult sweep_result;
                                 sweep_result.m_t = result->m_t;
                                 sweep_result.m_normal = result->m_normal;
                                 sweep_result.m_flags = result->m_flags;
-                                sweep_result.m_entity = target_shape->GetOwner();
+                                sweep_result.m_entity =
+                                    target_shape->GetOwner();
                                 sweep_result.m_is_initial_overlap =
                                     result->m_is_initial_overlap;
                                 sweep_result.m_shape = target_shape;
@@ -710,17 +709,15 @@ uint32_t PhysicsScene::Overlap(const PhysicsShape &shape,
     auto bounding_box = computeShapeBoundingBox(shape);
 
     for (auto &target_shape : m_shapes) {
-        if (!checkNeedQuery(shape, *target_shape)) {
-            continue;
-        }
+        TL_CONTINUE_IF_FALSE(checkNeedQuery(shape, *target_shape));
         Rect bounding_rect = computeShapeBoundingBox(*target_shape);
-        if (IsRectsIntersect(bounding_rect, bounding_box) &&
-            Overlap(shape, *target_shape)) {
-            OverlapResult result;
-            result.m_dst_entity = target_shape->GetOwner();
-            result.m_dst_shape = target_shape.get();
-            m_cached_overlaps_results.push_back(result);
-        }
+
+        TL_CONTINUE_IF_FALSE(IsRectsIntersect(bounding_rect, bounding_box) &&
+                             Overlap(shape, *target_shape));
+        OverlapResult result;
+        result.m_dst_entity = target_shape->GetOwner();
+        result.m_dst_shape = target_shape.get();
+        m_cached_overlaps_results.push_back(result);
     }
 
     for (auto &tilemap_collision : m_tilemap_collisions) {
@@ -739,9 +736,7 @@ uint32_t PhysicsScene::Overlap(const PhysicsShape &shape,
         tilemap_rect.m_center =
             tilemap_collision->m_topleft + tilemap_rect.m_half_size;
 
-        if (!IsRectsIntersect(tilemap_rect, bounding_box)) {
-            continue;
-        }
+        TL_CONTINUE_IF_FALSE(IsRectsIntersect(tilemap_rect, bounding_box));
 
         for (auto &layer : tilemap_collision->m_layers) {
             Range2D<int> chunk_range, tile_range;
@@ -751,9 +746,8 @@ uint32_t PhysicsScene::Overlap(const PhysicsShape &shape,
                  y++) {
                 for (int x = chunk_range.m_x.m_begin; x < chunk_range.m_x.m_end;
                      x++) {
-                    if (!layer.m_chunks.InRange(x, y)) {
-                        continue;
-                    }
+                    TL_CONTINUE_IF_FALSE(layer.m_chunks.InRange(x, y));
+
                     auto &chunk = layer.m_chunks.Get(x, y);
                     Range2D<int> cur_tile_range;
                     layer.getTileRangeInCurrentChunk(chunk_range, tile_range, x,
@@ -763,16 +757,14 @@ uint32_t PhysicsScene::Overlap(const PhysicsShape &shape,
                          sy < cur_tile_range.m_y.m_end; sy++) {
                         for (int sx = cur_tile_range.m_x.m_begin;
                              sx < cur_tile_range.m_x.m_end; sx++) {
-                            if (!chunk.InRange(sx, sy)) {
-                                continue;
-                            }
+                            TL_CONTINUE_IF_FALSE(chunk.InRange(sx, sy));
 
                             auto &target_shapes = chunk.Get(sx, sy);
                             for (auto &target_shape : target_shapes) {
-                                if (!(checkNeedQuery(shape, *target_shape) &&
-                                      Overlap(shape, *target_shape))) {
-                                    continue;
-                                }
+                                TL_CONTINUE_IF_FALSE(
+                                    checkNeedQuery(shape, *target_shape) &&
+                                    Overlap(shape, *target_shape));
+
                                 OverlapResult result;
                                 result.m_dst_entity = target_shape->GetOwner();
                                 result.m_dst_shape = target_shape;
@@ -989,11 +981,9 @@ bool PhysicsScene::Overlap(const PhysicsShape &shape1,
     return false;
 }
 
-bool PhysicsScene::checkNeedQuery(const PhysicsShape & src,
-                                  const PhysicsShape & target) const {
-    if (&src == &target) {
-        return false;
-    }
+bool PhysicsScene::checkNeedQuery(const PhysicsShape &src,
+                                  const PhysicsShape &target) const {
+    TL_RETURN_VALUE_IF_FALSE(&src != &target && target.IsQueryEnabled(), false);
 
     auto layer = target.GetCollisionLayer();
 

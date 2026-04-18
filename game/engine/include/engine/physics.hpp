@@ -127,11 +127,16 @@ public:
 
     void Move(const Vec2 &offset);
 
+    void SetQueryEnable(bool enable);
+    bool IsQueryEnabled() const;
+
+
     Entity GetOwner() const;
 
 private:
     Entity m_owner = null_entity;
     Type m_type = Type::Unknown;
+    bool m_enable_query = true;
     PhysicsStorageType m_storage_type;
     CollisionGroup m_collision_layer;
     CollisionGroup m_collision_mask;

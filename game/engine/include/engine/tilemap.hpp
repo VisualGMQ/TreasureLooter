@@ -251,6 +251,11 @@ public:
 class TilemapLayerComponent {
 public:
     TilemapLayerComponent(Entity, const TilemapLayerDefinition&);
+    TilemapLayerComponent(const TilemapLayerComponent&) = delete;
+    TilemapLayerComponent& operator=(const TilemapLayerComponent&) = delete;
+    TilemapLayerComponent( TilemapLayerComponent&&) = default;
+    TilemapLayerComponent& operator=(TilemapLayerComponent&&) = default;
+    ~TilemapLayerComponent();
 
     [[nodiscard]] const TilemapLayer* GetLayer() const;
     [[nodiscard]] const Tilemap* GetTilemap() const;

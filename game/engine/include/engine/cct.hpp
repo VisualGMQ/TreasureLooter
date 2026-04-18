@@ -6,7 +6,12 @@
 
 class CharacterController {
 public:
-    explicit CharacterController(Entity entity, const CCTDefinition& create_info);
+    explicit CharacterController(Entity entity,
+                                 const CCTDefinition& create_info);
+    CharacterController(const CharacterController&) = delete;
+    CharacterController& operator=(const CharacterController&) = delete;
+    CharacterController(CharacterController&&) = default;
+    CharacterController& operator=(CharacterController&&) = default;
     ~CharacterController();
 
     void MoveAndSlide(const Vec2& dir);

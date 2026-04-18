@@ -892,6 +892,8 @@ void bindPhysics(lua_State* L) {
                 .addFunction("MoveTo", &PhysicsShape::MoveTo)
                 .addFunction("Move", &PhysicsShape::Move)
                 .addFunction("GetStorageType", &PhysicsShape::GetStorageType)
+                .addFunction("SetQueryEnable", &PhysicsShape::SetQueryEnable)
+                .addFunction("IsQueryEnabled", &PhysicsShape::IsQueryEnabled)
             .endClass()
             .beginClass<PhysicsScene>("PhysicsScene")
                 .addFunction("IsEnableDebugDraw", &PhysicsScene::IsEnableDebugDraw)

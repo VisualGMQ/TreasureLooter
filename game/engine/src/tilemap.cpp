@@ -619,11 +619,15 @@ TilemapLayerComponent::TilemapLayerComponent(
                 definition.m_collision_layer.Add(CollisionGroupType::Obstacle);
                 definition.m_collision_mask.Add(CollisionGroupType::CCT);
 
-                auto actor = physics_scene->CreateShapeInChunk(
+                auto shape = physics_scene->CreateShapeInChunk(
                     entity, m_tilemap_collision, definition);
             }
         }
     }
+}
+
+TilemapLayerComponent::~TilemapLayerComponent() {
+    CURRENT_CONTEXT.m_physics_scene->RemoveTilemapCollision(m_tilemap_collision);
 }
 
 const TilemapLayer* TilemapLayerComponent::GetLayer() const {

@@ -52,6 +52,10 @@ public:
 
     Trigger() = default;
     Trigger(Entity, const TriggerDefinition&);
+    Trigger(const Trigger&) = delete;
+    Trigger& operator=(const Trigger&) = delete;
+    Trigger(Trigger&&) = default;
+    Trigger& operator=(Trigger&&) = default;
     [[nodiscard]] const PhysicsShape* GetPhysicsShape() const;
     [[nodiscard]] PhysicsShape* GetPhysicsShape();
     ~Trigger();
