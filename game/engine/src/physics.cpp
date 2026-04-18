@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <immintrin.h>
 #include <limits>
 
 #include "engine/profile.hpp"
