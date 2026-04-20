@@ -1,5 +1,5 @@
 <schema>
-    <include>math.hpp</include>
+    <include>common/math.hpp</include>
 
     <class name="Rect">
         <element name="center" type="Vec2" />
@@ -13,6 +13,14 @@
 
     <class name="Polygon">
         <array name="points" type="Vec2" />
+    </class>
+
+    <class name="Image9Grid">
+        <element name="left" type="float" default="0" />
+        <element name="right" type="float" default="0" />
+        <element name="top" type="float" default="0" />
+        <element name="bottom" type="float" default="0" />
+        <element name="scale" type="float" default="1.0f" />
     </class>
 
     <enum name="EntityType">

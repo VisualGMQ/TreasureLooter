@@ -10,9 +10,20 @@ local READ_I_SPEED = 0
 local READ_I_LO = -2147483648
 local READ_I_HI = 2147483647
 
-local function readonly_drag_float(label: string, v: number?)
-	local n = v
-	if n == nil or n ~= n then
+local function readonly_drag_float(label: string, v: any)
+	local n: number = 0
+	local t = type(v)
+	if t == "number" then
+		n = v :: number
+	elseif t == "userdata" then
+		local ok, u = pcall(function()
+			return (v :: any):Value()
+		end)
+		if ok and type(u) == "number" then
+			n = u :: number
+		end
+	end
+	if n ~= n then
 		n = 0
 	end
 	ImGui.BeginDisabled(true)
@@ -20,9 +31,21 @@ local function readonly_drag_float(label: string, v: number?)
 	ImGui.EndDisabled()
 end
 
-local function readonly_drag_int(label: string, v: number?)
-	local n = v
-	if n == nil or n ~= n then
+local function readonly_drag_int(label: string, v: any)
+	local n: number = 0
+	local t = type(v)
+	if t == "number" then
+		n = v :: number
+	elseif t == "userdata" then
+		-- e.g. TL.*Flags from schema bindings (Stack<Flags<T>> is userdata-by-value)
+		local ok, u = pcall(function()
+			return (v :: any):Value()
+		end)
+		if ok and type(u) == "number" then
+			n = u :: number
+		end
+	end
+	if n ~= n then
 		n = 0
 	end
 	ImGui.BeginDisabled(true)
@@ -173,7 +196,8 @@ function _M.DisplaySprite(s: TL.Sprite)
 	ImGui.PushID("Sprite")
 	local img = s.m_image
 	if img ~= nil and img:IsValid() then
-		ImGui.Text("m_image: " .. img:GetAssetPath())
+		local path = img:GetFilename()
+		ImGui.Text("m_image: " .. (path and tostring(path) or "(embed)"))
 	else
 		ImGui.Text("m_image: (none / invalid)")
 	end
@@ -273,8 +297,8 @@ function _M.DisplayUIWidget(ui: TL.UIWidget)
 	ImGui.PopID()
 end
 
-function _M.DisplayTilemapComponent(tc: TL.TilemapComponent)
-	ImGui.PushID("Tilemap")
+function _M.DisplayTilemapRenderComponent(tc: TL.TilemapRenderComponent)
+	ImGui.PushID("TilemapRender")
 	readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
 	local col = tc:GetTilemapCollision()
 	if col then
@@ -287,40 +311,43 @@ function _M.DisplayTilemapComponent(tc: TL.TilemapComponent)
 	ImGui.PopID()
 end
 
+function _M.DisplayTilemapCollisionComponent(tc: TL.TilemapCollisionComponent)
+	ImGui.PushID("TilemapCollision")
+	readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
+	local col = tc:GetTilemapCollision()
+	if col then
+		ImGui.Text("collision m_topleft")
+		readonly_drag_float("x##tcc_col", col.m_topleft.x)
+		readonly_drag_float("y##tcc_col", col.m_topleft.y)
+	else
+		ImGui.Text("collision: nil")
+	end
+	ImGui.PopID()
+end
+
 function _M.DisplayTrigger(tr: TL.Trigger)
 	ImGui.PushID("Trigger")
 	ImGui.Text("GetEventType: " .. tostring(tr:GetEventType()))
 	readonly_checkbox("IsTriggerEveryFrameWhenTouch", tr:IsTriggerEveryFrameWhenTouch())
-	local ok, list = pcall(function()
-		return tr:GetPhysicsData()
-	end)
-	if not ok then
-		ImGui.Text("GetPhysicsData: [error]")
-	elseif list == nil then
-		ImGui.Text("GetPhysicsData: nil")
-	else
-		local n = #(list :: any)
-		if n == 0 then
-			ImGui.Text("GetPhysicsData: (empty)")
-		else
-			for i = 1, n do
-				local pd = (list :: any)[i] :: TL.TriggerPhysicsData
-				if ImGui.TreeNode("PhysicsData #" .. tostring(i)) then
-					_M.DisplayVec2("m_local_position", pd.m_local_position)
-					local sh = pd.m_shape
-					if sh then
-						if ImGui.TreeNode("m_shape") then
-							_M.DisplayPhysicsShapeReadonly("tr_ph_" .. tostring(i), sh)
-							ImGui.TreePop()
-						end
-					else
-						ImGui.Text("m_shape: nil")
-					end
-					ImGui.TreePop()
-				end
-			end
-		end
-	end
+    local shapes = tr:GetUnderlyingShapes()
+    if #shapes == 0 then
+        ImGui.Text("underlying shapes: (empty)")
+    else
+        for i = 1, #shapes do
+            if ImGui.TreeNode("underlying shapes #" .. tostring(i)) then
+                local shape = shapes[i]
+                if shape then
+                    if ImGui.TreeNode("shape "..tostring(i)) then
+                        _M.DisplayPhysicsShapeReadonly("tr_ph_" .. tostring(i), shape)
+                        ImGui.TreePop()
+                    end
+                else
+                    ImGui.Text("m_shape: nil")
+                end
+                ImGui.TreePop()
+            end
+        end
+    end
 	ImGui.PopID()
 end
 
@@ -349,6 +376,33 @@ function _M.DisplayBindPoints(bind_mgr: TL.BindPointsComponentManager, e: TL.Ent
 	end)
 	if not ok then
 		ImGui.Text("BindPoints: [could not iterate] " .. tostring(err))
+	end
+	ImGui.PopID()
+end
+
+function _M.DisplayStaticCollision(sc: TL.StaticCollision)
+	ImGui.PushID("StaticCollision")
+	local n = sc:GetPhysicsShapeCount()
+	readonly_drag_int("physics shape count", n)
+	if n <= 0 then
+		ImGui.Text("shapes: (none)")
+	else
+		for i = 1, n do
+			if ImGui.TreeNode("shape #" .. tostring(i)) then
+				local lp = sc:GetPhysicsShapeLocalPosition(i)
+				_M.DisplayVec2("definition local center", lp)
+				local shape = sc:GetPhysicsShape(i)
+				if shape then
+					if ImGui.TreeNode("PhysicsShape (runtime)") then
+						_M.DisplayPhysicsShapeReadonly("sc_ph_" .. tostring(i), shape)
+						ImGui.TreePop()
+					end
+				else
+					ImGui.Text("GetPhysicsShape: nil")
+				end
+				ImGui.TreePop()
+			end
+		end
 	end
 	ImGui.PopID()
 end
@@ -416,10 +470,16 @@ function _M.DisplayInspector(ctx: TL.GameContext, e: TL.Entity)
 		_M.DisplayUIWidget(ui_mgr:Get(e) :: TL.UIWidget)
 	end
 
-	local tile_mgr = ctx:GetTilemapComponentManager()
-	if tile_mgr:Has(e) then
-		ImGui.SeparatorText("TilemapComponent")
-		_M.DisplayTilemapComponent(tile_mgr:Get(e) :: TL.TilemapComponent)
+	local tile_render_mgr = ctx:GetTilemapRenderComponentManager()
+	if tile_render_mgr:Has(e) then
+		ImGui.SeparatorText("TilemapRenderComponent")
+		_M.DisplayTilemapRenderComponent(tile_render_mgr:Get(e) :: TL.TilemapRenderComponent)
+	end
+
+	local tile_collision_mgr = ctx:GetTilemapCollisionComponentManager()
+	if tile_collision_mgr:Has(e) then
+		ImGui.SeparatorText("TilemapCollisionComponent")
+		_M.DisplayTilemapCollisionComponent(tile_collision_mgr:Get(e) :: TL.TilemapCollisionComponent)
 	end
 
 	local trig_mgr = ctx:GetTriggerComponentManager()
@@ -438,6 +498,13 @@ function _M.DisplayInspector(ctx: TL.GameContext, e: TL.Entity)
 	if cct_mgr:Has(e) then
 		ImGui.SeparatorText("CharacterController")
 		_M.DisplayCharacterController(cct_mgr:Get(e) :: TL.CharacterController)
+	end
+
+	local static_col_mgr = ctx:GetStaticCollisionManager()
+	if static_col_mgr:Has(e) then
+		ImGui.SeparatorText("StaticCollision")
+		readonly_checkbox("IsEnable", static_col_mgr:IsEnable(e))
+		_M.DisplayStaticCollision(static_col_mgr:Get(e) :: TL.StaticCollision)
 	end
 end
 

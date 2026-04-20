@@ -1,8 +1,8 @@
 <schema>
     <enum name="Flip">
-        <item name = "None" value="0"/>
-        <item name = "Horizontal" value="1"/>
-        <item name = "Vertical" value="2"/>
+        <item name="None" value="0" />
+        <item name="Horizontal" value="0x01" />
+        <item name="Vertical" value="0x02" />
     </enum>
 </schema>
-    
+

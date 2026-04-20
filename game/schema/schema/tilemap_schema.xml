@@ -1,6 +1,6 @@
 <schema>
-    <include>tilemap.hpp</include>
-    <include>math.hpp</include>
+    <include>common/tilemap.hpp</include>
+    <include>common/math.hpp</include>
 
     <class name="TilemapLayerDefinition">
         <element name="position" type="Vec2"/>

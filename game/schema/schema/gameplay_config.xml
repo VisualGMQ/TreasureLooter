@@ -1,16 +1,23 @@
 <schema>
-    <include>image.hpp</include>
-    <include>animation.hpp</include>
+    <include>common/image.hpp</include>
+    <include>common/animation.hpp</include>
     <import>common</import>
     <import>physics_schema</import>
     <import>scene_definition</import>
     <import>tilemap_schema</import>
+    <import>sprite</import>
 
     <enum name="TeamID">
         <item name="invalid" />
         <item name="neutral" />
         <item name="team1" />
         <item name="team2" />
+    </enum>
+
+    <enum name="ScriptType">
+        <item name="Unknown" />
+        <item name="Monster" />
+        <item name="Item" />
     </enum>
 
     <enum name="WeaponType">
@@ -20,14 +27,13 @@
 
     <asset name="WeaponDefinition" extension=".weapon_def">
         <element name="type" type="WeaponType" />
-        <handle name="sprite" type="Image" />
+        <element name="sprite" type="SpriteDefinition" />
         <element name="cooldown" type="float" default="1" />
         <element name="attack_speed" type="float" default="1" />
         <element name="damage" type="uint32_t" default="1" />
 
         <handle name="attack_animation" type="Animation" />
         <element name="hit_shapes" type="TriggerDefinition" />
-        <array name="bind_points" type="BindPointDefinition" />
     </asset>
 
     <asset name="CharacterDefinition" extension=".character_def">
@@ -46,21 +52,39 @@
         <element name="script" type="Path" />
 
         <handle name="weapon" type="WeaponDefinition" />
+        <handle name="pickaxe" type="WeaponDefinition" />
     </asset>
 
+    <class name="PlayerRelatedDefinition">
+        <handle name="interactable_hint_image" type="Image" />
+        <handle name="interactable_hint_animation" type="Animation" />
+        <element name="interact_check_area" type="TriggerDefinition" />
+    </class>
+
     <enum name="ItemBehavior">
-        <item name="None" />
-        <item name="Diggable" />
-        <item name="Choppable" />
-        <item name="Eatable" />
+        <item name="None" value="0" />
+        <item name="Diggable" value="0x01" />
+        <item name="Choppable" value="0x02" />
+        <item name="Eatable" value="0x04" />
+
+        <item name="Pickupable" value="0x08" />
+        <item name="Stackable" value="0x10" />
+    </enum>
+
+    <enum name="ItemType">
+        <item name="Unknown" />
+        <item name="Mine" />
     </enum>
 
     <asset name="ItemDefinition" extension=".item">
         <element name="sprite" type="SpriteDefinition" />
         <handle name="collision" type="PhysicsShapeDefinition" />
-        <element name="behavior" type="ItemBehavior" default="ItemBehavior::None" />
-        <element name="stackable" type="bool" default="false" />
-        <element name="pickupable" type="bool" default="false" />
+        <flags name="behavior" type="ItemBehavior" />
+        <element name="type" type="ItemType" default="ItemType::Unknown" />
+        <element name="script" type="Path" />
+
+        <element name="dig_time" type="float" default="3" />
+        <handle name="mineral_fragment" type="ItemDefinition" />
     </asset>
 
     <class name="MapLayerDefinition">
@@ -73,7 +97,9 @@
         <array name="layers" type="MapLayerDefinition" />
 
         <element name="player_put_on_layer" type="std::string" />
+        <element name="player_related_definition" type="PlayerRelatedDefinition" />
         <element name="player_spawn_point" type="std::string" />
+        <handle name="player_character" type="CharacterDefinition" />
         <element name="player_team_id" type="TeamID" default="TeamID::neutral" />
     </class>
 

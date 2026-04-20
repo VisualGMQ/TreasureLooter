@@ -1,5 +1,5 @@
 <schema>
-    <include>math.hpp</include>
+    <include>common/math.hpp</include>
 
     <class name="BindPointDefinition">
         <element name="name" type="std::string"/>

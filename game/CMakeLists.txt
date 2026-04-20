@@ -30,6 +30,10 @@ endif()
 ################ run schema parser ################
 file(GLOB_RECURSE SCHEMAS schema/schema/*)
 file(GLOB_RECURSE MUSTACHES ./schema/schema_parser/mustaches/*.mustache)
+file(GLOB_RECURSE SCHEMA_PARSER_TOOL_SOURCES
+    CONFIGURE_DEPENDS
+    schema/schema_parser/*.cpp
+    schema/schema_parser/*.hpp)
 set(SCHEMA_OUTPUT_PATH "schema_generate/schema")
 set(SCHEMA_DECLARE_OUTPUT_FILES)
 set(SCHEMA_SERD_OUTPUT_FILES)
@@ -72,7 +76,7 @@ set(LUAU_TYPES_HINT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/scripts/tl_types.luau")
 if (NEED_SCHEMA_PARSER)
     add_custom_target(run_schema_parser
         COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
-        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES} ${SCHEMA_PARSER_TOOL_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "parsing schemas...")
 
@@ -84,7 +88,7 @@ if (NEED_SCHEMA_PARSER)
         ${SCHEMA_ASSET_INFO_FILES}
         ${SCHEMA_SCRIPT_HINT_FILES}
         COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
-        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES} ${SCHEMA_PARSER_TOOL_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "parsing schemas...")
 
@@ -110,79 +114,33 @@ if (NEED_SCHEMA_PARSER)
         COMMENT "mobile_preprocess...")
 endif()
 
-################ build engine ################
-set(ENGINE_NAME engine)
-file(GLOB_RECURSE ENGINE_SRC engine/src/*.cpp engine/src/*.c)
-file(GLOB_RECURSE ENGINE_HEADER engine/include/*.hpp engine/include/*.h)
-file(GLOB_RECURSE ASSETS assets/*)
+################ build common ################
+set(COMMON_NAME common)
+add_subdirectory(common)
 
-add_library(${ENGINE_NAME} STATIC)
-
-target_sources(${ENGINE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS}
-    ${SCHEMA_DECLARE_OUTPUT_FILES}
-    ${SCHEMA_SERD_OUTPUT_FILES}
-    ${SCHEMA_ASSET_INFO_FILES}
-    ${SCHEMA_BINDING_OUTPUT_FILES})
-target_include_directories(${ENGINE_NAME} PUBLIC engine/include schema_generate)
-target_compile_features(${ENGINE_NAME} PRIVATE cxx_std_17)
-target_link_libraries(${ENGINE_NAME}
-    PUBLIC
-    SDL3::SDL3 SDL3_ttf::SDL3_ttf
-    spdlog::spdlog
-    stb_image
-    imgui
-    RapidXML
-    stduuid
-    tmxlite
-
-    Luau.Compiler
-    Luau.VM
-    LuaBridge)
-
-# TODO: compatible with clang++
-if (MSVC)
-    target_compile_options(${ENGINE_NAME} PRIVATE /bigobj)
-endif()
-
-if (TL_ENABLE_PROFILE)
-    target_link_libraries(${ENGINE_NAME} PUBLIC Tracy::TracyClient)
-    target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ENABLE_PROFILE)
-endif()
-
-target_compile_definitions(${ENGINE_NAME}
-    PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
-    PRIVATE _CRT_SECURE_NO_WARNINGS)
-
-if (ANDROID)
-    target_compile_definitions(${ENGINE_NAME} PUBLIC TL_ANDROID)
-endif()
+################ build client ################
+set(CLIENT_NAME client)
+add_subdirectory(client)
 
 ################ build game ################
 set(GAME_NAME ${PROJECT_NAME})
 
 if (ANDROID)
     set(GAME_NAME main)
-    add_library(${GAME_NAME} SHARED)
-else()
-    add_executable(${GAME_NAME})
 endif()
 
-file(GLOB_RECURSE GAME_SCRIPTS scripts/*.luau)
+add_subdirectory(game_entry)
 
-target_sources(${GAME_NAME} PRIVATE
-    main_entry/game_main.cpp
-    ${GAME_SCRIPTS}
-    ${SCHEMA_SCRIPT_HINT_FILES}
-    ${LUAU_TYPES_HINT_FILES})
-target_link_libraries(${GAME_NAME} PRIVATE ${ENGINE_NAME})
+################ build server ################
+if (NOT ANDROID)
+    set(SERVER_NAME ${PROJECT_NAME}-Server)
+    add_subdirectory(server)
+    add_subdirectory(server_entry)
+endif()
 
 ################ build editor ################
 if (NOT ANDROID)
     add_subdirectory(tools)
-    # file(GLOB_RECURSE EDITOR_SRC editor/*.hpp editor/*.cpp)
-    # add_executable(editor)
-    # target_sources(editor PRIVATE ${EDITOR_SRC} ${SCHEMA_DISPLAY_OUTPUT_FILES})
-    # target_link_libraries(editor PRIVATE ${ENGINE_NAME})
 endif()
 
 ################ install #######################

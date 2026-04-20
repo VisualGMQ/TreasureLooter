@@ -1,20 +1,21 @@
 #pragma once
-#include "engine/animation.hpp"
-#include "engine/asset.hpp"
-#include "engine/asset_manager.hpp"
-#include "engine/context.hpp"
-#include "engine/dialog.hpp"
-#include "engine/entity.hpp"
-#include "engine/handle.hpp"
-#include "engine/math.hpp"
-#include "engine/text.hpp"
-#include "engine/trigger.hpp"
-#include "engine/tilemap.hpp"
-#include "schema/serialize/physics_schema.hpp"
+#include "tool_context.hpp"
+#include "client/font.hpp"
+#include "common/animation.hpp"
+#include "common/asset.hpp"
+#include "common/asset_manager.hpp"
+#include "common/context.hpp"
+#include "common/dialog.hpp"
+#include "common/entity.hpp"
+#include "common/handle.hpp"
+#include "common/math.hpp"
+#include "common/tilemap.hpp"
+#include "common/trigger.hpp"
 #include "imgui.h"
 #include "schema/asset_info.hpp"
 #include "schema/display/display.hpp"
 #include "schema/physics_schema.hpp"
+#include "schema/serialize/physics_schema.hpp"
 
 #include <array>
 #include <optional>
@@ -89,14 +90,12 @@ void InstanceDisplay(const char* name, const Trigger::PhysicsData&);
 void InstanceDisplay(const char* name, PhysicsShape&);
 void InstanceDisplay(const char* name, const Color&);
 void InstanceDisplay(const char* name, Color&);
-void InstanceDisplay(const char* name, Image9Grid&);
-void InstanceDisplay(const char* name, const Image9Grid&);
 
 template <typename T>
 void ShowSelectAssetFileDialog(Handle<T>& value,
                                const std::vector<Filter>& filters) {
     FileDialog dialog{FileDialog::Type::OpenFile};
-    Path base_path = CURRENT_CONTEXT.GetProjectPath();
+    Path base_path = static_cast<ToolContext*>(&CLIENT_CONTEXT)->GetProjectPath();
     dialog.SetTitle("Select Asset");
     for (auto& filter : filters) {
         dialog.AddFilter(filter);
@@ -120,7 +119,7 @@ void ShowSelectAssetFileDialog(Handle<T>& value,
         if (err) {
             LOGE("Can only select file under {} dir", base_path);
         } else {
-            value = CURRENT_CONTEXT.m_assets_manager->GetManager<T>().Load(
+            value = COMMON_CONTEXT.m_assets_manager->GetManager<T>().Load(
                 relative_path);
         }
     }
@@ -135,10 +134,10 @@ void HandleInstanceDisplayCommon(const char* name, Handle<T>& handle,
         ImGui::InputText("path", filename_str.data(), filename_str.size() + 1,
                          ImGuiInputTextFlags_ReadOnly);
     }
-    using payload_type = T;
+    using payload_type = typename Handle<T>::underlying_type;
 
     if (!handle) {
-        auto& mgr = CURRENT_CONTEXT.m_assets_manager->GetManager<T>();
+        auto& mgr = COMMON_CONTEXT.m_assets_manager->GetManager<T>();
         if constexpr (std::is_default_constructible_v<T>) {
             if (ImGui::Button("Create")) {
                 handle = mgr.Create();
@@ -157,7 +156,7 @@ void HandleInstanceDisplayCommon(const char* name, Handle<T>& handle,
         if (ImGui::Checkbox("embed", &is_embed)) {
             // shift to embed mode, move asset to file
             if (is_embed) {
-                CURRENT_CONTEXT.m_assets_manager->GetManager<payload_type>()
+                COMMON_CONTEXT.m_assets_manager->GetManager<payload_type>()
                     .MakeEmbed(handle);
             } else {  // shift to un-embed mode, embed asset
                 FileDialog dialog{FileDialog::Type::SaveFile};
@@ -175,7 +174,7 @@ void HandleInstanceDisplayCommon(const char* name, Handle<T>& handle,
                             AssetInfoManager::GetExtension<payload_type>());
                     }
                     SaveAsset(handle.GetUUID(), *handle, filename);
-                    CURRENT_CONTEXT.m_assets_manager->GetManager<T>()
+                    COMMON_CONTEXT.m_assets_manager->GetManager<T>()
                         .MakeExternal(handle, filename);
                 }
             }
@@ -187,7 +186,7 @@ void HandleInstanceDisplayCommon(const char* name, Handle<T>& handle,
 
         ImGui::PushID(handle.GetUUID());
         if (ImGui::Button("Open")) {
-            std::string_view app_path = CURRENT_CONTEXT.GetAppPath();
+            std::string_view app_path = COMMON_CONTEXT.GetAppPath();
             std::string filename = handle.GetFilename()->string();
             const char* args[] = {
                 app_path.data(),

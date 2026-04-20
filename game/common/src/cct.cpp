@@ -1,0 +1,145 @@
+#include "common/cct.hpp"
+
+#include "common/context.hpp"
+#include "common/profile.hpp"
+
+CharacterController::CharacterController(Entity entity,
+                                         const CCTDefinition& create_info)
+    : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
+    m_shape = PhysicsShape::Proxy{COMMON_CONTEXT.m_physics_scene->CreateShape(
+        entity, create_info.m_physics_shape)};
+}
+
+bool CharacterController::EnableDebugOutput = false;
+
+#define CCT_DEBUG_LOG(fmt, ...)                        \
+    do {                                               \
+        if (CharacterController::EnableDebugOutput) {  \
+            LOGI("CCT Debug Log:" fmt, ##__VA_ARGS__); \
+        }                                              \
+    } while (0)
+
+void CharacterController::MoveAndSlide(const Vec2& dir) {
+    PROFILE_SECTION();
+
+    if (!m_shape) {
+        CCT_DEBUG_LOG("physics shape is nullptr");
+        return;
+    }
+
+    float disp_length = dir.Length();
+    CCT_DEBUG_LOG("disp: {}", dir);
+    CCT_DEBUG_LOG("disp length: {}", disp_length);
+    if (disp_length <= m_min_disp) {
+        CCT_DEBUG_LOG("disp length too small, exit");
+        return;
+    }
+
+    Vec2 disp = dir;
+    Vec2 disp_normalized = disp / disp_length;
+    uint32_t max_iter = MaxIter;
+    SweepResult hit;
+
+    auto& physics_scene = COMMON_CONTEXT.m_physics_scene;
+
+    CCT_DEBUG_LOG("max iter = {}, begin iter", max_iter);
+    CCT_DEBUG_LOG("start position: {}", m_shape->GetPosition());
+
+    while (max_iter--) {
+        if (disp_length <= m_min_disp) {
+            CCT_DEBUG_LOG("disp length({}) < min disp, exit", disp_length);
+            break;
+        }
+
+        if (disp.Dot(dir) <= 0) {
+            CCT_DEBUG_LOG("move to opposite direction: {}, break", disp);
+            break;
+        }
+
+        uint32_t hitted = physics_scene->Sweep(*m_shape, disp_normalized,
+                                               disp_length + m_skin, &hit, 1);
+
+        for (int i = 0; i < hitted; i++) {
+            CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
+                          hit.m_shape->GetPosition(), hit.m_normal, hit.m_t);
+        }
+
+        if (!hitted) {
+            CCT_DEBUG_LOG("not hitted, move along {}", disp);
+            m_shape->Move(disp);
+            break;
+        }
+
+        if (hit.m_is_initial_overlap) {
+            CCT_DEBUG_LOG("initial overlap, move along {}", disp);
+            m_shape->Move(disp);
+            break;
+        }
+
+        CCT_DEBUG_LOG("hitted! hit flags: {}, normal: {}, t: {}",
+                      hit.m_flags.Value(), hit.m_normal, hit.m_t);
+
+        float actual_move_dist = 0;
+        if (hit.m_t > m_skin) {
+            actual_move_dist = hit.m_t - m_skin;
+            m_shape->Move(actual_move_dist * disp_normalized);
+            CCT_DEBUG_LOG("is less than skin({} < {}): {}, actual move dist {}",
+                          hit.m_t, m_skin, hit.m_t < m_skin, actual_move_dist);
+            CCT_DEBUG_LOG("move to {}", m_shape->GetPosition());
+        }
+
+        disp_length -= actual_move_dist;
+
+        CCT_DEBUG_LOG("remain disp length: {}", disp_length);
+
+        auto [tangent, normal] =
+            DecomposeVector(disp_normalized * disp_length, hit.m_normal);
+        disp_length = tangent.Length();
+
+        CCT_DEBUG_LOG("tangent: {}, length: {}", tangent, disp_length);
+
+        disp = tangent;
+        disp_normalized = disp / disp_length;
+    }
+
+    CCT_DEBUG_LOG("end iter, final position: {}", m_shape->GetPosition());
+
+    m_shape->MoveTo(m_shape->GetPosition());
+}
+
+Vec2 CharacterController::GetPosition() const {
+    if (m_shape) {
+        return m_shape->GetPosition();
+    }
+    return {};
+}
+
+void CharacterController::SetSkin(float skin) {
+    m_skin = skin;
+}
+
+float CharacterController::GetSkin() const {
+    return m_skin;
+}
+
+void CharacterController::SetMinDisp(float disp) {
+    m_min_disp = disp;
+}
+
+float CharacterController::GetMinDisp() const {
+    return m_min_disp;
+}
+
+void CharacterController::Teleport(const Vec2& pos) {
+    if (m_shape) {
+        m_shape->MoveTo(pos);
+    }
+}
+
+const PhysicsShape* CharacterController::GetPhysicsShape() const {
+    return m_shape.get();
+}
+
+PhysicsShape* CharacterController::GetPhysicsShape() {
+    return m_shape.get();
+}

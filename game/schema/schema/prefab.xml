@@ -1,6 +1,5 @@
 <schema>
-    <include>transform.hpp</include>
-    <include>animation_player.hpp</include>
+    <include>common/transform.hpp</include>
     <import>draw_order</import>
     <import>sprite</import>
     <import>relationship</import>

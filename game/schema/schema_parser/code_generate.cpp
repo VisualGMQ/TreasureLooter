@@ -52,8 +52,8 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
 
     for (auto& include : schema_info.m_includes) {
         include_datas << kainjow::mustache::data{
-            "include", include_mustache.render(
-                           {"filename", "\"engine/" + include + "\""})};
+            "include",
+            include_mustache.render({"filename", "\"" + include + "\""})};
     }
 
     if (schema_info.m_include_hints & IncludeHint::Option) {
@@ -64,7 +64,7 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
         include_datas << kainjow::mustache::data{
             "include",
             include_mustache.render(
-                {"filename", "\"engine/script/script_flags_binding.hpp\""})};
+                {"filename", "\"common/script/script_flags_binding.hpp\""})};
     }
     if (schema_info.m_include_hints & IncludeHint::Array) {
         include_datas << kainjow::mustache::data{"include",
@@ -86,11 +86,11 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
     if (schema_info.m_include_hints & IncludeHint::Handle) {
         include_datas << kainjow::mustache::data{
             "include",
-            include_mustache.render({"filename", "\"engine/handle.hpp\""})};
+            include_mustache.render({"filename", "\"common/handle.hpp\""})};
         include_datas << kainjow::mustache::data{
             "include",
             include_mustache.render(
-                {"filename", "\"engine/script/script_handle_binding.hpp\""})};
+                {"filename", "\"common/script/script_handle_binding.hpp\""})};
     }
 
     for (auto& import_filename : schema_info.m_imports) {
@@ -151,8 +151,7 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema.m_includes) {
-        include_datas << kainjow::mustache::data{"include",
-                                                 "engine/" + include};
+        include_datas << kainjow::mustache::data{"include", include};
     }
 
     auto generate_header_filename = schema.m_pure_filename;
@@ -160,7 +159,7 @@ std::string GenerateSchemaSerializeHeaderCode(const SchemaInfo& schema) {
         generate_header_filename.replace_extension(".hpp");
     auto final_path = "schema/" + generate_header_filename.string();
     if (schema.m_include_hints & IncludeHint::Asset) {
-        include_datas << kainjow::mustache::data{"include", "engine/asset.hpp"};
+        include_datas << kainjow::mustache::data{"include", "common/asset.hpp"};
     }
     include_datas << kainjow::mustache::data{"include", final_path.c_str()};
     data.set("includes", include_datas);
@@ -203,7 +202,7 @@ std::string GenerateSchemaSerializeImplCode(const SchemaInfo& schema) {
     }
     if (schema.m_include_hints & IncludeHint::Asset) {
         import_datas << kainjow::mustache::data{"import_filename",
-                                                "engine/asset.hpp"};
+                                                "common/asset.hpp"};
     }
     data.set("import_filenames", import_datas);
 
@@ -409,8 +408,7 @@ std::string GenerateSchemaDisplayHeaderCode(const SchemaInfo& schema) {
     kainjow::mustache::data include_datas{kainjow::mustache::data::type::list};
 
     for (auto& include : schema.m_includes) {
-        include_datas << kainjow::mustache::data{"include",
-                                                 "engine/" + include};
+        include_datas << kainjow::mustache::data{"include", include};
     }
 
     auto generate_header_filename = schema.m_pure_filename;
@@ -631,6 +629,7 @@ std::string GenerateEnumScriptBindImplCode(const EnumInfo& enum_info) {
     kainjow::mustache::data data;
     data.set("type", enum_info.m_name);
     data.set("enum_name", enum_info.m_name);
+    data.set("enum_flags_name", enum_info.m_name + "Flags");
 
     kainjow::mustache::data enum_values_data{
         kainjow::mustache::data::type::list};
@@ -683,16 +682,19 @@ std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
 
     kainjow::mustache::data property_entries{
         kainjow::mustache::data::type::list};
-
     for (auto& prop : info.m_properties) {
         std::string property_name_with_prefix = "m_" + prop.m_name;
         kainjow::mustache::data prop_data;
         prop_data.set("type", info.m_name);
         prop_data.set("property_name", property_name_with_prefix);
+        prop_data.set("property_type", prop.m_type);
         if (prop.m_optional) {
             prop_data.set("is_optional", true);
             prop_data.set("optional_inner_type",
                           ExtractOptionalInnerType(prop.m_type));
+        }
+        if (prop.m_is_flags) {
+            prop_data.set("is_flags", true);
         }
         property_entries << prop_data;
     }
@@ -722,22 +724,18 @@ std::string GenerateSchemaScriptBindHeaderCode(const SchemaInfo& schema) {
     data.set("enum_stack_specializations", enum_stack_specializations_data);
 
     kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
-    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
 
     for (auto& enum_value : schema.m_enums) {
         auto code = GenerateEnumScriptBindHeaderCode(enum_value);
         registers_data << kainjow::mustache::data{"register", code};
-        bindings_data << kainjow::mustache::data{"binding", code};
     }
 
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassScriptBindHeaderCode(class_value);
         registers_data << kainjow::mustache::data{"register", code};
-        bindings_data << kainjow::mustache::data{"binding", code};
     }
 
     data.set("registers", registers_data);
-    data.set("bindings", bindings_data);
 
     return header_mustache.render(data);
 }
@@ -1010,7 +1008,8 @@ std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     if (it != Cpp2Luau.end()) return it->second;
     std::string inner = ExtractOptionalInnerType(cpp_type);
     if (!inner.empty()) return ConvertCppTypeToLuauType(inner) + "?";
-    if (!ExtractFlagsInnerType(cpp_type).empty()) return "number";
+    std::string flags_inner = ExtractFlagsInnerType(cpp_type);
+    if (!flags_inner.empty()) return flags_inner + "Flags";
     std::string vec_inner = ExtractVectorInnerType(cpp_type);
     if (!vec_inner.empty())
         return "{ " + ConvertCppTypeToLuauType(vec_inner) + " }";
@@ -1055,7 +1054,9 @@ std::string GenerateEnumLuauType(const EnumInfo& info) {
 std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
     std::string handle_name = asset_class_name + "Handle";
     return "export type " + handle_name +
-           " = { IsValid: (self: " + handle_name + ") -> boolean } & " +
+           " = { IsValid: (self: " + handle_name + ") -> boolean, " +
+           "GetFilename: (self: " + handle_name + ") -> Path?, " +
+           "GetUUID: (self: " + handle_name + ") -> UUID } & " +
            asset_class_name + "\n";
 }
 
@@ -1073,6 +1074,26 @@ std::string GenerateAssetFilenameIsLuauType(
     const std::string& asset_class_name) {
     return "export type FilenameIs" + asset_class_name +
            " = (filename: Path) -> boolean\n";
+}
+
+std::string GenerateFlagsLuauType(const std::string& enum_class_name) {
+    const std::string flags_name = enum_class_name + "Flags";
+    std::string out;
+    out += "export type " + flags_name + " = {\n";
+    out += "\tValue: (self: " + flags_name + ") -> number,\n";
+    out += "\tHas: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> boolean,\n";
+    out += "\tRemove: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> (),\n";
+    out += "\t__bor: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> " + flags_name + ",\n";
+    out += "\t__band: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> " + flags_name + ",\n";
+    out += "\t__bnot: (self: " + flags_name + ") -> " + flags_name + ",\n";
+    out += "\t__tostring: (self: " + flags_name + ") -> string,\n";
+    out += "} & (() -> " + flags_name + ") & ((" + enum_class_name + ") -> " +
+           flags_name + ") & ((number) -> " + flags_name + ")\n";
+    return out;
 }
 
 std::string GenerateGenericAssetManagerLuauType(
@@ -1102,6 +1123,14 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
             schema_defined_type_names.insert(clazz.m_name);
             if (clazz.is_asset)
                 schema_defined_type_names.insert(clazz.m_name + "Handle");
+            for (const auto& prop : clazz.m_properties) {
+                if (prop.m_is_flags) {
+                    std::string flags_inner =
+                        ExtractFlagsInnerType(prop.m_type);
+                    if (!flags_inner.empty())
+                        schema_defined_type_names.insert(flags_inner + "Flags");
+                }
+            }
         }
         for (const auto& enum_info : schema.m_enums)
             schema_defined_type_names.insert(enum_info.m_name);
@@ -1114,6 +1143,7 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
     std::unordered_set<std::string> emitted_classes;
     std::unordered_set<std::string> emitted_enums;
     std::unordered_set<std::string> emitted_handles;
+    std::unordered_set<std::string> emitted_flags;
     std::unordered_set<std::string> emitted_generic_asset_managers;
     std::unordered_set<std::string> emitted_filename_is_types;
     std::vector<std::string> generic_asset_types;
@@ -1147,6 +1177,9 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
             }
         }
         for (const auto& enum_info : schema.m_enums) {
+            if (emitted_flags.insert(enum_info.m_name).second) {
+                out += GenerateFlagsLuauType(enum_info.m_name) + "\n";
+            }
             if (emitted_enums.insert(enum_info.m_name).second)
                 out += GenerateEnumLuauType(enum_info) + "\n";
         }

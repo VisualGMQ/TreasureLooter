@@ -1,19 +1,20 @@
 local TL = require("@game/tl_types")
-local CharacterBehavior = require("@game/character_behavior")
-local WeaponBehavior = require("@game/weapon_behavior")
+local Character = require("@game/character")
+local Weapon = require("@game/weapon")
+local ItemBehavior = require("@game/item_behavior")
 
 local _M = {}
 
-function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior.WeaponBehavior?
+function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : (TL.Entity, Weapon.Weapon?)
     if not definition:IsValid() then
-        return nil
+        return TL.null_entity
     end
 
     local ctx: TL.GameContext = TL.GetContext()
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
-        return nil
+        return TL.null_entity
     end
 
     local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
@@ -21,36 +22,29 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
     local prefab_handle = prefab_manager:Create()
 
     prefab_handle.m_transform = TL.Transform()
-    prefab_handle.m_script = TL.Path("scripts/weapon_behavior.luau")
     local control_entity = scene:Instantiate(prefab_handle)
     prefab_manager:Unload(prefab_handle)
 
     -- fill weapon prefab
     prefab_handle = prefab_manager:Create()
     if not prefab_handle:IsValid() then
-        return nil
+        return TL.null_entity
     end
 
     prefab_handle.m_transform = TL.Transform()
-    prefab_handle.m_sprite = TL.Sprite()
-    prefab_handle.m_sprite.m_image = definition.m_sprite
-    prefab_handle.m_sprite.m_size = definition.m_sprite:GetSize()
-    prefab_handle.m_sprite.m_region.m_size = definition.m_sprite:GetSize()
+    prefab_handle.m_sprite = definition.m_sprite
 
     prefab_handle.m_draw_order = TL.DrawOrderDefinition()
     prefab_handle.m_draw_order.m_enable_y_sorting = false
     prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
 
-    local anim_mgr = ctx:GetAssetsManager():GetAnimationManager()
     prefab_handle.m_animation = TL.AnimationPlayerDefinition()
-    prefab_handle.m_animation.m_animation = anim_mgr:Load("assets/gpa/anim/item/weapon_forward_attack.animation.xml", false)
+    prefab_handle.m_animation.m_animation = definition.m_attack_animation
     prefab_handle.m_animation.m_auto_play = false
     prefab_handle.m_animation.m_loop = 0
     prefab_handle.m_animation.m_rate = 1.0
 
     prefab_handle.m_trigger = definition.m_hit_shapes
-
-    prefab_handle.m_bind_points = definition.m_bind_points
 
     local weapon_entity = scene:Instantiate(prefab_handle)
     prefab_manager:Unload(prefab_handle)
@@ -61,22 +55,13 @@ function _M.CreateWeapon(definition: TL.WeaponDefinitionHandle) : WeaponBehavior
     control_relationship:AddChild(weapon_entity)
 
     -- init script by definition
-    local script = ctx:GetScriptManager():Get(control_entity) :: WeaponBehavior.WeaponBehavior
-
-    if not script then
-        TL.Log("no script binding")
-        return nil
-    end
-
-    script:_initFromDefinition(definition)
-
-    return script
+    return control_entity, Weapon.new(control_entity, definition)
 end
 
-function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDefinitionHandle) : CharacterBehavior.CharacterBehavior?
+function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDefinitionHandle, player_related_definition: TL.PlayerRelatedDefinition) : (TL.Entity, Character.Character?)
     if not definition:IsValid()  then
         TL.Log("invalid character config")
-        return nil
+        return TL.null_entity
     end
 
     local ctx: TL.GameContext = TL.GetContext()
@@ -84,19 +69,26 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
         TL.Log("scene not exists")
-        return nil
+        return TL.null_entity
     end
 
     local prefab = ctx:GetAssetsManager():GetPrefabManager():Create()
 
     if not prefab:IsValid() then
-        return nil
+        return TL.null_entity
     end
 
     -- create weapon as child entity
     local weapon = nil
+    local weapon_entity = TL.null_entity
     if definition.m_weapon ~= nil then
-        weapon = _M.CreateWeapon(definition.m_weapon)
+        -- weapon_entity, weapon = _M.CreateWeapon(definition.m_weapon)
+    end
+
+    local pickaxe = nil
+    local pickaxe_entity = TL.null_entity
+    if definition.m_pickaxe ~= nil then
+        -- pickaxe_entity, pickaxe = _M.CreateWeapon(definition.m_pickaxe)
     end
 
     -- fill prefab
@@ -130,22 +122,24 @@ function _M.CreateCharacter(transform: TL.Transform, definition: TL.CharacterDef
     prefab_manager:Unload(prefab_handle)
 
     -- set weapon as children
-    if weapon and weapon:GetEntity() ~= TL.null_entity then
-        local relationship = ctx:GetRelationshipManager():Get(entity)
-        relationship:AddChild(weapon:GetEntity())
+    local relationship = ctx:GetRelationshipManager():Get(entity)
+    if weapon and weapon_entity ~= TL.null_entity then
+        relationship:AddChild(weapon_entity)
+    end
+
+    if pickaxe and pickaxe_entity ~= TL.null_entity then
+        relationship:AddChild(pickaxe_entity)
     end
 
     ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
 
-    local script = (ctx:GetScriptManager():Get(entity) :: CharacterBehavior.CharacterBehavior)
-    if script then
-        script:_initByDefinition(definition, weapon)
-    end
-
-    return script
+    return entity, Character.new(entity, definition, weapon, pickaxe)
 end
 
-function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHandle): TL.Entity
+-- return value:
+-- index 0 : TL.Entity
+-- index 1 : ItemBehavior.ItemBehavior
+function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHandle): (TL.Entity, ItemBehavior.Item?)
     if not definition:IsValid()  then
         TL.Log("invalid item definition")
         return TL.null_entity
@@ -162,6 +156,7 @@ function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHan
     local prefab = ctx:GetAssetsManager():GetPrefabManager():Create()
 
     if not prefab:IsValid() then
+        TL.Log("prefab invalid")
         return TL.null_entity
     end
 
@@ -177,6 +172,8 @@ function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHan
     prefab_handle.m_draw_order.m_enable_y_sorting = false
     prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
 
+    prefab_handle.m_script = definition.m_script
+
     local collisions = prefab_handle.m_static_collision.m_collisions
     table.insert(collisions, definition.m_collision)
     prefab_handle.m_static_collision.m_collisions = collisions
@@ -186,8 +183,7 @@ function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHan
 
     ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
 
-    return entity
+    return entity, ItemBehavior.Item.new(definition)
 end
-
 
 return _M

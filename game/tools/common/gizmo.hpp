@@ -1,7 +1,8 @@
 #pragma once
 
-#include "engine/context.hpp"
+#include "common/context.hpp"
 
+class ClientContext;
 class CommonContext;
 
 using GizmoID = uint32_t;
@@ -34,7 +35,7 @@ public:
     bool IsVisiable() const;
     void Hovering(bool is_hovering);
     bool IsHovering() const;
-    virtual void Draw(CommonContext&) = 0;
+    virtual void Draw(ClientContext&) = 0;
 
 private:
     bool m_visiable = false;
@@ -52,7 +53,7 @@ public:
     void SetWidth(float);
 
     bool IsPointIn(const Vec2&) const override;
-    void Draw(CommonContext&) override;
+    void Draw(ClientContext&) override;
 
 private:
     float m_len = 100;
@@ -65,7 +66,7 @@ public:
     void SetLen(float);
 
     bool IsPointIn(const Vec2&) const override;
-    void Draw(CommonContext&) override;
+    void Draw(ClientContext&) override;
 
 private:
     float m_len = 20;
@@ -78,8 +79,8 @@ public:
 
     void Remove(GizmoID);
 
-    void Update(CommonContext&);
-    void Draw(CommonContext&);
+    void Update(ClientContext&);
+    void Draw(ClientContext&);
 
 private:
     std::unordered_map<GizmoID, std::unique_ptr<Gizmo>> m_gizmoes;

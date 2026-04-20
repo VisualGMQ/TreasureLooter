@@ -2,10 +2,23 @@
 	<uuid>430c877c-1547-5f94-d41c-a42763569d58</uuid>
 	<payload>
 		<type>Stab</type>
-		<sprite>assets/Items/Weapons/Rapier/Sprite.png</sprite>
+		<sprite>
+			<image>assets/Items/Weapons/Lance/Sprite.png</image>
+			<region>
+				<topleft x="0.000000" y="0.000000"/>
+				<size x="0.000000" y="0.000000"/>
+			</region>
+			<size x="0.000000" y="0.000000"/>
+			<anchor x="0.000000" y="8.000000"/>
+			<flip>
+				<item>None</item>
+			</flip>
+			<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+		</sprite>
 		<cooldown>1000.000000</cooldown>
 		<attack_speed>500.000000</attack_speed>
 		<damage>1</damage>
+		<attack_animation>assets/gpa/anim/item/weapon_forward_attack.animation.xml</attack_animation>
 		<hit_shapes>
 			<event_type>WeaponAttack</event_type>
 			<physics_shapes>

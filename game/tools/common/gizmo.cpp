@@ -1,7 +1,10 @@
 #include "gizmo.hpp"
-#include "engine/context.hpp"
-#include "engine/input/mouse.hpp"
-#include "engine/physics.hpp"
+
+#include "client/context.hpp"
+#include "client/input/mouse.hpp"
+#include "client/renderer.hpp"
+#include "common/context.hpp"
+#include "common/physics.hpp"
 
 GizmoID Gizmo::GetID() const {
     return m_id;
@@ -69,7 +72,7 @@ bool AxisGizmo::IsPointIn(const Vec2& q) const {
            FLT_EQ(y_axis_nearest_pt.DistTo(q), 0);
 }
 
-void AxisGizmo::Draw(CommonContext& ctx) {
+void AxisGizmo::Draw(ClientContext& ctx) {
     Vec2 position = GetPosition();
     Rect x_axis_rect, y_axis_rect;
     x_axis_rect.m_half_size.w = m_len;
@@ -81,8 +84,8 @@ void AxisGizmo::Draw(CommonContext& ctx) {
     y_axis_rect.m_center = position + Vec2{0, y_axis_rect.m_half_size.h} * 0.5;
 
     x_axis_rect.m_center = (x_axis_rect.m_center - ctx.m_camera.GetPosition()) * ctx.m_camera.GetScale();
-    CURRENT_CONTEXT.m_camera.transform(&x_axis_rect.m_center, nullptr);
-    CURRENT_CONTEXT.m_camera.transform(&y_axis_rect.m_center, nullptr);
+    ctx.m_camera.transform(&x_axis_rect.m_center, nullptr);
+    ctx.m_camera.transform(&y_axis_rect.m_center, nullptr);
 
     ctx.m_renderer->FillRect(x_axis_rect,
                              IsHovering() ? Color{1, 0, 0, 0.5} : Color::Red);
@@ -116,11 +119,11 @@ bool ButtonGizmo::IsPointIn(const Vec2& p) const {
     return IsPointInRect(p, rect);
 }
 
-void ButtonGizmo::Draw(CommonContext& ctx) {
+void ButtonGizmo::Draw(ClientContext& ctx) {
     Rect rect;
     rect.m_center = GetPosition();
     rect.m_half_size = Vec2{m_len, m_len};
-    CURRENT_CONTEXT.m_camera.transform(&rect.m_center, nullptr);
+    ctx.m_camera.transform(&rect.m_center, nullptr);
     ctx.m_renderer->FillRect(rect,
                              IsHovering() ? Color{0, 1, 0, 0.5} : Color::Green);
 }
@@ -129,7 +132,7 @@ GizmoID GizmoManager::genID() {
     return m_cur_id++;
 }
 
-void GizmoManager::Update(CommonContext& ctx) {
+void GizmoManager::Update(ClientContext& ctx) {
     auto& mouse = ctx.m_mouse;
     auto& left_btn = mouse->Get(MouseButtonType::Left);
     auto mouse_position = mouse->Position();
@@ -161,7 +164,7 @@ void GizmoManager::Update(CommonContext& ctx) {
     }
 }
 
-void GizmoManager::Draw(CommonContext& ctx) {
+void GizmoManager::Draw(ClientContext& ctx) {
     for (auto&& [id, gizmo] : m_gizmoes) {
         if (!gizmo->IsVisiable()) {
             continue;

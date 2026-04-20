@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/context.hpp"
+#include "common/context.hpp"
 #include "tool_context.hpp"
 
 class AssetEditorContext : public ToolContext {
