@@ -291,6 +291,7 @@ export type TriggerComponentManager = {
     IsEnable: (self: TriggerComponentManager, entity: Entity) -> boolean,
     Enable: (self: TriggerComponentManager, entity: Entity) -> (),
     Disable: (self: TriggerComponentManager, entity: Entity) -> (),
+    RegisterEntity: (self: TriggerComponentManager, entity: Entity, definition: TriggerDefinition) -> (),
 }
 export type UIComponentManager = { Get: (self: UIComponentManager, entity: Entity) -> UIWidget?, Has: (self: UIComponentManager, entity: Entity) -> boolean }
 export type TilemapComponentManager = { Get: (self: TilemapComponentManager, entity: Entity) -> TilemapComponent?, Has: (self: TilemapComponentManager, entity: Entity) -> boolean }
@@ -384,6 +385,9 @@ export type Camera = {
 export type SpriteManager = {
 	Get: (self: SpriteManager, entity: Entity) -> Sprite?,
 	Has: (self: SpriteManager, entity: Entity) -> boolean,
+    IsEnable: (self: SpriteManager, entity: Entity) -> boolean,
+    Enable: (self: SpriteManager, entity: Entity) -> (),
+    Disable: (self: SpriteManager, entity: Entity) -> (),
 	RegisterEntity: (self: SpriteManager, entity: Entity, def: Sprite) -> (),
 }
 export type DrawOrder = {
@@ -417,6 +421,9 @@ export type AnimationPlayer = {
 export type AnimationPlayerManager = {
 	Get: (self: AnimationPlayerManager, entity: Entity) -> AnimationPlayer?,
 	Has: (self: AnimationPlayerManager, entity: Entity) -> boolean,
+    IsEnable: (self: AnimationPlayerManager, entity: Entity) -> boolean,
+    Enable: (self: AnimationPlayerManager, entity: Entity) -> (),
+    Disable: (self: AnimationPlayerManager, entity: Entity) -> (),
 }
 
 export type PhysicsShape = {
@@ -464,6 +471,8 @@ export type Trigger = {
 	SetEventType: (self: Trigger, type: TriggerEventType) -> (),
 	EnableTriggerEveryFrameWhenTouch: (self: Trigger, enable: boolean) -> (),
 	IsTriggerEveryFrameWhenTouch: (self: Trigger) -> boolean,
+    GetTouchingShapes: (self: Trigger) -> {PhysicsShape},
+    GetUnderlyingShapes: (self: Trigger) -> {PhysicsShape},
 }
 
 export type TriggerEnterEvent = {
@@ -523,7 +532,7 @@ export type GameContext = {
 	GetPhysicsScene: (self: GameContext) -> PhysicsScene,
 	GetStaticCollisionManager: (self: GameContext) -> StaticCollisionManager,
 	GetEventDebugger: (self: GameContext) -> EventDebugger,
-	GetDebugDraw: (self: GameContext) -> DebugDraw?,
+	GetDebugDraw: (self: GameContext) -> DebugDraw,
 }
 
 export type GetZOrderByYSorting = (y: number, layer: number) -> number

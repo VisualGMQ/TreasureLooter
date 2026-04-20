@@ -60,6 +60,11 @@ public:
     [[nodiscard]] const std::vector<PhysicsData>& GetPhysicsData() const;
     [[nodiscard]] std::vector<PhysicsData>& GetPhysicsData();
 
+    const std::vector<PhysicsShape*>& GetTouchingShapes();
+
+    // for debug
+    std::vector<PhysicsShape*> GetUnderlyingShapes() const;
+
     void SetEventType(TriggerEventType type);
     [[nodiscard]] TriggerEventType GetEventType() const;
 

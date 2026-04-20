@@ -22,11 +22,12 @@
 #include "engine/relationship.hpp"
 #include "engine/renderer.hpp"
 #include "engine/scene.hpp"
-#include "engine/static_collision.hpp"
 #include "engine/script/script.hpp"
+#include "engine/script/script_flags_binding.hpp"
 #include "engine/script/script_handle_binding.hpp"
 #include "engine/script/script_imgui_binding.hpp"
 #include "engine/sprite.hpp"
+#include "engine/static_collision.hpp"
 #include "engine/text.hpp"
 #include "engine/tilemap.hpp"
 #include "engine/timer.hpp"
@@ -781,6 +782,9 @@ void bindSprite(lua_State* L) {
                                  const SpriteDefinition& s) {
                                  m->RegisterEntity(e, s);
                              })
+                .addFunction("IsEnable", &SpriteManager::IsEnable)
+                .addFunction("Enable", &SpriteManager::Enable)
+                .addFunction("Disable", &SpriteManager::Disable)
             .endClass()
         .endNamespace();
 }
@@ -843,6 +847,9 @@ void bindAnimationPlayer(lua_State* L) {
                 .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
                     return m->Has(e);
                 })
+                .addFunction("IsEnable", &AnimationPlayerManager::IsEnable)
+                .addFunction("Enable", &AnimationPlayerManager::Enable)
+                .addFunction("Disable", &AnimationPlayerManager::Disable)
                 .addFunction("RegisterEntity",
                              +[](AnimationPlayerManager* m, Entity e, const AnimationPlayerDefinition& def) {
                                  m->RegisterEntity(e, def);
@@ -1190,6 +1197,8 @@ void bindTrigger(lua_State* L) {
                 .addFunction("SetEventType", &Trigger::SetEventType)
                 .addFunction("EnableTriggerEveryFrameWhenTouch", &Trigger::EnableTriggerEveryFrameWhenTouch)
                 .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
+                .addFunction("GetTouchingShapes", &Trigger::GetTouchingShapes)
+                .addFunction("GetUnderlyingShapes", &Trigger::GetUnderlyingShapes)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
@@ -1197,6 +1206,10 @@ void bindTrigger(lua_State* L) {
                 .addFunction("Enable", &TriggerComponentManager::Enable)
                 .addFunction("Disable", &TriggerComponentManager::Disable)
                 .addFunction("IsEnable", &TriggerComponentManager::IsEnable)
+                .addFunction("RegisterEntity", +[](TriggerComponentManager* manager, Entity entity,  const TriggerDefinition& definition) {
+                        TL_RETURN_IF_NULL(manager);
+                        manager->RegisterEntity(entity, entity, definition);
+                        })
             .endClass()
         .endNamespace();
 }

@@ -134,12 +134,12 @@ void CommonContext::Shutdown() {
     m_should_exit = true;
     m_is_inited = false;
 
+    m_script_component_manager.reset();
+
     if (m_scene_manager) {
         m_scene_manager->Switch({});
     }
     m_scene_manager.reset();
-
-    m_script_component_manager.reset();
 
     m_draw_order_manager.reset();
     m_trigger_component_manager.reset();

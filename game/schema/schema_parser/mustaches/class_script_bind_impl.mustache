@@ -29,7 +29,18 @@ void bind{{{type}}}TypeFromSchema(lua_State* L) {
                      })
         {{/is_optional}}
         {{^is_optional}}
+        {{#is_flags}}
+        .addProperty("{{{property_name}}}",
+                     +[](const {{{type}}}* self) -> {{{property_type}}}* {
+                         return const_cast<{{{property_type}}}*>(&self->{{{property_name}}});
+                     },
+                     +[]({{{type}}}* self, const {{{property_type}}}& value) {
+                         self->{{{property_name}}} = value;
+                     })
+        {{/is_flags}}
+        {{^is_flags}}
         .addProperty("{{{property_name}}}", &{{{type}}}::{{{property_name}}}, true)
+        {{/is_flags}}
         {{/is_optional}}
         {{/property_entries}}
         .endClass()

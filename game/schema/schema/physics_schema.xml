@@ -21,6 +21,8 @@
     <enum name="TriggerEventType">
         <item name="Coin"/>
         <item name="WeaponAttack"/>
+
+        <item name="InteractableDetect"/>
     </enum>
 
     <class name="TriggerDefinition">

@@ -2,7 +2,7 @@ local TL = require("@game/tl_types")
 local ScriptBehavior = require("@game/script_behavior")
 local Creation = require("@game/creation")
 local DebugPanel = require("@game/debug_panel")
-local CharacterBehavior = require("@game/character_behavior")
+local PlayerBehavior = require("@game/player_behavior")
 
 local GameEntry = {}
 GameEntry.__index = GameEntry
@@ -103,22 +103,25 @@ function GameEntry.OnInit(self: GameEntry)
 
     local player_spawn_point = spawn_point_infos[level_definition.m_map_definition.m_player_spawn_point]
     if player_spawn_point then
-        local definition = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load("assets/gpa/monsters/waggo/waggo.character_def.xml")
+        local definition = level_definition.m_map_definition.m_player_character
         local transform: TL.Transform = TL.Transform()
         transform.m_position = player_spawn_point
-        local character = Creation.CreateCharacter(transform, definition)
+
+        local entity, character = Creation.CreateCharacter(transform, definition)
 
         if not character then
             TL.Log("failed to create player, entity is null")
             return
         end
-        local player_script = script_mgr:Get(character.m_entity)
+        character:SetTeamID(level_definition.m_map_definition.m_player_team_id)
+        local player_script = script_mgr:Get(entity)
         if player_script then
-            (player_script :: CharacterBehavior.CharacterBehavior):SetTeamID(level_definition.m_map_definition.m_player_team_id)
+            local behavior = player_script :: PlayerBehavior.PlayerBehavior
+            behavior:_init(character, level_definition.m_map_definition.m_player_related_definition)
         end
         TL.Log("create player")
 
-        player_put_on_layer_relationship:AddChild(character:GetEntity())
+        player_put_on_layer_relationship:AddChild(entity)
         TL.Log("put player on layer ", level_definition.m_map_definition.m_player_put_on_layer)
     else
         TL.Log("no player spawn point")
@@ -146,17 +149,18 @@ function GameEntry.OnInit(self: GameEntry)
                 continue
             end
 
-            local character = Creation.CreateCharacter(transform, handle)
+            local entity, character = Creation.CreateCharacter(transform, handle)
             if character == nil then
                 TL.Log("spawn failed: create character failed")
                 continue
             end
-            local player_script = script_mgr:Get(character.m_entity)
-            if player_script then
-                (player_script :: CharacterBehavior.CharacterBehavior):SetTeamID(spawn_object_info.m_team_id)
+            character:SetTeamID(spawn_object_info.m_team_id)
+            local script = script_mgr:Get(entity)
+            if script then
+                script:_init(character)
             end
 
-            player_put_on_layer_relationship:AddChild(character:GetEntity())
+            player_put_on_layer_relationship:AddChild(entity)
             TL.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
         elseif TL.FilenameIsPrefab(asset_path) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(asset_path)
@@ -177,15 +181,14 @@ function GameEntry.OnInit(self: GameEntry)
                 continue
             end
 
-            local item_entity = Creation.CreateItem(transform, handle)
-            if item_entity == TL.null_entity then
+            local entity, item_script = Creation.CreateItem(transform, handle)
+            if entity == TL.null_entity then
                 TL.Log("spawn failed: create item failed")
                 continue
             end
 
-            player_put_on_layer_relationship:AddChild(item_entity)
+            player_put_on_layer_relationship:AddChild(entity)
             TL.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
-
         else
             TL.Log("spawn failed: no support file type")
         end

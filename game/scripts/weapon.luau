@@ -1,9 +1,7 @@
 local TL = require("@game/tl_types")
-local ScriptBehavior = require("@game/script_behavior")
 
-local WeaponBehavior = {}
-WeaponBehavior.__index = WeaponBehavior
-setmetatable(WeaponBehavior, { __index = ScriptBehavior })
+local Weapon = {}
+Weapon.__index = Weapon
 
 --[[
 Weapon node tree:
@@ -12,7 +10,7 @@ Weapon node tree:
   |---- weapon sprite & collision
 --]]
 
-type WeaponBehaviorData = {
+type WeaponData = {
     m_type : TL.WeaponType,
     m_image : TL.ImageHandle,
     m_attack_speed : number,
@@ -24,23 +22,19 @@ type WeaponBehaviorData = {
     m_relationship: TL.Relationship,
     m_dir : TL.Vec2,
 
-    m_control_node_transform: TL.Transform
+    m_control_node_transform: TL.Transform,
 }
 
-export type WeaponBehavior = typeof(setmetatable({} :: WeaponBehaviorData, WeaponBehavior)) & ScriptBehavior.ScriptBehavior
+export type Weapon = typeof(setmetatable({} :: WeaponData, Weapon))
 
-function WeaponBehavior.new(entity: number): WeaponBehavior
-    local self = ScriptBehavior.new(entity)
+function Weapon.new(entity: TL.Entity, definition: TL.WeaponDefinitionHandle): Weapon?
+    local self = {} :: WeaponData
+    self = setmetatable(self, Weapon)
 
     self.m_dir = TL.Vec2.ZERO
 
-    return setmetatable(self, WeaponBehavior)
-end
-
-function WeaponBehavior.OnInit(self: WeaponBehavior)
     local ctx: TL.GameContext = TL.GetContext()
 
-    local entity = self:GetEntity()
     local transform = ctx:GetTransformManager():Get(entity)
     if transform then
         self.m_control_node_transform = transform
@@ -53,11 +47,20 @@ function WeaponBehavior.OnInit(self: WeaponBehavior)
         self:_initWeapon(self.m_weapon_entity)
     else
         TL.Log("weapon controller don't has children")
-        return
+        return nil
     end
+
+    if definition:IsValid() then
+        self.m_type = definition.m_type
+        self.m_image = definition.m_sprite
+        self.m_attack_speed = definition.m_attack_speed
+        self.m_cooldown = definition.m_cooldown
+    end
+
+    return self
 end
 
-function WeaponBehavior._initWeapon(self: WeaponBehavior, entity: TL.Entity)
+function Weapon._initWeapon(self: Weapon, entity: TL.Entity)
     local ctx: TL.GameContext = TL.GetContext()
 
     local transform = ctx:GetTransformManager():Get(entity)
@@ -76,31 +79,24 @@ function WeaponBehavior._initWeapon(self: WeaponBehavior, entity: TL.Entity)
     if relationship then
         self.m_relationship = relationship
     end
-    
+
     ctx:GetTriggerComponentManager():Disable(self.m_weapon_entity)
 end
 
-function WeaponBehavior._initFromDefinition(self: WeaponBehavior, definition: TL.WeaponDefinitionHandle)
-    self.m_type = definition.m_type
-    self.m_image = definition.m_sprite
-    self.m_attack_speed = definition.m_attack_speed
-    self.m_cooldown = definition.m_cooldown
-end
-
-function WeaponBehavior.ChangeDir(self: WeaponBehavior, dir: TL.Vec2)
+function Weapon.ChangeDir(self: Weapon, dir: TL.Vec2)
     self.m_dir = dir
     self.m_control_node_transform.m_rotation = TL.Degrees(TL.GetAngle(self.m_dir, TL.Vec2.Y_UNIT * -1))
 end
 
-function WeaponBehavior.GetDir(self: WeaponBehavior): TL.Vec2
+function Weapon.GetDir(self: Weapon): TL.Vec2
     return self.m_dir
 end
 
-function WeaponBehavior.Attack(self: WeaponBehavior)
+function Weapon.Attack(self: Weapon)
     local ctx: TL.GameContext = TL.GetContext()
-    
+
     ctx:GetTriggerComponentManager():Enable(self.m_weapon_entity)
-    
+
     if not self.m_anim_player:IsPlaying() then
         self.m_anim_player:Stop()
         self.m_anim_player:Play()
@@ -110,13 +106,13 @@ function WeaponBehavior.Attack(self: WeaponBehavior)
     self.m_control_node_transform.m_rotation = TL.Degrees(angle)
 end
 
-function WeaponBehavior.OnUpdate(self: WeaponBehavior, elapse_time: number)
+function Weapon.OnUpdate(self: Weapon, elapse_time: number)
     local ctx: TL.GameContext = TL.GetContext()
-    
+
     -- FIXME: set state every frame may cause performance down
     if not self.m_anim_player:IsPlaying() then
         ctx:GetTriggerComponentManager():Disable(self.m_weapon_entity)
     end
 end
 
-return WeaponBehavior
+return Weapon

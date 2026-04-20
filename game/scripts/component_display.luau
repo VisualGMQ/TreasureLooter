@@ -291,36 +291,25 @@ function _M.DisplayTrigger(tr: TL.Trigger)
 	ImGui.PushID("Trigger")
 	ImGui.Text("GetEventType: " .. tostring(tr:GetEventType()))
 	readonly_checkbox("IsTriggerEveryFrameWhenTouch", tr:IsTriggerEveryFrameWhenTouch())
-	local ok, list = pcall(function()
-		return tr:GetPhysicsData()
-	end)
-	if not ok then
-		ImGui.Text("GetPhysicsData: [error]")
-	elseif list == nil then
-		ImGui.Text("GetPhysicsData: nil")
-	else
-		local n = #(list :: any)
-		if n == 0 then
-			ImGui.Text("GetPhysicsData: (empty)")
-		else
-			for i = 1, n do
-				local pd = (list :: any)[i] :: TL.TriggerPhysicsData
-				if ImGui.TreeNode("PhysicsData #" .. tostring(i)) then
-					_M.DisplayVec2("m_local_position", pd.m_local_position)
-					local sh = pd.m_shape
-					if sh then
-						if ImGui.TreeNode("m_shape") then
-							_M.DisplayPhysicsShapeReadonly("tr_ph_" .. tostring(i), sh)
-							ImGui.TreePop()
-						end
-					else
-						ImGui.Text("m_shape: nil")
-					end
-					ImGui.TreePop()
-				end
-			end
-		end
-	end
+    local shapes = tr:GetUnderlyingShapes()
+    if #shapes == 0 then
+        ImGui.Text("underlying shapes: (empty)")
+    else
+        for i = 1, #shapes do
+            if ImGui.TreeNode("underlying shapes #" .. tostring(i)) then
+                local shape = shapes[i]
+                if shape then
+                    if ImGui.TreeNode("shape "..tostring(i)) then
+                        _M.DisplayPhysicsShapeReadonly("tr_ph_" .. tostring(i), shape)
+                        ImGui.TreePop()
+                    end
+                else
+                    ImGui.Text("m_shape: nil")
+                end
+                ImGui.TreePop()
+            end
+        end
+    end
 	ImGui.PopID()
 end
 

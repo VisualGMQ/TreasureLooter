@@ -21,6 +21,11 @@
 			</layers>
 			<player_put_on_layer>arch</player_put_on_layer>
 			<player_spawn_point>player_spawn_point</player_spawn_point>
+			<player_character>assets/gpa/monsters/waggo/waggo.character_def.xml</player_character>
+			<player_related_definition>
+				<interactable_hint_image>assets/UI/Arrow.png</interactable_hint_image>
+				<interactable_hint_animation>assets/gpa/anim/item/interactable_hint_floating.animation.xml</interactable_hint_animation>
+			</player_related_definition>
 			<player_team_id>team1</player_team_id>
 		</map_definition>
 		<spawn_objects>
@@ -28,9 +33,6 @@
 				<key>slime_spawn_point</key>
 				<value>
 					<asset>assets/gpa/monsters/slime2/slime2.character_def.xml</asset>
-					<team_id>
-						<value>neutral</value>
-					</team_id>
 				</value>
 			</elem>
 			<elem>
@@ -39,16 +41,22 @@
 					<asset>assets/gpa/items/mine.item.xml</asset>
 				</value>
 			</elem>
-            <elem>
+			<elem>
 				<key>mine_spawn_point2</key>
 				<value>
 					<asset>assets/gpa/items/mine.item.xml</asset>
 				</value>
 			</elem>
-            <elem>
+			<elem>
 				<key>mine_spawn_point3</key>
 				<value>
 					<asset>assets/gpa/items/mine.item.xml</asset>
+				</value>
+			</elem>
+			<elem>
+				<key>mineral_fragment_spawn_point</key>
+				<value>
+					<asset>assets/gpa/items/mineral_fragments.item.xml</asset>
 				</value>
 			</elem>
 		</spawn_objects>

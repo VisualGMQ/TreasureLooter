@@ -80,6 +80,18 @@ std::vector<Trigger::PhysicsData>& Trigger::GetPhysicsData() {
     return m_physics_data;
 }
 
+const std::vector<PhysicsShape*>& Trigger::GetTouchingShapes() {
+    return m_touch_shapes;
+}
+
+std::vector<PhysicsShape*> Trigger::GetUnderlyingShapes() const {
+    std::vector<PhysicsShape*> shapes;
+    for (auto& data : m_physics_data) {
+        shapes.push_back(data.m_shape.get());
+    }
+    return shapes;
+}
+
 void Trigger::SetEventType(TriggerEventType type) {
     m_event_type = type;
 }
@@ -170,7 +182,8 @@ void TriggerComponentManager::Update() {
     }
 
     for (auto& [entity, trigger] : m_components) {
-        TL_CONTINUE_IF_FALSE(trigger.m_enable && !trigger.m_component->m_physics_data.empty());
+        TL_CONTINUE_IF_FALSE(trigger.m_enable &&
+                             !trigger.m_component->m_physics_data.empty());
 
         trigger.m_component->Update();
     }

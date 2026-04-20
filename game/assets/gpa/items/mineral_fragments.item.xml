@@ -1,13 +1,13 @@
 <ItemDefinition>
-    <uuid>ff549494-5d5c-4099-9628-99386595f43a</uuid>
+    <uuid>3cd10baa-231e-421e-aa34-ef994737fc2b</uuid>
     <payload>
         <sprite>
             <image>assets/Backgrounds/Tilesets/TilesetNature.png</image>
             <region>
-                <topleft x="64.000000" y="224.000000" />
+                <topleft x="0.000000" y="256.000000" />
                 <size x="16.000000" y="16.000000" />
             </region>
-            <size x="16.000000" y="16.000000" />
+            <size x="0.000000" y="0.000000" />
             <anchor x="0.000000" y="0.000000" />
             <flip>
                 <item>None</item>
@@ -15,7 +15,7 @@
             <color r="1.000000" g="1.000000" b="1.000000" a="1.000000" />
         </sprite>
         <collision>
-            <uuid>3cc13e8f-129b-45a8-af5e-7201f2002fb7</uuid>
+            <uuid>96148d43-e231-4a64-adad-61dbdc078237</uuid>
             <payload>
                 <is_rect>true</is_rect>
                 <rect>
@@ -27,18 +27,19 @@
                     <radius>0.000000</radius>
                 </circle>
                 <collision_layer>
-                    <elem>Obstacle</elem>
                     <elem>Interactable</elem>
                 </collision_layer>
                 <collision_mask>
-                    <elem>CCT</elem>
+                    <elem>Interactable</elem>
                 </collision_mask>
             </payload>
         </collision>
         <behavior>
-            <item>Diggable</item>
+            <item>Pickupable</item>
+            <item>Stackable</item>
         </behavior>
         <type>Mine</type>
+        <script />
     </payload>
 </ItemDefinition>
 

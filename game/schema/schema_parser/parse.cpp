@@ -202,6 +202,7 @@ std::optional<PropertyInfo> ParseFlags(SchemaInfo& schema,
     property.m_name = name->value();
     property.m_type = std::string{"Flags<"} + type->value() + ">";
     property.m_optional = false;
+    property.m_is_flags = true;
     schema.m_include_hints = schema.m_include_hints | IncludeHint::Flags;
     return property;
 }

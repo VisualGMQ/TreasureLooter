@@ -631,6 +631,7 @@ std::string GenerateEnumScriptBindImplCode(const EnumInfo& enum_info) {
     kainjow::mustache::data data;
     data.set("type", enum_info.m_name);
     data.set("enum_name", enum_info.m_name);
+    data.set("enum_flags_name", enum_info.m_name + "Flags");
 
     kainjow::mustache::data enum_values_data{
         kainjow::mustache::data::type::list};
@@ -683,16 +684,19 @@ std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
 
     kainjow::mustache::data property_entries{
         kainjow::mustache::data::type::list};
-
     for (auto& prop : info.m_properties) {
         std::string property_name_with_prefix = "m_" + prop.m_name;
         kainjow::mustache::data prop_data;
         prop_data.set("type", info.m_name);
         prop_data.set("property_name", property_name_with_prefix);
+        prop_data.set("property_type", prop.m_type);
         if (prop.m_optional) {
             prop_data.set("is_optional", true);
             prop_data.set("optional_inner_type",
                           ExtractOptionalInnerType(prop.m_type));
+        }
+        if (prop.m_is_flags) {
+            prop_data.set("is_flags", true);
         }
         property_entries << prop_data;
     }
@@ -722,22 +726,18 @@ std::string GenerateSchemaScriptBindHeaderCode(const SchemaInfo& schema) {
     data.set("enum_stack_specializations", enum_stack_specializations_data);
 
     kainjow::mustache::data registers_data{kainjow::mustache::data::type::list};
-    kainjow::mustache::data bindings_data{kainjow::mustache::data::type::list};
 
     for (auto& enum_value : schema.m_enums) {
         auto code = GenerateEnumScriptBindHeaderCode(enum_value);
         registers_data << kainjow::mustache::data{"register", code};
-        bindings_data << kainjow::mustache::data{"binding", code};
     }
 
     for (auto& class_value : schema.m_classes) {
         auto code = GenerateClassScriptBindHeaderCode(class_value);
         registers_data << kainjow::mustache::data{"register", code};
-        bindings_data << kainjow::mustache::data{"binding", code};
     }
 
     data.set("registers", registers_data);
-    data.set("bindings", bindings_data);
 
     return header_mustache.render(data);
 }
@@ -1010,7 +1010,8 @@ std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     if (it != Cpp2Luau.end()) return it->second;
     std::string inner = ExtractOptionalInnerType(cpp_type);
     if (!inner.empty()) return ConvertCppTypeToLuauType(inner) + "?";
-    if (!ExtractFlagsInnerType(cpp_type).empty()) return "number";
+    std::string flags_inner = ExtractFlagsInnerType(cpp_type);
+    if (!flags_inner.empty()) return flags_inner + "Flags";
     std::string vec_inner = ExtractVectorInnerType(cpp_type);
     if (!vec_inner.empty())
         return "{ " + ConvertCppTypeToLuauType(vec_inner) + " }";
@@ -1075,6 +1076,24 @@ std::string GenerateAssetFilenameIsLuauType(
            " = (filename: Path) -> boolean\n";
 }
 
+std::string GenerateFlagsLuauType(const std::string& enum_class_name) {
+    const std::string flags_name = enum_class_name + "Flags";
+    std::string out;
+    out += "export type " + flags_name + " = {\n";
+    out += "\tValue: (self: " + flags_name + ") -> number,\n";
+    out += "\tRemove: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> (),\n";
+    out += "\t__bor: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> " + flags_name + ",\n";
+    out += "\t__band: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> " + flags_name + ",\n";
+    out += "\t__bnot: (self: " + flags_name + ") -> " + flags_name + ",\n";
+    out += "\t__tostring: (self: " + flags_name + ") -> string,\n";
+    out += "} & (() -> " + flags_name + ") & ((" + enum_class_name +
+           ") -> " + flags_name + ") & ((number) -> " + flags_name + ")\n";
+    return out;
+}
+
 std::string GenerateGenericAssetManagerLuauType(
     const std::string& asset_class_name) {
     const std::string manager_name = asset_class_name + "AssetManager";
@@ -1102,6 +1121,13 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
             schema_defined_type_names.insert(clazz.m_name);
             if (clazz.is_asset)
                 schema_defined_type_names.insert(clazz.m_name + "Handle");
+            for (const auto& prop : clazz.m_properties) {
+                if (prop.m_is_flags) {
+                    std::string flags_inner = ExtractFlagsInnerType(prop.m_type);
+                    if (!flags_inner.empty())
+                        schema_defined_type_names.insert(flags_inner + "Flags");
+                }
+            }
         }
         for (const auto& enum_info : schema.m_enums)
             schema_defined_type_names.insert(enum_info.m_name);
@@ -1114,6 +1140,7 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
     std::unordered_set<std::string> emitted_classes;
     std::unordered_set<std::string> emitted_enums;
     std::unordered_set<std::string> emitted_handles;
+    std::unordered_set<std::string> emitted_flags;
     std::unordered_set<std::string> emitted_generic_asset_managers;
     std::unordered_set<std::string> emitted_filename_is_types;
     std::vector<std::string> generic_asset_types;
@@ -1147,6 +1174,9 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
             }
         }
         for (const auto& enum_info : schema.m_enums) {
+            if (emitted_flags.insert(enum_info.m_name).second) {
+                out += GenerateFlagsLuauType(enum_info.m_name) + "\n";
+            }
             if (emitted_enums.insert(enum_info.m_name).second)
                 out += GenerateEnumLuauType(enum_info) + "\n";
         }

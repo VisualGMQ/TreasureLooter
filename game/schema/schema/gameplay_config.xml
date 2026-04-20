@@ -13,6 +13,12 @@
         <item name="team2" />
     </enum>
 
+    <enum name="ScriptType">
+        <item name="Unknown" />
+        <item name="Monster" />
+        <item name="Item" />
+    </enum>
+
     <enum name="WeaponType">
         <item name="Sweep" />
         <item name="Stab" />
@@ -46,21 +52,35 @@
         <element name="script" type="Path" />
 
         <handle name="weapon" type="WeaponDefinition" />
+
+        <element name="interact_range" type="float" default="50" />
     </asset>
 
+    <class name="PlayerRelatedDefinition">
+        <handle name="interactable_hint_image" type="Image" />
+        <handle name="interactable_hint_animation" type="Animation" />
+    </class>
+
     <enum name="ItemBehavior">
-        <item name="None" />
-        <item name="Diggable" />
-        <item name="Choppable" />
-        <item name="Eatable" />
+        <item name="None" value="0" />
+        <item name="Diggable" value="0x01" />
+        <item name="Choppable" value="0x02" />
+        <item name="Eatable" value="0x04" />
+
+        <item name="Pickupable" value="0x08" />
+        <item name="Stackable" value="0x10" />
+    </enum>
+
+    <enum name="ItemType">
+        <item name="Unknown" />
+        <item name="Mine" />
     </enum>
 
     <asset name="ItemDefinition" extension=".item">
         <element name="sprite" type="SpriteDefinition" />
         <handle name="collision" type="PhysicsShapeDefinition" />
-        <element name="behavior" type="ItemBehavior" default="ItemBehavior::None" />
-        <element name="stackable" type="bool" default="false" />
-        <element name="pickupable" type="bool" default="false" />
+        <flags name="behavior" type="ItemBehavior" />
+        <element name="type" type="ItemType" default="ItemType::Unknown" />
     </asset>
 
     <class name="MapLayerDefinition">
@@ -74,6 +94,8 @@
 
         <element name="player_put_on_layer" type="std::string" />
         <element name="player_spawn_point" type="std::string" />
+        <handle name="player_character" type="CharacterDefinition" />
+        <element name="player_related_definition" type="PlayerRelatedDefinition" />
         <element name="player_team_id" type="TeamID" default="TeamID::neutral" />
     </class>
 

@@ -93,9 +93,6 @@ public:
 
     const expose_type Get(Entity entity) const {
         if (auto it = m_components.find(entity); it != m_components.end()) {
-            if (!it->second.m_enable) {
-                return nullptr;
-            }
             if constexpr (is_handle) {
                 return it->second.m_component;
             } else {
