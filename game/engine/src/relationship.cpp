@@ -1,6 +1,7 @@
 #include "engine/relationship.hpp"
 
 #include "engine/context.hpp"
+#include "engine/entity.hpp"
 #include "engine/profile.hpp"
 #include "engine/scene.hpp"
 #include "engine/transform.hpp"
@@ -37,6 +38,16 @@ void Relationship::RemoveChild(Entity entity) {
         relationship->m_parent = null_entity;
     }
     m_children.erase(it);
+}
+
+void Relationship::RemoveFromParent() {
+    TL_RETURN_IF_FALSE(m_owner != null_entity);
+
+    auto parent_relationship = CURRENT_CONTEXT.m_relationship_manager->Get(GetParent());
+
+    if (parent_relationship) {
+        parent_relationship->RemoveChild(m_owner);
+    }
 }
 
 void RelationshipManager::Update() {

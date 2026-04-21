@@ -206,7 +206,8 @@ export type Relationship = {
     Get: (self: Relationship, index: number) -> Entity,
     GetChildrenCount: (self: Relationship) -> number,
     GetParent: (self: Relationship) -> Entity,
-    RemoveChild: (self: Relationship) -> (),
+    RemoveChild: (self: Relationship, entity: Entity) -> (),
+    RemoveFromParent: (self: Relationship) -> (),
 }
 
 export type ScriptBinaryDataManager = {

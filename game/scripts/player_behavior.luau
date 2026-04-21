@@ -67,47 +67,51 @@ end
 function PlayerBehavior.OnUpdate(self: PlayerBehavior, elapse_time: TL.TimeType)
     local ctx = TL.GetContext()
 	local input_manager = ctx:GetInputManager()
-	local action = input_manager:GetAction("Attack")
-	local axises = input_manager:MakeAxises("MoveX", "MoveY"):Value(0)
-	if (action:IsPressed(0)) then
-		self.m_character:Attack()
-	end
-	self.m_character:Move(axises, elapse_time)
+
+    do
+        local action = input_manager:GetAction("Attack")
+        local axises = input_manager:MakeAxises("MoveX", "MoveY"):Value(0)
+        if action:IsPressed(0) then
+            self.m_character:Attack()
+        end
+        self.m_character:Move(axises, elapse_time)
+    end
+
+    do
+        local action = input_manager:GetAction("Interact")
+        if action:IsPressed(0) then
+            self.m_character:TryPickup()
+        end
+    end
+
+    do
+        local action = input_manager:GetAction("PutItemDown")
+        if action:IsPressed(0) then
+            self.m_character:PutItemDown()
+        end
+    end
+
 	ctx:GetCamera():MoveTo(self.m_character.m_transform.m_position)
 end
 
 function PlayerBehavior.OnRender(self: PlayerBehaviorData)
-    self:ShowDetectedInteractableItems(self.m_character.m_transform:GetGlobalPosition())
+    self:ShowDetectedInteractableItems()
 end
 
-function PlayerBehavior.ShowDetectedInteractableItems(self: PlayerBehavior, entity_position: TL.Vec2)
-    if not self.m_character.m_interactable_detect_trigger then
-        return
-    end
+function PlayerBehavior.ShowDetectedInteractableItems(self: PlayerBehavior)
+    local nearby_interactable_object = self.m_character:GetNearbyInteractableObject()
 
-    local shapes = self.m_character.m_interactable_detect_trigger:GetTouchingShapes()
     local ctx: TL.GameContext = TL.GetContext()
-    if #shapes == 0 then
+    if not nearby_interactable_object then
         ctx:GetSpriteManager():Disable(self.m_interactable_hint_entity)
         local anim_player = ctx:GetAnimationPlayerManager():Get(self.m_interactable_hint_entity)
         anim_player:Stop()
         return
     end
 
-    local nearest_shape = shapes[1]
-    local nearest_dist = math.huge
-    for _, shape: TL.PhysicsShape in ipairs(shapes) do
-        local position = shape:GetPosition()
-        local dist = (entity_position - position):Length()
-        if dist < nearest_dist then
-            nearest_dist = dist
-            nearest_shape = shape
-        end
-    end
-
     ctx:GetSpriteManager():Enable(self.m_interactable_hint_entity)
     local transform = ctx:GetTransformManager():Get(self.m_interactable_hint_entity)
-    transform.m_position = nearest_shape:GetPosition()
+    transform.m_position = nearby_interactable_object:GetPosition()
     transform.m_scale.x = 0.5
     transform.m_scale.y = 0.5
     transform.m_position.y -= 10

@@ -39,6 +39,7 @@
             <item>Diggable</item>
         </behavior>
         <type>Mine</type>
+        <script>scripts/item_behavior.luau</script>
     </payload>
 </ItemDefinition>
 

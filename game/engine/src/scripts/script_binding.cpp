@@ -1223,6 +1223,7 @@ void bindRelationship(lua_State* L) {
                 .addFunction("GetChildrenCount", &Relationship::GetChildrenCount)
                 .addFunction("GetParent", &Relationship::GetParent)
                 .addFunction("RemoveChild", &Relationship::RemoveChild)
+                .addFunction("RemoveFromParent", &Relationship::RemoveFromParent)
             .endClass()
             .beginClass<RelationshipManager>("RelationshipManager")
                 .addFunction("Get", +[](RelationshipManager* m, Entity e) {

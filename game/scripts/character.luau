@@ -2,11 +2,49 @@ local TL = require("@game/tl_types")
 local Weapon = require("@game/weapon")
 local Common = require("@game/common")
 local ScriptBehavior = require("@game/script_behavior")
+local ItemBehavior = require("@game/item_behavior")
 
 local Character = {}
 Character.__index = Character
 
+---- hurt data
+
+type HurtData = {
+	m_hurt_blinking_timer: TL.Timer,
+	m_in_red_state: boolean,
+}
+
+function Character.createHurtData() : HurtData
+    local self = {} :: HurtData
+    local ctx: TL.GameContext = TL.GetContext()
+	self.m_hurt_blinking_timer = ctx:GetTimerManager():Create(0.1, TL.TimerEventType.Unknown, 8)
+	self.m_in_red_state = false
+    return self
+end
+
+---- pickup data
+
+local PickupData = {}
+PickupData.__index = PickupData
+
+export type PickupData = {
+    m_items: { ItemBehavior.ItemBehavior },
+}
+
+function PickupData.HasObject(self: PickupData)
+    return #self.m_items > 0
+end
+
+function Character.createPickupData() : PickupData
+    local self = {} :: PickupData
+    self.m_items = {}
+    return setmetatable(self, PickupData)
+end
+
+---- character data
+
 type CharacterData = {
+    m_entity: TL.Entity,
     m_weapon : Weapon.Weapon?,
 
     -- from definition
@@ -25,17 +63,17 @@ type CharacterData = {
     -- from runtime
     m_team_id: TL.TeamID,
 	m_direction : Common.Direction,
+    m_forward_dir : TL.Vec2,
 
-    -- hurt relate
-	m_change_move_dir_timer: TL.Timer,
-	m_hurt_blinking_timer: TL.Timer,
-	m_in_red_state: boolean,
+    m_hurt_data: HurtData,
+    m_pickup_data: PickupData,
 }
 
 export type Character = typeof(setmetatable({} :: CharacterData, Character))
 
 function Character.new(entity: TL.Entity, definition: TL.CharacterDefinitionHandle, weapon: Weapon.Weapon?): Character
     local self = {} :: CharacterData
+    self.m_entity = entity
     self.m_weapon = weapon
 
     self.m_hp = definition.m_hp
@@ -45,6 +83,7 @@ function Character.new(entity: TL.Entity, definition: TL.CharacterDefinitionHand
     self.m_move_down_anim = definition.m_move_down_animation
     self.m_move_speed = definition.m_speed
     self.m_team_id = TL.TeamID.Team_invalid
+    self.m_forward_dir = TL.Vec2.Y_UNIT
 
     local ctx: TL.GameContext = TL.GetContext()
     local trigger_manager = ctx:GetTriggerComponentManager()
@@ -55,10 +94,10 @@ function Character.new(entity: TL.Entity, definition: TL.CharacterDefinitionHand
 	self.m_transform = ctx:GetTransformManager():Get(entity)
 	self.m_anim_player = ctx:GetAnimationPlayerManager():Get(entity)
 
-    self.m_direction = Common.Direction.Down
+    self.m_hurt_data = Character.createHurtData()
+    self.m_pickup_data = Character.createPickupData()
 
-	self.m_hurt_blinking_timer = ctx:GetTimerManager():Create(0.1, TL.TimerEventType.Unknown, 8)
-	self.m_in_red_state = false
+    self.m_direction = Common.Direction.Down
 
     return setmetatable(self, Character)
 end
@@ -97,9 +136,12 @@ function Character.Move(self:Character, dir: TL.Vec2, duration: TL.TimeType)
 		if self.m_anim_player ~= nil then
 			self.m_anim_player:Stop()
 		end
+        return
 	elseif self.m_weapon and not self.m_weapon.m_anim_player:IsPlaying() then
 		self.m_weapon:ChangeDir(dir:Normalize())
 	end
+
+    self.m_forward_dir = dir
 
 	local old_dir = self.m_direction
 	if dir.x < 0 then
@@ -149,9 +191,9 @@ function Character.Move(self:Character, dir: TL.Vec2, duration: TL.TimeType)
 end
 
 function Character.Hurt(self: Character, entity: TL.Entity, damage: number)
-	if not self.m_hurt_blinking_timer:IsRunning() then
+	if not self.m_hurt_data.m_hurt_blinking_timer:IsRunning() then
 		self.m_hp = self.m_hp - damage
-		self.m_hurt_blinking_timer:Start()
+		self.m_hurt_data.m_hurt_blinking_timer:Start()
 	end
 
 	if self.m_hp <= 0 then
@@ -161,25 +203,116 @@ function Character.Hurt(self: Character, entity: TL.Entity, damage: number)
 	end
 end
 
+--- @return pickup success
+function Character.TryPickup(self: Character): boolean
+    local interactable_object = self:GetNearbyInteractableObject()
+    if not interactable_object then
+        return false
+    end
+
+    local entity = interactable_object:GetOwner()
+    local ctx: TL.GameContext = TL.GetContext()
+    local script = ctx:GetScriptManager():Get(entity)
+
+    if not script or not script.m_item then
+        TL.Log("object is not item, can't pickup")
+        return false
+    end
+
+    script = script :: ItemBehavior.ItemBehavior
+    if not script.m_item.m_behavior:Has(TL.ItemBehavior.Pickupable) then
+        return false
+    end
+
+    if not self.m_pickup_data:HasObject() then
+        table.insert(self.m_pickup_data.m_items, script)
+        script:PickupTo(self.m_entity, #self.m_pickup_data.m_items - 1)
+        return true
+    end
+
+    local pickup_item_entity = script:GetEntity()
+
+    --[[ handle stackable
+    if script.m_item.m_behavior:Has(TL.ItemBehavior.Stackable) and
+        self.m_pickup_data:HasObject() and
+        self.m_pickup_data.m_items[1]:GetEntity() == pickup_item_entity then
+        table.insert(self.m_pickup_data.m_items, script)
+        script:PickupTo(self.m_entity)
+        return true
+    else
+        return false
+    end
+    --]]
+    return false
+end
+
+function Character.PutItemDown(self: Character)
+    if not self.m_pickup_data:HasObject() then
+        return
+    end
+
+    local item = nil
+
+    local back_index = #self.m_pickup_data.m_items
+    item = self.m_pickup_data.m_items[back_index]
+    table.remove(self.m_pickup_data.m_items, back_index)
+
+    local position = self.m_transform:GetGlobalPosition()
+    position += self:GetForwardDir() * 20
+    item:Putdown(position)
+end
+
+function Character.GetForwardDir(self: Character): TL.Vec2
+    return self.m_forward_dir
+end
+
 function Character.OnTimerEvent(self: Character, event: TL.TimerEvent)
 	local timer_id = event:GetID()
 
-	if timer_id == self.m_hurt_blinking_timer:GetID() then
-		if self.m_in_red_state then
+	if timer_id == self.m_hurt_data.m_hurt_blinking_timer:GetID() then
+		if self.m_hurt_data.m_in_red_state then
 			self.m_sprite.m_color = TL.Color.White
 		else
 			self.m_sprite.m_color = TL.Color.Red
 		end
-		self.m_in_red_state = not self.m_in_red_state
+		self.m_hurt_data.m_in_red_state = not self.m_hurt_data.m_in_red_state
 	end
 end
 
 function Character.OnTimerStopEvent(self: Character, event: TL.TimerStopEvent)
 	local timer_id = event:GetID()
-	if timer_id == self.m_hurt_blinking_timer:GetID() then
+	if timer_id == self.m_hurt_data.m_hurt_blinking_timer:GetID() then
 		self.m_sprite.m_color = TL.Color.White
-		self.m_in_red_state = false
+		self.m_hurt_data.m_in_red_state = false
 	end
+end
+
+function Character.GetNearbyInteractableObject(self: Character): TL.PhysicsShape?
+    if not self.m_interactable_detect_trigger then
+        return nil
+    end
+
+    local shapes = self.m_interactable_detect_trigger:GetTouchingShapes()
+    if #shapes == 0 then
+        return nil
+    end
+
+    local nearest_shape = shapes[1]
+    local nearest_dist = math.huge
+    for _, shape: TL.PhysicsShape in ipairs(shapes) do
+        local position = shape:GetPosition()
+        local dist = (self.m_transform:GetGlobalPosition() - position):Length()
+        if dist < nearest_dist then
+            nearest_dist = dist
+            nearest_shape = shape
+        end
+    end
+
+    return nearest_shape
+end
+
+function Character.IsHoldingObject(self: Character)
+    return self.m_pickup_data:HasObject()
 end
 
 return Character

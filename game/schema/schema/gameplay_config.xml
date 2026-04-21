@@ -81,6 +81,7 @@
         <handle name="collision" type="PhysicsShapeDefinition" />
         <flags name="behavior" type="ItemBehavior" />
         <element name="type" type="ItemType" default="ItemType::Unknown" />
+        <element name="script" type="Path" />
     </asset>
 
     <class name="MapLayerDefinition">

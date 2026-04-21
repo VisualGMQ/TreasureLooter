@@ -7,6 +7,27 @@
 				<keyboard>
 					<elem>J</elem>
 				</keyboard>
+				<gamepad>
+					<elem>South</elem>
+				</gamepad>
+			</elem>
+			<elem>
+				<name>Interact</name>
+				<keyboard>
+					<elem>K</elem>
+				</keyboard>
+				<gamepad>
+					<elem>East</elem>
+				</gamepad>
+			</elem>
+			<elem>
+				<name>PutItemDown</name>
+				<keyboard>
+					<elem>L</elem>
+				</keyboard>
+				<gamepad>
+					<elem>West</elem>
+				</gamepad>
 			</elem>
 		</action>
 		<axis>

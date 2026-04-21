@@ -16,6 +16,7 @@ public:
     bool HasChildren() const;
 
     void RemoveChild(Entity);
+    void RemoveFromParent();
 
 private:
     Entity m_owner = null_entity;

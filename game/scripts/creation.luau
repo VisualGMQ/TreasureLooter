@@ -1,7 +1,7 @@
 local TL = require("@game/tl_types")
 local Character = require("@game/character")
 local Weapon = require("@game/weapon")
-local Item = require("@game/item")
+local ItemBehavior = require("@game/item_behavior")
 
 local _M = {}
 
@@ -158,7 +158,7 @@ end
 -- return value:
 -- index 0 : TL.Entity
 -- index 1 : ItemBehavior.ItemBehavior
-function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHandle): (TL.Entity, Item.Item)
+function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHandle): (TL.Entity, ItemBehavior.Item?)
     if not definition:IsValid()  then
         TL.Log("invalid item definition")
         return TL.null_entity
@@ -191,6 +191,8 @@ function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHan
     prefab_handle.m_draw_order.m_enable_y_sorting = false
     prefab_handle.m_draw_order.m_draw_layer = TL.DrawLayer.TilemapArch
 
+    prefab_handle.m_script = definition.m_script
+
     local collisions = prefab_handle.m_static_collision.m_collisions
     table.insert(collisions, definition.m_collision)
     prefab_handle.m_static_collision.m_collisions = collisions
@@ -200,7 +202,7 @@ function _M.CreateItem(transform: TL.Transform, definition: TL.ItemDefinitionHan
 
     ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
 
-    return entity, Item.new(entity, definition)
+    return entity, ItemBehavior.createItem(definition)
 end
 
 

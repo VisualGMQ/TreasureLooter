@@ -181,10 +181,16 @@ function GameEntry.OnInit(self: GameEntry)
                 continue
             end
 
-            local entity, item_script = Creation.CreateItem(transform, handle)
+            local entity, item = Creation.CreateItem(transform, handle)
             if entity == TL.null_entity then
                 TL.Log("spawn failed: create item failed")
                 continue
+            end
+
+            local script = script_mgr:Get(entity)
+
+            if script then
+                script:_init(item, player_put_on_layer_entity)
             end
 
             player_put_on_layer_relationship:AddChild(entity)

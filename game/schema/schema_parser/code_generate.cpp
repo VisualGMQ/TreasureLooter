@@ -1081,6 +1081,8 @@ std::string GenerateFlagsLuauType(const std::string& enum_class_name) {
     std::string out;
     out += "export type " + flags_name + " = {\n";
     out += "\tValue: (self: " + flags_name + ") -> number,\n";
+    out += "\tHas: (self: " + flags_name + ", value: " + enum_class_name +
+           ") -> boolean,\n";
     out += "\tRemove: (self: " + flags_name + ", value: " + enum_class_name +
            ") -> (),\n";
     out += "\t__bor: (self: " + flags_name + ", value: " + enum_class_name +
