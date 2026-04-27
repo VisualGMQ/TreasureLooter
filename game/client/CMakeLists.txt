@@ -3,11 +3,7 @@ file(GLOB_RECURSE CLIENT_HEADER CONFIGURE_DEPENDS include/*.hpp include/*.h)
 
 add_library(${CLIENT_NAME} STATIC)
 
-target_sources(${CLIENT_NAME} PRIVATE ${CLIENT_SRC} ${CLIENT_HEADER} ${ASSETS} ${SCHEMAS}
-    ${SCHEMA_DECLARE_OUTPUT_FILES}
-    ${SCHEMA_SERD_OUTPUT_FILES}
-    ${SCHEMA_ASSET_INFO_FILES}
-    ${SCHEMA_BINDING_OUTPUT_FILES})
+target_sources(${CLIENT_NAME} PRIVATE ${CLIENT_SRC} ${CLIENT_HEADER} ${ASSETS})
 target_include_directories(${CLIENT_NAME} PUBLIC include ../schema_generate)
 
 # TODO: compatible with clang++

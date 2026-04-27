@@ -77,7 +77,7 @@ void ClientContext::Initialize(int argc, char** argv) {
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
 
     CommonContext::initGameConfig();
-    
+
     auto& game_config = GetGameConfig();
 
     m_script_binary_data_manager->Initialize(game_config);
@@ -125,8 +125,8 @@ void ClientContext::Initialize(int argc, char** argv) {
             game_config.m_input_config),
         *this);
 
-    SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
-        game_config.m_entry_scene);
+    SceneHandle level =
+        m_assets_manager->GetManager<Scene>().Load(game_config.m_entry_scene);
     m_scene_manager->Switch(level);
 
     m_player_controller->RegisterVirtualController(level, game_config);
@@ -269,9 +269,9 @@ void ClientContext::renderUpdate(TimeType elapse) {
 
 void ClientContext::Shutdown() {
     m_player_controller.reset();
-    
+
     CommonContext::Shutdown();
-    
+
     m_tilemap_layer_render_component_manager.reset();
     m_ui_manager.reset();
     m_draw_order_manager.reset();

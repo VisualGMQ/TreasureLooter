@@ -17,7 +17,7 @@ void bindFlags(const char* name, lua_State* L) {
     using UnderlyingType = typename FlagsType::underlying_type;
 
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<FlagsType>(name)
                 .template addConstructor<void (), void (T), void (UnderlyingType)>()
                 .addFunction("Value", &FlagsType::Value)
@@ -31,5 +31,6 @@ void bindFlags(const char* name, lua_State* L) {
                         return std::to_string(self.Value());
                     })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
+

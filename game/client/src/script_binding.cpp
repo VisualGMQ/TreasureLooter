@@ -65,7 +65,7 @@ static void registerLuaScriptEventBindings() {
 
 static void bindInput(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .addFunction("ACTION_PRESSED",
                          +[]() { return static_cast<int>(Action::State::Pressed); })
             .addFunction("ACTION_PRESSING",
@@ -132,12 +132,12 @@ static void bindInput(lua_State* L) {
                 .addFunction("GetLastDownTime", &MouseButton::GetLastDownTime)
                 .addFunction("GetLastUpTime", &MouseButton::GetLastUpTime)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindCamera(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<Camera>("Camera")
                 .addFunction("GetPosition", &Camera::GetPosition)
                 .addFunction("GetScale", &Camera::GetScale)
@@ -145,12 +145,12 @@ static void bindCamera(lua_State* L) {
                 .addFunction("Move", &Camera::Move)
                 .addFunction("ChangeScale", &Camera::ChangeScale)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindSprite(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<SpriteDefinition>("Sprite")
                 .addConstructor<void(void)>()
                 .addProperty("m_image", &SpriteDefinition::m_image, true)
@@ -176,12 +176,12 @@ static void bindSprite(lua_State* L) {
                 .addFunction("Enable", &SpriteManager::Enable)
                 .addFunction("Disable", &SpriteManager::Disable)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindDrawOrder(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<DrawOrder>("DrawOrder")
                 .addProperty("m_z_order", &DrawOrder::m_z_order, true)
                 .addProperty("m_enable_y_sorting", &DrawOrder::m_enable_y_sorting,
@@ -200,12 +200,12 @@ static void bindDrawOrder(lua_State* L) {
                                  m->RegisterEntity(e, def);
                              })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindAnimationPlayer(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<AnimationPlayer>("AnimationPlayer")
                 .addFunction("Play", &AnimationPlayer::Play)
                 .addFunction("Pause", &AnimationPlayer::Pause)
@@ -245,12 +245,12 @@ static void bindAnimationPlayer(lua_State* L) {
                                  m->RegisterEntity(e, def);
                              })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindTilemapRenderComponent(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<TilemapLayerRenderComponent>("TilemapRenderComponent")
                 .addFunction("GetLayer", &TilemapLayerRenderComponent::GetLayer)
                 .addFunction("GetTilemap", &TilemapLayerRenderComponent::GetTilemap)
@@ -268,12 +268,12 @@ static void bindTilemapRenderComponent(lua_State* L) {
                                  return m->Has(e);
                              })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindUI(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<UIWidget>("UIWidget")
                 .addProperty("m_use_clip", &UIWidget::m_use_clip, true)
                 .addProperty("m_disabled", &UIWidget::m_disabled, true)
@@ -290,12 +290,12 @@ static void bindUI(lua_State* L) {
                     return m->Has(e);
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 static void bindClientUIEvents(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<UIMouseHoverEvent>("UIMouseHoverEvent")
                 .addProperty("m_entity", &UIMouseHoverEvent::m_entity, true)
             .endClass()
@@ -323,12 +323,12 @@ static void bindClientUIEvents(lua_State* L) {
             .beginClass<UIDragEvent>("UIDragEvent")
                 .addProperty("m_entity", &UIDragEvent::m_entity, true)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
-static void bindClientGameContext(lua_State* L) {
+static void bindClientContext(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Client")
             .beginClass<ClientContext>("GameContext")
                 .addFunction("GetCamera", +[](ClientContext* ctx) { return &ctx->m_camera; })
                 .addFunction("GetScriptManager",
@@ -428,10 +428,10 @@ static void bindClientGameContext(lua_State* L) {
                                  return ctx->m_debug_drawer.get();
                              })
             .endClass()
-            .addFunction("GetContext", +[]() -> ClientContext* {
+            .addFunction("GetClientContext", +[]() -> ClientContext* {
                 return &ClientContext::GetInst();
             })
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 // clang-format on
@@ -446,5 +446,6 @@ void BindClientModule(lua_State* L) {
     bindAnimationPlayer(L);
     bindUI(L);
     bindClientUIEvents(L);
-    bindClientGameContext(L);
+    bindClientContext(L);
 }
+

@@ -39,7 +39,7 @@
 			<item>Diggable</item>
 		</behavior>
 		<type>Mine</type>
-		<script>scripts/item_behavior.luau</script>
+		<script>scripts/client/item_behavior.luau</script>
 		<dig_time>3.000000</dig_time>
 		<mineral_fragment>assets/gpa/items/mineral_fragments.item.xml</mineral_fragment>
 	</payload>

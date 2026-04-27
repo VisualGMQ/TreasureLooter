@@ -1,10 +1,14 @@
-local TL = require("@game/tl_types")
+local TL = require("@client/tl_types")
+local TLC = TL.Common
+local TLI = TL.Client
+local TLS = TL.Server
+
 
 local ScriptBehavior = {}
 ScriptBehavior.__index = ScriptBehavior
 
 type ScriptBehaviorData = {
-	_entity: TL.Entity,
+	_entity: TLC.Entity,
 }
 
 export type ScriptBehavior = typeof(setmetatable({}::ScriptBehaviorData, ScriptBehavior))
@@ -17,12 +21,12 @@ function ScriptBehavior.new(entity: number): ScriptBehavior
 	return setmetatable(self, ScriptBehavior)
 end
 
-function ScriptBehavior.GetEntity(self: ScriptBehavior): TL.Entity
+function ScriptBehavior.GetEntity(self: ScriptBehavior): TLC.Entity
 	return self._entity
 end
 
 function ScriptBehavior.SubscribeEvent(self: ScriptBehavior, eventName: string)
-	local ctx: TL.GameContext = TL.GetContext()
+	local ctx: TLI.ClientContext = TLI.GetClientContext()
 	ctx:GetScriptManager():SubscribeEvent(self:GetEntity(), eventName)
 end
 
@@ -87,3 +91,5 @@ function ScriptBehavior.OnRender(self)
 end
 
 return ScriptBehavior
+
+

@@ -1,0 +1,1 @@
+-- Types bound from server/src/script_binding.cpp (TL.Server)

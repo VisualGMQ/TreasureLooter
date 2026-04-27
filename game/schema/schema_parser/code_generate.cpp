@@ -1185,6 +1185,8 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
         }
     }
 
+    out += "\n-- Schema values (enums, FilenameIs*, asset managers, LoadAsset*, etc.) are "
+           "bound under TL.Schema.\n";
     out += "return TL";
     return out;
 }

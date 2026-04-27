@@ -72,16 +72,13 @@ list(APPEND SCHEMA_SERD_OUTPUT_FILES "${schema_final_path}/serialize/serialize.h
 list(APPEND SCHEMA_DISPLAY_OUTPUT_FILES "${schema_final_path}/display/display.hpp")
 list(APPEND SCHEMA_BINDING_OUTPUT_FILES "${schema_final_path}/binding/binding.hpp" "${schema_final_path}/binding/binding.cpp")
 set(SCHEMA_SCRIPT_HINT_FILES "${schema_final_path}/schema_types.luau.inc")
-set(TL_TYPES_LUAU_INC "${CMAKE_CURRENT_SOURCE_DIR}/script_hint_inc/tl_types.luau.inc")
-set(LUAU_TYPES_HINT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/scripts/tl_types.luau")
+set(TL_COMMON_TYPES_LUAU_INC "${CMAKE_CURRENT_SOURCE_DIR}/script_hint_inc/tl_common_types.luau.inc")
+set(TL_CLIENT_TYPES_LUAU_INC "${CMAKE_CURRENT_SOURCE_DIR}/script_hint_inc/tl_client_types.luau.inc")
+set(TL_SERVER_TYPES_LUAU_INC "${CMAKE_CURRENT_SOURCE_DIR}/script_hint_inc/tl_server_types.luau.inc")
+set(LUAU_TYPES_HINT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/scripts/client/tl_types.luau")
 
 if (NEED_SCHEMA_PARSER)
     message(STATUS "schema parser will be built, and the generated files will be placed in ${SCHEMA_OUTPUT_PATH}")
-    add_custom_target(run_schema_parser
-        COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
-        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES} ${SCHEMA_PARSER_TOOL_SOURCES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "parsing schemas...")
 
     add_custom_command(OUTPUT
         ${SCHEMA_DECLARE_OUTPUT_FILES}
@@ -98,21 +95,21 @@ if (NEED_SCHEMA_PARSER)
     # Merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau
     add_custom_command(OUTPUT ${LUAU_TYPES_HINT_FILES}
         COMMAND ${CMAKE_COMMAND}
-            -DTL_INC=${TL_TYPES_LUAU_INC}
+            -DTL_INC=${TL_COMMON_TYPES_LUAU_INC};${TL_CLIENT_TYPES_LUAU_INC};${TL_SERVER_TYPES_LUAU_INC}
             -DSCHEMA_INC=${SCHEMA_SCRIPT_HINT_FILES}
             -DOUT=${LUAU_TYPES_HINT_FILES}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
-        DEPENDS ${TL_TYPES_LUAU_INC} ${SCHEMA_SCRIPT_HINT_FILES}
+        DEPENDS ${TL_COMMON_TYPES_LUAU_INC} ${TL_CLIENT_TYPES_LUAU_INC} ${TL_SERVER_TYPES_LUAU_INC} ${SCHEMA_SCRIPT_HINT_FILES}
         COMMENT "merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau")
 
     # must call by user before compile to Android, don't need call under PC
     add_custom_target(mobile_preprocess
         COMMAND ${CMAKE_COMMAND}
-            -DTL_INC=${TL_TYPES_LUAU_INC}
+            -DTL_INC=${TL_COMMON_TYPES_LUAU_INC};${TL_CLIENT_TYPES_LUAU_INC};${TL_SERVER_TYPES_LUAU_INC}
             -DSCHEMA_INC=${SCHEMA_SCRIPT_HINT_FILES}
             -DOUT=${LUAU_TYPES_HINT_FILES}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
-        DEPENDS ${SCHEMA_SCRIPT_HINT_FILES} ${TL_TYPES_LUAU_INC}
+        DEPENDS ${SCHEMA_SCRIPT_HINT_FILES} ${TL_COMMON_TYPES_LUAU_INC} ${TL_CLIENT_TYPES_LUAU_INC} ${TL_SERVER_TYPES_LUAU_INC}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "mobile_preprocess...")
 endif()
@@ -120,16 +117,10 @@ endif()
 ################ build common ################
 set(COMMON_NAME common)
 add_subdirectory(common)
-if (NEED_SCHEMA_PARSER)
-    add_dependencies(${COMMON_NAME} run_schema_parser)
-endif()
 
 ################ build client ################
 set(CLIENT_NAME client)
 add_subdirectory(client)
-if (NEED_SCHEMA_PARSER)
-    add_dependencies(${CLIENT_NAME} run_schema_parser)
-endif()
 
 ################ build game ################
 set(GAME_NAME ${PROJECT_NAME})
@@ -139,13 +130,10 @@ if (ANDROID)
 endif()
 
 add_subdirectory(game_entry)
-if (NEED_SCHEMA_PARSER)
-    add_dependencies(${GAME_NAME} run_schema_parser)
-endif()
 
 ################ build server ################
 if (NOT ANDROID)
-    set(SERVER_NAME ${PROJECT_NAME}-Server)
+    set(SERVER_NAME server)
     add_subdirectory(server)
     add_subdirectory(server_entry)
 endif()

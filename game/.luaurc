@@ -1,5 +1,6 @@
 {
 	"aliases": {
-		"game": "./scripts"
+		"client": "./scripts/client",
+		"server": "./scripts/server"
 	}
 }

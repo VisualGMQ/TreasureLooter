@@ -38,6 +38,7 @@ void ServerContext::Initialize(int argc, char** argv) {
     CommonContext::Initialize(argc, argv);
     m_assets_manager = std::make_unique<ServerAssetsManager>();
     m_scene_manager = std::unique_ptr<ServerSceneManager>(new ServerSceneManager{});
+    m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
 
     CommonContext::initGameConfig();
 
@@ -46,8 +47,4 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 
     m_time->SetFPS(60);
-}
-
-void ServerContext::AttachComponentsOnEntity(Entity, const EntityInstance&) {
-    // TODO: not finish
 }

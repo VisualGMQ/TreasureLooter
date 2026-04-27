@@ -1,8 +1,13 @@
-local TL = require("@game/tl_types")
-local Weapon = require("@game/weapon")
-local Common = require("@game/common")
-local ScriptBehavior = require("@game/script_behavior")
-local ItemBehavior = require("@game/item_behavior")
+local TL = require("@client/tl_types")
+local TLC = TL.Common
+local TLI = TL.Client
+local TLS = TL.Server
+local TLSch = TL.Schema
+
+local Weapon = require("@client/weapon")
+local Common = require("@client/common")
+local ScriptBehavior = require("@client/script_behavior")
+local ItemBehavior = require("@client/item_behavior")
 
 local Character = {}
 Character.__index = Character
@@ -10,14 +15,14 @@ Character.__index = Character
 ---- hurt data
 
 type HurtData = {
-	m_hurt_blinking_timer: TL.Timer,
+	m_hurt_blinking_timer: TLC.Timer,
 	m_in_red_state: boolean,
 }
 
 function Character.createHurtData() : HurtData
     local self = {} :: HurtData
-    local ctx: TL.GameContext = TL.GetContext()
-	self.m_hurt_blinking_timer = ctx:GetTimerManager():Create(0.1, TL.TimerEventType.Unknown, 8)
+    local ctx: TLI.ClientContext = TLI.GetClientContext()
+	self.m_hurt_blinking_timer = ctx:GetTimerManager():Create(0.1, TLSch.TimerEventType.Unknown, 8)
 	self.m_in_red_state = false
     return self
 end
@@ -48,7 +53,7 @@ DiggingData.__index = DiggingData
 
 export type DiggingData = {
 	m_target : ItemBehavior.ItemBehavior?,
-	m_digging_countdown_timer : TL.Timer,
+	m_digging_countdown_timer : TLC.Timer,
 }
 
 function DiggingData.Start(self: DiggingData, item: ItemBehavior.ItemBehavior): boolean
@@ -59,24 +64,24 @@ function DiggingData.Start(self: DiggingData, item: ItemBehavior.ItemBehavior): 
 	self.m_target = item
 	self.m_digging_countdown_timer:SetInterval(self.m_target.m_item.m_dig_time)
 	self.m_digging_countdown_timer:Start()	
-	TL.Log("start digging")
+	TLC.Log("start digging")
 	return true
 end
 
 function DiggingData.Stop(self: DiggingData)
 	self.m_digging_countdown_timer:Stop()
 	self.m_target = nil
-	TL.Log("stop digging")
+	TLC.Log("stop digging")
 end
 
-function DiggingData.OnTimerEvent(self: DiggingData, event: TL.TimerEvent)
+function DiggingData.OnTimerEvent(self: DiggingData, event: TLC.TimerEvent)
 	local type = event:GetEventType()
-	if type ~= TL.TimerEventType.DigFinish then
+	if type ~= TLSch.TimerEventType.DigFinish then
 		return
 	end
 	-- TODO: Create mineral fragment
 	
-	TL.Log("generate mineral fragment")
+	TLC.Log("generate mineral fragment")
 end
 
 function DiggingData.GetTarget(self: DiggingData): ItemBehavior.ItemBehavior?
@@ -88,41 +93,41 @@ function DiggingData.IsDigging(self: DiggingData): boolean
 end
 
 function DiggingData.OnQuit(self: DiggingData)
-	local ctx: TL.GameContext = TL.GetContext()
+	local ctx: TL.ClientContext = TLI.GetClientContext()
 	ctx:GetTimerManager():Remove(self.m_digging_countdown_timer:GetID())
 end
 
 function Character.createDiggingData(): DiggingData
 	local self = {} :: DiggingData
-	local ctx: TL.GameContext = TL.GetContext()
-	self.m_digging_countdown_timer = ctx:GetTimerManager():Create(0, TL.TimerEventType.DigFinish, -1)
+	local ctx: TL.ClientContext = TLI.GetClientContext()
+	self.m_digging_countdown_timer = ctx:GetTimerManager():Create(0, TLSch.TimerEventType.DigFinish, -1)
 	return setmetatable(self, DiggingData)
 end
 
 ---- character data
 
 type CharacterData = {
-    m_entity: TL.Entity,
+    m_entity: TLC.Entity,
     m_weapon : Weapon.Weapon?,
     m_pickaxe : Weapon.Weapon?,
 	m_digging_data : DiggingData,
 
     -- from definition
     m_hp: number,
-    m_move_left_anim : TL.AnimationHandle,
-    m_move_right_anim : TL.AnimationHandle,
-    m_move_up_anim : TL.AnimationHandle,
-    m_move_down_anim : TL.AnimationHandle,
+    m_move_left_anim : TLSch.AnimationHandle,
+    m_move_right_anim : TLSch.AnimationHandle,
+    m_move_up_anim : TLSch.AnimationHandle,
+    m_move_down_anim : TLSch.AnimationHandle,
     m_move_speed : number,
-	m_sprite: TL.Sprite,
-	m_cct : TL.CharacterController?,
-	m_transform : TL.Transform,
-	m_anim_player : TL.AnimationPlayer,
+	m_sprite: TLI.Sprite,
+	m_cct : TLC.CharacterController?,
+	m_transform : TLC.Transform,
+	m_anim_player : TLI.AnimationPlayer,
 
     -- from runtime
-    m_team_id: TL.TeamID,
+    m_team_id: TLSch.TeamID,
 	m_direction : Common.Direction,
-    m_forward_dir : TL.Vec2,
+    m_forward_dir : TLC.Vec2,
 
     m_hurt_data: HurtData,
     m_pickup_data: PickupData,
@@ -130,7 +135,7 @@ type CharacterData = {
 
 export type Character = typeof(setmetatable({} :: CharacterData, Character))
 
-function Character.new(entity: TL.Entity, definition: TL.CharacterDefinitionHandle, weapon: Weapon.Weapon?, pickexe: Weapon.Weapon?): Character
+function Character.new(entity: TLC.Entity, definition: TLSch.CharacterDefinitionHandle, weapon: Weapon.Weapon?, pickexe: Weapon.Weapon?): Character
     local self = {} :: CharacterData
     self.m_entity = entity
     self.m_weapon = weapon
@@ -143,10 +148,10 @@ function Character.new(entity: TL.Entity, definition: TL.CharacterDefinitionHand
     self.m_move_up_anim = definition.m_move_up_animation
     self.m_move_down_anim = definition.m_move_down_animation
     self.m_move_speed = definition.m_speed
-    self.m_team_id = TL.TeamID.Team_invalid
-    self.m_forward_dir = TL.Vec2.Y_UNIT
+    self.m_team_id = TLSch.TeamID.invalid
+    self.m_forward_dir = TLC.Vec2.Y_UNIT
 
-    local ctx: TL.GameContext = TL.GetContext()
+    local ctx: TLI.ClientContext = TLI.GetClientContext()
 
 	self.m_sprite = ctx:GetSpriteManager():Get(entity)
 	self.m_cct = ctx:GetCCTManager():Get(entity)
@@ -168,19 +173,19 @@ function Character.SubscribeEvents(self:Character,  behavior: ScriptBehavior.Scr
 	behavior:SubscribeTimerStopEvent()
 end
 
-function Character.SetTeamID(self: Character, team_id: TL.TeamID)
+function Character.SetTeamID(self: Character, team_id: TLSch.TeamID)
     self.m_team_id = team_id
 end
 
-function Character.GetTeamID(self: Character): TL.TeamID
+function Character.GetTeamID(self: Character): TLSch.TeamID
     return self.m_team_id
 end
 
-function Character.GetWeaponEntity(self: Character): TL.Entity
+function Character.GetWeaponEntity(self: Character): TLC.Entity
     return self._weapon_entity
 end
 
-function Character.GetWeaponControlNode(self: Character): TL.Entity
+function Character.GetWeaponControlNode(self: Character): TLC.Entity
     return self._weapon_control_node
 end
 
@@ -190,8 +195,8 @@ function Character.Attack(self:Character)
     end
 end
 
-function Character.Move(self:Character, dir: TL.Vec2, duration: TL.TimeType)
-    if dir == TL.Vec2.ZERO then
+function Character.Move(self:Character, dir: TLC.Vec2, duration: TLC.TimeType)
+    if dir == TLC.Vec2.ZERO then
 		if self.m_anim_player ~= nil then
 			self.m_anim_player:Stop()
 		end
@@ -222,7 +227,7 @@ function Character.Move(self:Character, dir: TL.Vec2, duration: TL.TimeType)
 		self.m_transform.m_position = self.m_cct:GetPosition()
 	end
 
-	if (not self.m_anim_player:IsPlaying() and dir ~= TL.Vec2.ZERO) or old_dir ~= self.m_direction then
+	if (not self.m_anim_player:IsPlaying() and dir ~= TLC.Vec2.ZERO) or old_dir ~= self.m_direction then
 		if self.m_direction == Common.Direction.Up then
 			self.m_anim_player:ChangeAnimation(self.m_move_up_anim)
 		elseif self.m_direction == Common.Direction.Left then
@@ -235,15 +240,15 @@ function Character.Move(self:Character, dir: TL.Vec2, duration: TL.TimeType)
 		self.m_anim_player:Play()
 	end
 
-	if dir == TL.Vec2.ZERO then
+	if dir == TLC.Vec2.ZERO then
 		if self.m_direction == Common.Direction.Up then
-			self.m_sprite.m_region.m_topleft = TL.Vec2(16, 0)
+			self.m_sprite.m_region.m_topleft = TLC.Vec2(16, 0)
 		elseif self.m_direction == Common.Direction.Left then
-			self.m_sprite.m_region.m_topleft = TL.Vec2(32, 0)
+			self.m_sprite.m_region.m_topleft = TLC.Vec2(32, 0)
 		elseif self.m_direction == Common.Direction.Right then
-			self.m_sprite.m_region.m_topleft = TL.Vec2(48, 0)
+			self.m_sprite.m_region.m_topleft = TLC.Vec2(48, 0)
 		elseif self.m_direction == Common.Direction.Down then
-			self.m_sprite.m_region.m_topleft = TL.Vec2(0, 0)
+			self.m_sprite.m_region.m_topleft = TLC.Vec2(0, 0)
 		end
 	end
 
@@ -256,7 +261,7 @@ function Character.Hurt(self: Character, damage: number)
 	end
 
 	if self.m_hp <= 0 then
-		local ctx: TL.GameContext = TL.GetContext()
+		local ctx: TLI.ClientContext = TLI.GetClientContext()
 		local scene = ctx:GetSceneManager():GetCurrentScene()
 		scene:RemoveEntity(self.m_entity)
 	end
@@ -264,7 +269,7 @@ end
 
 --- @return pickup success
 function Character.TryPickup(self: Character, script: ItemBehavior.ItemBehavior): boolean
-    local ctx: TL.GameContext = TL.GetContext()
+    local ctx: TLI.ClientContext = TLI.GetClientContext()
 
     if not self.m_pickup_data:HasObject() then
         table.insert(self.m_pickup_data.m_items, script)
@@ -305,7 +310,7 @@ function Character.PutItemDown(self: Character)
     item:Putdown(position)
 end
 
-function Character.GetForwardDir(self: Character): TL.Vec2
+function Character.GetForwardDir(self: Character): TLC.Vec2
     return self.m_forward_dir
 end
 
@@ -325,7 +330,7 @@ function Character.OnQuit(self: Character)
 	self.m_digging_data:OnQuit()
 end
 
-function Character.OnTriggerEnterEvent(self: Character, event: TL.TriggerEnterEvent)
+function Character.OnTriggerEnterEvent(self: Character, event: TLC.TriggerEnterEvent)
     if self.m_weapon then
         self.m_weapon:OnTriggerEnterEvent(event)
     end
@@ -335,14 +340,14 @@ function Character.OnTriggerEnterEvent(self: Character, event: TL.TriggerEnterEv
     end
 end
 
-function Character.OnTimerEvent(self: Character, event: TL.TimerEvent)
+function Character.OnTimerEvent(self: Character, event: TLC.TimerEvent)
 	local timer_id = event:GetID()
 
 	if timer_id == self.m_hurt_data.m_hurt_blinking_timer:GetID() then
 		if self.m_hurt_data.m_in_red_state then
-			self.m_sprite.m_color = TL.Color.White
+			self.m_sprite.m_color = TLC.Color.White
 		else
-			self.m_sprite.m_color = TL.Color.Red
+			self.m_sprite.m_color = TLC.Color.Red
 		end
 		self.m_hurt_data.m_in_red_state = not self.m_hurt_data.m_in_red_state
 	end
@@ -350,12 +355,14 @@ function Character.OnTimerEvent(self: Character, event: TL.TimerEvent)
 	self.m_digging_data:OnTimerEvent(event)
 end
 
-function Character.OnTimerStopEvent(self: Character, event: TL.TimerStopEvent)
+function Character.OnTimerStopEvent(self: Character, event: TLC.TimerStopEvent)
 	local timer_id = event:GetID()
 	if timer_id == self.m_hurt_data.m_hurt_blinking_timer:GetID() then
-		self.m_sprite.m_color = TL.Color.White
+		self.m_sprite.m_color = TLC.Color.White
 		self.m_hurt_data.m_in_red_state = false
 	end
 end
 
 return Character
+
+
