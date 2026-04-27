@@ -3,6 +3,7 @@
 #include "client/asset_manager.hpp"
 #include "client/context.hpp"
 #include "client/draw_order.hpp"
+#include "client/input/finger_touch.hpp"
 #include "client/input/mouse.hpp"
 #include "common/macros.hpp"
 #include "common/profile.hpp"
