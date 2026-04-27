@@ -1,0 +1,45 @@
+<ItemDefinition>
+    <uuid>3cd10baa-231e-421e-aa34-ef994737fc2b</uuid>
+    <payload>
+        <sprite>
+            <image>assets/Backgrounds/Tilesets/TilesetNature.png</image>
+            <region>
+                <topleft x="0.000000" y="256.000000" />
+                <size x="16.000000" y="16.000000" />
+            </region>
+            <size x="0.000000" y="0.000000" />
+            <anchor x="0.000000" y="0.000000" />
+            <flip>
+                <item>None</item>
+            </flip>
+            <color r="1.000000" g="1.000000" b="1.000000" a="1.000000" />
+        </sprite>
+        <collision>
+            <uuid>96148d43-e231-4a64-adad-61dbdc078237</uuid>
+            <payload>
+                <is_rect>true</is_rect>
+                <rect>
+                    <center x="0.000000" y="0.000000" />
+                    <half_size x="8.000000" y="8.000000" />
+                </rect>
+                <circle>
+                    <center x="0.000000" y="0.000000" />
+                    <radius>0.000000</radius>
+                </circle>
+                <collision_layer>
+                    <elem>Interactable</elem>
+                </collision_layer>
+                <collision_mask>
+                    <elem>Interactable</elem>
+                </collision_mask>
+            </payload>
+        </collision>
+        <behavior>
+            <item>Pickupable</item>
+            <item>Stackable</item>
+        </behavior>
+        <type>Mine</type>
+        <script>scripts/item_behavior.luau</script>
+    </payload>
+</ItemDefinition>
+

@@ -1,32 +1,37 @@
-#include "engine/asset_manager.hpp"
-#include "engine/camera.hpp"
-#include "engine/cct.hpp"
-#include "engine/controller.hpp"
-#include "engine/debug_drawer.hpp"
-#include "engine/dialog.hpp"
-#include "engine/draw.hpp"
-#include "engine/input/finger_touch.hpp"
-#include "engine/input/input.hpp"
-#include "engine/input/keyboard.hpp"
-#include "engine/input/mouse.hpp"
-#include "engine/relationship.hpp"
-#include "engine/renderer.hpp"
-#include "engine/sprite.hpp"
-#include "engine/storage.hpp"
-#include "engine/trigger.hpp"
+#include "client/animation_player.hpp"
+#include "client/camera.hpp"
+#include "client/controller.hpp"
+#include "client/draw.hpp"
+#include "client/input/finger_touch.hpp"
+#include "client/input/input.hpp"
+#include "client/input/keyboard.hpp"
+#include "client/input/mouse.hpp"
+#include "client/renderer.hpp"
+#include "client/sprite.hpp"
+#include "client/tilemap_render_component.hpp"
+#include "common/asset_manager.hpp"
+#include "common/cct.hpp"
+#include "common/debug_drawer.hpp"
+#include "common/dialog.hpp"
+#include "common/relationship.hpp"
+#include "common/storage.hpp"
+#include "common/trigger.hpp"
 #include "instance_display.hpp"
 #include "lyra/lyra.hpp"
 #include "rapidxml.hpp"
 #include "schema/display/physics_schema.hpp"
 #include "schema/physics_schema.hpp"
-#include "schema/serialize/physics_schema.hpp"
 #include "schema/serialize/gameplay_config.hpp"
+#include "schema/serialize/physics_schema.hpp"
 
 #include "imgui.h"
 
 #include "context.hpp"
 
+#include "client/draw_order.hpp"
+
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
@@ -84,7 +89,8 @@ std::optional<CollisionAstKind> detectCollisionAstKind(
     return detectCollisionAstKindFromXmlRoot(absolute_path);
 }
 
-void SaveExternalPhysicsActorIfNeeded(const PhysicsShapeDefinitionHandle& handle) {
+void SaveExternalPhysicsActorIfNeeded(
+    const PhysicsShapeDefinitionHandle& handle) {
     if (!handle || handle.IsEmbed()) {
         return;
     }
@@ -105,8 +111,8 @@ void SaveReferencedExternalPhysicsActors(const CharacterDefinition& character) {
     SaveExternalPhysicsActorIfNeeded(character.m_cct.m_physics_shape);
 }
 
-void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 pos,
-                                   float z_base, const Color& edge) {
+void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 pos, float z_base,
+                                   const Color& edge) {
     constexpr float kHalf = 6.0f;
     Rect r;
     r.m_center = pos;
@@ -118,8 +124,9 @@ void drawMissingPhysicsPlaceholder(Renderer& renderer, Vec2 pos,
 }
 
 void drawPhysicsShapeForPreview(Renderer& renderer,
-                                const PhysicsShapeDefinition& info, float z_base,
-                                const Color& outline, const Color& fill) {
+                                const PhysicsShapeDefinition& info,
+                                float z_base, const Color& outline,
+                                const Color& fill) {
     constexpr bool kUseCamera = true;
     const bool rect_has_area =
         info.m_rect.m_half_size.x > 0.0f || info.m_rect.m_half_size.y > 0.0f;
@@ -146,14 +153,60 @@ void drawPhysicsShapeForPreview(Renderer& renderer,
     drawMissingPhysicsPlaceholder(renderer, center, z_base, outline);
 }
 
-void drawReferenceImageForPreview(Renderer& renderer, const Image& image,
+void drawReferenceImageForPreview(Renderer& renderer, const ImageBase& image,
                                   float z_order) {
     const Vec2 size = image.GetSize();
     const Vec2 half = size * 0.5f;
-    const Region src{{0.0f, 0.0f}, size};
+    const Region src{
+        {0.0f, 0.0f},
+        size
+    };
     renderer.DrawImageEx(image, src, Vec2{-half.x, -half.y},
                          Vec2{half.x, -half.y}, Vec2{-half.x, half.y},
                          Color::White, z_order, true);
+}
+
+void drawReferenceImageForPreview(Renderer& renderer,
+                                  const SpriteDefinition& sprite,
+                                  float z_order) {
+    if (!sprite.m_image) {
+        return;
+    }
+    Region src_region = sprite.m_region;
+    if (src_region.m_size.w == 0 || src_region.m_size.h == 0) {
+        src_region.m_size = sprite.m_image->GetSize();
+    }
+
+    Vec2 half_size = sprite.m_region.m_size * 0.5f;
+    if (half_size.x == 0 || half_size.y == 0) {
+        half_size = sprite.m_image->GetSize() * 0.5f;
+    }
+
+    std::array<Vec2, 3> pts;
+    pts[0] = -half_size;                   // top left
+    pts[1] = {half_size.x, -half_size.y};  // top right
+    pts[2] = {-half_size.x, half_size.y};  // bottom left
+
+    if (sprite.m_flip & Flip::Horizontal && sprite.m_flip & Flip::Vertical) {
+        pts[0] = half_size;
+        pts[1] = {-half_size.x, half_size.y};
+        pts[2] = {half_size.x, -half_size.y};
+    } else if (sprite.m_flip & Flip::Horizontal) {
+        pts[0] = {half_size.x, -half_size.y};
+        pts[1] = {-half_size.x, -half_size.y};
+        pts[2] = {half_size.x, half_size.y};
+    } else if (sprite.m_flip & Flip::Vertical) {
+        pts[0] = {-half_size.x, half_size.y};
+        pts[1] = {half_size.x, half_size.y};
+        pts[2] = -half_size;
+    }
+
+    for (auto& pt : pts) {
+        pt -= sprite.m_anchor;
+    }
+
+    renderer.DrawImageEx(*sprite.m_image, src_region, pts[0], pts[1], pts[2],
+                         sprite.m_color, z_order, true);
 }
 
 void CollisionEditorContext::Init() {
@@ -249,8 +302,8 @@ void CollisionEditorContext::loadAsset(Path absolute_path) {
         } else {
             m_selected_hit_shape_index = -1;
         }
-        m_prev_weapon_physics_shape_count = static_cast<int>(
-            m_weapon->m_hit_shapes.m_physics_shapes.size());
+        m_prev_weapon_physics_shape_count =
+            static_cast<int>(m_weapon->m_hit_shapes.m_physics_shapes.size());
     } else {
         m_weapon.Reset();
         auto h = m_assets_manager->GetManager<CharacterDefinition>().Load(
@@ -407,10 +460,11 @@ void CollisionEditorContext::showWeaponHitShapesUi() {
     ImGui::SeparatorText("Hit shapes (one trigger)");
     InstanceDisplay("event_type", hit_trigger.m_event_type);
     InstanceDisplay("trig_every_frame_when_touch",
-                   hit_trigger.m_trig_every_frame_when_touch);
+                    hit_trigger.m_trig_every_frame_when_touch);
 
     if (ImGui::Button("Add physics shape")) {
-        auto h = m_assets_manager->GetManager<PhysicsShapeDefinition>().Create();
+        auto h =
+            m_assets_manager->GetManager<PhysicsShapeDefinition>().Create();
         hit_trigger.m_physics_shapes.push_back(std::move(h));
     }
     ImGui::SameLine();
@@ -543,12 +597,14 @@ void CollisionEditorContext::ensurePreviewSprite() {
         return;
     }
     ImageHandle img;
+    const SpriteDefinition* weapon_sprite = nullptr;
     if (*m_kind == CollisionAstKind::Weapon) {
         if (!m_weapon) {
             clearPreviewEntity();
             return;
         }
-        img = m_weapon->m_sprite;
+        weapon_sprite = &m_weapon->m_sprite;
+        img = m_weapon->m_sprite.m_image;
     } else {
         if (!m_character) {
             clearPreviewEntity();
@@ -565,12 +621,19 @@ void CollisionEditorContext::ensurePreviewSprite() {
         m_transform_manager->ReplaceComponent(m_preview_entity, Transform{});
     }
     Sprite* spr = m_sprite_manager->Get(m_preview_entity);
-    if (!spr || spr->m_image.GetUUID() != img.GetUUID()) {
+    const bool need_weapon_sprite_sync =
+        (*m_kind == CollisionAstKind::Weapon && weapon_sprite != nullptr);
+    if (need_weapon_sprite_sync || !spr ||
+        spr->m_image.GetUUID() != img.GetUUID()) {
         Sprite sprite{};
-        sprite.m_image = img;
-        const Vec2 sz = img->GetSize();
-        sprite.m_region.m_topleft = {0.0f, 0.0f};
-        sprite.m_region.m_size = sz;
+        if (*m_kind == CollisionAstKind::Weapon && weapon_sprite) {
+            sprite = *weapon_sprite;
+        } else {
+            sprite.m_image = img;
+            const Vec2 sz = img->GetSize();
+            sprite.m_region.m_topleft = {0.0f, 0.0f};
+            sprite.m_region.m_size = sz;
+        }
         m_sprite_manager->ReplaceComponent(m_preview_entity, sprite);
     }
 }
@@ -619,8 +682,8 @@ void CollisionEditorContext::renderScenePreview() {
     constexpr float kShapeZ = 50.0f;
 
     if (m_kind && *m_kind == CollisionAstKind::Weapon && m_weapon &&
-        m_weapon->m_sprite) {
-        drawReferenceImageForPreview(*m_renderer, *m_weapon->m_sprite,
+        m_weapon->m_sprite.m_image) {
+        drawReferenceImageForPreview(*m_renderer, m_weapon->m_sprite,
                                      kReferenceImageZ);
     } else if (m_kind && *m_kind == CollisionAstKind::Character &&
                m_character && m_character->m_sprite_sheet) {
@@ -636,7 +699,8 @@ void CollisionEditorContext::renderScenePreview() {
             const bool is_sel = (m_selected_hit_shape_index == i);
             const Color& outline =
                 is_sel ? kWeaponHitSelOutline : kWeaponHitUnselOutline;
-            const Color& fill = is_sel ? kWeaponHitSelFill : kWeaponHitUnselFill;
+            const Color& fill =
+                is_sel ? kWeaponHitSelFill : kWeaponHitUnselFill;
             const float z = kShapeZ + static_cast<float>(i) * 0.5f;
             if (h) {
                 drawPhysicsShapeForPreview(*m_renderer, *h, z, outline, fill);
@@ -654,8 +718,8 @@ void CollisionEditorContext::renderScenePreview() {
         const Color cct_outline{0.35f, 0.85f, 0.45f, 1.0f};
         const Color cct_fill{0.35f, 0.85f, 0.45f, 0.18f};
         drawPhysicsShapeForPreview(*m_renderer,
-                                   *m_character->m_cct.m_physics_shape,
-                                   kShapeZ, cct_outline, cct_fill);
+                                   *m_character->m_cct.m_physics_shape, kShapeZ,
+                                   cct_outline, cct_fill);
     }
 
     m_renderer->ApplyDrawcall();

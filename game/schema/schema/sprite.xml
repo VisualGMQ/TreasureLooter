@@ -1,7 +1,6 @@
 <schema>
-    <include>image.hpp</include>
-    <include>renderer.hpp</include>
-    <include>flag.hpp</include>
+    <include>common/image.hpp</include>
+    <include>common/flag.hpp</include>
     <import>flip</import>
 
     <class name="SpriteDefinition">

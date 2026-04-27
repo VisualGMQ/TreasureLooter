@@ -1,5 +1,5 @@
 <schema>
-    <include>entity.hpp</include>
+    <include>common/entity.hpp</include>
 
     <class name="RelationshipDefinition">
         <array type="Entity" name="children"/>

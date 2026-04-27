@@ -32,6 +32,9 @@ jobs:
     - name: Prepare cmake
       uses: lukka/get-cmake@latest
 
+    - name: Output cmake version
+      run: cmake --version
+
     - name: Prepare Ubuntu
       if: contains(matrix.os, 'ubuntu')
       run: |

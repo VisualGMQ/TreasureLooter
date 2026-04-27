@@ -1,7 +1,7 @@
 <schema>
-    <include>math.hpp</include>
-    <include>timer.hpp</include>
-    <include>image.hpp</include>
+    <include>common/math.hpp</include>
+    <include>common/timer.hpp</include>
+    <include>common/image.hpp</include>
     
     <enum name="AnimationBindingPoint">
         <item name = "Unknown" value ="0"/>

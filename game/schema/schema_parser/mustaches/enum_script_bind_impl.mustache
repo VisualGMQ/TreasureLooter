@@ -1,4 +1,5 @@
 void bind{{{type}}}TypeFromSchema(lua_State* L) {
+    bindFlags<{{{type}}}>("{{{enum_flags_name}}}", L);
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL")
         .beginNamespace("{{{type}}}")

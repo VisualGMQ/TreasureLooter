@@ -1,0 +1,50 @@
+<WeaponDefinition>
+	<uuid>af82b053-3738-4192-b4a6-00c530296fa3</uuid>
+	<payload>
+		<type>Sweep</type>
+		<sprite>
+			<image>assets/Items/Weapons/Pickaxe/Sprite.png</image>
+			<region>
+				<topleft x="0.000000" y="0.000000"/>
+				<size x="0.000000" y="0.000000"/>
+			</region>
+			<size x="0.000000" y="0.000000"/>
+			<anchor x="0.000000" y="8.000000"/>
+			<flip>
+				<item>None</item>
+			</flip>
+			<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+		</sprite>
+		<cooldown>0.500000</cooldown>
+		<attack_speed>0.500000</attack_speed>
+		<damage>0</damage>
+		<attack_animation>assets/gpa/anim/item/pickaxe_working.animation.xml</attack_animation>
+		<hit_shapes>
+			<event_type>Digging</event_type>
+			<physics_shapes>
+				<elem>
+					<uuid>7ac7e838-5bf1-4583-a45c-ecc5b18e3d44</uuid>
+					<payload>
+						<is_rect>false</is_rect>
+						<rect>
+							<center x="0.000000" y="0.000000"/>
+							<half_size x="0.000000" y="0.000000"/>
+						</rect>
+						<circle>
+							<center x="0.000000" y="8.000000"/>
+							<radius>6.000000</radius>
+						</circle>
+						<collision_layer>
+							<elem>WeaponAttack</elem>
+						</collision_layer>
+						<collision_mask>
+							<elem>Interactable</elem>
+						</collision_mask>
+					</payload>
+				</elem>
+			</physics_shapes>
+			<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
+		</hit_shapes>
+	</payload>
+</WeaponDefinition>
+

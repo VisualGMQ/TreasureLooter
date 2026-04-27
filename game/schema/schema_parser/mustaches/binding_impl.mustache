@@ -3,7 +3,7 @@
 /////////////////////////////////////////////////////////////////////
 
 #include "schema/binding/binding.hpp"
-#include "engine/asset_manager.hpp"
+#include "common/asset_manager.hpp"
 #include "schema/asset_info.hpp"
 #include <string>
 
@@ -15,10 +15,10 @@ void bindSchemaAssetManager(lua_State* L) {
                 return AssetInfoManager::FilenameIs{{{type}}}(filename);
             })
             {{/asset_filename_checks}}
-            .beginClass<AssetsManager>("AssetsManager")
+            .beginClass<IAssetsManager>("AssetsManager")
             {{#asset_manager_getters}}
                 .addFunction("Get{{{type}}}Manager",
-                             +[](AssetsManager* m) -> GenericAssetManager<{{{type}}}>* {
+                             +[](IAssetsManager* m) -> GenericAssetManager<{{{type}}}>* {
                                  return &m->GetManager<{{{type}}}>();
                              })
             {{/asset_manager_getters}}

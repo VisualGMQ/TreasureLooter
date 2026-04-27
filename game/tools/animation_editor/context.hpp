@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/entity.hpp"
-#include "engine/animation.hpp"
-#include "engine/animation_player.hpp"
+#include "common/entity.hpp"
+#include "common/animation.hpp"
+#include "client/animation_player.hpp"
 #include "schema/scene_definition.hpp"
 #include "tool_context.hpp"
 #include <memory>
@@ -14,7 +14,7 @@ public:
     static void Init();
     static void Destroy();
     static AnimationEditorContext& GetInst();
-
+    
     void Initialize(int argc, char** argv) override;
     void Shutdown() override;
     void HandleEvents(const SDL_Event&) override;

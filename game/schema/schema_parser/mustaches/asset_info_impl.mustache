@@ -3,8 +3,8 @@
 /////////////////////////////////////////////////////////////////////
 
 #include "schema/asset_info.hpp"
-#include "engine/asset_manager.hpp"
-#include "engine/context.hpp"
+#include "common/asset_manager.hpp"
+#include "common/context.hpp"
 
 VariantAsset AssetInfoManager::LoadAsset(const Path& filename, CommonContext& ctx) {
     std::string filename_str = filename.string();

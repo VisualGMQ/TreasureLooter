@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/entity.hpp"
+#include "common/entity.hpp"
 #include "schema/gameplay_config.hpp"
 #include "tool_context.hpp"
 #include <memory>
@@ -22,6 +22,7 @@ public:
     void HandleEvents(const SDL_Event&) override;
 
 protected:
+    using ToolContext::ToolContext;
     void update() override;
 
 private:

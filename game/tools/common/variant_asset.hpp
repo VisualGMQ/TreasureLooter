@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/dialog.hpp"
+#include "common/dialog.hpp"
 #include "schema/asset_info.hpp"
 
 class ToolContext;

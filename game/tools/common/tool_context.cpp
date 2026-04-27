@@ -1,20 +1,21 @@
 #include "tool_context.hpp"
-#include "engine/asset_manager.hpp"
-#include "engine/dialog.hpp"
-#include "engine/relationship.hpp"
-#include "engine/storage.hpp"
+#include "client/renderer.hpp"
+#include "common/asset_manager.hpp"
+#include "common/dialog.hpp"
+#include "common/relationship.hpp"
+#include "common/storage.hpp"
 #include "imgui.h"
 #include "schema/display/display.hpp"
 #include "variant_asset.hpp"
 
 void ToolContext::Initialize(int argc, char** argv) {
-    CommonContext::Initialize(argc, argv);
+    ClientContext::Initialize(argc, argv);
     parseProjectPath();
     m_time->SetFPS(240);
 }
 
 void ToolContext::Shutdown() {
-    CommonContext::Shutdown();
+    ClientContext::Shutdown();
 }
 
 void ToolContext::parseProjectPath() {
@@ -59,6 +60,19 @@ void ToolContext::Update() {
     m_renderer->Present();
 }
 
-void ToolContext::HandleEvents(const SDL_Event& event) {
-    CommonContext::HandleEvents(event);
+const Path& ToolContext::GetProjectPath() const {
+    return m_project_path;
+}
+
+Path ToolContext::ToProjectRelative(const Path& filename) const {
+    std::error_code err;
+    auto& project_path = GetProjectPath();
+    auto relative = std::filesystem::relative(filename, project_path, err);
+    if (err) {
+        LOGE("path {} not related to project path {}", filename, project_path);
+        return filename;
+    }
+    auto str = relative.string();
+    std::replace(str.begin(), str.end(), '\\', '/');
+    return str;
 }

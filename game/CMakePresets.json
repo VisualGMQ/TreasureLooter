@@ -21,10 +21,7 @@
         },
         {
             "name": "CI-Windows",
-            "binaryDir": "${sourceDir}/cmake-build",
-            "cacheVariables": {
-                "CMAKE_SYSTEM_VERSION" : "10.0.26100.0"
-            }
+            "binaryDir": "${sourceDir}/cmake-build"
         }
     ]
 }

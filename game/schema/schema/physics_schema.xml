@@ -1,8 +1,8 @@
 <schema>
-    <include>math.hpp</include>
+    <include>common/math.hpp</include>
+    <include>common/collision_group.hpp</include>
     <import>common</import>
     <import>collision_group_schema</import>
-    <include>collision_group.hpp</include>
 
     <asset name="PhysicsShapeDefinition" extension=".physics_shape">
         <element name="is_rect" type="bool"/>
@@ -19,12 +19,16 @@
     </class>
 
     <enum name="TriggerEventType">
+        <item name="None"/>
         <item name="Coin"/>
         <item name="WeaponAttack"/>
+        <item name="Digging"/>
+
+        <item name="InteractableDetect"/>
     </enum>
 
     <class name="TriggerDefinition">
-        <element name="event_type" type="TriggerEventType"/>
+        <element name="event_type" type="TriggerEventType" default="TriggerEventType::None"/>
         <array name="physics_shapes" type="PhysicsShapeDefinitionHandle"/>
         <element name="trig_every_frame_when_touch" type="bool" default="false"/>
     </class>

@@ -1,15 +1,15 @@
 template<>
 AssetLoadResult<{{type}}> LoadAsset<{{type}}>(const rapidxml::xml_node<>& node) {
     AssetLoadResult<{{type}}> payload;
-    Deserialize(CURRENT_CONTEXT, node, payload);
+    Deserialize(COMMON_CONTEXT, node, payload);
     return payload;
 }
 
 rapidxml::xml_node<>* SaveAsset(const UUID& uuid, rapidxml::xml_document<>& doc, const {{type}}& payload) {
     AssetLoadResult<{{type}}> asset_load_result;
     asset_load_result.m_uuid = uuid;
-    asset_load_result.m_payload = payload;
-    return Serialize(CURRENT_CONTEXT, doc, asset_load_result, "{{type}}");
+    asset_load_result.m_payload = std::make_unique<{{type}}>(payload);
+    return Serialize(COMMON_CONTEXT, doc, asset_load_result, "{{type}}");
 }
 
 template<>

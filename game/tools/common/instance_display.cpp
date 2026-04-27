@@ -1,11 +1,13 @@
 #include "instance_display.hpp"
 
-#include "engine/cct.hpp"
-#include "engine/collision_group.hpp"
-#include "engine/dialog.hpp"
-#include "engine/image.hpp"
-#include "engine/math.hpp"
-#include "engine/trigger.hpp"
+#include "client/animation_player.hpp"
+#include "client/image.hpp"
+#include "common/cct.hpp"
+#include "common/collision_group.hpp"
+#include "common/dialog.hpp"
+#include "common/image.hpp"
+#include "common/math.hpp"
+#include "common/trigger.hpp"
 #include "imgui.h"
 #include "schema/display/anim.hpp"
 #include "schema/display/bind_point_schema.hpp"
@@ -310,7 +312,7 @@ void displayAssetName(Handle<T> handle) {
     ImGui::EndDisabled();
 }
 
-void InstanceDisplay(const char* name, Handle<Image>& value) {
+void InstanceDisplay(const char* name, ImageHandle& value) {
     HandleInstanceDisplayCommon(
         name, value,
         {
@@ -339,7 +341,7 @@ void InstanceDisplay(const char* name, const Handle<Image>& value) {
     }
 }
 
-void InstanceDisplay(const char* name, Handle<Font>& value) {
+void InstanceDisplay(const char* name, FontHandle& value) {
     HandleInstanceDisplayCommon(name, value,
                                 {
                                     {"TTF", "ttf"}
@@ -649,7 +651,7 @@ void displayAnimationContent(Animation& anim) {
     }
 }
 
-void InstanceDisplay(const char* name, Handle<Animation>& animation) {
+void InstanceDisplay(const char* name, AnimationHandle& animation) {
     HandleInstanceDisplayCommon(
         name, animation,
         {
@@ -756,7 +758,8 @@ void InstanceDisplay(const char* name, Path& path) {
         auto& files = file_dialog.GetSelectedFiles();
         if (!files.empty()) {
             path = files.front();
-            const Path& project_path = CURRENT_CONTEXT.GetProjectPath();
+            const Path& project_path =
+                dynamic_cast<ToolContext*>(&CLIENT_CONTEXT)->GetProjectPath();
             std::string str =
                 std::filesystem::relative(path, project_path).string();
             std::replace(str.begin(), str.end(), '\\', '/');
@@ -841,7 +844,8 @@ void InstanceDisplay(const char* name, const Trigger& trigger) {
     ImGui::Text("%s", name);
 
     InstanceDisplay("physics_data", trigger.GetPhysicsData());
-    InstanceDisplay("trigger every frame when touch", trigger.IsTriggerEveryFrameWhenTouch());
+    InstanceDisplay("trigger every frame when touch",
+                    trigger.IsTriggerEveryFrameWhenTouch());
     InstanceDisplay("event type", trigger.GetEventType());
 }
 
@@ -879,21 +883,4 @@ void InstanceDisplay(const char* name, const Color& color) {
 
 void InstanceDisplay(const char* name, Color& color) {
     ImGui::DragFloat4(name, (float*)&color, 0.1, 0, 1);
-}
-
-void InstanceDisplay(const char* name, Image9Grid& grid) {
-    ImGui::DragFloat("left", &grid.left);
-    ImGui::DragFloat("right", &grid.right);
-    ImGui::DragFloat("top", &grid.top);
-    ImGui::DragFloat("bottom", &grid.bottom);
-    ImGui::DragFloat("scale", &grid.scale);
-}
-
-void InstanceDisplay(const char* name, const Image9Grid& grid) {
-    ImGui::BeginDisabled(true);
-    ImGui::DragFloat("left", (float*)&grid.left);
-    ImGui::DragFloat("right", (float*)&grid.right);
-    ImGui::DragFloat("top", (float*)&grid.top);
-    ImGui::DragFloat("bottom", (float*)&grid.bottom);
-    ImGui::EndDisabled();
 }

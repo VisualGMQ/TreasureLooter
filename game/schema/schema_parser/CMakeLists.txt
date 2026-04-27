@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SRC ./*.cpp ./*.hpp)
+file(GLOB_RECURSE SRC CONFIGURE_DEPENDS ./*.cpp ./*.hpp)
 file(GLOB_RECURSE MUSTACHES ./mustaches/*.mustache)
 
 add_executable(schema_parser)

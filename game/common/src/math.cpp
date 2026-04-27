@@ -1,0 +1,340 @@
+#include "common/math.hpp"
+#include <limits>
+
+Vec2 Reflect(const Vec2& v, const Vec2& n) {
+    return 2.0 * n * v.Length() - v;
+}
+
+Vec2 Mirror(const Vec2& p, const Vec2& axis_position, const Vec2& axis_dir) {
+    return Reflect(p - axis_position, axis_dir);
+}
+
+Color Color::From0_1(float r, float g, float b, float a) {
+    return Color{r, g, b, a};
+}
+
+Color Color::From0_255(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    return Color{r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
+}
+
+Degrees::Degrees(float value) : m_value{value} {}
+
+Degrees::Degrees(Radians radians) {
+    *this = radians;
+}
+
+Degrees& Degrees::operator=(Radians radians) {
+    m_value = radians.Value() * 180.0f / PI.Value();
+    return *this;
+}
+
+Degrees& Degrees::operator=(float value) {
+    m_value = value;
+    return *this;
+}
+
+Degrees& Degrees::operator-=(Degrees o) {
+    m_value -= o.m_value;
+    return *this;
+}
+
+Degrees& Degrees::operator+=(Degrees o) {
+    m_value += o.m_value;
+    return *this;
+}
+
+Degrees& Degrees::operator*=(Degrees o) {
+    m_value *= o.m_value;
+    return *this;
+}
+
+Degrees& Degrees::operator/=(Degrees o) {
+    m_value /= o.m_value;
+    return *this;
+}
+
+bool Degrees::operator>(Degrees o) const {
+    return m_value > o.m_value;
+}
+
+bool Degrees::operator<(Degrees o) const {
+    return m_value < o.m_value;
+}
+
+bool Degrees::operator>=(Degrees o) const {
+    return m_value >= o.m_value;
+}
+
+bool Degrees::operator<=(Degrees o) const {
+    return m_value <= o.m_value;
+}
+
+bool Degrees::operator==(Degrees o) const {
+    return m_value == o.m_value;
+}
+
+bool Degrees::operator!=(Degrees o) const {
+    return !(*this == o);
+}
+
+Degrees Degrees::operator+(Degrees d) const {
+    Degrees o = *this;
+    return o += d;
+}
+
+Degrees Degrees::operator-(Degrees d) const {
+    Degrees o = *this;
+    return o -= d;
+}
+
+Degrees Degrees::operator*(Degrees d) const {
+    Degrees o = *this;
+    return o *= d;
+}
+
+Degrees Degrees::operator/(Degrees d) const {
+    Degrees o = *this;
+    return o /= d;
+}
+
+Degrees Degrees::operator*(float k) const {
+    Degrees o = *this;
+    return o *= k;
+}
+
+Degrees Degrees::operator/(float k) const {
+    Degrees o = *this;
+    return o /= k;
+}
+
+Degrees operator*(float k, Degrees d) {
+    return d * k;
+}
+
+std::ostream& operator<<(std::ostream& o, const Degrees& d) {
+    o << "Degrees(" << d.Value() << ")";
+    return o;
+}
+
+Mat33 Mat33::CreateTranslation(const Vec2& p) {
+    Mat33 result;
+    result.Set(2, 0, p.x);
+    result.Set(2, 1, p.y);
+    return result;
+}
+
+Mat33 Mat33::CreateScale(const Vec2& s) {
+    Mat33 result;
+    result.Set(0, 0, s.x);
+    result.Set(1, 1, s.y);
+    return result;
+}
+
+Mat33 Mat33::CreateRotation(Degrees d) {
+    Mat33 result;
+    float r = Radians{d}.Value();
+    float s = std::sin(r);
+    float c = std::cos(r);
+    result.Set(0, 0, c);
+    result.Set(0, 1, s);
+    result.Set(1, 0, -s);
+    result.Set(1, 1, c);
+    return result;
+}
+
+Mat33::Mat33() {
+    m_data[0][0] = 1;
+    m_data[1][1] = 1;
+    m_data[2][2] = 1;
+}
+
+Mat33& Mat33::operator*=(const Mat33& o) {
+    Mat33 result;
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t j = 0; j < 3; ++j) {
+            float sum = 0.0f;
+            for (size_t k = 0; k < 3; ++k) {
+                sum += Get(k, i) * o.Get(j, k);
+            }
+            result.Set(j, i, sum);
+        }
+    }
+
+    *this = result;
+    return *this;
+}
+
+Mat33 operator*(const Mat33& m1, const Mat33& m2) {
+    Mat33 m(m1);
+    return m *= m2;
+}
+
+Vec2 GetPosition(const Mat33& m) {
+    return Vec2{m.Get(2, 0), m.Get(2, 1)};
+}
+
+float Mat33::Get(size_t x, size_t y) const {
+    return m_data[x][y];
+}
+
+float& Mat33::Get(size_t x, size_t y) {
+    return m_data[x][y];
+}
+
+void Mat33::Set(size_t x, size_t y, float value) {
+    m_data[x][y] = value;
+}
+
+Radians::Radians(float value) : m_value{value} {}
+
+Radians::Radians(Degrees degrees) {
+    *this = degrees;
+}
+
+Radians& Radians::operator=(Degrees degrees) {
+    m_value = degrees.Value() * PI.Value() / 180.0f;
+    return *this;
+}
+
+Radians& Radians::operator=(float value) {
+    m_value = value;
+    return *this;
+}
+
+Radians& Radians::operator-=(Radians o) {
+    m_value -= o.m_value;
+    return *this;
+}
+
+Radians& Radians::operator+=(Radians o) {
+    m_value += o.m_value;
+    return *this;
+}
+
+Radians& Radians::operator*=(Radians o) {
+    m_value *= o.m_value;
+    return *this;
+}
+
+Radians& Radians::operator/=(Radians o) {
+    m_value /= o.m_value;
+    return *this;
+}
+
+Radians Radians::operator+(Radians d) const {
+    Radians o = *this;
+    return o += d;
+}
+
+Radians Radians::operator-(Radians d) const {
+    Radians o = *this;
+    return o -= d;
+}
+
+Radians Radians::operator*(Radians d) const {
+    Radians o = *this;
+    return o *= d;
+}
+
+Radians operator*(float k, Radians d) {
+    return d * k;
+}
+
+std::ostream& operator<<(std::ostream& o, const Radians& r) {
+    o << "Radians(" << r.Value() << ")";
+    return o;
+}
+
+Radians Radians::operator/(Radians d) const {
+    Radians o = *this;
+    return o /= d;
+}
+
+bool Radians::operator>(Radians o) const {
+    return m_value > o.m_value;
+}
+
+bool Radians::operator<(Radians o) const {
+    return m_value < o.m_value;
+}
+
+bool Radians::operator>=(Radians o) const {
+    return m_value >= o.m_value;
+}
+
+bool Radians::operator<=(Radians o) const {
+    return m_value <= o.m_value;
+}
+
+bool Radians::operator==(Radians o) const {
+    return m_value == o.m_value;
+}
+
+bool Radians::operator!=(Radians o) const {
+    return !(*this == o);
+}
+
+Radians Radians::operator*(float k) const {
+    Radians o = *this;
+    return o *= k;
+}
+
+Radians Radians::operator/(float k) const {
+    Radians o = *this;
+    return o /= k;
+}
+
+Vec2 Rotate(const Vec2& p, Degrees d) {
+    float rot = Radians{d}.Value();
+    auto s = std::sin(rot);
+    auto c = std::cos(rot);
+
+    return {p.x * c - p.y * s, p.x * s + p.y * c};
+}
+
+Transform::Transform() : m_size{1.0, 1.0} {}
+
+const Mat33& Transform::GetLocalMat() const {
+    return m_mat;
+}
+
+const Mat33& Transform::GetGlobalMat() const {
+    return m_global_mat;
+}
+
+void Transform::UpdateMat(const Transform* parent) {
+    m_mat = Mat33::CreateTranslation(m_position) *
+            Mat33::CreateRotation(m_rotation) * Mat33::CreateScale(m_scale);
+    if (parent) {
+        m_global_mat = parent->GetGlobalMat() * m_mat;
+    } else {
+        m_global_mat = m_mat;
+    }
+}
+
+Radians GetAngle(const Vec2& norm_a, const Vec2& norm_b) {
+    float c = norm_a.Dot(norm_b);
+    float s = norm_a.Cross(norm_b);
+
+    float theta = std::acos(c);
+
+    if ((c >= 0 && s >= 0) || (c < 0 && s >= 0)) {
+        return theta;
+    }
+    return 2 * PI - theta;
+}
+
+DecompositionResult DecomposeVector(const Vec2& v, const Vec2& normal) {
+    DecompositionResult result;
+    result.m_normal = v.Dot(normal) * normal;
+    result.m_tangent = v - result.m_normal;
+    return result;
+}
+
+const Color Color::Red{1, 0, 0};
+const Color Color::Green{0, 1, 0};
+const Color Color::Blue{0, 0, 1};
+const Color Color::Black{0, 0, 0};
+const Color Color::White{1, 1, 1};
+const Color Color::Yellow{1, 1, 0};
+const Color Color::Purple{1, 0, 1};

@@ -1,5 +1,5 @@
 <schema>
-    <include>animation.hpp</include>
+    <include>common/animation.hpp</include>
     <class name="AnimationPlayerDefinition">
         <element name = "loop" type="int" default="0"/>
         <element name = "rate" type="float" default="1.0f"/>

@@ -1,9 +1,7 @@
 <schema>
     <import>scene_definition</import>
     <import>input</import>
-    <include>scene.hpp</include>
-    <include>path.hpp</include>
-    <include>text.hpp</include>
+    <include>common/path.hpp</include>
 
     <class name="VirtualJoystickConfig">
         <element name="offset" type="Vec2" default="{200, 200}"/>
