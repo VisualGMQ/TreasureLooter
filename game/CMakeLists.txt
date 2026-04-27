@@ -19,9 +19,11 @@ configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_pa
 ################ compile schema parser ################
 set(NEED_SCHEMA_PARSER ON)
 
-if (ANDROID)
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(NEED_SCHEMA_PARSER OFF)
 endif()
+
+message(STATUS "schema parser gating: CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}', ANDROID='${ANDROID}', NEED_SCHEMA_PARSER='${NEED_SCHEMA_PARSER}'")
 
 if (NEED_SCHEMA_PARSER)
     add_subdirectory(schema)
@@ -74,7 +76,7 @@ set(TL_TYPES_LUAU_INC "${CMAKE_CURRENT_SOURCE_DIR}/script_hint_inc/tl_types.luau
 set(LUAU_TYPES_HINT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/scripts/tl_types.luau")
 
 if (NEED_SCHEMA_PARSER)
-    message("schema parser will be built, and the generated files will be placed in ${SCHEMA_OUTPUT_PATH}")
+    message(STATUS "schema parser will be built, and the generated files will be placed in ${SCHEMA_OUTPUT_PATH}")
     add_custom_target(run_schema_parser
         COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
         DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES} ${SCHEMA_PARSER_TOOL_SOURCES}
@@ -118,10 +120,16 @@ endif()
 ################ build common ################
 set(COMMON_NAME common)
 add_subdirectory(common)
+if (NEED_SCHEMA_PARSER)
+    add_dependencies(${COMMON_NAME} run_schema_parser)
+endif()
 
 ################ build client ################
 set(CLIENT_NAME client)
 add_subdirectory(client)
+if (NEED_SCHEMA_PARSER)
+    add_dependencies(${CLIENT_NAME} run_schema_parser)
+endif()
 
 ################ build game ################
 set(GAME_NAME ${PROJECT_NAME})
@@ -131,6 +139,9 @@ if (ANDROID)
 endif()
 
 add_subdirectory(game_entry)
+if (NEED_SCHEMA_PARSER)
+    add_dependencies(${GAME_NAME} run_schema_parser)
+endif()
 
 ################ build server ################
 if (NOT ANDROID)
