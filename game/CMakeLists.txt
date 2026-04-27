@@ -91,8 +91,7 @@ if (NEED_SCHEMA_PARSER)
         COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
         DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES} ${SCHEMA_PARSER_TOOL_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "parsing schemas..."
-        CODEGEN)
+        COMMENT "parsing schemas...")
 
     # Merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau
     add_custom_command(OUTPUT ${LUAU_TYPES_HINT_FILES}
@@ -102,8 +101,7 @@ if (NEED_SCHEMA_PARSER)
             -DOUT=${LUAU_TYPES_HINT_FILES}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
         DEPENDS ${TL_TYPES_LUAU_INC} ${SCHEMA_SCRIPT_HINT_FILES}
-        COMMENT "merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau"
-        CODEGEN)
+        COMMENT "merge tl_types.luau.inc + schema_types.luau.inc -> tl_types.luau")
 
     # must call by user before compile to Android, don't need call under PC
     add_custom_target(mobile_preprocess
@@ -114,8 +112,7 @@ if (NEED_SCHEMA_PARSER)
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/merge_luau_hint_incs.cmake
         DEPENDS ${SCHEMA_SCRIPT_HINT_FILES} ${TL_TYPES_LUAU_INC}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "mobile_preprocess..."
-        CODEGEN)
+        COMMENT "mobile_preprocess...")
 endif()
 
 ################ build common ################
