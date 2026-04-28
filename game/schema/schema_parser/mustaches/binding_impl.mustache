@@ -9,8 +9,7 @@
 
 void bindSchemaAssetManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
-            .beginNamespace("Schema")
+        .beginNamespace("TL_Schema")
             {{#asset_filename_checks}}
             .addFunction("FilenameIs{{{type}}}", +[](const Path& filename) {
                 return AssetInfoManager::FilenameIs{{{type}}}(filename);
@@ -54,7 +53,6 @@ void bindSchemaAssetManager(lua_State* L) {
                 .addFunction("Clear", &GenericAssetManager<{{{type}}}>::Clear)
             .endClass()
             {{/asset_manager_classes}}
-        .endNamespace()
         .endNamespace();
 }
 

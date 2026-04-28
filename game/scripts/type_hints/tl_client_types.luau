@@ -1,5 +1,3 @@
--- Types bound from client/src/script_binding.cpp (TL.Client)
-
 export type Sprite = {
 	m_image: ImageHandle,
 	m_region: Region,
@@ -151,3 +149,6 @@ export type ClientContext = {
 }
 
 export type GetClientContext = () -> ClientContext
+
+
+return TL_Client

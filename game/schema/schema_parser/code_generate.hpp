@@ -40,5 +40,5 @@ std::string GenerateSchemaScriptBindImplCode(const SchemaInfo&);
 std::string GenerateBindingHeaderCode(const SchemaInfoManager&);
 std::string GenerateBindingImplCode(const SchemaInfoManager&);
 
-// Luau schema types: generate schema_types.luau.inc (fragment; merged with tl_types.luau.inc by CMake)
+// Luau schema types: generate schema_types.luau.inc (fragment; wrapped by CMake into scripts/tl_schema_types.luau)
 std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager&);

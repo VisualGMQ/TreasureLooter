@@ -1,8 +1,7 @@
-local TL = require("@client/tl_types")
-local TLC = TL.Common
-local TLI = TL.Client
-local TLS = TL.Server
-local TLSch = TL.Schema
+local TL_Common = require("@type_hints/tl_common_types")
+local TL_Client = require("@type_hints/tl_client_types")
+local TL_Schema = require("@type_hints/tl_schema_types")
+
 
 local ScriptBehavior = require("@client/script_behavior")
 local Creation = require("@client/creation")
@@ -18,17 +17,17 @@ type GameEntryData = { }
 
 export type GameEntry = typeof(setmetatable({}::GameEntryData, GameEntry))
 
-function GameEntry.new(entity: TLC.Entity) : GameEntry
+function GameEntry.new(entity: TL_Common.Entity) : GameEntry
     local self = ScriptBehavior.new(entity)
     return setmetatable(self, GameEntry)
 end
 
 function GameEntry.OnInit(self: GameEntry)
-    local ctx: TLI.ClientContext = TLI.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
 
     local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load("assets/gpa/levels/main.level.xml")
     if not level_definition then
-        TLC.Log("load level definition failed: nil")
+        TL_Common.Log("load level definition failed: nil")
         return
     end
 
@@ -37,7 +36,7 @@ function GameEntry.OnInit(self: GameEntry)
     local scene = scene_manager:GetCurrentScene()
 
     if not scene then
-        TLC.Log("create scene failed")
+        TL_Common.Log("create scene failed")
         return
     end
 
@@ -51,13 +50,13 @@ function GameEntry.OnInit(self: GameEntry)
 
     local map_layer_entities = {}
 
-    for _, layer: TLSch.MapLayerDefinition in ipairs(level_definition.m_map_definition.m_layers) do
+    for _, layer: TL_Schema.MapLayerDefinition in ipairs(level_definition.m_map_definition.m_layers) do
         local prefab = prefab_manager:Create()
 
-        prefab.m_transform = TLC.Transform()
+        prefab.m_transform = TL_Common.Transform()
         prefab.m_draw_order = layer.m_draw_order
-        prefab.m_tilemap_layer = TLSch.TilemapLayerDefinition()
-        prefab.m_tilemap_layer.m_position = TLC.Vec2.ZERO
+        prefab.m_tilemap_layer = TL_Schema.TilemapLayerDefinition()
+        prefab.m_tilemap_layer.m_position = TL_Common.Vec2.ZERO
         prefab.m_tilemap_layer.m_layer_name = layer.m_name
         prefab.m_tilemap_layer.m_tilemap = tilemap
 
@@ -73,7 +72,7 @@ function GameEntry.OnInit(self: GameEntry)
 
     for i = 0, tilemap:GetLayerCount() - 1 do
         local layer = tilemap:GetLayer(i)
-        if (not layer) or layer:GetType() ~= TLC.TilemapLayerType.Object then
+        if (not layer) or layer:GetType() ~= TL_Common.TilemapLayerType.Object then
             continue
         end
 
@@ -83,7 +82,7 @@ function GameEntry.OnInit(self: GameEntry)
         end
         for j = 0, object_layer:GetObjectCount() - 1 do
             local object = object_layer:GetObject(j)
-            if object and object:GetType() == TLC.TilemapObjectType.Point then
+            if object and object:GetType() == TL_Common.TilemapObjectType.Point then
                 local point = object:AsPoint()
                 if point then
                     spawn_point_infos[object:GetName()] = point
@@ -93,12 +92,12 @@ function GameEntry.OnInit(self: GameEntry)
     end
 
     for name, v in pairs(spawn_point_infos) do
-        TLC.Log("spaw point: ", name)
+        TL_Common.Log("spaw point: ", name)
     end
 
     local player_put_on_layer_entity = map_layer_entities[level_definition.m_map_definition.m_player_put_on_layer]
     if not player_put_on_layer_entity then
-        TLC.Log("no player put on layer")
+        TL_Common.Log("no player put on layer")
         return
     end
 
@@ -113,13 +112,13 @@ function GameEntry.OnInit(self: GameEntry)
     local player_spawn_point = spawn_point_infos[level_definition.m_map_definition.m_player_spawn_point]
     if player_spawn_point then
         local definition = level_definition.m_map_definition.m_player_character
-        local transform: TLC.Transform = TLC.Transform()
+        local transform: TL_Common.Transform = TL_Common.Transform()
         transform.m_position = player_spawn_point
 
         local entity, character = Creation.CreateCharacter(transform, definition)
 
         if not character then
-            TLC.Log("failed to create player, entity is null")
+            TL_Common.Log("failed to create player, entity is null")
             return
         end
         character:SetTeamID(level_definition.m_map_definition.m_player_team_id)
@@ -128,39 +127,39 @@ function GameEntry.OnInit(self: GameEntry)
             local behavior = player_script :: PlayerBehavior.PlayerBehavior
             behavior:_init(character, level_definition.m_map_definition.m_player_related_definition)
         end
-        TLC.Log("create player")
+        TL_Common.Log("create player")
 
         player_put_on_layer_relationship:AddChild(entity)
-        TLC.Log("put player on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+        TL_Common.Log("put player on layer ", level_definition.m_map_definition.m_player_put_on_layer)
     else
-        TLC.Log("no player spawn point")
+        TL_Common.Log("no player spawn point")
     end
 
     -- create other components
-    for spawn_point_name, spawn_object_info: TLSch.ObjectSpawnDefinition in pairs(level_definition.m_spawn_objects) do
+    for spawn_point_name, spawn_object_info: TL_Schema.ObjectSpawnDefinition in pairs(level_definition.m_spawn_objects) do
         local spawn_point = spawn_point_infos[spawn_point_name]
 
         local asset_path = spawn_object_info.m_asset
 
-        TLC.Log("spawning ", asset_path, " at spawn point ", spawn_point_name)
+        TL_Common.Log("spawning ", asset_path, " at spawn point ", spawn_point_name)
 
         if not spawn_point then
-            TLC.Log("spawn failed: no spaw point")
+            TL_Common.Log("spawn failed: no spaw point")
             continue
         end
 
-        if TLSch.FilenameIsCharacterDefinition(spawn_object_info.m_asset) then
-            local transform = TLC.Transform()
+        if TL_Schema.FilenameIsCharacterDefinition(spawn_object_info.m_asset) then
+            local transform = TL_Common.Transform()
             transform.m_position = spawn_point
             local handle = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load(asset_path, false)
             if not handle:IsValid() then
-                TLC.Log("spawn failed: can't load asset")
+                TL_Common.Log("spawn failed: can't load asset")
                 continue
             end
 
             local entity, character = Creation.CreateCharacter(transform, handle)
             if character == nil then
-                TLC.Log("spawn failed: create character failed")
+                TL_Common.Log("spawn failed: create character failed")
                 continue
             end
             character:SetTeamID(spawn_object_info.m_team_id)
@@ -170,29 +169,29 @@ function GameEntry.OnInit(self: GameEntry)
             end
 
             player_put_on_layer_relationship:AddChild(entity)
-            TLC.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
-        elseif TLSch.FilenameIsPrefab(asset_path) then
+            TL_Common.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+        elseif TL_Schema.FilenameIsPrefab(asset_path) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(asset_path)
             if not prefab:IsValid() then
-                TLC.Log("spawn failed: can't load prefab")
+                TL_Common.Log("spawn failed: can't load prefab")
                 continue
             end
 
             local entity = scene:Instantiate(prefab)
             player_put_on_layer_relationship:AddChild(entity)
-            TLC.Log("put prefab on layer ", level_definition.m_map_definition.m_player_put_on_layer)
-        elseif TLSch.FilenameIsItemDefinition(asset_path) then
-            local transform = TLC.Transform()
+            TL_Common.Log("put prefab on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+        elseif TL_Schema.FilenameIsItemDefinition(asset_path) then
+            local transform = TL_Common.Transform()
             transform.m_position = spawn_point
             local handle = ctx:GetAssetsManager():GetItemDefinitionManager():Load(asset_path, false)
             if not handle:IsValid() then
-                TLC.Log("spawn failed: can't load asset")
+                TL_Common.Log("spawn failed: can't load asset")
                 continue
             end
 
             local entity, item = Creation.CreateItem(transform, handle)
-            if entity == TLC.null_entity then
-                TLC.Log("spawn failed: create item failed")
+            if entity == TL_Common.null_entity then
+                TL_Common.Log("spawn failed: create item failed")
                 continue
             end
 
@@ -203,9 +202,9 @@ function GameEntry.OnInit(self: GameEntry)
             end
 
             player_put_on_layer_relationship:AddChild(entity)
-            TLC.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+            TL_Common.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
         else
-            TLC.Log("spawn failed: no support file type")
+            TL_Common.Log("spawn failed: no support file type")
         end
     end
 end

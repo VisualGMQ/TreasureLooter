@@ -58,10 +58,10 @@ void BindHandle(const std::string& name,
 					}
 
 					luabridge::LuaRef tl = luabridge::LuaRef::getGlobal(L, "TL");
-					// Engine: TL.Common; schema: TL.Schema (legacy TL root kept for older builds).
+					// Engine: TL.Common; schema: TL_Schema (legacy TL root kept for older builds).
 					luabridge::LuaRef cls = tl["Common"][t_class_name];
 					if (cls.isNil()) {
-						cls = tl["Schema"][t_class_name];
+						cls = luabridge::LuaRef::getGlobal(L, "TL_Schema")[t_class_name];
 					}
 					if (cls.isNil()) {
 						cls = tl[t_class_name];

@@ -1,19 +1,16 @@
-local TL = require("@client/tl_types")
-local TLC = TL.Common
-local TLI = TL.Client
-local TLS = TL.Server
+local TL_Common = require("@type_hints/tl_common_types")
+
 
 
 export type LuaContext = {
-    m_player_layer_entity: TLC.Entity,
+    m_player_layer_entity: TL_Common.Entity,
 }
 
 local _M = {}
 
 local function new()
     local self = {} :: LuaContext
-    print("TL = ", TL)
-    self.m_player_layer_entity = TLC.null_entity
+    self.m_player_layer_entity = TL_Common.null_entity
     return setmetatable(self, _M)
 end
 

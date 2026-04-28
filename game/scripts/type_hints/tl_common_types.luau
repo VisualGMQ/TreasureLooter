@@ -1,5 +1,3 @@
--- Types bound from common/src/scripts/script_binding.cpp (TL.Common)
-
 export type Entity = number
 export type TimeType = number
 export type TimerID = number
@@ -425,3 +423,6 @@ export type DebugDraw = {
 
 export type GetAngle = (from: { x: number, y: number }, to: { x: number, y: number }) -> number
 export type DecomposeVector = (velocity: Vec2, tangent: Vec2) -> DecompositionResult
+
+
+return TL.Common

@@ -3,9 +3,7 @@
 
 void BindServerModule(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
-        .beginNamespace("Server")
-        .endNamespace()
+        .beginNamespace("TL_Server")
         .endNamespace();
 }
 

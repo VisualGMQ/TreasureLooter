@@ -4,7 +4,7 @@ logs
 imgui.ini
 install
 schema_generate/
-game/scripts/tl_types.luau
+game/scripts/type_hints/tl_schema_types.luau
 
 .gradle
 .cxx

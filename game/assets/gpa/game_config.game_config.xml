@@ -25,6 +25,10 @@
 				<key>server</key>
 				<value>scripts/server</value>
 			</elem>
+			<elem>
+				<key>type_hints</key>
+				<value>scripts/type_hints</value>
+			</elem>
 		</lua_paths>
 	</payload>
 </GameConfig>
