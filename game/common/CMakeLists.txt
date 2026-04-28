@@ -21,6 +21,8 @@ target_link_libraries(${COMMON_NAME}
     RapidXML
     stduuid
     tmxlite
+    enet
+    protobuf::libprotobuf
 
     Luau.Compiler
     Luau.VM

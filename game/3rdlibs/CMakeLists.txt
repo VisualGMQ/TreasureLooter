@@ -38,3 +38,10 @@ set(LUAU_BUILD_SHARED OFF)
 add_3rdlib(luau)
 
 add_3rdlib(LuaBridge3)
+
+set(protobuf_INSTALL OFF)
+set(protobuf_MSVC_STATIC_RUNTIME OFF)
+set(protobuf_LOCAL_DEPENDENCIES_ONLY ON)
+add_3rdlib(protobuf)
+
+add_3rdlib(enet)
