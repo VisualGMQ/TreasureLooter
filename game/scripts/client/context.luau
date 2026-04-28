@@ -1,18 +1,21 @@
-local TL = require("@game/tl_types")
+local TL_Common = require("@type_hints/tl_common_types")
+
+
 
 export type LuaContext = {
-    m_player_layer_entity: TL.Entity,
+    m_player_layer_entity: TL_Common.Entity,
 }
 
 local _M = {}
 
 local function new()
     local self = {} :: LuaContext
-    print("TL = ", TL)
-    self.m_player_layer_entity = TL.null_entity
+    self.m_player_layer_entity = TL_Common.null_entity
     return setmetatable(self, _M)
 end
 
 local context = new()
 
 return context
+
+

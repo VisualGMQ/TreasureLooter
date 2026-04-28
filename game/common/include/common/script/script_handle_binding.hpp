@@ -43,7 +43,7 @@ void BindHandle(const std::string& name,
                 const char* t_class_name) {
     using handle_type = Handle<T>;
     luabridge::getGlobalNamespace(L)
-           .beginNamespace("TL")
+           .beginNamespace("TL").beginNamespace("Common")
 			.beginClass<handle_type>(name.c_str())
 			.addFunction(
 				"IsValid",
@@ -58,7 +58,15 @@ void BindHandle(const std::string& name,
 					}
 
 					luabridge::LuaRef tl = luabridge::LuaRef::getGlobal(L, "TL");
-					luabridge::LuaRef method = tl[t_class_name][key];
+					// Engine: TL.Common; schema: TL_Schema (legacy TL root kept for older builds).
+					luabridge::LuaRef cls = tl["Common"][t_class_name];
+					if (cls.isNil()) {
+						cls = luabridge::LuaRef::getGlobal(L, "TL_Schema")[t_class_name];
+					}
+					if (cls.isNil()) {
+						cls = tl[t_class_name];
+					}
+					luabridge::LuaRef method = cls[key];
 					if (!method.isNil() && method.isCallable()) {
 						method.push(L);
 						luabridge::lua_pushcclosure_x(L, &detail::HandleForwardCall<T>, 1);
@@ -98,5 +106,6 @@ void BindHandle(const std::string& name,
 					return luabridge::LuaRef(L);
 				})
 			.endClass()
-			.endNamespace();
+			.endNamespace().endNamespace();
 }
+

@@ -9,7 +9,7 @@
 
 void bindSchemaAssetManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL_Schema")
             {{#asset_filename_checks}}
             .addFunction("FilenameIs{{{type}}}", +[](const Path& filename) {
                 return AssetInfoManager::FilenameIs{{{type}}}(filename);

@@ -18,8 +18,16 @@
 		<default_font>assets/fonts/zpix.ttf</default_font>
 		<lua_paths>
 			<elem>
-				<key>game</key>
-				<value>scripts/</value>
+				<key>client</key>
+				<value>scripts/client</value>
+			</elem>
+			<elem>
+				<key>server</key>
+				<value>scripts/server</value>
+			</elem>
+			<elem>
+				<key>type_hints</key>
+				<value>scripts/type_hints</value>
 			</elem>
 		</lua_paths>
 	</payload>

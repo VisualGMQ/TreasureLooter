@@ -12,8 +12,6 @@ public:
     ServerContext& operator=(ServerContext&&) = delete;
 
     void Initialize(int argc, char** argv) override;
-
-    void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
 };
 
 #define SERVER_CONTEXT ServerContext::GetInst()

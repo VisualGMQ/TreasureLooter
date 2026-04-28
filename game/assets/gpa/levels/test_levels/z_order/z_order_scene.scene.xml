@@ -1,7 +1,7 @@
 <SceneDefinition>
 	<uuid>a736e81a-2768-4309-b651-c59a7dacfe77</uuid>
 	<payload>
-		<script_path>scripts/game_entry.luau</script_path>
+		<script_path>scripts/client/game_entry.luau</script_path>
 		<entities>
 			<elem>
 				<transform>

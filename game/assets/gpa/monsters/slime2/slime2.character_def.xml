@@ -34,7 +34,7 @@
 		<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
 		<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
 		<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
-		<script>scripts/slime.luau</script>
+		<script>scripts/client/slime.luau</script>
 		<interact_range>0.000000</interact_range>
 	</payload>
 </CharacterDefinition>

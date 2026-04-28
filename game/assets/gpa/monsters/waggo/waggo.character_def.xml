@@ -34,7 +34,7 @@
 		<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
 		<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
 		<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
-		<script>scripts/player_behavior.luau</script>
+		<script>scripts/client/player_behavior.luau</script>
 		<weapon>assets/gpa/weapons/weapon.weapon_def.xml</weapon>
 		<interact_range>50.000000</interact_range>
 	</payload>

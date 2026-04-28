@@ -1,6 +1,6 @@
 void bind{{{type}}}TypeFromSchema(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL_Schema")
         {{#is_asset}}
         .addFunction("LoadAsset{{{type}}}", +[](const Path& path) {
             auto r = LoadAsset<{{{type}}}>(path);

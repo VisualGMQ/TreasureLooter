@@ -114,7 +114,7 @@ static int ScriptComponentManager_GetTable(lua_State* L) {
 
 void bindScriptBinaryDataManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
         .beginClass<ScriptBinaryDataManager>("ScriptBinaryDataManager")
         .addFunction("Load",
                      +[](ScriptBinaryDataManager* m, const std::string& path) {
@@ -147,12 +147,12 @@ void bindScriptBinaryDataManager(lua_State* L) {
                     }
                 })
         .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindCollisionGroup(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<CollisionGroup>("CollisionGroup")
                 .template addConstructor<void ()>()
                 .addFunction("Add", &CollisionGroup::Add)
@@ -163,12 +163,12 @@ void bindCollisionGroup(lua_State* L) {
                 .addFunction("GetUnderlying", &CollisionGroup::GetUnderlying)
                 .addFunction("SetUnderlying", &CollisionGroup::SetUnderlying)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindPath(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<Path>("Path")
                 .template addConstructor<void (const std::string&), void (void)>()
                 // .addFunction("string", &Path::string)
@@ -195,13 +195,13 @@ void bindPath(lua_State* L) {
                     return ss.str();
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 template <typename T>
 void bindTVec2(lua_State* L, const char* className) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<TVec2<T>>(className)
                 .template addConstructor<void (void), void (T, T)>()
                 .addProperty("x", &TVec2<T>::x, true)
@@ -229,14 +229,14 @@ void bindTVec2(lua_State* L, const char* className) {
                 .addStaticProperty("X_UNIT", &TVec2<T>::X_UNIT)
                 .addStaticProperty("Y_UNIT", &TVec2<T>::Y_UNIT)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindMath(lua_State* L) {
     bindTVec2<float>(L, "Vec2");
     bindTVec2<uint32_t>(L, "Vec2UI");
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<Color>("Color")
                 .template addConstructor<void (void), void (float, float, float, float)>()
                 .addProperty("r", &Color::r, true)
@@ -311,24 +311,24 @@ void bindMath(lua_State* L) {
                     return m->Has(e);
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindScene(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<Scene>("Scene")
                 .addFunction("Instantiate", &Scene::Instantiate)
                 .addFunction("RemoveEntity", &Scene::RemoveEntity)
                 .addFunction("GetRootEntity", &Scene::GetRootEntity)
                 .addFunction("GetUIRootEntity", &Scene::GetUIRootEntity)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindImage(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<ImageBase>("Image")
                 .addFunction("GetSize", &ImageBase::GetSize)
                 .addFunction("ChangeColorMask", &ImageBase::ChangeColorMask)
@@ -351,12 +351,12 @@ void bindImage(lua_State* L) {
                     return m->Find(Path(path));
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindDebugDraw(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<IDebugDrawer>("DebugDraw")
                 .addStaticProperty("kOneFrame",
                                    +[]() { return IDebugDrawer::kOneFrame; })
@@ -450,11 +450,11 @@ void bindDebugDraw(lua_State* L) {
                     }
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindContext(lua_State* L) {
-    luabridge::getGlobalNamespace(L).beginNamespace("TL").addFunction("Log", TL_Log).endNamespace();
+    luabridge::getGlobalNamespace(L).beginNamespace("TL").beginNamespace("Common").addFunction("Log", TL_Log).endNamespace().endNamespace();
 }
 
 ScriptBinaryDataManager* scriptGetScriptBinaryDataManager(IAssetsManager* m) {
@@ -487,7 +487,7 @@ GenericAssetManager<LevelDefinition>* scriptGetLevelDefinitionManager(IAssetsMan
 
 void bindAssetsManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<IAssetsManager>("AssetsManager")
                 .addFunction("GetScriptBinaryDataManager", &scriptGetScriptBinaryDataManager)
                 .addFunction("GetImageManager", &scriptGetImageManager)
@@ -499,12 +499,12 @@ void bindAssetsManager(lua_State* L) {
                 // Keep a typo-compatible alias for existing scripts.
                 .addFunction("GetLevelDefintionManager", &scriptGetLevelDefinitionManager)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindTimer(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<Time>("Time")
                 .addFunction("GetElapseTime", &Time::GetElapseTime)
                 .addFunction("GetCurrentTime", &Time::GetCurrentTime)
@@ -528,12 +528,12 @@ void bindTimer(lua_State* L) {
                 .addFunction("Remove", &TimerManager::Remove)
                 .addFunction("Find", &TimerManager::Find)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindCCT(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<CharacterController>("CharacterController")
                 .addFunction("MoveAndSlide",
                              +[](CharacterController* cct, Vec2 dir) { cct->MoveAndSlide(dir); })
@@ -555,12 +555,12 @@ void bindCCT(lua_State* L) {
                     return m->Has(e);
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindPhysics(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<PhysicsShape>("PhysicsShape")
                 .addFunction("GetPosition", &PhysicsShape::GetPosition)
                 .addFunction("SetCollisionLayer", &PhysicsShape::SetCollisionLayer)
@@ -622,12 +622,12 @@ void bindPhysics(lua_State* L) {
                 .addFunction("IsEnable", &StaticCollisionManager::IsEnable)
                 .addFunction("Disable", &StaticCollisionManager::Disable)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindEvent(lua_State* L) {
      luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<EventDebugger>("EventDebugger")
                 .addFunction("SendDebugEvent", &EventDebugger::SendDebugEvent)
                 .addFunction("GetTriggeredCount", &EventDebugger::GetTriggeredCount)
@@ -659,12 +659,12 @@ void bindEvent(lua_State* L) {
                 .addFunction("GetID", &TimerStopEvent::GetID)
                 .addFunction("GetEventType", &TimerStopEvent::GetEventType)
             .endClass()
-    .endNamespace();
+    .endNamespace().endNamespace();
 }
 
 void bindTilemap(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginNamespace("TilemapLayerType")
                 .addProperty("Tiled",
                              +[]() {
@@ -810,12 +810,12 @@ void bindTilemap(lua_State* L) {
                 .addProperty("m_topleft", &PhysicsScene::TilemapCollision::m_topleft,
                              true)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindTilemapCollisionComponent(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<TilemapLayerCollisionComponent>("TilemapCollisionComponent")
                 .addFunction("GetLayer", &TilemapLayerCollisionComponent::GetLayer)
                 .addFunction("GetTilemap", &TilemapLayerCollisionComponent::GetTilemap)
@@ -833,12 +833,12 @@ void bindTilemapCollisionComponent(lua_State* L) {
                                  return m->Has(e);
                              })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindTrigger(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<Trigger>("Trigger")
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
@@ -859,12 +859,12 @@ void bindTrigger(lua_State* L) {
                         manager->RegisterEntity(entity, entity, definition);
                         })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindRelationship(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<Relationship>("Relationship")
                 .addFunction("AddChild", &Relationship::AddChild)
                 .addFunction("Get", &Relationship::Get)
@@ -885,12 +885,12 @@ void bindRelationship(lua_State* L) {
                                  m->RegisterEntity(e, e);
                              })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindFontManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<FontManagerBase>("FontManager")
                 .addFunction("Load",
                              +[](FontManagerBase* m, const std::string& path) {
@@ -909,12 +909,12 @@ void bindFontManager(lua_State* L) {
                     return m->Find(Path(path));
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindAnimationManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<AnimationManager>("AnimationManager")
                 .addFunction("Load",
                              +[](AnimationManager* m, const std::string& path) {
@@ -933,12 +933,12 @@ void bindAnimationManager(lua_State* L) {
                     return m->Find(Path(path));
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindTilemapManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<TilemapManager>("TilemapManager")
                 .addFunction("Load",
                              +[](TilemapManager* m, const std::string& path) {
@@ -957,12 +957,12 @@ void bindTilemapManager(lua_State* L) {
                     return m->Find(Path(path));
                 })
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindBindPoint(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<BindPoint>("BindPoint")
                 .addProperty("m_position", &BindPoint::m_position)
                 .addProperty("m_name", &BindPoint::m_name)
@@ -979,12 +979,12 @@ void bindBindPoint(lua_State* L) {
                     .addFunction("Has", &BindPointsComponentManager::Has)
                     .addFunction("ToggleDebugDraw", &BindPointsComponentManager::ToggleDebugDraw)
             .endClass()
-    .endNamespace();
+    .endNamespace().endNamespace();
 }
 
 void bindSceneManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<SceneManager>("SceneManager")
                 .addFunction("Load",
                              +[](SceneManager* m, const std::string& path) {
@@ -1007,7 +1007,7 @@ void bindSceneManager(lua_State* L) {
                 .addFunction("Create", static_cast<SceneHandle (SceneManager::*)(SceneDefinitionHandle)>(&SceneManager::Create))
                 .addFunction("Unload", &SceneManager::Unload)
             .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindHandleTypes(lua_State* L) {
@@ -1020,16 +1020,16 @@ void bindHandleTypes(lua_State* L) {
 
 void bindEntity(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
         .addProperty(
             "null_entity",
             +[]() -> Entity { return static_cast<Entity>(null_entity); })
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 void bindUUID(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL")
+        .beginNamespace("TL").beginNamespace("Common")
             .beginClass<UUID>("UUID")
             .addConstructor<void(void)>()
             .addStaticFunction("CreateV4", &UUID::CreateV4)
@@ -1039,7 +1039,7 @@ void bindUUID(lua_State* L) {
             .addFunction("__eq", &UUID::operator==)
             .addFunction("__tostring", &UUID::ToString)
         .endClass()
-        .endNamespace();
+        .endNamespace().endNamespace();
 }
 
 // clang-format on
@@ -1079,3 +1079,4 @@ void BindTLModule(lua_State* L) {
     BindSchema(L);
     bindImGui(L);
 }
+

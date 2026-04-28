@@ -1,21 +1,25 @@
-local TL = require("@game/tl_types")
-local ScriptBehavior = require("@game/script_behavior")
-local LuaContext = require("@game/context")
+local TL_Common = require("@type_hints/tl_common_types")
+local TL_Client = require("@type_hints/tl_client_types")
+local TL_Schema = require("@type_hints/tl_schema_types")
+
+
+local ScriptBehavior = require("@client/script_behavior")
+local LuaContext = require("@client/context")
 
 local Item = {}
 Item.__index = Item
 
 export type Item = {
-    m_type : TL.ItemType,
-    m_behavior: TL.ItemBehaviorFlags,
-    m_item_uuid : TL.UUID, -- detemine whether two item are the same type, so they can stack
+    m_type : TL_Schema.ItemType,
+    m_behavior: TL_Schema.ItemBehaviorFlags,
+    m_item_uuid : TL_Common.UUID, -- detemine whether two item are the same type, so they can stack
 
     -- mine relate
-    m_mineral_fragment: TL.ItemDefinitionHandle,
+    m_mineral_fragment: TL_Schema.ItemDefinitionHandle,
     m_dig_time: number,
 }
 
-function Item.new(definition: TL.ItemDefinitionHandle): Item?
+function Item.new(definition: TL_Schema.ItemDefinitionHandle): Item?
     if not definition:IsValid() then
         return nil
     end
@@ -44,23 +48,23 @@ ItemBehavior.__index = ItemBehavior
 setmetatable(ItemBehavior, { __index = ScriptBehavior })
 
 type ItemBehaviorData = {
-    m_transform : TL.Transform,
-    m_relationship : TL.Relationship,
-    m_pickup_trigger : TL.Trigger,
+    m_transform : TL_Common.Transform,
+    m_relationship : TL_Common.Relationship,
+    m_pickup_trigger : TL_Common.Trigger,
 
     m_item: Item,
 }
 
 export type ItemBehavior = typeof(setmetatable({} :: ItemBehaviorData, ItemBehavior)) & ScriptBehavior.ScriptBehavior
 
-function ItemBehavior.new(entity: TL.Entity): ItemBehavior?
+function ItemBehavior.new(entity: TL_Common.Entity): ItemBehavior?
     local self = ScriptBehavior.new(entity)
 
     return setmetatable(self, ItemBehavior)
 end
 
 function ItemBehavior.OnInit(self: ItemBehavior)
-    local ctx: TL.GameContext = TL.GetContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
 
     local entity = self:GetEntity()
     self.m_transform = ctx:GetTransformManager():Get(entity)
@@ -69,21 +73,21 @@ end
 
 function ItemBehavior._init(self: ItemBehavior, item: Item?)
     if not item then
-        TL.Log("definition is null")
-        self.m_behavior = TL.ItemBehaviorFlags()
-        self.m_type = TL.ItemType.Unknown
+        TL_Common.Log("definition is null")
+        self.m_behavior = TL_Schema.ItemBehaviorFlags()
+        self.m_type = TL_Schema.ItemType.Unknown
         return
     end
 
     self.m_item = item
 end
 
-function ItemBehavior.PickupTo(self: ItemBehavior, owner_entity: TL.Entity, stack_index: number)
-    if owner_entity == TL.null_entity then
+function ItemBehavior.PickupTo(self: ItemBehavior, owner_entity: TL_Common.Entity, stack_index: number)
+    if owner_entity == TL_Common.null_entity then
         return
     end
 
-    local ctx: TL.GameContext = TL.GetContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
 
     local entity = self:GetEntity()
     local relationship = ctx:GetRelationshipManager():Get(entity)
@@ -97,8 +101,8 @@ function ItemBehavior.PickupTo(self: ItemBehavior, owner_entity: TL.Entity, stac
     ctx:GetStaticCollisionManager():Disable(entity)
 end
 
-function ItemBehavior.Putdown(self: ItemBehavior, putdown_position: TL.Vec2)
-    local ctx: TL.GameContext = TL.GetContext()
+function ItemBehavior.Putdown(self: ItemBehavior, putdown_position: TL_Common.Vec2)
+    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
 
     local entity = self:GetEntity()
     local relationship = ctx:GetRelationshipManager():Get(entity)
@@ -112,3 +116,5 @@ function ItemBehavior.Putdown(self: ItemBehavior, putdown_position: TL.Vec2)
 end
 
 return ItemBehavior
+
+

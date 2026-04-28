@@ -4,7 +4,7 @@ else()
     add_executable(${GAME_NAME})
 endif()
 
-file(GLOB_RECURSE GAME_SCRIPTS ../scripts/*.luau)
+file(GLOB_RECURSE GAME_SCRIPTS ../scripts/client/*.luau)
 
 target_sources(${GAME_NAME} PRIVATE
     game_main.cpp

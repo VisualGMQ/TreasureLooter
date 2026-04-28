@@ -19,14 +19,15 @@ cmake --build cmake-build
 
 ### Build For Android
 
-First we must build `schema_parser` under PC and run `run_schema_parser` target:
+First we must build `schema_parser` under PC and generate schema outputs:
 
 ```bash
 cmake -S game/ -B cmake-build
 cmake --build cmake-build --target mobile_preprocess
 ```
 
-It will generate `game/schema_generate` and `game/scripts/tl_types.luau`.
+It will generate `game/schema_generate` and `game/scripts/type_hints/tl_schema_types.luau`.
+The other type-hint files (`tl_common_types.luau`, `tl_client_types.luau`, `tl_server_types.luau`) are source files under `game/scripts/type_hints`.
 
 Then copy `game` folder to `android/app/jni`.
 
@@ -78,9 +79,12 @@ Some projects are entirely written by AI, I didn't review code, so you can ignor
 
 For best development experience, open vscode under `TreasureLooter/game`.
 
-You can require [tl_types](scripts/TL_types.luau) and [imgui_types](scripts/imgui_types.luau) to make IDE complete C++ binding functions & classes for you:
+You can require [tl_common_types](game/scripts/type_hints/tl_common_types.luau), [tl_client_types](game/scripts/type_hints/tl_client_types.luau), [tl_server_types](game/scripts/type_hints/tl_server_types.luau), [tl_schema_types](game/scripts/type_hints/tl_schema_types.luau), and [imgui_types](scripts/client/imgui_types.luau) to make IDE complete C++ binding functions & classes for you:
 
 ```luau
-local TL = require("@game/tl_types")
+local TLC = require("@game/scripts/type_hints/tl_common_types")
+local TLI = require("@game/scripts/type_hints/tl_client_types")
+local TLS = require("@game/scripts/type_hints/tl_server_types")
+local TLSch = require("@game/scripts/type_hints/tl_schema_types")
 local ImGui = require("@game/imgui_types")
 ```
