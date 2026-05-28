@@ -1,7 +1,40 @@
 #include "parse.hpp"
 
+#include <charconv>
 #include <fstream>
 #include <iostream>
+
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+bool parseIntegral(const char* begin, const char* end, T& output_number) {
+    auto [ptr, errc] = std::from_chars(begin, end, output_number);
+
+    std::string_view display_str = {begin, (size_t)(end - begin)};
+
+    if (errc != std::errc{}) {
+        std::error_code error_code = std::make_error_code(errc);
+        std::cerr << "Error parsing proto_id `" << display_str << "` "
+                  << error_code.message() << std::endl;
+        return false;
+    }
+
+    if (ptr != end) {
+        std::cout << "Waning: extra character when parsing proto_id `"
+                  << display_str << "`" << std::endl;
+    }
+
+    return true;
+}
+
+bool parseProtoID(rapidxml::xml_node<>* node, uint32_t& id) {
+    auto proto_id_node = node->first_attribute("proto_id");
+    if (!proto_id_node) {
+        return false;
+    }
+
+    const char* value = proto_id_node->value();
+    size_t value_size = proto_id_node->value_size();
+    return parseIntegral(value, value + value_size, id);
+}
 
 std::optional<EnumInfo> ParseEnum(SchemaInfo& schema,
                                   rapidxml::xml_node<>* node) {
@@ -13,6 +46,14 @@ std::optional<EnumInfo> ParseEnum(SchemaInfo& schema,
     }
 
     info.m_name = name_node->value();
+
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        info.m_proto_id = proto_id;
+    } else if (auto proto_node = node->first_attribute("proto");
+               proto_node && proto_node->value() == std::string_view{"true"}) {
+        info.m_gen_proto = true;
+    }
 
     auto type_node = node->first_attribute("type");
     if (type_node) {
@@ -76,6 +117,12 @@ std::optional<PropertyInfo> ParseElement(rapidxml::xml_node<>* node) {
 
     property.m_name = name->value();
     property.m_type = type->value();
+
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        property.m_proto_id = proto_id;
+    }
+
     return property;
 }
 
@@ -96,7 +143,14 @@ std::optional<PropertyInfo> ParseOption(SchemaInfo& schema,
     PropertyInfo property;
     property.m_name = name->value();
     property.m_type = "std::optional<" + std::string{type->value()} + ">";
-    property.m_optional = true;
+    property.m_template_type1 = type->value();
+    property.m_is_optional = true;
+
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        property.m_proto_id = proto_id;
+    }
+
     schema.m_include_hints = schema.m_include_hints | IncludeHint::Option;
     return property;
 }
@@ -132,12 +186,19 @@ std::optional<PropertyInfo> ParseArray(SchemaInfo& schema,
 
     PropertyInfo property;
     property.m_name = name->value();
+    property.m_template_type1 = type->value();
     if (is_dynamic) {
         property.m_type = "std::vector<" + std::string{type->value()} + ">";
     } else {
         property.m_type = "std::array<" + std::string{type->value()} + ", " +
                           std::to_string(count) + ">";
     }
+
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        property.m_proto_id = proto_id;
+    }
+
     property.m_is_array = true;
     schema.m_include_hints = schema.m_include_hints | IncludeHint::Array;
     return property;
@@ -179,8 +240,14 @@ std::optional<PropertyInfo> ParseHandle(SchemaInfo& schema,
     PropertyInfo property;
     property.m_name = name->value();
     property.m_type = type->value() + std::string{"Handle"};
-    property.m_optional = false;
+    property.m_template_type1 = type->value();
+    property.m_is_optional = false;
     property.m_is_handle = true;
+
+    if (auto proto_id_node = node->first_attribute("proto_id")) {
+        std::cerr << "Error: proto can't has Handle<T> element";
+    }
+
     return property;
 }
 
@@ -200,9 +267,16 @@ std::optional<PropertyInfo> ParseFlags(SchemaInfo& schema,
 
     PropertyInfo property;
     property.m_name = name->value();
+    property.m_template_type1 = type->value();
     property.m_type = std::string{"Flags<"} + type->value() + ">";
-    property.m_optional = false;
+    property.m_is_optional = false;
     property.m_is_flags = true;
+
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        property.m_proto_id = proto_id;
+    }
+
     schema.m_include_hints = schema.m_include_hints | IncludeHint::Flags;
     return property;
 }
@@ -231,6 +305,15 @@ std::optional<PropertyInfo> ParseUnorderedMap(SchemaInfo& schema,
     property.m_name = name_node->value();
     property.m_type = std::string{"std::unordered_map<"} + key_node->value() +
                       ", " + value_node->value() + ">";
+    property.m_template_type1 = key_node->value();
+    property.m_template_type2 = value_node->value();
+    property.m_is_unordered_map = true;
+
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        property.m_proto_id = proto_id;
+    }
+
     schema.m_include_hints = schema.m_include_hints | IncludeHint::UnorderedMap;
     return property;
 }
@@ -247,6 +330,14 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
 
     class_info.m_name = name_attr->value();
 
+    uint32_t proto_id = 0;
+    if (parseProtoID(node, proto_id)) {
+        class_info.m_proto_id = proto_id;
+    } else if (auto proto_node = node->first_attribute("proto");
+               proto_node && proto_node->value() == std::string_view{"true"}) {
+        class_info.m_gen_proto = true;
+    }
+
     if (is_asset) {
         auto extension_attr = node->first_attribute("extension");
         if (!extension_attr) {
@@ -259,7 +350,7 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
     }
 
     auto element = node->first_node();
-    while (element) {
+    while (element && element->type() == rapidxml::node_type::node_element) {
         std::string_view name = element->name();
         std::optional<PropertyInfo> property;
         if (name == "element") {
@@ -277,7 +368,6 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
         } else {
             std::cerr << "Error parsing class, unknown node " << element->name()
                       << std::endl;
-            return std::nullopt;
         }
 
         if (property) {

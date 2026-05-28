@@ -7,6 +7,7 @@
 #include "client/input/input.hpp"
 #include "client/input/keyboard.hpp"
 #include "client/input/mouse.hpp"
+#include "client/logic.hpp"
 #include "client/sprite.hpp"
 #include "client/tilemap_render_component.hpp"
 #include "common/asset_manager.hpp"
@@ -23,8 +24,6 @@
 #include "schema/display/display.hpp"
 #include "variant_asset.hpp"
 
-std::unique_ptr<AssetEditorContext> AssetEditorContext::instance;
-
 void AssetEditorContext::Init() {
     if (!instance) {
         instance = std::unique_ptr<AssetEditorContext>(new AssetEditorContext);
@@ -38,7 +37,7 @@ void AssetEditorContext::Destroy() {
 }
 
 AssetEditorContext& AssetEditorContext::GetInst() {
-    return *instance;
+    return static_cast<AssetEditorContext&>(*instance);
 }
 
 void AssetEditorContext::Initialize(int argc, char** argv) {

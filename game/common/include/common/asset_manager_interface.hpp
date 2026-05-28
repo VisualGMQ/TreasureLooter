@@ -1,11 +1,11 @@
 #pragma once
 #include "common/handle.hpp"
 
+#include "common/uuid.hpp"
 #include "common/asset.hpp"
 #include "common/log.hpp"
 #include "common/path.hpp"
 #include "common/type_index.hpp"
-#include "common/uuid.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -28,16 +28,16 @@ public:
 
     // create an empty asset
     HandleType Create() {
-        return this->store(nullptr, UUID::CreateV4(), std::make_unique<T>());
+        return this->store(nullptr, UUIDv4::CreateV4(), std::make_unique<T>());
     }
 
-    HandleType Create(const UUID& uuid, T&& value, const Path* filename) {
+    HandleType Create(const UUIDv4& uuid, T&& value, const Path* filename) {
         TL_RETURN_DEFAULT_IF_FALSE(uuid);
         return this->store(filename, uuid,
                            std::make_unique<T>(std::forward<T>(value)));
     }
 
-    HandleType Create(const UUID& uuid, std::unique_ptr<T>&& payload,
+    HandleType Create(const UUIDv4& uuid, std::unique_ptr<T>&& payload,
                       const Path* filename) {
         TL_RETURN_DEFAULT_IF_FALSE(uuid);
         TL_RETURN_DEFAULT_IF_FALSE(payload);
@@ -62,20 +62,20 @@ public:
         return nullptr;
     }
 
-    HandleType Find(UUID uuid) {
+    HandleType Find(UUIDv4 uuid) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             return {it->first, it->second.get(), this};
         }
         return nullptr;
     }
 
-    void Replace(UUID uuid, T&& payload) {
+    void Replace(UUIDv4 uuid, T&& payload) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             *it->second = std::move(payload);
         }
     }
 
-    void Reload(UUID uuid) {
+    void Reload(UUIDv4 uuid) {
         if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
             Load(it->second, true);
         }
@@ -88,7 +88,7 @@ public:
         }
     }
 
-    HandleType Replace(UUID uuid, const T& payload) {
+    HandleType Replace(UUIDv4 uuid, const T& payload) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             *it->second = payload;
             return HandleType{it->first, it->second.get(), this};
@@ -100,18 +100,18 @@ public:
         return m_paths_uuid_map.find(filename) != m_paths_uuid_map.end();
     }
 
-    bool IsExists(const UUID& uuid) const override {
+    bool IsExists(const UUIDv4& uuid) const override {
         return m_payloads.find(uuid) != m_payloads.end();
     }
 
-    const Path* GetFilename(const UUID& uuid) const override {
+    const Path* GetFilename(const UUIDv4& uuid) const override {
         if (auto it = m_uuid_path_map.find(uuid); it != m_uuid_path_map.end()) {
             return &it->second;
         }
         return nullptr;
     }
 
-    void MakeEmbed(const UUID& uuid) {
+    void MakeEmbed(const UUIDv4& uuid) {
         if constexpr (AssetSLInfo<T>::CanEmbed) {
             auto it = m_uuid_path_map.find(uuid);
             if (it != m_uuid_path_map.end()) {
@@ -132,7 +132,7 @@ public:
      *
      * @warning only use for editor
      */
-    void MakeExternal(const UUID& uuid, const Path& filename) {
+    void MakeExternal(const UUIDv4& uuid, const Path& filename) {
         m_uuid_path_map[uuid] = filename;
         m_paths_uuid_map[filename] = uuid;
     }
@@ -144,7 +144,7 @@ public:
     void MakeExternal(HandleType handle, const Path& filename) {
         TL_RETURN_IF_FALSE(handle);
 
-        const UUID& uuid = handle.GetUUID();
+        const UUIDv4& uuid = handle.GetUUID();
         if (const Path* old_filename = handle.GetFilename()) {
             m_paths_uuid_map.erase(*old_filename);
             m_uuid_path_map.erase(uuid);
@@ -161,7 +161,7 @@ public:
     }
 
 protected:
-    HandleType store(const Path* filename, UUID uuid,
+    HandleType store(const Path* filename, UUIDv4 uuid,
                      std::unique_ptr<T>&& payload) {
         if (auto it = m_payloads.find(uuid); it != m_payloads.end()) {
             it->second.reset();
@@ -179,9 +179,9 @@ protected:
     }
 
 private:
-    std::unordered_map<UUID, std::unique_ptr<T>> m_payloads;
-    std::unordered_map<Path, UUID> m_paths_uuid_map;
-    std::unordered_map<UUID, Path> m_uuid_path_map;
+    std::unordered_map<UUIDv4, std::unique_ptr<T>> m_payloads;
+    std::unordered_map<Path, UUIDv4> m_paths_uuid_map;
+    std::unordered_map<UUIDv4, Path> m_uuid_path_map;
 };
 
 template <typename T>

@@ -1,0 +1,5 @@
+﻿#pragma once
+#include <cstdint>
+typedef struct _ENetPeer ENetPeer;
+
+void NetMsgDispatch(ENetPeer* peer, const uint8_t* buf, size_t buf_len);

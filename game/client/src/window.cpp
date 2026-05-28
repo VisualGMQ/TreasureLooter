@@ -18,10 +18,10 @@ Window::~Window() {
     SDL_DestroyWindow(m_window);
 }
 
-Vec2 Window::GetWindowSize() const {
+Vec2UI Window::GetWindowSize() const {
     int w, h;
     SDL_CALL(SDL_GetWindowSize(m_window, &w, &h));
-    return Vec2(w, h);
+    return Vec2UI(w, h);
 }
 
 void Window::SetTitle(const std::string& title) {

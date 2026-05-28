@@ -474,15 +474,11 @@ AnimationManager* scriptGetAnimationManager(IAssetsManager* m) {
 }
 
 GenericAssetManager<SceneDefinition>* scriptGetSceneDefinitionManager(IAssetsManager* m) {
-    return &m->GetSceneDefinitionAssetManager();
+    return &m->GetManager<SceneDefinition>();
 }
 
 FontManagerBase* scriptGetFontManager(IAssetsManager* m) {
     return &m->GetManager< FontHandle::underlying_type>();
-}
-
-GenericAssetManager<LevelDefinition>* scriptGetLevelDefinitionManager(IAssetsManager* m) {
-    return &m->GetLevelDefinitionAssetManager();
 }
 
 void bindAssetsManager(lua_State* L) {
@@ -495,9 +491,6 @@ void bindAssetsManager(lua_State* L) {
                 .addFunction("GetAnimationManager", &scriptGetAnimationManager)
                 .addFunction("GetSceneDefinitionManager", &scriptGetSceneDefinitionManager)
                 .addFunction("GetFontManager", &scriptGetFontManager)
-                .addFunction("GetLevelDefinitionManager", &scriptGetLevelDefinitionManager)
-                // Keep a typo-compatible alias for existing scripts.
-                .addFunction("GetLevelDefintionManager", &scriptGetLevelDefinitionManager)
             .endClass()
         .endNamespace().endNamespace();
 }
@@ -807,8 +800,7 @@ void bindTilemap(lua_State* L) {
                              +[](const TilemapObject* o) { return o->AsPoint(); })
             .endClass()
             .beginClass<PhysicsScene::TilemapCollision>("TilemapCollision")
-                .addProperty("m_topleft", &PhysicsScene::TilemapCollision::m_topleft,
-                             true)
+                .addProperty("m_topleft", &PhysicsScene::TilemapCollision::GetTopLeft)
             .endClass()
         .endNamespace().endNamespace();
 }
@@ -1030,14 +1022,14 @@ void bindEntity(lua_State* L) {
 void bindUUID(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL").beginNamespace("Common")
-            .beginClass<UUID>("UUID")
+            .beginClass<UUIDv4>("UUID")
             .addConstructor<void(void)>()
-            .addStaticFunction("CreateV4", &UUID::CreateV4)
-            .addStaticFunction("CreateFromString", &UUID::CreateFromString)
+            .addStaticFunction("CreateV4", &UUIDv4::CreateV4)
+            .addStaticFunction("CreateFromString", &UUIDv4::CreateFromString)
             .addFunction(
-                "IsValid", +[](UUID* uuid) { return static_cast<bool>(*uuid); })
-            .addFunction("__eq", &UUID::operator==)
-            .addFunction("__tostring", &UUID::ToString)
+                "IsValid", +[](UUIDv4* uuid) { return static_cast<bool>(*uuid); })
+            .addFunction("__eq", &UUIDv4::operator==)
+            .addFunction("__tostring", &UUIDv4::ToString)
         .endClass()
         .endNamespace().endNamespace();
 }

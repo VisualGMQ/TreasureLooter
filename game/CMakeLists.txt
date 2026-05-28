@@ -11,7 +11,7 @@ include(cmake/add_3rdlib.cmake)
 add_subdirectory(3rdlibs)
 
 ################# options #####################
-option(TL_ENABLE_PROFILE "enable profile use tracy v0.13.1" OFF)
+option(TL_ENABLE_PROFILE "enable profile use tracy" OFF)
 
 ################ generate project path config file ################
 configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_path.xml)
@@ -23,8 +23,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(NEED_SCHEMA_PARSER OFF)
 endif()
 
-message(STATUS "schema parser gating: CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}', ANDROID='${ANDROID}', NEED_SCHEMA_PARSER='${NEED_SCHEMA_PARSER}'")
-
 if (NEED_SCHEMA_PARSER)
     add_subdirectory(schema)
 endif()
@@ -32,22 +30,27 @@ endif()
 ################ run schema parser ################
 file(GLOB_RECURSE SCHEMAS schema/schema/*)
 file(GLOB_RECURSE MUSTACHES ./schema/schema_parser/mustaches/*.mustache)
-file(GLOB_RECURSE SCHEMA_PARSER_TOOL_SOURCES
-    CONFIGURE_DEPENDS
-    schema/schema_parser/*.cpp
-    schema/schema_parser/*.hpp)
-set(SCHEMA_OUTPUT_PATH "schema_generate/schema")
+set(SCHEMA_OUTPUT_ROOT_PATH "schema_generate")
+set(SCHEMA_OUTPUT_PATH "${SCHEMA_OUTPUT_ROOT_PATH}/schema")
+set(SCHEMA_PROTOBUF_OUTPUT_PATH "${SCHEMA_OUTPUT_ROOT_PATH}/proto")
+
 set(SCHEMA_DECLARE_OUTPUT_FILES)
 set(SCHEMA_SERD_OUTPUT_FILES)
 set(SCHEMA_DISPLAY_OUTPUT_FILES)
+set(SCHEMA_PROTO_OUTPUT_FILES)
+set(PROTOBUF_OUTPUT_FILES)
 foreach(schema ${SCHEMAS})
     cmake_path(GET schema FILENAME schema_filename)
     cmake_path(REPLACE_EXTENSION schema_filename ".hpp" OUTPUT_VARIABLE schema_generate_hpp)
     cmake_path(REPLACE_EXTENSION schema_filename ".cpp" OUTPUT_VARIABLE schema_generate_cpp)
+    cmake_path(REPLACE_EXTENSION schema_filename ".proto" OUTPUT_VARIABLE schema_generate_proto)
     set(schema_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_OUTPUT_PATH}")
     list(APPEND
             SCHEMA_DECLARE_OUTPUT_FILES
             "${schema_final_path}/${schema_generate_hpp}")
+    list(APPEND
+            SCHEMA_PROTO_OUTPUT_FILES
+            "${schema_final_path}/proto/${schema_generate_proto}")
     list(APPEND
             SCHEMA_SERD_OUTPUT_FILES
             "${schema_final_path}/serialize/${schema_generate_hpp}"
@@ -61,6 +64,13 @@ foreach(schema ${SCHEMAS})
             "${schema_final_path}/binding/${schema_generate_hpp}"
             "${schema_final_path}/binding/${schema_generate_cpp}")
 
+    cmake_path(REPLACE_EXTENSION schema_filename ".pb.h" OUTPUT_VARIABLE protobuf_generate_hpp)
+    cmake_path(REPLACE_EXTENSION schema_filename ".pb.cc" OUTPUT_VARIABLE protobuf_generate_cpp)
+    set(protobuf_final_path "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_PROTOBUF_OUTPUT_PATH}")
+    list(APPEND
+            PROTOBUF_OUTPUT_FILES
+            "${protobuf_final_path}/${protobuf_generate_hpp}"
+            "${protobuf_final_path}/${protobuf_generate_cpp}")
 endforeach()
 
 set(SCHEMA_ASSET_INFO_FILES
@@ -71,13 +81,13 @@ set(SCHEMA_ASSET_INFO_FILES
 list(APPEND SCHEMA_SERD_OUTPUT_FILES "${schema_final_path}/serialize/serialize.hpp")
 list(APPEND SCHEMA_DISPLAY_OUTPUT_FILES "${schema_final_path}/display/display.hpp")
 list(APPEND SCHEMA_BINDING_OUTPUT_FILES "${schema_final_path}/binding/binding.hpp" "${schema_final_path}/binding/binding.cpp")
+list(APPEND PROTOBUF_OUTPUT_FILES  "${protobuf_final_path}/all_proto.pb.h" "${protobuf_final_path}/all_proto.pb.cc")
+set(PROTOBUF_NETMSG_DISPATCH_FILES "${schema_final_path}/proto/net_msg_dispatch.hpp" "${schema_final_path}/proto/net_msg_dispatch.cpp")
 set(SCHEMA_SCRIPT_HINT_INC "${schema_final_path}/schema_types.luau.inc")
 set(LUAU_TYPES_HINT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts/type_hints")
 set(LUAU_SCHEMA_TYPES_HINT_FILE "${LUAU_TYPES_HINT_DIR}/tl_schema_types.luau")
 
 if (NEED_SCHEMA_PARSER)
-    message(STATUS "schema parser will be built, and the generated files will be placed in ${SCHEMA_OUTPUT_PATH}")
-
     add_custom_command(OUTPUT
         ${SCHEMA_DECLARE_OUTPUT_FILES}
         ${SCHEMA_SERD_OUTPUT_FILES}
@@ -85,10 +95,18 @@ if (NEED_SCHEMA_PARSER)
         ${SCHEMA_BINDING_OUTPUT_FILES}
         ${SCHEMA_ASSET_INFO_FILES}
         ${SCHEMA_SCRIPT_HINT_INC}
-        COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_PATH} --src-prefix="./"
-        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES} ${SCHEMA_PARSER_TOOL_SOURCES}
+        ${SCHEMA_PROTO_OUTPUT_FILES}
+        ${PROTOBUF_NETMSG_DISPATCH_FILES}
+        COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_ROOT_PATH} --src-prefix="./"
+        DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "parsing schemas...")
+        COMMENT "=== parsing schemas...")
+
+    add_custom_command(OUTPUT ${PROTOBUF_OUTPUT_FILES}
+            COMMAND $<TARGET_FILE:protoc> --proto_path=${SCHEMA_OUTPUT_PATH}/proto --cpp_out=${SCHEMA_PROTOBUF_OUTPUT_PATH} ${SCHEMA_OUTPUT_PATH}/proto/*.proto
+            DEPENDS $<TARGET_FILE:protoc> ${SCHEMA_PROTO_OUTPUT_FILES}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "=== generate protobuf files...")
 
     add_custom_command(OUTPUT ${LUAU_SCHEMA_TYPES_HINT_FILE}
         COMMAND ${CMAKE_COMMAND}
@@ -97,11 +115,11 @@ if (NEED_SCHEMA_PARSER)
             -DRETURN_VALUE=TL_Schema
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/wrap_luau_hint_inc.cmake
         DEPENDS ${SCHEMA_SCRIPT_HINT_INC}
-        COMMENT "generate tl_schema_types.luau")
+        COMMENT "=== generate tl_schema_types.luau")
 
-    add_custom_target(mobile_preprocess ALL
-        DEPENDS ${LUAU_SCHEMA_TYPES_HINT_FILE}
-        COMMENT "generate luau type hints")
+    add_custom_target(schema_preprocess ALL
+        DEPENDS ${LUAU_SCHEMA_TYPES_HINT_FILE} ${PROTOBUF_OUTPUT_FILES}
+        COMMENT "=== generate luau type hints")
 endif()
 
 ################ build common ################

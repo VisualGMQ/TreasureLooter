@@ -23,7 +23,7 @@
 
 #define TL_CONTINUE_IF_NULL(expr) \
     if ((expr) == nullptr) {      \
-        continue;                  \
+        continue;                 \
     }
 
 #define TL_CONTINUE_IF_TRUE(expr) \
@@ -65,6 +65,13 @@
     do {                                     \
         if ((expr)) return value;            \
     } while (0)
+
+#define TL_RETURN_VALUE_IF_NULL(expr, value) \
+    TL_RETURN_VALUE_IF_FALSE((expr), value)
+
+#define TL_RETURN_FALSE_IF_FALSE(expr) TL_RETURN_VALUE_IF_FALSE((expr), false)
+#define TL_RETURN_FALSE_IF_TRUE(expr) TL_RETURN_VALUE_IF_TRUE((expr), false)
+#define TL_RETURN_FALSE_IF_NULL(expr) TL_RETURN_VALUE_IF_NULL((expr), false)
 
 #define TL_RETURN_IF_NULL_WITH_LOG(expr, log_fn, fmt, ...) \
     do {                                                   \

@@ -11,8 +11,8 @@ MustacheManager& MustacheManager::GetInst() {
 }
 
 MustacheManager::MustacheManager()
-    : m_class_mustache{readMustache(
-          "schema/schema_parser/mustaches/class.mustache")},
+    : m_class_mustache{
+          readMustache("schema/schema_parser/mustaches/class.mustache")},
       m_property_mustache{
           readMustache("schema/schema_parser/mustaches/property.mustache")},
       m_schema_mustache{
@@ -49,6 +49,20 @@ MustacheManager::MustacheManager()
           "schema/schema_parser/mustaches/class_display_header.mustache")},
       m_class_display_impl_mustache{readMustache(
           "schema/schema_parser/mustaches/class_display_impl.mustache")},
+      m_proto_mustache{
+          readMustache("schema/schema_parser/mustaches/proto.mustache")},
+      m_proto_class_declare_mustache{readMustache(
+          "schema/schema_parser/mustaches/proto_class_declare.mustache")},
+      m_proto_enum_declare_mustache{readMustache(
+          "schema/schema_parser/mustaches/proto_enum_declare.mustache")},
+      m_all_proto_mustache{
+          readMustache("schema/schema_parser/mustaches/all_proto.mustache")},
+      m_net_msg_dispatch_impl_mustache{
+          readMustache("schema/schema_parser/mustaches/"
+                       "proto_net_msg_dispatch_impl.mustache")},
+      m_net_msg_dispatch_header_mustache{
+          readMustache("schema/schema_parser/mustaches/"
+                       "proto_net_msg_dispatch_header.mustache")},
       m_asset_info_header_mustache{readMustache(
           "schema/schema_parser/mustaches/asset_info_header.mustache")},
       m_asset_info_impl_mustache{readMustache(
@@ -73,8 +87,8 @@ MustacheManager::MustacheManager()
           "schema/schema_parser/mustaches/script_bind_impl.mustache")},
       m_binding_header_mustache{readMustache(
           "schema/schema_parser/mustaches/binding_header.mustache")},
-      m_binding_impl_mustache{readMustache(
-          "schema/schema_parser/mustaches/binding_impl.mustache")},
+      m_binding_impl_mustache{
+          readMustache("schema/schema_parser/mustaches/binding_impl.mustache")},
       m_cpp_asset_def_mustache{readMustache(
           "schema/schema_parser/mustaches/cpp_asset_def.mustache")},
       m_cpp_asset_def_header_mustache{readMustache(

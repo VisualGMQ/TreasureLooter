@@ -1,0 +1,17 @@
+edition = "2023";
+
+package proto;
+
+{{#imports}}
+import "{{import}}";
+{{/imports}}
+
+{{#has_oneof}}
+message NetMsg {
+    oneof payload {
+    {{#oneof_classes}}
+        {{class_type}} m_{{class_name_snake_case}} = {{proto_id}};
+    {{/oneof_classes}}
+    }
+}
+{{/has_oneof}}

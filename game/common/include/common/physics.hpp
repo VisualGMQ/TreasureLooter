@@ -52,8 +52,8 @@ struct OverlapResult {
 Rect RectUnion(const Rect &r1, const Rect &r2);
 
 // nearest point
-Vec2 NearestRectPoint(const Rect &, const Vec2 &);
-Vec2 NearestCirclePoint(const Circle &, const Vec2 &);
+Vec2 NearestRectPoint(const Vec2 &, const Rect &);
+Vec2 NearestCirclePoint(const Vec2&, const Circle &);
 Vec2 NearestCapsulePoint(const Vec2 &q, float r, const Vec2 &p1,
                          const Vec2 &p2);
 
@@ -158,8 +158,8 @@ public:
     using Chunk = MatStorage<std::vector<PhysicsShape *> >;
 
     struct Chunks {
-        Vec2UI m_chunk_size{};
-        Vec2UI m_tile_size{};
+        Vec2UI m_tile_extent{};   // tile width and height
+        Vec2UI m_chunk_extent{};  // chunk contains how many tiles
         MatStorage<Chunk> m_chunks;
 
         Chunks() = default;
@@ -173,6 +173,7 @@ public:
         Chunks &operator=(Chunks &&) = default;
 
         void getOverlapChunkRange(const Rect &bounding_box,
+                                  const Vec2 &topleft,
                                   Range2D<int> &out_chunk_range,
                                   Range2D<int> &out_tile_range);
 
@@ -189,11 +190,12 @@ public:
 
         using Proxy = std::unique_ptr<TilemapCollision, DeletorForProxy>;
 
-        Vec2 m_topleft;
-        std::vector<Chunks> m_layers;
-        std::vector<std::unique_ptr<PhysicsShape> > m_physics_shapes;
+        TilemapCollision(const Vec2 &topleft, const Vec2UI &tile_size,
+                         const Vec2UI &chunk_size);
 
-        explicit TilemapCollision(const Vec2 &topleft) : m_topleft(topleft) {}
+        void MoveTo(const Vec2 &new_topleft);
+        void Move(const Vec2 &offset);
+        Vec2 GetTopLeft() const;
 
         TilemapCollision(const TilemapCollision &) = delete;
 
@@ -203,12 +205,11 @@ public:
 
         TilemapCollision &operator=(TilemapCollision &&) = default;
 
-        Chunks &CreateLayer(const Vec2UI &tile_size, const Vec2UI &chunk_size) {
-            Chunks layer;
-            layer.m_chunk_size = chunk_size;
-            layer.m_tile_size = tile_size;
-            return m_layers.emplace_back(std::move(layer));
-        }
+        Chunks m_chunks;
+        std::vector<std::unique_ptr<PhysicsShape> > m_physics_shapes;
+
+    private:
+        Vec2 m_topleft;
     };
 
     PhysicsScene();
@@ -220,7 +221,9 @@ public:
                                      TilemapCollision *tilemap_collision,
                                      const PhysicsShapeDefinition &);
 
-    TilemapCollision *CreateTilemapCollision(const Vec2 &topleft);
+    TilemapCollision *CreateTilemapCollision(const Vec2 &topleft,
+                                             const Vec2UI &tile_size,
+                                             const Vec2UI &chunk_size);
 
     PhysicsShape *CreateShape(Entity, PhysicsShapeDefinitionHandle);
 
@@ -283,6 +286,5 @@ private:
     [[nodiscard]] bool checkNeedQuery(const PhysicsShape &src,
                                       const PhysicsShape &target) const;
 
-    void removeShapeInChunk(TilemapCollision *, uint32_t layer,
-                            PhysicsShape *actor);
+    void removeShapeInChunk(TilemapCollision *, PhysicsShape *actor);
 };

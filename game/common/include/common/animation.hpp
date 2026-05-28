@@ -121,7 +121,7 @@ AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename);
 template <>
 AssetLoadResult<Animation> LoadAsset<Animation>(const rapidxml::xml_node<>&);
 
-void SaveAsset(const UUID& uuid, const Animation& payload,
+void SaveAsset(const UUIDv4& uuid, const Animation& payload,
                const Path& filename);
 
 class AnimationManager : public AssetManagerBase<Animation> {

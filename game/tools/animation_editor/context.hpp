@@ -23,8 +23,6 @@ protected:
     void update() override;
 
 private:
-    static std::unique_ptr<AnimationEditorContext> instance;
-
     PrefabHandle m_prefab;
     Entity m_preview_entity = null_entity;
     AnimationHandle m_current_animation;

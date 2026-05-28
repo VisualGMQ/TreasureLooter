@@ -1,0 +1,25 @@
+﻿#include "net_msg_dispatch.hpp"
+#include "common/event.hpp"
+#include "common/net.hpp"
+#include "common/context.hpp"
+#include "enet/enet.h"
+#include "proto/all_proto.pb.h"
+
+void NetMsgDispatch(ENetPeer* peer, const uint8_t* buf, size_t buf_len) {
+    auto& event_system = COMMON_CONTEXT.m_event_system;
+    proto::NetMsg net_msg;
+
+    if (net_msg.ParseFromArray(buf, buf_len)) {
+        switch (net_msg.payload_case()) {
+            {{#msgs}}
+            case proto::NetMsg::kM{{msg_name}}:
+                event_system->EnqueueEvent(NetMsg{peer, net_msg.m_{{msg_snake_case_name}}()});
+                break;
+            {{/msgs}}
+            case proto::NetMsg::PAYLOAD_NOT_SET:
+                break;
+        }
+    } else {
+        LOGE("parse NetMsg failed");
+    }
+}

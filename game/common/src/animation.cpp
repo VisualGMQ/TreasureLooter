@@ -114,7 +114,7 @@ AssetLoadResult<Animation> LoadAsset<Animation>(
     return result;
 }
 
-void SaveAsset(const UUID& uuid, const Animation& payload,
+void SaveAsset(const UUIDv4& uuid, const Animation& payload,
                const Path& filename) {
     rapidxml::xml_document<> doc;
 

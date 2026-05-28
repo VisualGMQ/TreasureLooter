@@ -1,0 +1,31 @@
+﻿<schema>
+    <class name="NetVec2" proto="true">
+        <element name="x" type="float" proto_id="1"/>
+        <element name="y" type="float" proto_id="2"/>
+    </class>
+
+    <class name="TalkMsg" proto_id="2">
+        <element name="msg" type="std::string" proto_id="1"/>
+    </class>
+
+    <class name="Connect" proto_id="3">
+    </class>
+
+    <class name="Disconnect" proto_id="4">
+    </class>
+
+    <class name="Enter" proto_id="5">
+        <element name="id" type="uint32_t" proto_id="1"/>
+        <element name="position" type="NetVec2" proto_id="2"/>
+    </class>
+
+    <class name="Leave" proto_id="6">
+        <element name="id" type="uint32_t" proto_id="1"/>
+    </class>
+
+    <class name="Move" proto_id="7">
+        <element name="id" type="uint32_t" proto_id="1"/>
+        <element name="position" type="NetVec2" proto_id="2"/>
+    </class>
+
+</schema>

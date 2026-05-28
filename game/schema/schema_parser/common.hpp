@@ -23,33 +23,50 @@ enum IncludeHint {
 
 struct PropertyInfo {
     std::string m_type;
+    std::string m_template_type1;  // when m_type is template type, inner_type
+                                   // is typename T(Or Key)
+    std::string m_template_type2;  // when m_type is unordered_map, inner_type
+                                   // is typename Value
     std::string m_name;
-    bool m_optional = false;
+    bool m_is_unordered_map = false;
+    bool m_is_optional = false;
     bool m_is_handle = false;
     bool m_is_array = false;
     bool m_is_flags = false;
     std::string m_default;
+    std::optional<uint32_t> m_proto_id;
 };
 
 struct ClassInfo {
     static constexpr std::string_view ExtensionVarSuffix = "_AssetExtension";
-    
+
+    bool m_gen_proto =
+        false;  // check generate protobuf message when don't have m_proto_id
+    std::optional<uint32_t> m_proto_id;
     std::string m_name;
     std::vector<PropertyInfo> m_properties;
     bool is_asset = false;
     std::string m_asset_extension;
     std::string m_asset_extension_var;
+
+    bool ShouldGenProto() const { return m_gen_proto || m_proto_id; }
 };
 
 struct EnumInfo {
     struct Item {
         std::string m_name;
         std::string m_value;
+        std::optional<uint32_t> m_proto_id;
     };
 
+    bool m_gen_proto =
+        false;  // check generate protobuf message when don't have m_proto_id
+    std::optional<uint32_t> m_proto_id;
     std::string m_name;
     std::string m_type;
     std::vector<Item> m_items;
+
+    bool ShouldGenProto() const { return m_gen_proto || m_proto_id; }
 };
 
 struct CppAssetDef {
@@ -59,10 +76,10 @@ struct CppAssetDef {
 
 struct SchemaInfo {
     int m_include_hints = None;
-    
+
     std::vector<std::string> m_includes;
     std::filesystem::path m_filename;
-    std::filesystem::path m_pure_filename; //! without directory & extension
+    std::filesystem::path m_pure_filename;  //! without directory & extension
     std::filesystem::path m_generate_filename;
     std::vector<ClassInfo> m_classes;
     std::vector<EnumInfo> m_enums;
@@ -89,7 +106,7 @@ struct MustacheManager {
     kainjow::mustache::mustache m_class_serd_impl_mustache;
     kainjow::mustache::mustache m_asset_sl_header_mustache;
     kainjow::mustache::mustache m_asset_sl_impl_mustache;
-    
+
     kainjow::mustache::mustache m_instance_display_header_mustache;
     kainjow::mustache::mustache m_instance_display_impl_mustache;
     kainjow::mustache::mustache m_enum_display_impl_mustache;
@@ -98,10 +115,17 @@ struct MustacheManager {
     kainjow::mustache::mustache m_class_display_impl_mustache;
     kainjow::mustache::mustache m_asset_info_header_mustache;
     kainjow::mustache::mustache m_asset_info_impl_mustache;
-    
+
+    kainjow::mustache::mustache m_proto_mustache;
+    kainjow::mustache::mustache m_proto_class_declare_mustache;
+    kainjow::mustache::mustache m_proto_enum_declare_mustache;
+    kainjow::mustache::mustache m_all_proto_mustache;
+    kainjow::mustache::mustache m_net_msg_dispatch_impl_mustache;
+    kainjow::mustache::mustache m_net_msg_dispatch_header_mustache;
+
     kainjow::mustache::mustache m_asset_serialize_header_mustache;
     kainjow::mustache::mustache m_asset_display_header_mustache;
-    
+
     kainjow::mustache::mustache m_enum_script_bind_header_mustache;
     kainjow::mustache::mustache m_enum_script_bind_impl_mustache;
     kainjow::mustache::mustache m_enum_stack_specialization_mustache;

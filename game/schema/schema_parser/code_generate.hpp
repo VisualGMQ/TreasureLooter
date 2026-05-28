@@ -22,6 +22,13 @@ std::string GenerateClassDisplayImplCode(const ClassInfo&);
 std::string GenerateSchemaDisplayHeaderCode(const SchemaInfo&);
 std::string GenerateSchemaDisplayImplCode(const SchemaInfo&);
 
+std::string GenerateProtoClassDeclareCode(const ClassInfo&);
+std::string GenerateProtoEnumDeclareCode(const EnumInfo&);
+std::string GenerateProtoSchemaDeclareCode(const SchemaInfo&);
+std::string GenerateProtoAllProtoDeclareCode(const SchemaInfoManager&);
+std::string GenerateProtoNetMsgDispatchHeaderCode(const SchemaInfoManager&);
+std::string GenerateProtoNetMsgDispatchImplCode(const SchemaInfoManager&);
+
 // editor relative code
 std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager&);
 std::string GenerateAssetInfoImplCode(const SchemaInfoManager&);

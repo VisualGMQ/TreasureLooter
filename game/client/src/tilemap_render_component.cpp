@@ -35,10 +35,6 @@ TilemapLayerRenderComponent::TilemapLayerRenderComponent(
         "[Tilemap]: create tilemap layer {} from tilemap {} failed",
         create_info.m_layer_name,
         create_info.m_tilemap.GetFilename()->string());
-
-    m_tilemap_collision = PhysicsScene::TilemapCollision::Proxy{
-        COMMON_CONTEXT.m_physics_scene->CreateTilemapCollision(
-            create_info.m_position)};
 }
 
 const TilemapLayer* TilemapLayerRenderComponent::GetLayer() const {
@@ -47,11 +43,6 @@ const TilemapLayer* TilemapLayerRenderComponent::GetLayer() const {
 
 const Tilemap* TilemapLayerRenderComponent::GetTilemap() const {
     return m_tilemap_handle.Get();
-}
-
-const PhysicsScene::TilemapCollision*
-TilemapLayerRenderComponent::GetTilemapCollision() const {
-    return m_tilemap_collision.get();
 }
 
 void TilemapLayerRenderComponentManager::SubmitDrawCommand(Entity entity) {
@@ -87,7 +78,6 @@ void TilemapLayerRenderComponentManager::drawTilemapLayer(
                 Vec2 scaled_tile_size = tilemap->GetTileSize() * scale;
 
                 dst_rect.m_center =
-                    component.GetTilemapCollision()->m_topleft +
                     Vec2(x, y + 1) * scaled_tile_size +
                     Vec2(tile->m_tile_size.w, -tile->m_tile_size.h) * 0.5;
 

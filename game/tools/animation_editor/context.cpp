@@ -7,6 +7,7 @@
 #include "client/input/input.hpp"
 #include "client/input/keyboard.hpp"
 #include "client/input/mouse.hpp"
+#include "client/logic.hpp"
 #include "client/sprite.hpp"
 #include "client/tilemap_render_component.hpp"
 #include "common/asset_manager.hpp"
@@ -24,8 +25,6 @@
 #include <cstdio>
 #include <filesystem>
 #include <system_error>
-
-std::unique_ptr<AnimationEditorContext> AnimationEditorContext::instance;
 
 namespace {
 constexpr float kTrackRowHeight = 28.0f;
@@ -173,7 +172,7 @@ void AnimationEditorContext::Destroy() {
 }
 
 AnimationEditorContext& AnimationEditorContext::GetInst() {
-    return *instance;
+    return static_cast<AnimationEditorContext&>(*instance);
 }
 
 void AnimationEditorContext::Initialize(int argc, char** argv) {

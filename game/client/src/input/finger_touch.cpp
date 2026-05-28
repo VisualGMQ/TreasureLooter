@@ -22,7 +22,8 @@ bool FingerTouch::IsPressed() const {
 }
 
 Vec2 FingerTouch::Position() const {
-    return m_position * CLIENT_CONTEXT.m_window->GetWindowSize();
+    return m_position *
+           static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize());
 }
 
 const Vec2& FingerTouch::Offset() const {

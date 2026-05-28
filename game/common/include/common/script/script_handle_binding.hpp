@@ -49,7 +49,7 @@ void BindHandle(const std::string& name,
 				"IsValid",
 				+[](handle_type handle) { return static_cast<bool>(handle); })
 			.addFunction("GetFilename", &handle_type::GetFilename)
-            .addFunction("GetUUID", +[](const handle_type& h) -> UUID { return h.GetUUID(); })
+            .addFunction("GetUUID", +[](const handle_type& h) -> UUIDv4 { return h.GetUUID(); })
 			.addIndexMetaMethod(
 				[t_class_name](handle_type& handle, const luabridge::LuaRef& key,
 							   lua_State* L) -> luabridge::LuaRef {

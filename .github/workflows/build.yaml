@@ -68,7 +68,7 @@ jobs:
       working-directory: ./game
       run: |
         ${{ matrix.cmake-path }}cmake --preset=default
-        ${{ matrix.cmake-path }}cmake --build cmake-build --target mobile_preprocess
+        ${{ matrix.cmake-path }}cmake --build cmake-build --target schema_preprocess
 
     - name: Prepare Android JDK
       if: matrix.android

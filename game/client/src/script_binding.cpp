@@ -254,8 +254,6 @@ static void bindTilemapRenderComponent(lua_State* L) {
             .beginClass<TilemapLayerRenderComponent>("TilemapRenderComponent")
                 .addFunction("GetLayer", &TilemapLayerRenderComponent::GetLayer)
                 .addFunction("GetTilemap", &TilemapLayerRenderComponent::GetTilemap)
-                .addFunction("GetTilemapCollision",
-                             &TilemapLayerRenderComponent::GetTilemapCollision)
             .endClass()
             .beginClass<TilemapLayerRenderComponentManager>(
                 "TilemapRenderComponentManager")

@@ -2,6 +2,7 @@
 #include "client/camera.hpp"
 #include "common/context.hpp"
 
+class ClientLogic;
 class IDebugDrawer;
 class GamepadManager;
 class Touches;
@@ -20,6 +21,8 @@ class GameplayConfigManager;
 
 class ClientContext : public CommonContext {
 public:
+    static void ChangeContext(ClientContext&);
+
     static void Init();
     static void Destroy();
     static ClientContext& GetInst();
@@ -53,6 +56,7 @@ public:
     std::unique_ptr<TilemapLayerRenderComponentManager>
         m_tilemap_layer_render_component_manager;
     std::unique_ptr<Renderer> m_renderer;
+    std::unique_ptr<ClientLogic> m_logic;
     Camera m_camera;
 
 protected:
@@ -61,8 +65,8 @@ protected:
 
     ClientContext() = default;
 
-private:
     static std::unique_ptr<ClientContext> instance;
+private:
 
     void initImGui();
     void shutdownImGui();
