@@ -1,8 +1,4 @@
 #include "server/context.hpp"
-#include "SDL3_ttf/SDL_ttf.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
-#include "common/uuid.hpp"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
@@ -14,6 +10,7 @@
 #include "common/relationship.hpp"
 #include "common/scene.hpp"
 #include "common/script/script.hpp"
+#include "common/script/script_binding.hpp"
 #include "common/sdl_call.hpp"
 #include "common/serialize.hpp"
 #include "common/static_collision.hpp"
@@ -21,15 +18,19 @@
 #include "common/tilemap.hpp"
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
+#include "common/uuid.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
+#include "schema/proto/proto_binding.hpp"
+#include "schema/proto/proto_event_binding.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "server/asset_manager.hpp"
 #include "server/logic.hpp"
 #include "server/scene.hpp"
+#include "server/script_binding.hpp"
 
 #include <memory>
 
@@ -56,19 +57,34 @@ void ServerContext::Initialize(int argc, char** argv) {
 
     CommonContext::Initialize(argc, argv);
     m_assets_manager = std::make_unique<ServerAssetsManager>();
-    m_scene_manager = std::unique_ptr<ServerSceneManager>(new ServerSceneManager{});
+    m_scene_manager = std::make_unique<ServerSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
     m_logic = std::make_unique<ServerLogic>();
 
     CommonContext::initGameConfig();
 
-    m_assets_manager->GetManager<ScriptBinaryData>().Initialize(GetGameConfig());
+    m_assets_manager->GetManager<ScriptBinaryData>().Initialize(
+        GetGameConfig());
 
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 
     m_logic->OnInit();
 
+    m_script_binary_data_manager->BindModule([](lua_State* L) {
+        BindTLModule(L);
+        BindServerModule(L);
+    });
+
     m_time->SetFPS(60);
+}
+
+void ServerContext::HandleEvents(const SDL_Event& event) {
+    CommonContext::HandleEvents(event);
+
+    // SDL hijack Ctrl-C to SDL_EVENT_QUIT, so this will make Ctrl-C work again
+    if (event.type == SDL_EVENT_QUIT) {
+        Exit();
+    }
 }
 
 void ServerContext::Update() {
@@ -80,6 +96,10 @@ void ServerContext::Update() {
 
     PROFILE_SECTION();
 
+    if (m_net_host) {
+        m_net_host->HandleIncomingNetPacket();
+    }
+
     m_time->Update();
 
     m_script_component_manager->Update();
@@ -89,6 +109,7 @@ void ServerContext::Update() {
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
+    m_net_host->Flush();
     m_event_system->Update();
     m_timer_manager->Update(elapse_time);
 
@@ -100,5 +121,13 @@ void ServerContext::Update() {
 void ServerContext::Shutdown() {
     m_logic->OnQuit();
     m_logic.reset();
+
+    m_script_component_manager->Clear();
+    m_scene_manager->Switch({});
+
     CommonContext::Shutdown();
+}
+
+void ServerContext::NetListen(const NetAddress& address, int peer_count) {
+    m_net_host = std::make_unique<UDPHost>(&address, peer_count);
 }

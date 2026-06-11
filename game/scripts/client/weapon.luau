@@ -42,7 +42,7 @@ function Weapon.new(entity: TL_Common.Entity, definition: TL_Schema.WeaponDefini
 
     self.m_dir = TL_Common.Vec2.ZERO
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local transform = ctx:GetTransformManager():Get(entity)
     if transform then
@@ -75,14 +75,14 @@ function Weapon.new(entity: TL_Common.Entity, definition: TL_Schema.WeaponDefini
 end
 
 function Weapon.OnQuit(self: Weapon)
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	if self.m_digging_timer then
 		ctx:GetTimerManager():Remove(self.m_digging_timer:GetID())
 	end
 end
 
 function Weapon._initWeapon(self: Weapon, entity: TL_Common.Entity)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local transform = ctx:GetTransformManager():Get(entity)
     if transform then
@@ -114,7 +114,7 @@ function Weapon.GetDir(self: Weapon): TL_Common.Vec2
 end
 
 function Weapon.Attack(self: Weapon)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     ctx:GetTriggerComponentManager():Enable(self.m_weapon_entity)
 
@@ -128,7 +128,7 @@ function Weapon.Attack(self: Weapon)
 end
 
 function Weapon.OnUpdate(self: Weapon, elapse_time: number)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     -- FIXME: set state every frame may cause performance down
     if not self.m_anim_player:IsPlaying() then
@@ -142,7 +142,7 @@ function Weapon.OnTriggerEnterEvent(self: Weapon, event: TL_Common.TriggerEnterE
 		return
 	end
 
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	local script_mgr = ctx:GetScriptManager()
 	local script = script_mgr:Get(dst_entity)
 
@@ -172,7 +172,7 @@ end
 function Weapon.OnTimerStopEvent(self: Weapon, event: TL_Common.TimerStopEvent)
     if event:GetEventType() == TL_Common.TimerEventType.Digging and self.m_digging_entity ~= TL_Common.null_entity then
         -- TODO: spawn mineral fragment
-        local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+        local ctx: TL_Client.ClientContext = TL_Client.GetContext()
         local scene = ctx:GetSceneManager():GetCurrentScene()
 
         local item_behavior = ctx:GetScriptManager():Get(self.m_digging_entity) :: ItemBehavior.ItemBehavior

@@ -23,7 +23,7 @@ function GameEntry.new(entity: TL_Common.Entity) : GameEntry
 end
 
 function GameEntry.OnInit(self: GameEntry)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load("assets/gpa/levels/main.level.xml")
     if not level_definition then

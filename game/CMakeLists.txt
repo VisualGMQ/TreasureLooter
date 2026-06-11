@@ -83,9 +83,14 @@ list(APPEND SCHEMA_DISPLAY_OUTPUT_FILES "${schema_final_path}/display/display.hp
 list(APPEND SCHEMA_BINDING_OUTPUT_FILES "${schema_final_path}/binding/binding.hpp" "${schema_final_path}/binding/binding.cpp")
 list(APPEND PROTOBUF_OUTPUT_FILES  "${protobuf_final_path}/all_proto.pb.h" "${protobuf_final_path}/all_proto.pb.cc")
 set(PROTOBUF_NETMSG_DISPATCH_FILES "${schema_final_path}/proto/net_msg_dispatch.hpp" "${schema_final_path}/proto/net_msg_dispatch.cpp")
+set(PROTOBUF_SCRIPT_BINDING_FILES "${schema_final_path}/proto/proto_binding.hpp" "${schema_final_path}/proto/proto_binding.cpp"
+                                  "${schema_final_path}/proto/proto_event_binding.hpp" "${schema_final_path}/proto/proto_event_binding.cpp"
+                                  "${schema_final_path}/proto/proto_convert.hpp" "${schema_final_path}/proto/proto_convert.cpp")
 set(SCHEMA_SCRIPT_HINT_INC "${schema_final_path}/schema_types.luau.inc")
+set(PROTO_SCRIPT_HINT_INC "${schema_final_path}/proto_types.luau.inc")
 set(LUAU_TYPES_HINT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts/type_hints")
 set(LUAU_SCHEMA_TYPES_HINT_FILE "${LUAU_TYPES_HINT_DIR}/tl_schema_types.luau")
+set(LUAU_PROTO_TYPES_HINT_FILE "${LUAU_TYPES_HINT_DIR}/tl_proto_types.luau")
 
 if (NEED_SCHEMA_PARSER)
     add_custom_command(OUTPUT
@@ -95,8 +100,10 @@ if (NEED_SCHEMA_PARSER)
         ${SCHEMA_BINDING_OUTPUT_FILES}
         ${SCHEMA_ASSET_INFO_FILES}
         ${SCHEMA_SCRIPT_HINT_INC}
+        ${PROTO_SCRIPT_HINT_INC}
         ${SCHEMA_PROTO_OUTPUT_FILES}
         ${PROTOBUF_NETMSG_DISPATCH_FILES}
+        ${PROTOBUF_SCRIPT_BINDING_FILES}
         COMMAND $<TARGET_FILE:schema_parser> ./schema/schema --output-dir=${SCHEMA_OUTPUT_ROOT_PATH} --src-prefix="./"
         DEPENDS $<TARGET_FILE:schema_parser> ${SCHEMAS} ${MUSTACHES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -117,8 +124,17 @@ if (NEED_SCHEMA_PARSER)
         DEPENDS ${SCHEMA_SCRIPT_HINT_INC}
         COMMENT "=== generate tl_schema_types.luau")
 
+    add_custom_command(OUTPUT ${LUAU_PROTO_TYPES_HINT_FILE}
+        COMMAND ${CMAKE_COMMAND}
+            -DINC=${PROTO_SCRIPT_HINT_INC}
+            -DOUT=${LUAU_PROTO_TYPES_HINT_FILE}
+            -DRETURN_VALUE=TL_Proto
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/wrap_luau_hint_inc.cmake
+        DEPENDS ${PROTO_SCRIPT_HINT_INC}
+        COMMENT "=== generate tl_proto_types.luau")
+
     add_custom_target(schema_preprocess ALL
-        DEPENDS ${LUAU_SCHEMA_TYPES_HINT_FILE} ${PROTOBUF_OUTPUT_FILES}
+        DEPENDS ${LUAU_SCHEMA_TYPES_HINT_FILE} ${LUAU_PROTO_TYPES_HINT_FILE} ${PROTOBUF_OUTPUT_FILES}
         COMMENT "=== generate luau type hints")
 endif()
 
@@ -137,7 +153,7 @@ if (ANDROID)
     set(GAME_NAME main)
 endif()
 
-add_subdirectory(game_entry)
+add_subdirectory(client_entry)
 
 ################ build server ################
 if (NOT ANDROID)

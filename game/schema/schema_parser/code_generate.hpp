@@ -28,6 +28,12 @@ std::string GenerateProtoSchemaDeclareCode(const SchemaInfo&);
 std::string GenerateProtoAllProtoDeclareCode(const SchemaInfoManager&);
 std::string GenerateProtoNetMsgDispatchHeaderCode(const SchemaInfoManager&);
 std::string GenerateProtoNetMsgDispatchImplCode(const SchemaInfoManager&);
+std::string GenerateProtoBindingHeaderCode(const SchemaInfoManager&);
+std::string GenerateProtoBindingImplCode(const SchemaInfoManager&);
+std::string GenerateProtoEventBindingHeaderCode(const SchemaInfoManager&);
+std::string GenerateProtoEventBindingImplCode(const SchemaInfoManager&);
+std::string GenerateProtoConvertHeaderCode(const SchemaInfoManager&);
+std::string GenerateProtoConvertImplCode(const SchemaInfoManager&);
 
 // editor relative code
 std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager&);
@@ -49,3 +55,4 @@ std::string GenerateBindingImplCode(const SchemaInfoManager&);
 
 // Luau schema types: generate schema_types.luau.inc (fragment; wrapped by CMake into scripts/tl_schema_types.luau)
 std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager&);
+std::string GenerateProtoTypesLuauCode(const SchemaInfoManager&);

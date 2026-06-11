@@ -20,7 +20,7 @@ type HurtData = {
 
 function Character.createHurtData() : HurtData
     local self = {} :: HurtData
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	self.m_hurt_blinking_timer = ctx:GetTimerManager():Create(0.1, TL_Schema.TimerEventType.Unknown, 8)
 	self.m_in_red_state = false
     return self
@@ -92,13 +92,13 @@ function DiggingData.IsDigging(self: DiggingData): boolean
 end
 
 function DiggingData.OnQuit(self: DiggingData)
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	ctx:GetTimerManager():Remove(self.m_digging_countdown_timer:GetID())
 end
 
 function Character.createDiggingData(): DiggingData
 	local self = {} :: DiggingData
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	self.m_digging_countdown_timer = ctx:GetTimerManager():Create(0, TL_Schema.TimerEventType.DigFinish, -1)
 	return setmetatable(self, DiggingData)
 end
@@ -150,7 +150,7 @@ function Character.new(entity: TL_Common.Entity, definition: TL_Schema.Character
     self.m_team_id = TL_Schema.TeamID.invalid
     self.m_forward_dir = TL_Common.Vec2.Y_UNIT
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
 	self.m_sprite = ctx:GetSpriteManager():Get(entity)
 	self.m_cct = ctx:GetCCTManager():Get(entity)
@@ -260,7 +260,7 @@ function Character.Hurt(self: Character, damage: number)
 	end
 
 	if self.m_hp <= 0 then
-		local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+		local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 		local scene = ctx:GetSceneManager():GetCurrentScene()
 		scene:RemoveEntity(self.m_entity)
 	end
@@ -268,7 +268,7 @@ end
 
 --- @return pickup success
 function Character.TryPickup(self: Character, script: ItemBehavior.ItemBehavior): boolean
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     if not self.m_pickup_data:HasObject() then
         table.insert(self.m_pickup_data.m_items, script)

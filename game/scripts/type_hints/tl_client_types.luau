@@ -1,3 +1,4 @@
+--!nolua
 export type Sprite = {
 	m_image: ImageHandle,
 	m_region: Region,
@@ -47,6 +48,13 @@ export type UIMouseUpEvent = {
 export type UIMouseClickedEvent = { m_entity: Entity }
 export type UICheckToggledEvent = { m_entity: Entity, m_checked: boolean }
 export type UIDragEvent = { m_entity: Entity }
+
+export type ActionState = {
+    Pressed: number,
+    Pressing: number,
+    Released: number,
+    Releasing: number,
+}
 
 export type Action = {
 	IsPressed: (self: Action, id: number?) -> boolean,
@@ -121,34 +129,20 @@ export type AnimationPlayerManager = {
 export type UIComponentManager = { Get: (self: UIComponentManager, entity: Entity) -> UIWidget?, Has: (self: UIComponentManager, entity: Entity) -> boolean }
 export type TilemapRenderComponentManager = { Get: (self: TilemapRenderComponentManager, entity: Entity) -> TilemapRenderComponent?, Has: (self: TilemapRenderComponentManager, entity: Entity) -> boolean }
 
-export type ClientContext = {
+export type ClientContext = CommonContext & {
 	GetCamera: (self: ClientContext) -> Camera,
-	GetScriptManager: (self: ClientContext) -> ScriptComponentManager,
-	GetAssetsManager: (self: ClientContext) -> AssetsManager,
-	GetSceneManager: (self: ClientContext) -> SceneManager,
-	GetTime: (self: ClientContext) -> Time,
-	GetTimerManager: (self: ClientContext) -> TimerManager,
-	GetTransformManager: (self: ClientContext) -> TransformManager,
 	GetSpriteManager: (self: ClientContext) -> SpriteManager,
 	GetDrawOrderManager: (self: ClientContext) -> DrawOrderManager,
 	GetRenderer: (self: ClientContext) -> Renderer,
 	GetWindow: (self: ClientContext) -> Window,
 	GetInputManager: (self: ClientContext) -> InputManager,
-	GetTriggerComponentManager: (self: ClientContext) -> TriggerComponentManager,
-	GetRelationshipManager: (self: ClientContext) -> RelationshipManager,
 	GetAnimationPlayerManager: (self: ClientContext) -> AnimationPlayerManager,
-	GetBindPointsComponentManager: (self: ClientContext) -> BindPointsComponentManager,
 	GetUIManager: (self: ClientContext) -> UIComponentManager,
 	GetTilemapRenderComponentManager: (self: ClientContext) -> TilemapRenderComponentManager,
-	GetTilemapCollisionComponentManager: (self: ClientContext) -> TilemapCollisionComponentManager,
-	GetCCTManager: (self: ClientContext) -> CCTManager,
-	GetPhysicsScene: (self: ClientContext) -> PhysicsScene,
-	GetStaticCollisionManager: (self: ClientContext) -> StaticCollisionManager,
-	GetEventDebugger: (self: ClientContext) -> EventDebugger,
-	GetDebugDraw: (self: ClientContext) -> DebugDraw,
+	GetNetPeer: (self: ClientContext) -> TL_Common.NetPeer,
 }
 
-export type GetClientContext = () -> ClientContext
+export type GetContext = () -> ClientContext
 
 
 return TL_Client

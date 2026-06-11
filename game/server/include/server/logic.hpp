@@ -1,20 +1,17 @@
 ﻿#pragma once
 #include "common/logic.hpp"
+#include "common/net/udp.hpp"
 #include "common/timer.hpp"
-#include "proto/proto.pb.h"
-// #include "enet/enet.h"
 
-typedef struct _ENetHost ENetHost;
-typedef struct _ENetPeer ENetPeer;
+#include <memory>
+#include <unordered_map>
 
 struct Plank {
-    ENetPeer* m_peer{};
+    UDPPeer m_peer;
     uint32_t m_id;
     Vec2 m_position;
 };
 
-// NOTE: temporary class for learning networking, we write network code here
-// rather than put into luau script
 class ServerLogic: public ILogic {
 public:
     void OnInit() override;
@@ -22,8 +19,8 @@ public:
     void OnQuit() override;
 
 private:
-    std::unordered_map<ENetPeer*, Plank> m_peers;
-    int m_side = -1; // -1 means left, 1 means right
+    std::unordered_map<UDPPeer::ID, Plank> m_peers;
+    int m_side = -1;
 
     void onConnectReceive(const NetMsg<proto::Connect>&);
     void onDisconnectReceive(const NetMsg<proto::Disconnect>&);

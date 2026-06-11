@@ -147,4 +147,7 @@
         }                                                                \
     } while (0)
 
+#define TL_RETURN_FALSE_IF_NULL_WITH_LOG(expr, log_fn, fmt, ...) \
+    TL_RETURN_VALUE_IF_FALSE_WITH_LOG(expr, false, log_fn, fmt, #__VA_ARGS__);
+
 #define TL_ASSERT(expr) assert(expr)

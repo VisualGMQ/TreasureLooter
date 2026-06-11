@@ -1,3 +1,4 @@
+--!nolua
 export type Begin = (name: string) -> boolean
 export type End = () -> ()
 

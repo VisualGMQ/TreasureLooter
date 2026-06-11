@@ -2,12 +2,7 @@
 #include "common/log.hpp"
 #include "common/macros.hpp"
 #include "imgui.h"
-
-// clang-format off
-#include "lua.h"
-#include "lualib.h"
-#include "LuaBridge/LuaBridge.h"
-// clang-format on
+#include "common/script/luabridge_include.hpp"
 
 static constexpr size_t kImGuiInputTextBufSize = 4096;
 

@@ -27,5 +27,4 @@
         <element name="id" type="uint32_t" proto_id="1"/>
         <element name="position" type="NetVec2" proto_id="2"/>
     </class>
-
 </schema>

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <string>
+#include "common/net/udp.hpp"
 
 typedef struct _ENetHost ENetHost;
 typedef struct _ENetPeer ENetPeer;
@@ -12,17 +13,17 @@ public:
 
     NetMsg() = default;
 
-    explicit NetMsg(ENetPeer* peer, const T& data)
+    explicit NetMsg(const UDPPeer& peer, const T& data)
         : m_data{data}, m_peer{peer} {}
 
-    explicit NetMsg(ENetPeer* peer, T&& data)
+    explicit NetMsg(const UDPPeer& peer, T&& data)
         : m_data{std::move(data)}, m_peer{peer} {}
 
     T* operator->() { return &m_data; }
 
     const T* operator->() const { return &m_data; }
 
-    ENetPeer* m_peer{};
+    UDPPeer m_peer{};
 
     T& Payload() { return m_data; }
     const T& Payload() const { return m_data; }

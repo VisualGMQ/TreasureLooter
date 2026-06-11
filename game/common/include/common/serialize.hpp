@@ -46,6 +46,9 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
                                 const unsigned char& payload,
                                 const std::string& name);
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
+                                const std::byte& payload,
+                                const std::string& name);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, long long& payload);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, long& payload);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, int& payload);
@@ -56,6 +59,7 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned int& payload);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned short& payload);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, unsigned char& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::byte& payload);
 
 // Path
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,

@@ -35,7 +35,7 @@ end
 
 function PlayerBehavior._initInteractableCheckEntity(self: PlayerBehavior, player_definition: TL_Schema.PlayerRelatedDefinition)
     -- create interactable detection controller
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
     local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
     local prefab = prefab_mgr:Create()
     prefab.m_transform = TL_Common.Transform()
@@ -55,7 +55,7 @@ function PlayerBehavior._initInteractableCheckEntity(self: PlayerBehavior, playe
 end
 
 function PlayerBehavior._initInteractableHintEntity(self: PlayerBehavior, player_definition: TL_Schema.PlayerRelatedDefinition)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
     local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
     local handle = prefab_manager:Create()
     handle.m_transform = TL_Common.Transform()
@@ -88,7 +88,7 @@ end
 function PlayerBehavior.OnQuit(self: PlayerBehavior)
     self.m_character:OnQuit()
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if scene then
         scene:RemoveEntity(self.m_interactable_hint_entity)
@@ -125,7 +125,7 @@ function PlayerBehavior.GetNearbyInteractableObject(self: PlayerBehavior): TL_Co
 end
 
 function PlayerBehavior.OnUpdate(self: PlayerBehavior, elapse_time: TL_Common.TimeType)
-    local ctx = TL_Client.GetClientContext()
+    local ctx = TL_Client.GetContext()
 	local input_manager = ctx:GetInputManager()
 
     do
@@ -149,7 +149,7 @@ function PlayerBehavior.OnUpdate(self: PlayerBehavior, elapse_time: TL_Common.Ti
         
         if nearest_item then
             local entity = nearest_item:GetOwner()
-            local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+            local ctx: TL_Client.ClientContext = TL_Client.GetContext()
             script = ctx:GetScriptManager():Get(entity)
         end
         if action:IsPressed(0) and nearest_item then
@@ -196,7 +196,7 @@ end
 function PlayerBehavior.ShowDetectedInteractableItems(self: PlayerBehavior)
     local nearby_interactable_object = self:GetNearbyInteractableObject()
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
     if not nearby_interactable_object then
         ctx:GetSpriteManager():Disable(self.m_interactable_hint_entity)
         local anim_player = ctx:GetAnimationPlayerManager():Get(self.m_interactable_hint_entity)

@@ -130,34 +130,9 @@ uint32_t SyncPlank::GetID() const {
 }
 
 void ClientLogic::OnInit() {
-    ILogic::OnInit();
+    CLIENT_CONTEXT.ConnectToServer({IP.data(), PORT});
 
-    initNetHost(nullptr, 1, 2, 0, 0);
-
-    ENetAddress address;
-    if (enet_address_set_host(&address, IP.data()) != 0) {
-        m_talk_box.AddMsg("enet address parse failed");
-        LOGE("enet address parse failed");
-        return;
-    }
-    address.port = PORT;
-
-    m_server = enet_host_connect(m_host, &address, 2, 0);
-
-    if (!m_server) {
-        m_talk_box.AddMsg("connect to server failed");
-        LOGE("connect to server {}:{} failed", IP, PORT);
-        return;
-    }
-
-    ENetEvent event;
-    bool connect_success = false;
-    if (enet_host_service(m_host, &event, 1000) > 0 &&
-        event.type == ENET_EVENT_TYPE_CONNECT) {
-        connect_success = true;
-    }
-
-    if (!connect_success) {
+    if (!CLIENT_CONTEXT.m_net_peer.IsValid()) {
         m_talk_box.AddMsg("connect to server failed");
         LOGE("connect to server {}:{} failed", IP, PORT);
         return;
@@ -172,8 +147,6 @@ void ClientLogic::OnInit() {
 }
 
 void ClientLogic::OnUpdate(TimeType elapse) {
-    ILogic::OnUpdate(elapse);
-
     talkBoxUpdate();
 
     if (m_ctrl_plank) {
@@ -191,14 +164,7 @@ void ClientLogic::OnUpdate(TimeType elapse) {
             pos->set_m_x(m_ctrl_plank->GetPosition().x);
             pos->set_m_y(m_ctrl_plank->GetPosition().y);
 
-            std::vector<uint8_t> buf(net_msg.ByteSizeLong());
-            if (net_msg.SerializeToArray(buf.data(), buf.size())) {
-                auto packet = enet_packet_create(buf.data(), buf.size(), 0);
-                if (packet && enet_peer_send(m_server, 0, packet) != 0) {
-                    LOGE("send move protocal failed");
-                    enet_packet_destroy(packet);
-                }
-            }
+            CLIENT_CONTEXT.m_net_host->Send(&CLIENT_CONTEXT.m_net_peer, net_msg, 0);
         }
     }
 }
@@ -217,18 +183,12 @@ void ClientLogic::OnRender() {
 void ClientLogic::OnQuit() {
     m_ctrl_plank.reset();
     m_sync_plank.reset();
-    if (m_server) {
-        enet_peer_disconnect(m_server, 0);
-        enet_host_flush(m_host);
-    }
-
-    ILogic::OnQuit();
 }
 
 void ClientLogic::onDisconnectMsgReceive(const NetMsg<proto::Disconnect>&) {
     m_talk_box.AddMsg("server disconnected");
-    enet_peer_reset(m_server);
-    m_server = nullptr;
+
+    CLIENT_CONTEXT.m_net_peer.Reset();
 }
 
 void ClientLogic::onTalkMsgReceive(const NetMsg<proto::TalkMsg>& msg) {
@@ -254,6 +214,9 @@ void ClientLogic::onEnterMsgReceive(const NetMsg<proto::Enter>& msg) {
 void ClientLogic::onPeerDisconnectReceive(const NetMsg<proto::Leave>& msg) {
     TL_RETURN_IF_NULL(m_sync_plank);
 
+    LOGI("onPeerDisconnectReceive: leave id={}, sync id={}", msg->m_id(),
+         m_sync_plank->GetID());
+
     if (msg->m_id() == m_sync_plank->GetID()) {
         m_sync_plank.reset();
     }
@@ -269,7 +232,7 @@ void ClientLogic::onMoveReceive(const NetMsg<proto::Move>& msg) {
 void ClientLogic::talkBoxUpdate() {
     TL_RETURN_IF_FALSE(m_talk_box.NeedSend());
 
-    if (!m_server) {
+    if (!CLIENT_CONTEXT.m_net_host || !CLIENT_CONTEXT.m_net_host->IsValid()) {
         m_talk_box.AddMsg("disconnect");
         return;
     }
@@ -280,21 +243,14 @@ void ClientLogic::talkBoxUpdate() {
     proto::NetMsg net_msg;
     net_msg.mutable_m_talk_msg()->set_m_msg(input_text);
 
-    std::vector<uint8_t> buf(net_msg.ByteSizeLong());
+    std::vector<std::byte> buf(net_msg.ByteSizeLong());
     if (!net_msg.SerializeToArray(buf.data(), buf.size())) {
         LOGE("Serialize NetMsg to buffer failed");
         return;
     }
 
-    ENetPacket* packet =
-        enet_packet_create(buf.data(), buf.size(), ENET_PACKET_FLAG_RELIABLE);
-    if (!packet) {
-        success = false;
-    }
-    if (enet_peer_send(m_server, 0, packet) != 0) {
-        success = false;
-        enet_packet_destroy(packet);
-    }
+    CLIENT_CONTEXT.m_net_host->Send(&CLIENT_CONTEXT.m_net_peer, buf.data(),
+                                    buf.size(), 0);
 
     if (!success) {
         m_talk_box.AddMsg("send msg failed");

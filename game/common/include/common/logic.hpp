@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "common/context.hpp"
-#include "common/net.hpp"
+#include "net/net.hpp"
 
 #include "common/event.hpp"
 #include <string_view>
@@ -16,17 +16,11 @@ class ILogic {
 public:
     virtual ~ILogic() = default;
 
-    virtual void OnInit();
-    virtual void OnUpdate(TimeType);
-    virtual void OnQuit();
+    virtual void OnInit() = 0;
+    virtual void OnUpdate(TimeType) = 0;
+    virtual void OnQuit() = 0;
 
 protected:
-    ENetHost* m_host{};
-
-    void initNetHost(ENetAddress* address, uint32_t peer_count,
-                     uint32_t channel_limit, uint32_t incoming_bandwidth,
-                     uint32_t outgoing_bandwidth);
-
     template <typename T>
     void registerNetMsgDelegate(const EventListener<NetMsg<T>>& f) const {
         COMMON_CONTEXT.m_event_system->AddListener(f);

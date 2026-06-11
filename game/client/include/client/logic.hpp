@@ -3,6 +3,7 @@
 #include "client/sprite.hpp"
 #include "common/cct.hpp"
 #include "common/logic.hpp"
+#include "common/net/udp.hpp"
 #include "common/timer.hpp"
 #include "proto/proto.pb.h"
 #include "schema/gameplay_config.hpp"
@@ -84,8 +85,6 @@ private:
     TalkBox m_talk_box;
     std::unique_ptr<CtrlPlank> m_ctrl_plank;
     std::unique_ptr<SyncPlank> m_sync_plank;
-
-    ENetPeer* m_server{};
 
     void onDisconnectMsgReceive(const NetMsg<proto::Disconnect>&);
     void onTalkMsgReceive(const NetMsg<proto::TalkMsg>&);

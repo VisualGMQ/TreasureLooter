@@ -122,6 +122,21 @@ struct MustacheManager {
     kainjow::mustache::mustache m_all_proto_mustache;
     kainjow::mustache::mustache m_net_msg_dispatch_impl_mustache;
     kainjow::mustache::mustache m_net_msg_dispatch_header_mustache;
+    kainjow::mustache::mustache m_proto_binding_header_mustache;
+    kainjow::mustache::mustache m_proto_binding_impl_mustache;
+    kainjow::mustache::mustache m_proto_event_binding_header_mustache;
+    kainjow::mustache::mustache m_proto_event_binding_impl_mustache;
+    kainjow::mustache::mustache m_proto_convert_header_mustache;
+    kainjow::mustache::mustache m_proto_convert_impl_mustache;
+    kainjow::mustache::mustache m_proto_class_luau_mustache;
+    kainjow::mustache::mustache m_proto_net_msg_luau_mustache;
+    kainjow::mustache::mustache m_proto_net_msg_wrapper_luau_mustache;
+    kainjow::mustache::mustache m_schema_class_luau_mustache;
+    kainjow::mustache::mustache m_schema_enum_luau_mustache;
+    kainjow::mustache::mustache m_schema_flags_luau_mustache;
+    kainjow::mustache::mustache m_schema_asset_luau_mustache;
+    kainjow::mustache::mustache m_schema_filename_is_luau_mustache;
+    kainjow::mustache::mustache m_schema_asset_manager_luau_mustache;
 
     kainjow::mustache::mustache m_asset_serialize_header_mustache;
     kainjow::mustache::mustache m_asset_display_header_mustache;

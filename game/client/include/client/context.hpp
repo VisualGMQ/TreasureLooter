@@ -1,6 +1,7 @@
 #pragma once
 #include "client/camera.hpp"
 #include "common/context.hpp"
+#include "common/net/udp.hpp"
 
 class ClientLogic;
 class IDebugDrawer;
@@ -39,6 +40,8 @@ public:
     void HandleEvents(const SDL_Event&) override;
     void Update() override;
 
+    void ConnectToServer(const NetAddress&);
+
     void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
     void RemoveAllComponentsOnEntity(Entity) override;
 
@@ -57,6 +60,7 @@ public:
         m_tilemap_layer_render_component_manager;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<ClientLogic> m_logic;
+    UDPPeer m_net_peer;
     Camera m_camera;
 
 protected:

@@ -7,7 +7,7 @@ endif()
 file(GLOB_RECURSE GAME_SCRIPTS ../scripts/client/*.luau)
 
 target_sources(${GAME_NAME} PRIVATE
-    game_main.cpp
+    client_main.cpp
     ${GAME_SCRIPTS}
     ${SCHEMA_SCRIPT_HINT_FILES}
     ${LUAU_TYPES_HINT_FILES})

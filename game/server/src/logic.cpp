@@ -2,20 +2,12 @@
 
 #include "common/log.hpp"
 #include "common/logic.hpp"
-
-#include "absl/strings/str_format.h"
-#include "common/macros.hpp"
-#include "enet/enet.h"
+#include "common/net/udp.hpp"
 #include "proto/all_proto.pb.h"
+#include "server/context.hpp"
 
 void ServerLogic::OnInit() {
-    ILogic::OnInit();
-
-    ENetAddress address;
-    address.host = ENET_HOST_ANY;
-    address.port = PORT;
-
-    initNetHost(&address, 32, 2, 0, 0);
+    SERVER_CONTEXT.NetListen(NetAddress{0, PORT}, 32);
 
     registerNetMsgDelegate(&ServerLogic::onConnectReceive);
     registerNetMsgDelegate(&ServerLogic::onDisconnectReceive);
@@ -23,24 +15,19 @@ void ServerLogic::OnInit() {
     registerNetMsgDelegate(&ServerLogic::onMoveReceive);
 }
 
-void ServerLogic::OnUpdate(TimeType elapse) {
-    ILogic::OnUpdate(elapse);
-}
+void ServerLogic::OnUpdate(TimeType elapse) {}
 
-void ServerLogic::OnQuit() {
-    ILogic::OnQuit();
-}
+void ServerLogic::OnQuit() {}
 
 void ServerLogic::onConnectReceive(const NetMsg<proto::Connect>& msg) {
-    ENetPeer* peer = msg.m_peer;
-    char buf[1024] = {0};
-    enet_address_get_host(&peer->address, buf, sizeof(buf) - 1);
-    LOGI("connect client: {}", buf);
+    auto& new_peer = msg.m_peer;
+    auto id = new_peer.GetID();
+    LOGI("connect client: {}:{}", new_peer.GetIP(), new_peer.GetPort());
 
     {
         proto::NetMsg net_msg;
         auto* enter = net_msg.mutable_m_enter();
-        enter->set_m_id(peer->connectID);
+        enter->set_m_id(id);
         Vec2 position = CalcPlankPos(m_side);
         auto* pos = enter->mutable_m_position();
         pos->set_m_x(position.x);
@@ -48,42 +35,34 @@ void ServerLogic::onConnectReceive(const NetMsg<proto::Connect>& msg) {
 
         m_side *= -1;
 
-        m_peers[peer] = Plank{peer, peer->connectID, position};
+        m_peers[id] = Plank{new_peer, id, position};
 
-        std::vector<uint8_t> msg_buf(net_msg.ByteSizeLong());
-        if (net_msg.SerializeToArray(msg_buf.data(), msg_buf.size())) {
-            auto packet = enet_packet_create(msg_buf.data(), msg_buf.size(),
-                                             ENET_PACKET_FLAG_RELIABLE);
-            enet_host_broadcast(m_host, 0, packet);
-        }
+        SERVER_CONTEXT.m_net_host->Send(nullptr, net_msg, 0);
     }
 
-    for (auto&& [id, other] : m_peers) {
-        TL_CONTINUE_IF_TRUE(id->connectID == peer->connectID);
+    for (auto&& [other_id, other] : m_peers) {
+        TL_CONTINUE_IF_TRUE(other_id == id);
 
         proto::NetMsg net_msg;
         auto* enter = net_msg.mutable_m_enter();
-        enter->set_m_id(other.m_peer->connectID);
+        enter->set_m_id(other.m_id);
         auto* pos = enter->mutable_m_position();
         pos->set_m_x(other.m_position.x);
         pos->set_m_y(other.m_position.y);
 
-        std::vector<uint8_t> msg_buf(net_msg.ByteSizeLong());
-
-        if (net_msg.SerializeToArray(msg_buf.data(), msg_buf.size())) {
-            auto packet = enet_packet_create(msg_buf.data(), msg_buf.size(),
-                                        ENET_PACKET_FLAG_RELIABLE);
-            enet_peer_send(msg.m_peer, 0, packet);
-        }
+        SERVER_CONTEXT.m_net_host->Send( &new_peer, net_msg, 0);
     }
 }
 
 void ServerLogic::onDisconnectReceive(const NetMsg<proto::Disconnect>& msg) {
-    char host[1024] = {0};
-    enet_address_get_host(&msg.m_peer->address, host, sizeof(host) - 1);
-    LOGI("disconnect client: {}", host);
+    auto& peer = msg.m_peer;
+    TL_RETURN_IF_FALSE_WITH_LOG(peer.IsValid(), LOGE,
+                                "disconnect with null peer");
 
-    auto it = m_peers.find(msg.m_peer);
+    auto id = peer.GetID();
+    LOGI("disconnect client: id={}, {}:{}", id, peer.GetIP(), peer.GetPort());
+
+    auto it = m_peers.find(id);
 
     proto::NetMsg net_msg;
     auto* leave = net_msg.mutable_m_leave();
@@ -91,16 +70,11 @@ void ServerLogic::onDisconnectReceive(const NetMsg<proto::Disconnect>& msg) {
         leave->set_m_id(it->second.m_id);
     }
 
-    std::vector<uint8_t> msg_buf(net_msg.ByteSizeLong());
-    if (net_msg.SerializeToArray(msg_buf.data(), msg_buf.size())) {
-        auto packet = enet_packet_create(msg_buf.data(), msg_buf.size(), 0);
-        if (packet) {
-            enet_host_broadcast(m_host, 0, packet);
-        }
-    }
+    SERVER_CONTEXT.m_net_host->Send(nullptr, net_msg, 0);
 
-    m_peers.erase(msg.m_peer);
+    m_peers.erase(id);
     m_side *= -1;
+    SERVER_CONTEXT.m_net_host->GetPeer(id).Reset();
 }
 
 void ServerLogic::onTalkMsgReceive(const NetMsg<proto::TalkMsg>& msg) {
@@ -109,24 +83,16 @@ void ServerLogic::onTalkMsgReceive(const NetMsg<proto::TalkMsg>& msg) {
     proto::NetMsg net_msg;
     net_msg.mutable_m_talk_msg()->set_m_msg(msg->m_msg());
 
-    std::vector<uint8_t> buf(net_msg.ByteSizeLong());
-    if (net_msg.SerializeToArray(buf.data(), buf.size())) {
-        ENetPacket* packet =
-            enet_packet_create(buf.data(), buf.size(), ENET_PACKET_FLAG_RELIABLE);
-
-        enet_host_broadcast(m_host, 0, packet);
-    }
+    SERVER_CONTEXT.m_net_host->Send(nullptr, net_msg, 0);
 }
 
 void ServerLogic::onMoveReceive(const NetMsg<proto::Move>& msg) {
-    m_peers[msg.m_peer].m_position = Vec2{msg->m_position().m_x(), msg->m_position().m_y()};
+    auto id = msg.m_peer.GetID();
+    auto& plank = m_peers[id];
+    plank.m_position = Vec2{msg->m_position().m_x(), msg->m_position().m_y()};
 
     proto::NetMsg net_msg;
     *net_msg.mutable_m_move() = msg.Payload();
 
-    std::vector<uint8_t> msg_buf(net_msg.ByteSizeLong());
-    if (net_msg.SerializeToArray(msg_buf.data(), msg_buf.size())) {
-        auto packet = enet_packet_create(msg_buf.data(), msg_buf.size(), ENET_PACKET_FLAG_RELIABLE);
-        enet_host_broadcast(m_host, 0, packet);
-    }
+    SERVER_CONTEXT.m_net_host->Send(nullptr, net_msg, 0);
 }
