@@ -4,6 +4,11 @@
 #include <cstddef>
 #include <vector>
 
+template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
+bool FLT_EQ(T a, T b) {
+    return std::abs(a - b) <= std::numeric_limits<T>::epsilon();
+}
+
 template <typename T>
 struct TVec2 final {
     union {
@@ -55,7 +60,7 @@ struct TVec2 final {
 
     float Dot(const TVec2 &) const;
 
-    float DistTo(const TVec2&) const;
+    float DistTo(const TVec2 &) const;
 
     float Cross(const TVec2 &) const;
 
@@ -148,7 +153,7 @@ float TVec2<T>::Dot(const TVec2 &o) const {
 }
 
 template <typename T>
-float TVec2<T>::DistTo(const TVec2& o) const {
+float TVec2<T>::DistTo(const TVec2 &o) const {
     return (*this - o).Length();
 }
 
@@ -240,7 +245,7 @@ std::ostream &operator<<(std::ostream &os, const TVec2<T> &p) {
 }
 
 Vec2 Reflect(const Vec2 &v, const Vec2 &n);
-Vec2 Mirror(const Vec2& p, const Vec2& axis_position, const Vec2& axis_dir);
+Vec2 Mirror(const Vec2 &p, const Vec2 &axis_position, const Vec2 &axis_dir);
 
 struct Color {
     static const Color Red;
@@ -256,7 +261,8 @@ struct Color {
 
     constexpr Color() = default;
 
-    constexpr Color(float r, float g, float b, float a = 1) : r{r}, g{g}, b{b}, a{a} {}
+    constexpr Color(float r, float g, float b, float a = 1)
+        : r{r}, g{g}, b{b}, a{a} {}
 
     float r{}, g{}, b{}, a = 1;
 };
@@ -299,7 +305,7 @@ private:
 
 Degrees operator*(float k, Degrees d);
 
-std::ostream& operator<<(std::ostream&, const Degrees&);
+std::ostream &operator<<(std::ostream &, const Degrees &);
 
 struct Radians {
     Radians() = default;
@@ -337,7 +343,7 @@ private:
 
 Radians operator*(float k, Radians d);
 
-std::ostream& operator<<(std::ostream&, const Radians&);
+std::ostream &operator<<(std::ostream &, const Radians &);
 
 inline const Radians PI{3.14159265358979323846f};
 inline const Radians PI_Half{3.14159265358979323846f * 0.5};
@@ -365,7 +371,7 @@ private:
 
 Mat33 operator*(const Mat33 &, const Mat33 &);
 
-Vec2 GetPosition(const Mat33&);
+Vec2 GetPosition(const Mat33 &);
 
 template <typename T>
 class MatStorage {
@@ -426,7 +432,7 @@ public:
     size_t GetSize() const { return GetWidth() * GetHeight(); }
 
 private:
-    std::vector<std::vector<T> > m_data;
+    std::vector<std::vector<T>> m_data;
     size_t m_w{}, m_h{};
 };
 
@@ -449,6 +455,93 @@ struct Range2D {
     Range<T> m_x;
     Range<T> m_y;
 };
+
+template <typename T>
+T Lerp(T a, T b, float t) {
+    return a + (b - a) * t;
+}
+
+template <typename T>
+T Clamp(T v, T a, T b) {
+    return v < a ? a : v > b ? b : v;
+}
+
+template <typename T>
+bool IsPointInRect(const TVec2<T> &pt, const TVec2<T> &center,
+                   const TVec2<T> &half_size) {
+    T left = center.x - half_size.w;
+    T right = center.x + half_size.w;
+    T top = center.y + half_size.h;
+    T bottom = center.y - half_size.h;
+
+    return pt.x > left && pt.x < right && pt.y < top && pt.y > bottom;
+}
+
+template <typename T>
+bool IsRectsIntersect(const TVec2<T> &center1, const TVec2<T> &half_size1,
+                      const TVec2<T> &center2, const TVec2<T> &half_size2) {
+    return IsPointInRect(center2, center1, half_size1 + half_size2);
+}
+
+template <typename T>
+bool IsPointInCircle(const TVec2<T> &pt, const TVec2<T> &center, T radius) {
+    return (pt - center).LengthSquared() < radius * radius;
+}
+
+template <typename T>
+bool IsCirclesIntersect(const TVec2<T> &center1, T radius1,
+                        const TVec2<T> &center2, T radius2) {
+    auto radius_sum = radius1 + radius2;
+    return (center1 - center2).LengthSquared() < radius_sum * radius_sum;
+}
+
+template <typename T>
+Vec2 NearestRectPoint(const TVec2<T> &pt, const TVec2<T> &center,
+                      const TVec2<T> &half_size) {
+    Vec2 top_left = center - half_size;
+    Vec2 bottom_right = center + half_size;
+
+    return Vec2{Clamp(pt.x, top_left.x, bottom_right.x),
+                Clamp(pt.y, top_left.y, bottom_right.y)};
+}
+
+template <typename T>
+Vec2 NearestCirclePoint(const TVec2<T> &v, const TVec2<T> &center, T radius) {
+    return (v - center).Normalize() * radius + center;
+}
+
+template <typename T>
+Vec2 NearestCapsulePoint(const Vec2 &pt, float r, const Vec2 &p1,
+                         const Vec2 &p2) {
+    Vec2 dir1 = pt - p1;
+    float dist1 = (pt - p1).Length();
+    dir1 = FLT_EQ(dist1, 0.0f) ? Vec2::ZERO : dir1 / dist1;
+    Vec2 dir2 = pt - p2;
+    float dist2 = (pt - p2).Length();
+    dir2 = FLT_EQ(dist2, 0.0f) ? Vec2::ZERO : dir2 / dist2;
+    Vec2 dir = (p1 - p2).Normalize();
+    float c1 = dir.Dot(dir1);
+    float c2 = dir.Dot(dir2);
+
+    if (c1 * c2 >= 0) {
+        Vec2 on_line_pt_dir = dir1.Dot(dir) * dist1 * dir;
+        Vec2 normal_to_q = dir1 - on_line_pt_dir;
+        float len = normal_to_q.Length();
+        normal_to_q = FLT_EQ(len, 0.0f) ? Vec2::ZERO : normal_to_q / len;
+        return on_line_pt_dir + p2 + std::min(len, r) * normal_to_q;
+    }
+
+    if (c1 < 0 && c2 > 0) {
+        return p1 + dir1 * std::min(r, dist1);
+    }
+
+    if (c1 > 0 && c2 < 0) {
+        return p2 + dir2 * std::min(r, dist2);
+    }
+
+    assert(false);
+    return Vec2::ZERO;
+}
 
 struct Transform {
     friend class RelationshipManager;
@@ -481,16 +574,6 @@ private:
     Mat33 m_global_mat;
 };
 
-template <typename T>
-T Lerp(T a, T b, float t) {
-    return a + (b - a) * t;
-}
-
-template <typename T>
-T Clamp(T v, T a, T b) {
-    return v < a ? a : v > b ? b : v;
-}
-
 /**
  *
  * @param norm_a normalized vector
@@ -513,5 +596,3 @@ DecompositionResult DecomposeVector(const Vec2 &v, const Vec2 &normal);
 // for spdlog output
 template <>
 struct fmt::formatter<Vec2> : fmt::ostream_formatter {};
-
-#define FLT_EQ(a, b) (std::abs(a - b) <= std::numeric_limits<float>::epsilon())

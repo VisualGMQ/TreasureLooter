@@ -1,0 +1,10 @@
+export type {{{flags_name}}} = {
+	Value: (self: {{{flags_name}}}) -> number,
+	Has: (self: {{{flags_name}}}, value: {{{enum_name}}}) -> boolean,
+	Remove: (self: {{{flags_name}}}, value: {{{enum_name}}}) -> (),
+	__bor: (self: {{{flags_name}}}, value: {{{enum_name}}}) -> {{{flags_name}}},
+	__band: (self: {{{flags_name}}}, value: {{{enum_name}}}) -> {{{flags_name}}},
+	__bnot: (self: {{{flags_name}}}) -> {{{flags_name}}},
+	__tostring: (self: {{{flags_name}}}) -> string,
+} & (() -> {{{flags_name}}}) & (({{{enum_name}}}) -> {{{flags_name}}}) & ((number) -> {{{flags_name}}})
+

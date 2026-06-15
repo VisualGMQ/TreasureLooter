@@ -11,7 +11,7 @@ public:
     Window& operator=(const Window&) = delete;
     ~Window();
 
-    Vec2 GetWindowSize() const;
+    Vec2UI GetWindowSize() const;
     void SetTitle(const std::string&);
     void Resize(const Vec2UI&);
     SDL_WindowID GetID() const;

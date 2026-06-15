@@ -68,8 +68,8 @@ bool AxisGizmo::IsPointIn(const Vec2& q) const {
     Vec2 y_axis_nearest_pt = NearestCapsulePoint(q, m_width + 10, position,
                                                  position + Vec2{0, m_len});
 
-    return FLT_EQ(x_axis_nearest_pt.DistTo(q), 0) ||
-           FLT_EQ(y_axis_nearest_pt.DistTo(q), 0);
+    return FLT_EQ(x_axis_nearest_pt.DistTo(q), 0.0f) ||
+           FLT_EQ(y_axis_nearest_pt.DistTo(q), 0.0f);
 }
 
 void AxisGizmo::Draw(ClientContext& ctx) {

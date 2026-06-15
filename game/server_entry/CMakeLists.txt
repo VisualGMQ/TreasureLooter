@@ -1,8 +1,12 @@
-target_sources(${SERVER_NAME} PRIVATE
+add_executable(${PROJECT_NAME}-Server)
+
+file(GLOB_RECURSE SERVER_SCRIPTS ../scripts/server/*.luau)
+
+target_sources(${PROJECT_NAME}-Server PRIVATE
     server_main.cpp
-    ${GAME_SCRIPTS}
+    ${SERVER_SCRIPTS}
     ${SCHEMA_SCRIPT_HINT_FILES}
     ${LUAU_TYPES_HINT_FILES})
-target_link_libraries(${SERVER_NAME} PRIVATE ${COMMON_NAME})
+target_link_libraries(${PROJECT_NAME}-Server PRIVATE ${SERVER_NAME})
 
 

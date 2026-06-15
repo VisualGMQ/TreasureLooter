@@ -23,9 +23,13 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::filesystem::path serd_output_dir = output_dir / "serialize";
-    std::filesystem::path display_output_dir = output_dir / "display";
-    std::filesystem::path binding_output_dir = output_dir / "binding";
+    std::filesystem::path schema_output_dir = output_dir / "schema";
+    std::filesystem::path serd_output_dir = schema_output_dir / "serialize";
+    std::filesystem::path display_output_dir = schema_output_dir / "display";
+    std::filesystem::path binding_output_dir = schema_output_dir / "binding";
+    std::filesystem::path proto_output_dir = schema_output_dir / "proto";
+
+    std::filesystem::path protobuf_output_dir = output_dir / "proto";
 
     if (!std::filesystem::exists(parse_dir)) {
         std::cerr << "invalid parse directory: " << parse_dir << std::endl;
@@ -61,20 +65,32 @@ int main(int argc, char** argv) {
         std::filesystem::remove_all(output_dir);
     }
 
-    // code generate
-    std::filesystem::create_directories(output_dir);
+    std::filesystem::create_directories(schema_output_dir);
+    std::filesystem::create_directories(proto_output_dir);
     std::filesystem::create_directories(serd_output_dir);
     std::filesystem::create_directories(display_output_dir);
     std::filesystem::create_directories(binding_output_dir);
+    std::filesystem::create_directories(protobuf_output_dir);
 
     for (auto& info : manager.m_infos) {
         // generate class declare codes
         {
             std::string code = GenerateSchemaCode(info);
-            std::ofstream file(output_dir / info.m_generate_filename);
+            std::ofstream file(schema_output_dir / info.m_generate_filename);
             file.write(code.c_str(), code.length());
-            std::cout << "generate file to : " << output_dir / info.
-                m_generate_filename << std::endl;
+            std::cout << "generate file to : "
+                      << schema_output_dir / info.m_generate_filename << std::endl;
+        }
+
+        // generate proto codes
+        {
+            std::string code = GenerateProtoSchemaDeclareCode(info);
+            std::filesystem::path proto_filename = info.m_pure_filename;
+            proto_filename.replace_extension("proto");
+            auto final_filename = proto_output_dir / proto_filename;
+            std::ofstream file(final_filename);
+            file.write(code.c_str(), code.length());
+            std::cout << "generate file to : " << final_filename << std::endl;
         }
 
         // generate serialize codes
@@ -100,8 +116,7 @@ int main(int argc, char** argv) {
         // generate display codes
         {
             {
-                std::string code =
-                    GenerateSchemaDisplayHeaderCode(info);
+                std::string code = GenerateSchemaDisplayHeaderCode(info);
                 auto header_filename = info.m_pure_filename;
                 header_filename.replace_extension(".hpp");
                 std::ofstream file(display_output_dir / header_filename);
@@ -126,7 +141,8 @@ int main(int argc, char** argv) {
                 header_filename.replace_extension(".hpp");
                 std::ofstream file(binding_output_dir / header_filename);
                 file.write(header_code.c_str(), header_code.length());
-                std::cout << "generate script bind header to : " << binding_output_dir / header_filename << std::endl;
+                std::cout << "generate script bind header to : "
+                          << binding_output_dir / header_filename << std::endl;
             }
 
             {
@@ -135,22 +151,113 @@ int main(int argc, char** argv) {
                 impl_filename.replace_extension(".cpp");
                 std::ofstream file(binding_output_dir / impl_filename);
                 file.write(impl_code.c_str(), impl_code.length());
-                std::cout << "generate script bind impl to : " << binding_output_dir / impl_filename << std::endl;
+                std::cout << "generate script bind impl to : "
+                          << binding_output_dir / impl_filename << std::endl;
             }
         }
+    }
+
+    // generate all_proto.proto
+    {
+        std::string code = GenerateProtoAllProtoDeclareCode(manager);
+        std::filesystem::path proto_filename = "all_proto.proto";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate net_msg_dispatch.hpp
+    {
+        std::string code = GenerateProtoNetMsgDispatchHeaderCode(manager);
+        std::filesystem::path proto_filename = "net_msg_dispatch.hpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate net_msg_dispatch.cpp
+    {
+        std::string code = GenerateProtoNetMsgDispatchImplCode(manager);
+        std::filesystem::path proto_filename = "net_msg_dispatch.cpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate proto_binding.hpp
+    {
+        std::string code = GenerateProtoBindingHeaderCode(manager);
+        std::filesystem::path proto_filename = "proto_binding.hpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate proto_binding.cpp
+    {
+        std::string code = GenerateProtoBindingImplCode(manager);
+        std::filesystem::path proto_filename = "proto_binding.cpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate proto_event_binding.hpp
+    {
+        std::string code = GenerateProtoEventBindingHeaderCode(manager);
+        std::filesystem::path proto_filename = "proto_event_binding.hpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate proto_event_binding.cpp
+    {
+        std::string code = GenerateProtoEventBindingImplCode(manager);
+        std::filesystem::path proto_filename = "proto_event_binding.cpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate proto_convert.hpp
+    {
+        std::string code = GenerateProtoConvertHeaderCode(manager);
+        std::filesystem::path proto_filename = "proto_convert.hpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
+    }
+
+    // generate proto_convert.cpp
+    {
+        std::string code = GenerateProtoConvertImplCode(manager);
+        std::filesystem::path proto_filename = "proto_convert.cpp";
+        auto final_filename = proto_output_dir / proto_filename;
+        std::ofstream file(final_filename);
+        file.write(code.c_str(), code.length());
+        std::cout << "generate file to : " << final_filename << std::endl;
     }
 
     // generate asset_info.hpp
     {
         std::string code = GenerateAssetInfoHeaderCode(manager);
-        std::ofstream file(output_dir / "asset_info.hpp");
+        std::ofstream file(schema_output_dir / "asset_info.hpp");
         file.write(code.c_str(), code.length());
     }
 
     // generate asset_info.cpp
     {
         std::string code = GenerateAssetInfoImplCode(manager);
-        std::ofstream file(output_dir / "asset_info.cpp");
+        std::ofstream file(schema_output_dir / "asset_info.cpp");
         file.write(code.c_str(), code.length());
     }
 
@@ -173,7 +280,8 @@ int main(int argc, char** argv) {
         std::string code = GenerateBindingHeaderCode(manager);
         std::ofstream file(binding_output_dir / "binding.hpp");
         file.write(code.c_str(), code.length());
-        std::cout << "generate binding header to : " << binding_output_dir / "binding.hpp" << std::endl;
+        std::cout << "generate binding header to : "
+                  << binding_output_dir / "binding.hpp" << std::endl;
     }
 
     // generate binding/binding.cpp
@@ -181,22 +289,33 @@ int main(int argc, char** argv) {
         std::string code = GenerateBindingImplCode(manager);
         std::ofstream file(binding_output_dir / "binding.cpp");
         file.write(code.c_str(), code.length());
-        std::cout << "generate binding impl to : " << binding_output_dir / "binding.cpp" << std::endl;
+        std::cout << "generate binding impl to : "
+                  << binding_output_dir / "binding.cpp" << std::endl;
     }
 
     // generate schema_types.luau.inc to output_dir (schema_generate/schema);
     // CMake wraps this fragment into scripts/tl_schema_types.luau.
     {
         std::string code = GenerateSchemaTypesLuauCode(manager);
-        std::ofstream file(output_dir / "schema_types.luau.inc");
+        std::ofstream file(schema_output_dir / "schema_types.luau.inc");
         file.write(code.c_str(), code.length());
-        std::cout << "generate schema_types.luau.inc to : " << output_dir / "schema_types.luau.inc" << std::endl;
+        std::cout << "generate schema_types.luau.inc to : "
+                  << schema_output_dir / "schema_types.luau.inc" << std::endl;
+    }
+
+    // generate proto_types.luau.inc
+    {
+        std::string code = GenerateProtoTypesLuauCode(manager);
+        std::ofstream file(schema_output_dir / "proto_types.luau.inc");
+        file.write(code.c_str(), code.length());
+        std::cout << "generate proto_types.luau.inc to : "
+                  << schema_output_dir / "proto_types.luau.inc" << std::endl;
     }
 
     // generate cpp_asset_extension.hpp
     {
         std::string code = GenerateCppAssetExtensionHeaderCode(manager);
-        std::ofstream file(output_dir / "cpp_asset_def_extension.hpp");
+        std::ofstream file(schema_output_dir / "cpp_asset_def_extension.hpp");
         file.write(code.c_str(), code.length());
     }
 

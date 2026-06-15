@@ -159,8 +159,9 @@ void PlayerController::initVirualJoystick(SceneHandle level,
     Transform transform;
     transform.m_size.w = game_config.m_virtual_joystick.m_radius;
     transform.m_size.h = game_config.m_virtual_joystick.m_radius;
-    transform.m_position = CLIENT_CONTEXT.m_window->GetWindowSize() -
-                           game_config.m_virtual_joystick.m_offset;
+    transform.m_position =
+        static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize()) -
+        game_config.m_virtual_joystick.m_offset;
     Entity virtual_joystick_entity = level->Instantiate(joystick_prefab);
 
     SDL_WindowEvent resize_event{};
@@ -195,8 +196,9 @@ void PlayerController::initVirualAttackButton(SceneHandle level,
     Transform transform;
     transform.m_size.w = game_config.m_virtual_attack_button.m_radius;
     transform.m_size.h = game_config.m_virtual_attack_button.m_radius;
-    transform.m_position = CLIENT_CONTEXT.m_window->GetWindowSize() -
-                           game_config.m_virtual_attack_button.m_offset;
+    transform.m_position =
+        static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize()) -
+        game_config.m_virtual_attack_button.m_offset;
     Entity entity = level->Instantiate(button_prefab);
     *m_transform_mgr.Get(entity) = transform;
 
@@ -229,7 +231,7 @@ void PlayerController::handleJoystickDragEvent(EventListenerID id,
     float dir_len = dir.Length();
     Vec2 offset = Vec2::ZERO;
     float offset_len = 0;
-    if (!FLT_EQ(dir_len, 0)) {
+    if (!FLT_EQ(dir_len, 0.0f)) {
         dir /= dir_len;
         offset = dir;
     }

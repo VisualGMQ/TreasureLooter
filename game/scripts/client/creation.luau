@@ -14,7 +14,7 @@ function _M.CreateWeapon(definition: TL_Schema.WeaponDefinitionHandle) : (TL_Com
         return TL_Common.null_entity
     end
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
@@ -68,7 +68,7 @@ function _M.CreateCharacter(transform: TL_Common.Transform, definition: TL_Schem
         return TL_Common.null_entity
     end
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
@@ -149,7 +149,7 @@ function _M.CreateItem(transform: TL_Common.Transform, definition: TL_Schema.Ite
         return TL_Common.null_entity
     end
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then

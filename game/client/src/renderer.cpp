@@ -1,9 +1,12 @@
 #include "client/renderer.hpp"
 
+#include <cmath>
+
 #include "client/camera.hpp"
 #include "client/context.hpp"
 #include "common/log.hpp"
 #include "common/macros.hpp"
+#include "common/physics.hpp"
 #include "common/profile.hpp"
 #include "common/sdl_call.hpp"
 
@@ -271,7 +274,8 @@ bool Renderer::IsRecordingYSorting() const {
 void Renderer::transformByCamera(const Camera& camera, Vec2* center,
                                  Vec2* size) const {
     if (center) {
-        auto window_size = CLIENT_CONTEXT.m_window->GetWindowSize();
+        Vec2 window_size =
+            static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize());
         *center = (*center - camera.GetPosition()) * camera.GetScale() +
                   window_size * 0.5;
     }
@@ -296,8 +300,10 @@ void Renderer::resizeTexture(const Vec2UI& new_size) {
 }
 
 struct ApplyDrawCmdVisitor {
-    ApplyDrawCmdVisitor(SDL_Renderer* renderer, const Color& color)
-        : m_renderer{renderer}, m_color{color} {}
+    ApplyDrawCmdVisitor(SDL_Renderer* renderer, const Vec2UI window_size)
+        : m_renderer{renderer}, m_window_rect{Vec2::ZERO, Vec2{window_size}} {}
+
+    void ChangeColor(const Color& color) { m_color = color; }
 
     void operator()(const DrawLineCommand& cmd) {
         setRenderColor(m_color);
@@ -306,6 +312,8 @@ struct ApplyDrawCmdVisitor {
     }
 
     void operator()(const DrawRectCommand& cmd) {
+        TL_RETURN_IF_FALSE(IsRectsIntersect(m_window_rect, cmd.m_rect));
+
         setRenderColor(m_color);
         Vec2 tl = cmd.m_rect.m_center - cmd.m_rect.m_half_size;
         SDL_FRect rect{tl.x, tl.y, cmd.m_rect.m_half_size.w * 2.0f,
@@ -315,6 +323,10 @@ struct ApplyDrawCmdVisitor {
     }
 
     void operator()(const DrawImageCommand& cmd) {
+        TL_RETURN_IF_FALSE(IsRectsIntersect(
+            m_window_rect,
+            GetDrawImageAABB(cmd.m_dst, cmd.m_rotation, cmd.m_rot_center)));
+
         SDL_FRect src_rect, dst_rect;
         src_rect.x = cmd.m_src.m_topleft.x;
         src_rect.y = cmd.m_src.m_topleft.y;
@@ -339,6 +351,22 @@ struct ApplyDrawCmdVisitor {
     }
 
     void operator()(const DrawImageExCommand& cmd) {
+        Vec2 br = {cmd.m_right.x + cmd.m_down.x - cmd.m_origin.x,
+                   cmd.m_right.y + cmd.m_down.y - cmd.m_origin.y};
+        float min_x =
+            std::min({cmd.m_origin.x, cmd.m_right.x, cmd.m_down.x, br.x});
+        float max_x =
+            std::max({cmd.m_origin.x, cmd.m_right.x, cmd.m_down.x, br.x});
+        float min_y =
+            std::min({cmd.m_origin.y, cmd.m_right.y, cmd.m_down.y, br.y});
+        float max_y =
+            std::max({cmd.m_origin.y, cmd.m_right.y, cmd.m_down.y, br.y});
+        Rect aabb{
+            {(min_x + max_x) * 0.5f, (min_y + max_y) * 0.5f},
+            {(max_x - min_x) * 0.5f, (max_y - min_y) * 0.5f}
+        };
+        TL_RETURN_IF_FALSE(IsRectsIntersect(m_window_rect, aabb));
+
         SDL_FRect rect = {cmd.m_src.m_topleft.x, cmd.m_src.m_topleft.y,
                           cmd.m_src.m_size.w, cmd.m_src.m_size.h};
         SDL_FPoint sdl_tl{cmd.m_origin.x, cmd.m_origin.y},
@@ -352,6 +380,8 @@ struct ApplyDrawCmdVisitor {
     }
 
     void operator()(const FillRectCommand& cmd) {
+        TL_RETURN_IF_FALSE(IsRectsIntersect(m_window_rect, cmd.m_rect));
+
         setRenderColor(m_color);
         Vec2 tl = cmd.m_rect.m_center - cmd.m_rect.m_half_size;
         SDL_FRect rect{tl.x, tl.y, cmd.m_rect.m_half_size.w * 2.0f,
@@ -360,6 +390,8 @@ struct ApplyDrawCmdVisitor {
     }
 
     void operator()(const DrawImage9GridCommand& cmd) {
+        TL_RETURN_IF_FALSE(IsRectsIntersect(m_window_rect, cmd.m_dst));
+
         SDL_FRect final_rect;
 
         auto top_left = cmd.m_dst.m_center - cmd.m_dst.m_half_size;
@@ -486,8 +518,8 @@ struct ApplyDrawCmdVisitor {
         {
             SDL_FRect src_rect;
             src_rect.x = cmd.m_src.m_topleft.x;
-            src_rect.y =
-                cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid.m_bottom;
+            src_rect.y = cmd.m_src.m_topleft.y + cmd.m_src.m_size.h -
+                         cmd.m_grid.m_bottom;
             src_rect.w = cmd.m_grid.m_right;
             src_rect.h = cmd.m_grid.m_bottom;
 
@@ -504,8 +536,8 @@ struct ApplyDrawCmdVisitor {
         {
             SDL_FRect src_rect;
             src_rect.x = cmd.m_src.m_topleft.x + cmd.m_grid.m_left;
-            src_rect.y =
-                cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid.m_bottom;
+            src_rect.y = cmd.m_src.m_topleft.y + cmd.m_src.m_size.h -
+                         cmd.m_grid.m_bottom;
             src_rect.w = cmd.m_src.m_topleft.x + cmd.m_src.m_size.w -
                          cmd.m_grid.m_right - cmd.m_grid.m_left;
             src_rect.h = cmd.m_grid.m_bottom;
@@ -524,8 +556,8 @@ struct ApplyDrawCmdVisitor {
             SDL_FRect src_rect;
             src_rect.x =
                 cmd.m_src.m_topleft.x + cmd.m_src.m_size.w - cmd.m_grid.m_right;
-            src_rect.y =
-                cmd.m_src.m_topleft.y + cmd.m_src.m_size.h - cmd.m_grid.m_bottom;
+            src_rect.y = cmd.m_src.m_topleft.y + cmd.m_src.m_size.h -
+                         cmd.m_grid.m_bottom;
             src_rect.w = cmd.m_grid.m_right;
             src_rect.h = cmd.m_grid.m_bottom;
 
@@ -544,7 +576,45 @@ struct ApplyDrawCmdVisitor {
 
 private:
     SDL_Renderer* m_renderer;
+    Rect m_window_rect;
     Color m_color;
+
+    Rect GetDrawImageAABB(const Rect& rect, Degrees rotation,
+                          const Vec2& pivot) const {
+        if (rotation.Value() == 0.0f) {
+            return rect;
+        }
+        Radians rad = rotation;
+        float s = std::sin(rad.Value()), c_val = std::cos(rad.Value());
+        Vec2 corners[4] = {
+            {rect.m_center.x - rect.m_half_size.w,
+             rect.m_center.y - rect.m_half_size.h},
+            {rect.m_center.x + rect.m_half_size.w,
+             rect.m_center.y - rect.m_half_size.h},
+            {rect.m_center.x - rect.m_half_size.w,
+             rect.m_center.y + rect.m_half_size.h},
+            {rect.m_center.x + rect.m_half_size.w,
+             rect.m_center.y + rect.m_half_size.h}
+        };
+        for (auto& c : corners) {
+            float dx = c.x - pivot.x;
+            float dy = c.y - pivot.y;
+            c.x = pivot.x + dx * c_val - dy * s;
+            c.y = pivot.y + dx * s + dy * c_val;
+        }
+        float min_x =
+            std::min({corners[0].x, corners[1].x, corners[2].x, corners[3].x});
+        float max_x =
+            std::max({corners[0].x, corners[1].x, corners[2].x, corners[3].x});
+        float min_y =
+            std::min({corners[0].y, corners[1].y, corners[2].y, corners[3].y});
+        float max_y =
+            std::max({corners[0].y, corners[1].y, corners[2].y, corners[3].y});
+        return {
+            {(min_x + max_x) * 0.5f, (min_y + max_y) * 0.5f},
+            {(max_x - min_x) * 0.5f, (max_y - min_y) * 0.5f}
+        };
+    }
 
     void setRenderColor(const Color& c) {
         SDL_CALL(SDL_SetRenderDrawColor(m_renderer, c.r * 255, c.g * 255,
@@ -555,8 +625,11 @@ private:
 void Renderer::applyDrawCommands() {
     PROFILE_SECTION();
 
+    auto window_size = CLIENT_CONTEXT.m_window->GetWindowSize();
+
+    ApplyDrawCmdVisitor visitor{m_renderer, window_size};
     for (auto& cmd : m_draw_commands) {
-        ApplyDrawCmdVisitor visitor{m_renderer, cmd.m_color};
+        visitor.ChangeColor(cmd.m_color);
         std::visit(visitor, cmd.m_cmd);
     }
 }

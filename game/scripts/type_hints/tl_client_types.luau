@@ -148,7 +148,7 @@ export type ClientContext = {
 	GetDebugDraw: (self: ClientContext) -> DebugDraw,
 }
 
-export type GetClientContext = () -> ClientContext
+export type GetContext = () -> ClientContext
 
 
 return TL_Client

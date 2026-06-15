@@ -14,16 +14,6 @@ public:
     IAssetsManager() = default;
     virtual ~IAssetsManager() = default;
 
-    GenericAssetManager<SceneDefinition>& GetSceneDefinitionAssetManager() {
-        return ensureManager<GenericAssetManager<SceneDefinition>>(
-            TypeIndexGenerator::Get<SceneDefinition>());
-    }
-
-    GenericAssetManager<LevelDefinition>& GetLevelDefinitionAssetManager() {
-        return ensureManager<GenericAssetManager<LevelDefinition>>(
-            TypeIndexGenerator::Get<LevelDefinition>());
-    }
-
     template <typename T>
     auto& GetManager() {
         TypeIndex type_index = TypeIndexGenerator::Get<T>();

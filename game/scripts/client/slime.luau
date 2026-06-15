@@ -29,7 +29,7 @@ function Slime.new(entity: number): Slime
 end
 
 function Slime.OnInit(self: Slime)
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
 	self.m_direction = Common.Direction.Down
 
@@ -52,7 +52,7 @@ end
 function Slime.OnQuit(self: Slime)
     self.m_character:OnQuit()
 
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	if self.m_change_move_dir_timer then
 		ctx:GetTimerManager():Remove(self.m_change_move_dir_timer:GetID())
 	end

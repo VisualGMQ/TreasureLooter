@@ -10,7 +10,8 @@ void ClientScene::OnEnter() {
 
     Transform* transform =
         COMMON_CONTEXT.m_transform_manager->Get(GetUIRootEntity());
-    transform->m_size = CLIENT_CONTEXT.m_window->GetWindowSize();
+    transform->m_size =
+        static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize());
 
     m_window_resize_event_listener_id =
         COMMON_CONTEXT.m_event_system->AddListener<SDL_WindowEvent>(
@@ -62,7 +63,8 @@ void ClientScene::initRootEntity(const Path& script_path) {
     ui->m_panel = std::make_unique<UIPanelComponent>();
     Transform* transform =
         CLIENT_CONTEXT.m_transform_manager->Get(m_ui_root_entity);
-    transform->m_size = CLIENT_CONTEXT.m_window->GetWindowSize();
+    transform->m_size =
+        static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize());
 
     if (!script_path.empty()) {
         auto handle =
@@ -77,10 +79,11 @@ SceneHandle ClientSceneManager::Load(const Path& filename, bool force) {
     if (auto handle = Find(filename); handle && !force) {
         return handle;
     }
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::CreateV4(),
                  std::make_unique<ClientScene>(filename));
 }
 
 SceneHandle ClientSceneManager::Create(SceneDefinitionHandle handle) {
-    return store(nullptr, UUID::CreateV4(), std::make_unique<ClientScene>(handle));
+    return store(nullptr, UUIDv4::CreateV4(),
+                 std::make_unique<ClientScene>(handle));
 }

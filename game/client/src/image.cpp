@@ -93,6 +93,6 @@ ImageHandle ClientImageManager::Load(const Path& filename, bool force) {
         return it;
     }
 
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::CreateV4(),
                  std::make_unique<Image>(m_renderer, filename));
 }

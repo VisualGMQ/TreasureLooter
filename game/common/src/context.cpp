@@ -7,6 +7,7 @@
 #include "common/cct.hpp"
 #include "common/debug_drawer.hpp"
 #include "common/event.hpp"
+#include "common/net/udp.hpp"
 #include "common/profile.hpp"
 #include "common/relationship.hpp"
 #include "common/scene.hpp"
@@ -48,9 +49,12 @@ void CommonContext::InitSystem() {
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
     SDL_CALL(TTF_Init());
+
+    UDPInit();
 }
 
 void CommonContext::ShutdownSystem() {
+    UDPShutdown();
     TTF_Quit();
     SDL_Quit();
     LOGT("system shutdown");
@@ -91,11 +95,6 @@ void CommonContext::Shutdown() {
     m_should_exit = true;
     m_is_inited = false;
 
-    m_script_component_manager->Clear();
-
-    if (m_scene_manager) {
-        m_scene_manager->Switch({});
-    }
     m_scene_manager.reset();
 
     m_script_component_manager.reset();
@@ -115,6 +114,8 @@ void CommonContext::Shutdown() {
     m_tilemap_layer_collision_component_manager.reset();
     m_transform_manager.reset();
     m_assets_manager.reset();
+
+    m_net_host.reset();
 }
 
 void CommonContext::HandleEvents(const SDL_Event& event) {

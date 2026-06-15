@@ -15,14 +15,11 @@ public:
     [[nodiscard]] const TilemapLayer* GetLayer() const;
     [[nodiscard]] const Tilemap* GetTilemap() const;
 
-    const PhysicsScene::TilemapCollision* GetTilemapCollision() const;
-
 private:
     std::unique_ptr<TilemapLayer> m_tilemap_layer;
     TilemapHandle m_tilemap_handle;  // FIXME: component rely on asset may cause
                                      // asset dangling reference
     std::string m_name;
-    PhysicsScene::TilemapCollision::Proxy m_tilemap_collision{};
 };
 
 class TilemapLayerRenderComponentManager

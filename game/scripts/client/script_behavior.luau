@@ -24,7 +24,7 @@ function ScriptBehavior.GetEntity(self: ScriptBehavior): TL_Common.Entity
 end
 
 function ScriptBehavior.SubscribeEvent(self: ScriptBehavior, eventName: string)
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	ctx:GetScriptManager():SubscribeEvent(self:GetEntity(), eventName)
 end
 

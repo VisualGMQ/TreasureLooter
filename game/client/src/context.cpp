@@ -21,6 +21,7 @@
 #include "client/tilemap_render_component.hpp"
 #include "client/ui.hpp"
 #include "client/window.hpp"
+#include "common/uuid.hpp"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
@@ -39,7 +40,6 @@
 #include "common/tilemap_layer_collision_component.hpp"
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
-#include "common/uuid.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
@@ -49,6 +49,8 @@
 #include <memory>
 
 std::unique_ptr<ClientContext> ClientContext::instance;
+
+void ClientContext::ChangeContext(ClientContext&) {}
 
 void ClientContext::Init() {
     if (!instance) {
@@ -176,6 +178,14 @@ void ClientContext::Update() {
     m_time->End();
 }
 
+void ClientContext::ConnectToServer(const NetAddress& address) {
+    m_net_host = std::make_unique<UDPHost>(nullptr);
+
+    if (m_net_host) {
+        m_net_peer = m_net_host->Connect(address);
+    }
+}
+
 void ClientContext::AttachComponentsOnEntity(Entity entity,
                                              const EntityInstance& instance) {
     CommonContext::AttachComponentsOnEntity(entity, instance);
@@ -216,6 +226,10 @@ void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
 void ClientContext::logicUpdate(TimeType elapse) {
     PROFILE_SECTION();
 
+    if (m_net_host) {
+        m_net_host->HandleIncomingNetPacket();
+    }
+
     m_time->Update();
     m_gamepad_manager->Update();
     m_keyboard->Update();
@@ -231,6 +245,11 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
+
+    if (m_net_host) {
+        m_net_host->Flush();
+    }
+
     m_event_system->Update();
     m_timer_manager->Update(elapse);
 }
@@ -268,9 +287,14 @@ void ClientContext::renderUpdate(TimeType elapse) {
 }
 
 void ClientContext::Shutdown() {
-    m_player_controller.reset();
+    m_script_component_manager->Clear();
+    m_scene_manager->Switch({});
 
-    CommonContext::Shutdown();
+    m_player_controller.reset();
+    if (m_net_peer.IsValid()) {
+        m_net_peer.Disconnect();
+    }
+    m_net_peer.Reset();
 
     m_tilemap_layer_render_component_manager.reset();
     m_ui_manager.reset();
@@ -288,6 +312,8 @@ void ClientContext::Shutdown() {
     shutdownImGui();
     m_renderer.reset();
     m_window.reset();
+
+    CommonContext::Shutdown();
 }
 
 ClientContext::~ClientContext() {}

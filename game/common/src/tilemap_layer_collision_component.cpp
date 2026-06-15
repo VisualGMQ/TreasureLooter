@@ -38,12 +38,12 @@ TilemapLayerCollisionComponent::TilemapLayerCollisionComponent(
 
     auto tile_size = tilemap->GetTileSize();
     m_tilemap_collision = PhysicsScene::TilemapCollision::Proxy{
-        physics_scene->CreateTilemapCollision(create_info.m_position)};
+        physics_scene->CreateTilemapCollision(
+            create_info.m_position, Vec2UI(tile_size.w, tile_size.h),
+            game_config.m_tile_in_chunk_size)};
 
     if (m_tilemap_layer->GetType() == TilemapLayer::Type::Tiled) {
         auto tiled_layer = m_tilemap_layer->AsTiledLayer();
-        m_tilemap_collision->CreateLayer(Vec2UI(tile_size.w, tile_size.h),
-                                         game_config.m_tile_in_chunk_size);
         auto& size = tiled_layer->GetSize();
         for (size_t y = 0; y < size.y; y++) {
             for (size_t x = 0; x < size.x; x++) {

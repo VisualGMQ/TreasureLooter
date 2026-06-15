@@ -26,8 +26,6 @@ protected:
     void update() override;
 
 private:
-    static std::unique_ptr<CollisionEditorContext> instance;
-
     std::optional<CollisionAstKind> m_kind;
     WeaponDefinitionHandle m_weapon;
     CharacterDefinitionHandle m_character;

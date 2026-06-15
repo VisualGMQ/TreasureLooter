@@ -5,11 +5,124 @@
 #include <unordered_map>
 #include <unordered_set>
 
-// Forward declarations for property handling (defined later in this file)
-std::string ExtractOptionalInnerType(const std::string& cpp_type);
-std::string ExtractFlagsInnerType(const std::string& cpp_type);
-std::string ExtractVectorInnerType(const std::string& cpp_type);
-std::string ExtractUnorderedMapInnerType(const std::string& cpp_type);
+std::string toSnakeCase(std::string_view pascal) {
+    if (pascal.empty()) return {};
+
+    std::string result;
+    result.reserve(pascal.size() + 4);
+
+    for (size_t i = 0; i < pascal.size(); ++i) {
+        char c = static_cast<char>(
+            std::tolower(static_cast<unsigned char>(pascal[i])));
+        if (i > 0 && std::isupper(static_cast<unsigned char>(pascal[i]))) {
+            if (std::islower(static_cast<unsigned char>(pascal[i - 1])) ||
+                (i + 1 < pascal.size() &&
+                 std::islower(static_cast<unsigned char>(pascal[i + 1])))) {
+                result += '_';
+            }
+        }
+        result += c;
+    }
+
+    return result;
+}
+
+std::string toCamelCase(std::string_view name) {
+    std::string snake = toSnakeCase(name);
+    std::string result;
+    result.reserve(snake.size());
+    bool cap_next = true;
+    for (char c : snake) {
+        if (c >= 'a' && c <= 'z') {
+            result += cap_next ? static_cast<char>(c - 'a' + 'A') : c;
+            cap_next = false;
+        } else if (c >= 'A' && c <= 'Z') {
+            result += c;
+            cap_next = false;
+        } else if (c >= '0' && c <= '9') {
+            result += c;
+            cap_next = true;
+        } else {
+            cap_next = true;
+        }
+    }
+    return result;
+}
+
+std::string extractOptionalInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::optional<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    int depth = 1;
+    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
+        char c = cpp_type[i];
+        if (c == '<')
+            ++depth;
+        else if (c == '>') {
+            --depth;
+            if (depth == 0)
+                return cpp_type.substr(prefix.size(), i - prefix.size());
+        }
+    }
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+std::string extractFlagsInnerType(const std::string& cpp_type) {
+    const std::string prefix = "Flags<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    int depth = 1;
+    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
+        char c = cpp_type[i];
+        if (c == '<')
+            ++depth;
+        else if (c == '>') {
+            --depth;
+            if (depth == 0)
+                return cpp_type.substr(prefix.size(), i - prefix.size());
+        }
+    }
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+std::string extractVectorInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::vector<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    int depth = 1;
+    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
+        char c = cpp_type[i];
+        if (c == '<')
+            ++depth;
+        else if (c == '>') {
+            --depth;
+            if (depth == 0)
+                return cpp_type.substr(prefix.size(), i - prefix.size());
+        }
+    }
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+std::string extractUnorderedMapInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::unordered_map<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
+std::string extractArrayInnerType(const std::string& cpp_type) {
+    const std::string prefix = "std::array<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    size_t comma = cpp_type.find(',', prefix.size());
+    if (comma == std::string::npos) return {};
+    return cpp_type.substr(prefix.size(), comma - prefix.size());
+}
 
 std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
@@ -25,8 +138,6 @@ std::string GenerateClassCode(const ClassInfo& info) {
 
         auto prop_code = prop_mustache.render(prop_data);
         prop_datas << kainjow::mustache::data{"property", prop_code};
-        // optional/flags/array/handle: no get/set in struct; script binding
-        // uses lambda on member (m_xxx)
     }
 
     kainjow::mustache::data class_data;
@@ -279,7 +390,7 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
     for (auto& prop : info.m_properties) {
         kainjow::mustache::data property_data;
         property_data.set("property", prop.m_name);
-        property_data.set("is_optional", prop.m_optional ? "true" : "false");
+        property_data.set("is_optional", prop.m_is_optional ? "true" : "false");
         property_data.set("is_handle", prop.m_is_handle ? "true" : "false");
         property_data.set("is_array", prop.m_is_array ? "true" : "false");
         properties_data << property_data;
@@ -462,6 +573,493 @@ std::string GenerateSchemaDisplayImplCode(const SchemaInfo& schema) {
     data.set("display_impls", display_datas);
 
     return mustache.render(data);
+}
+
+const std::unordered_map<std::string, std::string> CppTypeToProtoType = {
+    {          "double", "double"},
+    {           "float",  "float"},
+    {             "int",  "int32"},
+    {            "long",  "int64"},
+    {        "uint32_t", "uint32"},
+    {            "bool",   "bool"},
+    {     "std::string", "string"},
+    {"std::string_view", "string"},
+};
+
+const char* ProtoRepeatedKeyword = "repeated";
+
+const std::unordered_map<std::string, std::string> ProtoScalarToCppType = {
+    {  "float",  "float"},
+    { "double", "double"},
+    {  "int32", "::int32_t"},
+    {  "int64", "::int64_t"},
+    { "uint32", "::uint32_t"},
+    {   "bool",   "bool"},
+};
+
+std::string protoScalarToCppType(const std::string& proto_type) {
+    auto it = ProtoScalarToCppType.find(proto_type);
+    if (it != ProtoScalarToCppType.end()) {
+        return it->second;
+    }
+    return proto_type;
+}
+
+std::string typeConvertToProto(const std::string& type) {
+    if (auto it = CppTypeToProtoType.find(type);
+        it != CppTypeToProtoType.end()) {
+        return it->second;
+    }
+    return type;
+}
+
+std::string GenerateProtoClassDeclareCode(const ClassInfo& info) {
+    assert(info.ShouldGenProto());
+
+    auto& mustache = MustacheManager::GetInst().m_proto_class_declare_mustache;
+    kainjow::mustache::data data;
+
+    data.set("type", info.m_name);
+
+    kainjow::mustache::data fields_data{kainjow::mustache::data::type::list};
+    for (auto& property : info.m_properties) {
+        kainjow::mustache::data field_data;
+
+        field_data.set("field_name", property.m_name);
+        if (property.m_proto_id) {
+            field_data.set("field_id",
+                           std::to_string(property.m_proto_id.value()));
+        }
+        if (property.m_is_array) {
+            field_data.set("repeated", ProtoRepeatedKeyword);
+            field_data.set("field_type",
+                           typeConvertToProto(property.m_template_type1));
+        } else if (property.m_is_flags) {
+            // TODO: use enum underlying type
+            field_data.set("field_type", "uint32");
+        } else if (property.m_is_optional) {
+            field_data.set("field_type",
+                           typeConvertToProto(property.m_template_type1));
+        } else if (property.m_is_unordered_map) {
+            field_data.set(
+                "field_type",
+                "map<" + typeConvertToProto(property.m_template_type1) + ", " +
+                    typeConvertToProto(property.m_template_type2) + ">");
+        } else {
+            field_data.set("field_type", typeConvertToProto(property.m_type));
+        }
+
+        fields_data << field_data;
+    }
+
+    data.set("fields", fields_data);
+
+    return mustache.render(data);
+}
+
+std::string GenerateProtoEnumDeclareCode(const EnumInfo& info) {
+    assert(info.ShouldGenProto());
+
+    auto& mustache = MustacheManager::GetInst().m_proto_enum_declare_mustache;
+    kainjow::mustache::data data;
+    data.set("type", info.m_type);
+
+    kainjow::mustache::data items{kainjow::mustache::data::type::list};
+    for (auto& item : info.m_items) {
+        kainjow::mustache::data item_data;
+        item_data.set("item", item.m_name);
+        item_data.set("value", item.m_value);
+        items << item_data;
+    }
+    data.set("items", items);
+
+    return mustache.render(data);
+}
+
+std::string GenerateProtoSchemaDeclareCode(const SchemaInfo& info) {
+    auto& mustache = MustacheManager::GetInst().m_proto_mustache;
+    kainjow::mustache::data data;
+
+    kainjow::mustache::data imports_data{kainjow::mustache::data::type::list};
+    for (auto& import : info.m_imports) {
+        kainjow::mustache::data import_data;
+        import_data.set("import", import + ".proto");
+        imports_data << import_data;
+    }
+
+    kainjow::mustache::data enums_data{kainjow::mustache::data::type::list};
+    for (auto& enum_info : info.m_enums) {
+        if (!enum_info.ShouldGenProto()) {
+            continue;
+        }
+
+        kainjow::mustache::data enum_data;
+        enum_data.set("enum", GenerateProtoEnumDeclareCode(enum_info));
+
+        enums_data << enum_data;
+    }
+
+    kainjow::mustache::data classes_data{kainjow::mustache::data::type::list};
+    for (auto& class_info : info.m_classes) {
+        if (!class_info.ShouldGenProto()) {
+            continue;
+        }
+
+        kainjow::mustache::data class_data;
+        class_data.set("class", GenerateProtoClassDeclareCode(class_info));
+
+        classes_data << class_data;
+    }
+
+    data.set("imports", imports_data);
+    data.set("enums", enums_data);
+    data.set("classes", classes_data);
+
+    return mustache.render(data);
+}
+
+std::string GenerateProtoAllProtoDeclareCode(const SchemaInfoManager& mgr) {
+    auto& mustache = MustacheManager::GetInst().m_all_proto_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data import_datas{kainjow::mustache::data::type::list};
+    kainjow::mustache::data oneof_classes_data{
+        kainjow::mustache::data::type::list};
+
+    bool has_proto = false;
+    for (auto& schema_info : mgr.m_infos) {
+        std::filesystem::path proto_filename = schema_info.m_pure_filename;
+        proto_filename.replace_extension("proto");
+
+        bool schema_has_proto = false;
+        for (auto& enum_info : schema_info.m_enums) {
+            if (!enum_info.m_proto_id) {
+                continue;
+            }
+
+            schema_has_proto = true;
+
+            kainjow::mustache::data oneof_class_data;
+            oneof_class_data.set("class_type", enum_info.m_name);
+            oneof_class_data.set("class_name_snake_case",
+                                 toSnakeCase(enum_info.m_name));
+            oneof_class_data.set("proto_id",
+                                 std::to_string(enum_info.m_proto_id.value()));
+
+            oneof_classes_data << oneof_class_data;
+        }
+
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.m_proto_id) {
+                continue;
+            }
+
+            schema_has_proto = true;
+
+            kainjow::mustache::data oneof_class_data;
+            oneof_class_data.set("class_type", class_info.m_name);
+            oneof_class_data.set("class_name_snake_case",
+                                 toSnakeCase(class_info.m_name));
+            oneof_class_data.set("proto_id",
+                                 std::to_string(class_info.m_proto_id.value()));
+
+            oneof_classes_data << oneof_class_data;
+        }
+
+        if (schema_has_proto) {
+            kainjow::mustache::data import_data;
+            import_data.set("import", proto_filename.string());
+            import_datas << import_data;
+
+            has_proto = true;
+        }
+    }
+
+    if (has_proto) {
+        datas.set("imports", import_datas);
+        datas.set("has_oneof", true);
+        datas.set("oneof_classes", oneof_classes_data);
+    }
+
+    return mustache.render(datas);
+}
+
+std::string GenerateProtoNetMsgDispatchHeaderCode(const SchemaInfoManager&) {
+    auto& mustache = MustacheManager::GetInst().m_net_msg_dispatch_header_mustache;
+    kainjow::mustache::data data;
+    return mustache.render(data);
+}
+
+std::string GenerateProtoNetMsgDispatchImplCode(const SchemaInfoManager& mgr) {
+    auto& mustache = MustacheManager::GetInst().m_net_msg_dispatch_impl_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data msg_datas{kainjow::mustache::data::type::list};
+
+    for (auto& schema_info : mgr.m_infos) {
+        for (auto& enum_info : schema_info.m_enums) {
+            if (!enum_info.m_proto_id) {
+                continue;
+            }
+
+            kainjow::mustache::data msg_data;
+            msg_data.set("msg_camel_case_name", toCamelCase(enum_info.m_name));
+            std::string name = toSnakeCase(enum_info.m_name);
+            msg_data.set("msg_snake_case_name", name);
+
+            msg_datas << msg_data;
+        }
+
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.m_proto_id) {
+                continue;
+            }
+
+            kainjow::mustache::data msg_data;
+            msg_data.set("msg_camel_case_name", toCamelCase(class_info.m_name));
+            std::string name = toSnakeCase(class_info.m_name);
+            msg_data.set("msg_snake_case_name", name);
+
+            msg_datas << msg_data;
+        }
+    }
+
+    datas.set("msgs", msg_datas);
+
+    return mustache.render(datas);
+}
+
+std::string GenerateProtoBindingHeaderCode(const SchemaInfoManager&) {
+    auto& mustache = MustacheManager::GetInst().m_proto_binding_header_mustache;
+    kainjow::mustache::data data;
+    return mustache.render(data);
+}
+
+std::string GenerateProtoBindingImplCode(const SchemaInfoManager& mgr) {
+    auto& mustache = MustacheManager::GetInst().m_proto_binding_impl_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data classes_data{kainjow::mustache::data::type::list};
+
+    for (auto& schema_info : mgr.m_infos) {
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.ShouldGenProto()) {
+                continue;
+            }
+
+            kainjow::mustache::data class_data;
+            class_data.set("class_name", class_info.m_name);
+            class_data.set("class_full_name",
+                           "proto::" + class_info.m_name);
+            class_data.set("has_schema", true);
+
+            kainjow::mustache::data fields_data{
+                kainjow::mustache::data::type::list};
+            for (auto& property : class_info.m_properties) {
+                if (!property.m_proto_id) {
+                    continue;
+                }
+
+                kainjow::mustache::data field_data;
+                field_data.set("field_name", "m_" + property.m_name);
+
+                bool is_builtin =
+                    CppTypeToProtoType.find(property.m_type) !=
+                    CppTypeToProtoType.end();
+                bool is_string = property.m_type == "std::string" ||
+                                 property.m_type == "std::string_view";
+
+                if (!is_builtin) {
+                    field_data.set("is_message", true);
+                    field_data.set("field_type",
+                                   "::proto::" + property.m_type);
+                    field_data.set("has_has", true);
+                } else if (is_string) {
+                    field_data.set("is_string", true);
+                } else {
+                    field_data.set("is_scalar", true);
+                    auto it = CppTypeToProtoType.find(property.m_type);
+                    field_data.set("field_type",
+                                   protoScalarToCppType(it->second));
+                }
+                fields_data << field_data;
+            }
+            class_data.set("fields", fields_data);
+
+            classes_data << class_data;
+        }
+    }
+
+    // NetMsg oneof binding
+    {
+        kainjow::mustache::data net_msg_data;
+        net_msg_data.set("class_name", std::string{"NetMsg"});
+        net_msg_data.set("class_full_name",
+                         std::string{"proto::NetMsg"});
+
+        kainjow::mustache::data net_msg_fields{
+            kainjow::mustache::data::type::list};
+        for (auto& schema_info : mgr.m_infos) {
+            for (auto& class_info : schema_info.m_classes) {
+                if (!class_info.m_proto_id) {
+                    continue;
+                }
+                kainjow::mustache::data field_data;
+                field_data.set("field_name",
+                               "m_" + toSnakeCase(class_info.m_name));
+                field_data.set("is_message", true);
+                field_data.set("field_type",
+                               "::proto::" + class_info.m_name);
+                field_data.set("has_has", true);
+                net_msg_fields << field_data;
+            }
+            for (auto& enum_info : schema_info.m_enums) {
+                if (!enum_info.m_proto_id) {
+                    continue;
+                }
+                kainjow::mustache::data field_data;
+                field_data.set("field_name",
+                               "m_" + toSnakeCase(enum_info.m_name));
+                field_data.set("is_message", true);
+                field_data.set("field_type",
+                               "::proto::" + enum_info.m_name);
+                field_data.set("has_has", true);
+                net_msg_fields << field_data;
+            }
+        }
+        net_msg_data.set("fields", net_msg_fields);
+
+        classes_data << net_msg_data;
+    }
+
+    datas.set("classes", classes_data);
+
+    return mustache.render(datas);
+}
+
+std::string GenerateProtoEventBindingHeaderCode(const SchemaInfoManager&) {
+    auto& mustache =
+        MustacheManager::GetInst().m_proto_event_binding_header_mustache;
+    kainjow::mustache::data data;
+    return mustache.render(data);
+}
+
+std::string GenerateProtoEventBindingImplCode(const SchemaInfoManager& mgr) {
+    auto& mustache =
+        MustacheManager::GetInst().m_proto_event_binding_impl_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data events_data{kainjow::mustache::data::type::list};
+
+    for (auto& schema_info : mgr.m_infos) {
+        for (auto& enum_info : schema_info.m_enums) {
+            if (!enum_info.m_proto_id) {
+                continue;
+            }
+            kainjow::mustache::data event_data;
+            event_data.set("event_type", enum_info.m_name);
+            event_data.set("event_name", enum_info.m_name);
+            events_data << event_data;
+        }
+
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.m_proto_id) {
+                continue;
+            }
+            kainjow::mustache::data event_data;
+            event_data.set("event_type", class_info.m_name);
+            event_data.set("event_name", class_info.m_name);
+            events_data << event_data;
+        }
+    }
+
+    datas.set("events", events_data);
+
+    return mustache.render(datas);
+}
+
+std::string GenerateProtoConvertHeaderCode(const SchemaInfoManager& mgr) {
+    auto& mustache =
+        MustacheManager::GetInst().m_proto_convert_header_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data includes_data{
+        kainjow::mustache::data::type::list};
+    kainjow::mustache::data conversions_data{
+        kainjow::mustache::data::type::list};
+
+    for (auto& schema_info : mgr.m_infos) {
+        bool has_proto_class = false;
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.ShouldGenProto()) {
+                continue;
+            }
+            has_proto_class = true;
+
+            kainjow::mustache::data conv_data;
+            conv_data.set("class_name", class_info.m_name);
+            conversions_data << conv_data;
+        }
+        if (has_proto_class) {
+            includes_data << kainjow::mustache::data{
+                "include",
+                std::string{"schema/"} +
+                    schema_info.m_pure_filename.string() + ".hpp"};
+        }
+    }
+
+    datas.set("includes", includes_data);
+    datas.set("conversions", conversions_data);
+
+    return mustache.render(datas);
+}
+
+std::string GenerateProtoConvertImplCode(const SchemaInfoManager& mgr) {
+    auto& mustache =
+        MustacheManager::GetInst().m_proto_convert_impl_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data includes_data{
+        kainjow::mustache::data::type::list};
+    kainjow::mustache::data conversions_data{
+        kainjow::mustache::data::type::list};
+
+    for (auto& schema_info : mgr.m_infos) {
+        bool has_proto_class = false;
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.ShouldGenProto()) {
+                continue;
+            }
+            has_proto_class = true;
+
+            kainjow::mustache::data conv_data;
+            conv_data.set("class_name", class_info.m_name);
+
+            kainjow::mustache::data fields_data{
+                kainjow::mustache::data::type::list};
+            for (auto& property : class_info.m_properties) {
+                if (!property.m_proto_id) {
+                    continue;
+                }
+
+                kainjow::mustache::data field_data;
+                field_data.set("field_name", "m_" + property.m_name);
+                field_data.set(
+                    "is_message",
+                    CppTypeToProtoType.find(property.m_type) ==
+                        CppTypeToProtoType.end());
+                fields_data << field_data;
+            }
+            conv_data.set("fields", fields_data);
+
+            conversions_data << conv_data;
+        }
+        if (has_proto_class) {
+            includes_data << kainjow::mustache::data{
+                "include",
+                std::string{"schema/"} +
+                    schema_info.m_pure_filename.string() + ".hpp"};
+        }
+    }
+
+    datas.set("includes", includes_data);
+    datas.set("conversions", conversions_data);
+
+    return mustache.render(datas);
 }
 
 std::string GenerateAssetInfoHeaderCode(const SchemaInfoManager& manager) {
@@ -688,10 +1286,10 @@ std::string GenerateClassScriptBindImplCode(const ClassInfo& info) {
         prop_data.set("type", info.m_name);
         prop_data.set("property_name", property_name_with_prefix);
         prop_data.set("property_type", prop.m_type);
-        if (prop.m_optional) {
+        if (prop.m_is_optional) {
             prop_data.set("is_optional", true);
             prop_data.set("optional_inner_type",
-                          ExtractOptionalInnerType(prop.m_type));
+                          extractOptionalInnerType(prop.m_type));
         }
         if (prop.m_is_flags) {
             prop_data.set("is_flags", true);
@@ -868,81 +1466,6 @@ std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
     return impl_mustache.render(data);
 }
 
-std::string ExtractOptionalInnerType(const std::string& cpp_type) {
-    const std::string prefix = "std::optional<";
-    if (cpp_type.size() <= prefix.size() + 1 ||
-        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
-        return {};
-    int depth = 1;
-    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
-        char c = cpp_type[i];
-        if (c == '<')
-            ++depth;
-        else if (c == '>') {
-            --depth;
-            if (depth == 0)
-                return cpp_type.substr(prefix.size(), i - prefix.size());
-        }
-    }
-    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
-}
-
-std::string ExtractFlagsInnerType(const std::string& cpp_type) {
-    const std::string prefix = "Flags<";
-    if (cpp_type.size() <= prefix.size() + 1 ||
-        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
-        return {};
-    int depth = 1;
-    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
-        char c = cpp_type[i];
-        if (c == '<')
-            ++depth;
-        else if (c == '>') {
-            --depth;
-            if (depth == 0)
-                return cpp_type.substr(prefix.size(), i - prefix.size());
-        }
-    }
-    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
-}
-
-std::string ExtractVectorInnerType(const std::string& cpp_type) {
-    const std::string prefix = "std::vector<";
-    if (cpp_type.size() <= prefix.size() + 1 ||
-        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
-        return {};
-    int depth = 1;
-    for (size_t i = prefix.size(); i < cpp_type.size() - 1; ++i) {
-        char c = cpp_type[i];
-        if (c == '<')
-            ++depth;
-        else if (c == '>') {
-            --depth;
-            if (depth == 0)
-                return cpp_type.substr(prefix.size(), i - prefix.size());
-        }
-    }
-    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
-}
-
-std::string ExtractUnorderedMapInnerType(const std::string& cpp_type) {
-    const std::string prefix = "std::unordered_map<";
-    if (cpp_type.size() <= prefix.size() + 1 ||
-        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
-        return {};
-    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
-}
-
-std::string ExtractArrayInnerType(const std::string& cpp_type) {
-    const std::string prefix = "std::array<";
-    if (cpp_type.size() <= prefix.size() + 1 ||
-        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
-        return {};
-    size_t comma = cpp_type.find(',', prefix.size());
-    if (comma == std::string::npos) return {};
-    return cpp_type.substr(prefix.size(), comma - prefix.size());
-}
-
 bool IsLuauPrimitiveType(const std::string& name) {
     return name == "number" || name == "string" || name == "boolean";
 }
@@ -1006,17 +1529,26 @@ std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     };
     auto it = Cpp2Luau.find(cpp_type);
     if (it != Cpp2Luau.end()) return it->second;
-    std::string inner = ExtractOptionalInnerType(cpp_type);
+    std::string inner = extractOptionalInnerType(cpp_type);
     if (!inner.empty()) return ConvertCppTypeToLuauType(inner) + "?";
-    std::string flags_inner = ExtractFlagsInnerType(cpp_type);
+    std::string flags_inner = extractFlagsInnerType(cpp_type);
     if (!flags_inner.empty()) return flags_inner + "Flags";
-    std::string vec_inner = ExtractVectorInnerType(cpp_type);
+    std::string vec_inner = extractVectorInnerType(cpp_type);
     if (!vec_inner.empty())
         return "{ " + ConvertCppTypeToLuauType(vec_inner) + " }";
-    std::string arr_inner = ExtractArrayInnerType(cpp_type);
+    std::string arr_inner = extractArrayInnerType(cpp_type);
     if (!arr_inner.empty())
         return "{ " + ConvertCppTypeToLuauType(arr_inner) + " }";
-    if (!ExtractUnorderedMapInnerType(cpp_type).empty()) return "{}";
+    if (!extractUnorderedMapInnerType(cpp_type).empty()) return "{}";
+    return cpp_type;
+}
+
+std::string CppToLuauForProto(const std::string& cpp_type) {
+    if (cpp_type == "std::string" || cpp_type == "std::string_view")
+        return "string";
+    if (cpp_type == "bool") return "boolean";
+    if (CppTypeToProtoType.find(cpp_type) != CppTypeToProtoType.end())
+        return "number";
     return cpp_type;
 }
 
@@ -1027,7 +1559,7 @@ std::string GenerateClassLuauType(
     std::string out = "export type " + info.m_name + " = {\n";
     for (const auto& p : info.m_properties) {
         std::string luau_type = ConvertCppTypeToLuauType(p.m_type);
-        if (p.m_optional && luau_type.back() != '?') luau_type += "?";
+        if (p.m_is_optional && luau_type.back() != '?') luau_type += "?";
         if (use_tl_prefix)
             luau_type =
                 EnsureTLPrefixForSchema(luau_type, schema_defined_type_names);
@@ -1126,7 +1658,7 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
             for (const auto& prop : clazz.m_properties) {
                 if (prop.m_is_flags) {
                     std::string flags_inner =
-                        ExtractFlagsInnerType(prop.m_type);
+                        extractFlagsInnerType(prop.m_type);
                     if (!flags_inner.empty())
                         schema_defined_type_names.insert(flags_inner + "Flags");
                 }
@@ -1135,6 +1667,15 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
         for (const auto& enum_info : schema.m_enums)
             schema_defined_type_names.insert(enum_info.m_name);
     }
+
+    auto& class_t = MustacheManager::GetInst().m_schema_class_luau_mustache;
+    auto& enum_t = MustacheManager::GetInst().m_schema_enum_luau_mustache;
+    auto& flags_t = MustacheManager::GetInst().m_schema_flags_luau_mustache;
+    auto& asset_t = MustacheManager::GetInst().m_schema_asset_luau_mustache;
+    auto& fnis_t =
+        MustacheManager::GetInst().m_schema_filename_is_luau_mustache;
+    auto& amgr_t =
+        MustacheManager::GetInst().m_schema_asset_manager_luau_mustache;
 
     std::string out;
     std::unordered_set<std::string> emitted_classes;
@@ -1148,42 +1689,182 @@ std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
     bool use_tl_prefix = false;
     for (const auto& schema : manager.m_infos) {
         for (const auto& clazz : schema.m_classes) {
-            if (emitted_classes.insert(clazz.m_name).second)
-                out += GenerateClassLuauType(clazz, schema_defined_type_names,
-                                             use_tl_prefix) +
-                       "\n";
+            if (emitted_classes.insert(clazz.m_name).second) {
+                kainjow::mustache::data cdata;
+                cdata.set("class_name", clazz.m_name);
+                kainjow::mustache::data props{
+                    kainjow::mustache::data::type::list};
+                for (const auto& p : clazz.m_properties) {
+                    std::string luau_type =
+                        ConvertCppTypeToLuauType(p.m_type);
+                    if (p.m_is_optional && luau_type.back() != '?')
+                        luau_type += "?";
+                    if (use_tl_prefix)
+                        luau_type = EnsureTLPrefixForSchema(
+                            luau_type, schema_defined_type_names);
+                    std::string key =
+                        IsLuaKeyword(p.m_name)
+                            ? ("[\"" + p.m_name + "\"]")
+                            : "m_" + p.m_name;
+                    kainjow::mustache::data pd;
+                    pd.set("key", key);
+                    pd.set("luau_type", luau_type);
+                    props << pd;
+                }
+                cdata.set("properties", props);
+                out += class_t.render(cdata) + "\n";
+            }
             if (clazz.is_asset &&
                 emitted_handles.insert(clazz.m_name + "Handle").second) {
-                out += GenerateAssetHandleLuauType(clazz.m_name) + "\n";
-                out += GenerateAssetLoadSaveLuauTypes(clazz.m_name) + "\n";
+                kainjow::mustache::data adata;
+                adata.set("class_name", clazz.m_name);
+                adata.set("handle_name", clazz.m_name + "Handle");
+                out += asset_t.render(adata);
             }
             if (clazz.is_asset &&
                 emitted_filename_is_types.insert(clazz.m_name).second) {
-                out += GenerateAssetFilenameIsLuauType(clazz.m_name) + "\n";
+                out += fnis_t.render({"class_name", clazz.m_name});
             }
             if (clazz.is_asset &&
                 emitted_generic_asset_managers.insert(clazz.m_name).second) {
                 generic_asset_types.push_back(clazz.m_name);
-                out += GenerateGenericAssetManagerLuauType(clazz.m_name) + "\n";
+                kainjow::mustache::data mdata;
+                mdata.set("class_name", clazz.m_name);
+                mdata.set("handle_name", clazz.m_name + "Handle");
+                out += amgr_t.render(mdata);
             }
         }
         for (const auto& cpp_def : schema.m_cpp_asset_defs) {
             if (emitted_filename_is_types.insert(cpp_def.m_asset_name).second) {
-                out += GenerateAssetFilenameIsLuauType(cpp_def.m_asset_name) +
-                       "\n";
+                out += fnis_t.render({"class_name", cpp_def.m_asset_name});
             }
         }
         for (const auto& enum_info : schema.m_enums) {
             if (emitted_flags.insert(enum_info.m_name).second) {
-                out += GenerateFlagsLuauType(enum_info.m_name) + "\n";
+                kainjow::mustache::data fdata;
+                fdata.set("flags_name", enum_info.m_name + "Flags");
+                fdata.set("enum_name", enum_info.m_name);
+                out += flags_t.render(fdata);
             }
-            if (emitted_enums.insert(enum_info.m_name).second)
-                out += GenerateEnumLuauType(enum_info) + "\n";
+            if (emitted_enums.insert(enum_info.m_name).second) {
+                kainjow::mustache::data edata;
+                edata.set("enum_name", enum_info.m_name);
+                kainjow::mustache::data items{
+                    kainjow::mustache::data::type::list};
+                for (const auto& item : enum_info.m_items) {
+                    std::string key = IsLuaKeyword(item.m_name)
+                                          ? ("[\"" + item.m_name + "\"]")
+                                          : item.m_name;
+                    items << kainjow::mustache::data{"key", key};
+                }
+                edata.set("items", items);
+                out += enum_t.render(edata) + "\n";
+            }
         }
     }
 
-    out += "\n-- Schema values (enums, FilenameIs*, asset managers, LoadAsset*, etc.) are "
+    out += "\n-- Schema values (enums, FilenameIs*, asset managers, "
+           "LoadAsset*, etc.) are "
            "bound under TL_Schema.\n";
+    return out;
+}
+
+std::string GenerateProtoTypesLuauCode(const SchemaInfoManager& mgr) {
+    std::string out;
+    auto& class_t = MustacheManager::GetInst().m_proto_class_luau_mustache;
+    auto& net_msg_t = MustacheManager::GetInst().m_proto_net_msg_luau_mustache;
+    auto& wrapper_t =
+        MustacheManager::GetInst().m_proto_net_msg_wrapper_luau_mustache;
+
+    for (auto& schema_info : mgr.m_infos) {
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.ShouldGenProto()) {
+                continue;
+            }
+
+            kainjow::mustache::data cdata;
+            cdata.set("class_name", class_info.m_name);
+            cdata.set("has_schema", true);
+
+            kainjow::mustache::data fields_list{
+                kainjow::mustache::data::type::list};
+            for (auto& property : class_info.m_properties) {
+                if (!property.m_proto_id) {
+                    continue;
+                }
+
+                kainjow::mustache::data fdata;
+                fdata.set("field", "m_" + property.m_name);
+                fdata.set("luau_type", CppToLuauForProto(property.m_type));
+
+                bool is_message =
+                    CppTypeToProtoType.find(property.m_type) ==
+                    CppTypeToProtoType.end();
+                if (is_message) {
+                    fdata.set("has_has", true);
+                }
+                fields_list << fdata;
+            }
+            cdata.set("fields", fields_list);
+
+            out += class_t.render(cdata) + "\n";
+        }
+    }
+
+    // NetMsg oneof type
+    {
+        kainjow::mustache::data ndata;
+        kainjow::mustache::data nfields{kainjow::mustache::data::type::list};
+        for (auto& schema_info : mgr.m_infos) {
+            for (auto& class_info : schema_info.m_classes) {
+                if (!class_info.m_proto_id) {
+                    continue;
+                }
+                kainjow::mustache::data fdata;
+                fdata.set("field",
+                          "m_" + toSnakeCase(class_info.m_name));
+                fdata.set("type", class_info.m_name);
+                fdata.set("has_has", true);
+                nfields << fdata;
+            }
+            for (auto& enum_info : schema_info.m_enums) {
+                if (!enum_info.m_proto_id) {
+                    continue;
+                }
+                kainjow::mustache::data fdata;
+                fdata.set("field",
+                          "m_" + toSnakeCase(enum_info.m_name));
+                fdata.set("type", enum_info.m_name);
+                fdata.set("has_has", true);
+                nfields << fdata;
+            }
+        }
+        ndata.set("fields", nfields);
+        out += net_msg_t.render(ndata) + "\n";
+    }
+
+    // NetMsg<proto::T> wrapper types
+    for (auto& schema_info : mgr.m_infos) {
+        for (auto& class_info : schema_info.m_classes) {
+            if (!class_info.m_proto_id) {
+                continue;
+            }
+            kainjow::mustache::data wdata;
+            wdata.set("wrapper_name", "NetMsg_" + class_info.m_name);
+            wdata.set("type", class_info.m_name);
+            out += wrapper_t.render(wdata) + "\n";
+        }
+        for (auto& enum_info : schema_info.m_enums) {
+            if (!enum_info.m_proto_id) {
+                continue;
+            }
+            kainjow::mustache::data wdata;
+            wdata.set("wrapper_name", "NetMsg_" + enum_info.m_name);
+            wdata.set("type", enum_info.m_name);
+            out += wrapper_t.render(wdata) + "\n";
+        }
+    }
+
     return out;
 }
 

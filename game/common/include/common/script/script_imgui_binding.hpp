@@ -1,5 +1,5 @@
 #pragma once
 
-#include "lua.h"
+struct lua_State;
 
 void bindImGui(lua_State* L);

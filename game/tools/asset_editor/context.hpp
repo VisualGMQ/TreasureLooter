@@ -20,7 +20,6 @@ protected:
     void update() override;
 
 private:
-    static std::unique_ptr<AssetEditorContext> instance;
     VariantAsset m_asset;
 
     void parseCmdArgs(int argc, char** argv);

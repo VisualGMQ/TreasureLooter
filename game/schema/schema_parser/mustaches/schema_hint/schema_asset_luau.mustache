@@ -1,0 +1,5 @@
+export type {{{handle_name}}} = { IsValid: (self: {{{handle_name}}}) -> boolean, GetFilename: (self: {{{handle_name}}}) -> Path?, GetUUID: (self: {{{handle_name}}}) -> UUID } & {{{class_name}}}
+
+export type LoadAsset{{{class_name}}} = (path: Path) -> {{{class_name}}}
+export type SaveAsset{{{class_name}}} = (handle: {{{handle_name}}}, path: Path) -> ()
+

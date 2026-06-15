@@ -1,0 +1,13 @@
+export type {{{class_name}}} = {
+{{#fields}}
+	{{{field}}}: (self: {{{class_name}}}) -> {{{luau_type}}},
+	set_{{{field}}}: (self: {{{class_name}}}, value: {{{luau_type}}}) -> (),
+{{#has_has}}
+	has_{{{field}}}: (self: {{{class_name}}}) -> boolean,
+{{/has_has}}
+{{/fields}}
+{{#has_schema}}
+	to_schema: (self: {{{class_name}}}) -> {{{class_name}}},
+	FromSchema: (from: {{{class_name}}}) -> {{{class_name}}},
+{{/has_schema}}
+} & (() -> {{{class_name}}})

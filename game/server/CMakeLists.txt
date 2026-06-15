@@ -4,7 +4,7 @@ file(GLOB_RECURSE SERVER_HEADER CONFIGURE_DEPENDS include/*.hpp include/*.h)
 add_library(${SERVER_NAME} STATIC)
 
 target_sources(${SERVER_NAME} PRIVATE ${SERVER_SRC} ${SERVER_HEADER} ${ASSETS})
-target_include_directories(${SERVER_NAME} PUBLIC include ../schema_generate)
+target_include_directories(${SERVER_NAME} PUBLIC include)
 
 # TODO: compatible with clang++
 if (MSVC)

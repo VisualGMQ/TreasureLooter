@@ -1,9 +1,7 @@
 #pragma once
 
 #include "common/flag.hpp"
-#include "lua.h"
-#include "lualib.h"
-#include "LuaBridge/LuaBridge.h"
+#include "common/script/luabridge_include.hpp"
 #include <string>
 #include <type_traits>
 
@@ -17,7 +15,7 @@ void bindFlags(const char* name, lua_State* L) {
     using UnderlyingType = typename FlagsType::underlying_type;
 
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL").beginNamespace("Common")
+        .beginNamespace("TL_Common")
             .beginClass<FlagsType>(name)
                 .template addConstructor<void (), void (T), void (UnderlyingType)>()
                 .addFunction("Value", &FlagsType::Value)
@@ -31,6 +29,6 @@ void bindFlags(const char* name, lua_State* L) {
                         return std::to_string(self.Value());
                     })
             .endClass()
-        .endNamespace().endNamespace();
+        .endNamespace();
 }
 

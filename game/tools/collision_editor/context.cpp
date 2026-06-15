@@ -6,6 +6,7 @@
 #include "client/input/input.hpp"
 #include "client/input/keyboard.hpp"
 #include "client/input/mouse.hpp"
+#include "client/logic.hpp"
 #include "client/renderer.hpp"
 #include "client/sprite.hpp"
 #include "client/tilemap_render_component.hpp"
@@ -46,8 +47,6 @@ const Color kWeaponHitSelOutline{0.55f, 0.35f, 0.12f, 1.0f};
 const Color kWeaponHitSelFill{0.55f, 0.35f, 0.12f, 0.22f};
 
 }  // namespace
-
-std::unique_ptr<CollisionEditorContext> CollisionEditorContext::instance;
 
 bool pathFilenameEndsWith(const Path& p, std::string_view suffix) {
     const std::string fn = p.filename().string();
@@ -223,7 +222,7 @@ void CollisionEditorContext::Destroy() {
 }
 
 CollisionEditorContext& CollisionEditorContext::GetInst() {
-    return *instance;
+    return static_cast<CollisionEditorContext&>(*instance);
 }
 
 void CollisionEditorContext::Initialize(int argc, char** argv) {

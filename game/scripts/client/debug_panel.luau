@@ -111,7 +111,7 @@ local function draw_selected_entity_marker(ctx: TL_Client.ClientContext)
 end
 
 function _M.ShowDebugPanel()
-	local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 	local event_debugger: TL_Common.EventDebugger = ctx:GetEventDebugger()
 	if not ImGui.Begin("Debug panel") then
 		ImGui.End()

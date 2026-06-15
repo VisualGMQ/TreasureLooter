@@ -6,7 +6,14 @@
 #include "schema/serialize/anim.hpp"
 #include "schema/serialize/anim_player.hpp"
 #include "schema/serialize/flip.hpp"
+#include <charconv>
 #include <stdexcept>
+
+template <typename T>
+bool fromChars(const char* first, const char* last, T& value) {
+    auto [ptr, ec] = std::from_chars(first, last, value);
+    return ec == std::errc{};
+}
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 rapidxml::xml_document<>& doc,
@@ -20,10 +27,9 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  long long& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    if (!fromChars(v, v + node.value_size(), payload)) {
+        LOGE("[Deserialize]: from_chars failed (long long), value: {}", v);
     }
 }
 
@@ -38,10 +44,12 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  long& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<long>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (long), value: {}", v);
     }
 }
 
@@ -56,10 +64,9 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  int& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    if (!fromChars(v, v + node.value_size(), payload)) {
+        LOGE("[Deserialize]: from_chars failed (int), value: {}", v);
     }
 }
 
@@ -74,10 +81,12 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  short& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<short>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (short), value: {}", v);
     }
 }
 
@@ -92,10 +101,12 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  char& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<char>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (char), value: {}", v);
     }
 }
 
@@ -111,10 +122,9 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  unsigned long long& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    if (!fromChars(v, v + node.value_size(), payload)) {
+        LOGE("[Deserialize]: from_chars failed (unsigned long long), value: {}", v);
     }
 }
 
@@ -130,10 +140,12 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  unsigned long& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    unsigned long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<unsigned long>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (unsigned long), value: {}", v);
     }
 }
 
@@ -149,10 +161,12 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  unsigned int& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    unsigned long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<unsigned int>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (unsigned int), value: {}", v);
     }
 }
 
@@ -168,10 +182,12 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  unsigned short& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    unsigned long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<unsigned short>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (unsigned short), value: {}", v);
     }
 }
 
@@ -185,12 +201,36 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
     return node;
 }
 
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,
+                                rapidxml::xml_document<>& doc,
+                                const std::byte& payload,
+                                const std::string& name) {
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    node->value(doc.allocate_string(
+        std::to_string(static_cast<uint8_t>(payload)).c_str()));
+    return node;
+}
+
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  unsigned char& payload) {
-    try {
-        payload = std::stoll(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stoll exception: {}, {}", e.what(), node.value());
+    auto v = node.value();
+    unsigned long long val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<unsigned char>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (unsigned char), value: {}", v);
+    }
+}
+
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
+                 std::byte& payload) {
+    auto v = node.value();
+    unsigned int val{};
+    if (fromChars(v, v + node.value_size(), val)) {
+        payload = static_cast<std::byte>(val);
+    } else {
+        LOGE("[Deserialize]: from_chars failed (std::byte), value: {}", v);
     }
 }
 
@@ -452,7 +492,8 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 rapidxml::xml_document<>& doc,
-                                const UUID& payload, const std::string& name) {
+                                const UUIDv4& payload,
+                                const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     node->value(doc.allocate_string(payload.ToString().c_str()));
@@ -460,8 +501,8 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
-                 UUID& payload) {
-    payload = UUID::CreateFromString(node.value());
+                 UUIDv4& payload) {
+    payload = UUIDv4::CreateFromString(node.value());
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,

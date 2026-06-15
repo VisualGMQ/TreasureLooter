@@ -1,0 +1,6 @@
+export type {{{class_name}}} = {
+{{#properties}}
+	{{{key}}}: {{{luau_type}}},
+{{/properties}}
+} & (() -> {{{class_name}}})
+

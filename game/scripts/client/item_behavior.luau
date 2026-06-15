@@ -64,7 +64,7 @@ function ItemBehavior.new(entity: TL_Common.Entity): ItemBehavior?
 end
 
 function ItemBehavior.OnInit(self: ItemBehavior)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local entity = self:GetEntity()
     self.m_transform = ctx:GetTransformManager():Get(entity)
@@ -87,7 +87,7 @@ function ItemBehavior.PickupTo(self: ItemBehavior, owner_entity: TL_Common.Entit
         return
     end
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local entity = self:GetEntity()
     local relationship = ctx:GetRelationshipManager():Get(entity)
@@ -102,7 +102,7 @@ function ItemBehavior.PickupTo(self: ItemBehavior, owner_entity: TL_Common.Entit
 end
 
 function ItemBehavior.Putdown(self: ItemBehavior, putdown_position: TL_Common.Vec2)
-    local ctx: TL_Client.ClientContext = TL_Client.GetClientContext()
+    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
 
     local entity = self:GetEntity()
     local relationship = ctx:GetRelationshipManager():Get(entity)

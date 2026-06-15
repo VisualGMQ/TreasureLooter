@@ -1,6 +1,6 @@
 #pragma once
-#include "common/math.hpp"
 #include "common/entity.hpp"
+#include "common/math.hpp"
 #include "schema/config.hpp"
 #include <memory>
 
@@ -23,6 +23,7 @@ class SceneManager;
 class StaticCollisionManager;
 class EventSystem;
 class EventDebugger;
+class UDPHost;
 
 class CommonContext {
 public:
@@ -63,13 +64,13 @@ public:
 
     Entity CreateEntity();
 
-    bool ShouldExit() const;
-    bool IsInited() const;
+    [[nodiscard]] bool ShouldExit() const;
+    [[nodiscard]] bool IsInited() const;
     void Exit();
-    const GameConfig& GetGameConfig() const;
+    [[nodiscard]] const GameConfig& GetGameConfig() const;
 
-    const std::vector<std::string_view>& GetOSArgs() const;
-    std::string_view GetAppPath() const;
+    [[nodiscard]] const std::vector<std::string_view>& GetOSArgs() const;
+    [[nodiscard]] std::string_view GetAppPath() const;
 
     std::unique_ptr<EventSystem> m_event_system;
     std::unique_ptr<EventDebugger> m_event_debugger_system;
@@ -89,6 +90,7 @@ public:
     std::unique_ptr<ScriptBinaryDataManager> m_script_binary_data_manager;
     std::unique_ptr<ScriptComponentManager> m_script_component_manager;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
+    std::unique_ptr<UDPHost> m_net_host;
 
 protected:
     class ImGuiContext* m_imgui_context{};

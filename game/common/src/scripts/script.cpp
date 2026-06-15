@@ -99,7 +99,7 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
     if (auto it = Find(filename); it && !force) {
         return it;
     }
-    return store(&filename, UUID::CreateV4(),
+    return store(&filename, UUIDv4::CreateV4(),
                  std::make_unique<ScriptBinaryData>(filename));
 }
 

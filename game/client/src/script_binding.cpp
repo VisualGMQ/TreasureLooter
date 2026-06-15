@@ -5,6 +5,24 @@
 #include "common/entity.hpp"
 #include "common/transform.hpp"
 
+#include "common/bind_point.hpp"
+#include "common/cct.hpp"
+#include "common/context.hpp"
+#include "common/event.hpp"
+#include "common/net/net.hpp"
+#include "common/physics.hpp"
+#include "common/relationship.hpp"
+#include "common/scene.hpp"
+#include "common/script/event_binding.hpp"
+#include "common/script/luabridge_include.hpp"
+#include "common/script/script.hpp"
+#include "common/script/script_event_registry.hpp"
+#include "common/static_collision.hpp"
+#include "common/tilemap.hpp"
+#include "common/tilemap_layer_collision_component.hpp"
+#include "common/timer.hpp"
+#include "common/trigger.hpp"
+
 #include "client/animation_player.hpp"
 #include "client/camera.hpp"
 #include "client/context.hpp"
@@ -17,63 +35,36 @@
 #include "client/ui.hpp"
 #include "client/window.hpp"
 
-#include "common/bind_point.hpp"
-#include "common/cct.hpp"
-#include "common/context.hpp"
-#include "common/event.hpp"
-#include "common/physics.hpp"
-#include "common/relationship.hpp"
-#include "common/scene.hpp"
-#include "common/script/script.hpp"
-#include "common/static_collision.hpp"
-#include "common/script/script_event_registry.hpp"
-#include "common/tilemap.hpp"
-#include "common/tilemap_layer_collision_component.hpp"
-#include "common/timer.hpp"
-#include "common/trigger.hpp"
-
-#include "common/script/luabridge_include.hpp"
-
-#define TL_REGISTER_SCRIPT_UI_EVENT(EventType, EventName)                \
-    do {                                                                 \
-        ScriptEventRegistry::Register<EventType>(EventName);             \
-        COMMON_CONTEXT.m_event_system->AddListener<EventType>(           \
-            [](EventListenerID, const EventType& event) {                \
-                COMMON_CONTEXT.m_script_component_manager->HandleEvent( \
-                    event, EventName);                                   \
-            });                                                          \
-    } while (0)
-
 static void registerLuaScriptEventBindings() {
-    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseHoverEvent, "UIMouseHoverEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseDownEvent, "UIMouseDownEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseUpEvent, "UIMouseUpEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(UIMouseClickedEvent, "UIMouseClickedEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(UICheckToggledEvent, "UICheckToggledEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(UIDragEvent, "UIDragEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(TriggerEnterEvent, "TriggerEnterEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(TriggerTouchEvent, "TriggerTouchEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(TriggerLeaveEvent, "TriggerLeaveEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(EventDebugger::DebugEvent, "DebugEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(TimerEvent, "TimerEvent");
-    TL_REGISTER_SCRIPT_UI_EVENT(TimerStopEvent, "TimerStopEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseHoverEvent, "UIMouseHoverEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseDownEvent, "UIMouseDownEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseUpEvent, "UIMouseUpEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseClickedEvent, "UIMouseClickedEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(UICheckToggledEvent, "UICheckToggledEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(UIDragEvent, "UIDragEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(TriggerEnterEvent, "TriggerEnterEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(TriggerTouchEvent, "TriggerTouchEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(TriggerLeaveEvent, "TriggerLeaveEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(EventDebugger::DebugEvent, "DebugEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(TimerEvent, "TimerEvent");
+    TL_REGISTER_EVENT_TO_SCRIPT(TimerStopEvent, "TimerStopEvent");
 }
-
-#undef TL_REGISTER_SCRIPT_UI_EVENT
 
 // clang-format off
 
 static void bindInput(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
-            .addFunction("ACTION_PRESSED",
-                         +[]() { return static_cast<int>(Action::State::Pressed); })
-            .addFunction("ACTION_PRESSING",
-                         +[]() { return static_cast<int>(Action::State::Pressing); })
-            .addFunction("ACTION_RELEASED",
-                         +[]() { return static_cast<int>(Action::State::Released); })
-            .addFunction("ACTION_RELEASING",
-                         +[]() { return static_cast<int>(Action::State::Releasing); })
+            .beginNamespace("ActionState")
+                .addProperty("Pressed",
+                             +[]() { return static_cast<int>(Action::State::Pressed); })
+                .addProperty("Pressing",
+                             +[]() { return static_cast<int>(Action::State::Pressing); })
+                .addProperty("Released",
+                             +[]() { return static_cast<int>(Action::State::Released); })
+                .addProperty("Releasing",
+                             +[]() { return static_cast<int>(Action::State::Releasing); })
+            .endNamespace()
             .beginClass<Action>("Action")
                 .addFunction("IsPressed", +[](const Action* a) { return a->IsPressed(0); },
                              +[](const Action* a, int id) { return a->IsPressed(id); })
@@ -254,8 +245,6 @@ static void bindTilemapRenderComponent(lua_State* L) {
             .beginClass<TilemapLayerRenderComponent>("TilemapRenderComponent")
                 .addFunction("GetLayer", &TilemapLayerRenderComponent::GetLayer)
                 .addFunction("GetTilemap", &TilemapLayerRenderComponent::GetTilemap)
-                .addFunction("GetTilemapCollision",
-                             &TilemapLayerRenderComponent::GetTilemapCollision)
             .endClass()
             .beginClass<TilemapLayerRenderComponentManager>(
                 "TilemapRenderComponentManager")
@@ -329,32 +318,8 @@ static void bindClientUIEvents(lua_State* L) {
 static void bindClientContext(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
-            .beginClass<ClientContext>("GameContext")
+            .deriveClass<ClientContext, CommonContext>("GameContext")
                 .addFunction("GetCamera", +[](ClientContext* ctx) { return &ctx->m_camera; })
-                .addFunction("GetScriptManager",
-                             +[](ClientContext* ctx) -> ScriptComponentManager* {
-                                 return ctx->m_script_component_manager.get();
-                             })
-                .addFunction("GetAssetsManager",
-                             +[](ClientContext* ctx) -> IAssetsManager* {
-                                 return ctx->m_assets_manager.get();
-                             })
-                .addFunction("GetSceneManager",
-                             +[](ClientContext* ctx) -> SceneManager* {
-                                 return ctx->m_scene_manager.get();
-                             })
-                .addFunction("GetTime",
-                             +[](ClientContext* ctx) -> Time* {
-                                 return ctx->m_time.get();
-                             })
-                .addFunction("GetTimerManager",
-                             +[](ClientContext* ctx) -> TimerManager* {
-                                 return ctx->m_timer_manager.get();
-                             })
-                .addFunction("GetTransformManager",
-                             +[](ClientContext* ctx) -> TransformManager* {
-                                 return ctx->m_transform_manager.get();
-                             })
                 .addFunction("GetSpriteManager",
                              +[](ClientContext* ctx) -> SpriteManager* {
                                  return ctx->m_sprite_manager.get();
@@ -375,21 +340,9 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> InputManager* {
                                  return ctx->m_input_manager.get();
                              })
-                .addFunction("GetTriggerComponentManager",
-                             +[](ClientContext* ctx) -> TriggerComponentManager* {
-                                 return ctx->m_trigger_component_manager.get();
-                             })
-                .addFunction("GetRelationshipManager",
-                             +[](ClientContext* ctx) -> RelationshipManager* {
-                                 return ctx->m_relationship_manager.get();
-                             })
                 .addFunction("GetAnimationPlayerManager",
                              +[](ClientContext* ctx) -> AnimationPlayerManager* {
                                  return ctx->m_animation_player_manager.get();
-                             })
-                .addFunction("GetBindPointsComponentManager",
-                             +[](ClientContext* ctx) -> BindPointsComponentManager* {
-                                 return ctx->m_bind_point_component_manager.get();
                              })
                 .addFunction("GetUIManager",
                              +[](ClientContext* ctx) -> UIComponentManager* {
@@ -401,34 +354,11 @@ static void bindClientContext(lua_State* L) {
                                  return ctx->m_tilemap_layer_render_component_manager
                                      .get();
                              })
-                .addFunction("GetTilemapCollisionComponentManager",
-                             +[](ClientContext* ctx)
-                                 -> TilemapLayerCollisionComponentManager* {
-                                 return ctx->m_tilemap_layer_collision_component_manager
-                                     .get();
-                             })
-                .addFunction("GetCCTManager",
-                             +[](ClientContext* ctx) -> CCTManager* {
-                                 return ctx->m_cct_manager.get();
-                             })
-                .addFunction("GetPhysicsScene",
-                             +[](ClientContext* ctx) -> PhysicsScene* {
-                                 return ctx->m_physics_scene.get();
-                             })
-                .addFunction("GetStaticCollisionManager",
-                             +[](ClientContext* ctx) -> StaticCollisionManager* {
-                                 return ctx->m_static_collision_manager.get();
-                             })
-                .addFunction("GetEventDebugger",
-                             +[](ClientContext* ctx) -> EventDebugger* {
-                                 return ctx->m_event_debugger_system.get();
-                             })
-                .addFunction("GetDebugDraw",
-                             +[](ClientContext* ctx) -> IDebugDrawer* {
-                                 return ctx->m_debug_drawer.get();
-                             })
+                .addFunction("GetNetPeer", +[](ClientContext* ctx) -> UDPPeer& {
+                    return ctx->m_net_peer;
+                })
             .endClass()
-            .addFunction("GetClientContext", +[]() -> ClientContext* {
+            .addFunction("GetContext", +[]() -> ClientContext* {
                 return &ClientContext::GetInst();
             })
         .endNamespace();
@@ -448,4 +378,3 @@ void BindClientModule(lua_State* L) {
     bindClientUIEvents(L);
     bindClientContext(L);
 }
-

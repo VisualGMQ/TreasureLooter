@@ -1,6 +1,7 @@
 #pragma once
 #include "client/camera.hpp"
 #include "common/context.hpp"
+#include "common/net/udp.hpp"
 
 class IDebugDrawer;
 class GamepadManager;
@@ -20,6 +21,8 @@ class GameplayConfigManager;
 
 class ClientContext : public CommonContext {
 public:
+    static void ChangeContext(ClientContext&);
+
     static void Init();
     static void Destroy();
     static ClientContext& GetInst();
@@ -35,6 +38,8 @@ public:
 
     void HandleEvents(const SDL_Event&) override;
     void Update() override;
+
+    void ConnectToServer(const NetAddress&);
 
     void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
     void RemoveAllComponentsOnEntity(Entity) override;
@@ -53,6 +58,7 @@ public:
     std::unique_ptr<TilemapLayerRenderComponentManager>
         m_tilemap_layer_render_component_manager;
     std::unique_ptr<Renderer> m_renderer;
+    UDPPeer m_net_peer;
     Camera m_camera;
 
 protected:
@@ -61,8 +67,8 @@ protected:
 
     ClientContext() = default;
 
-private:
     static std::unique_ptr<ClientContext> instance;
+private:
 
     void initImGui();
     void shutdownImGui();

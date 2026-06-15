@@ -425,4 +425,4 @@ export type GetAngle = (from: { x: number, y: number }, to: { x: number, y: numb
 export type DecomposeVector = (velocity: Vec2, tangent: Vec2) -> DecompositionResult
 
 
-return TL.Common
+return TL_Common

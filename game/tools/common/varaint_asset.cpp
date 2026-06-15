@@ -24,7 +24,7 @@ struct AssetSaver {
     template <typename T, typename = std::enable_if_t<is_handle_v<T>>>
     void operator()(const T& handle) {
         if (m_is_save_as) {
-            SaveAsset(UUID::CreateV4(), *handle, m_save_as_path);
+            SaveAsset(UUIDv4::CreateV4(), *handle, m_save_as_path);
         } else {
             SaveAsset(handle.GetUUID(), *handle, *handle.GetFilename());
         }
@@ -33,7 +33,7 @@ struct AssetSaver {
 private:
     bool m_is_save_as = false;
     Path m_save_as_path;
-    UUID m_uuid;
+    UUIDv4 m_uuid;
 };
 
 void SaveVariantAsset(const VariantAsset& asset) {
