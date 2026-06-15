@@ -6,6 +6,7 @@
 #include "common/debug_drawer.hpp"
 #include "common/event.hpp"
 #include "common/log.hpp"
+#include "common/net/udp.hpp"
 #include "common/profile.hpp"
 #include "common/relationship.hpp"
 #include "common/scene.hpp"
@@ -28,7 +29,6 @@
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
 #include "server/asset_manager.hpp"
-#include "server/logic.hpp"
 #include "server/scene.hpp"
 #include "server/script_binding.hpp"
 
@@ -59,7 +59,6 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_assets_manager = std::make_unique<ServerAssetsManager>();
     m_scene_manager = std::make_unique<ServerSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
-    m_logic = std::make_unique<ServerLogic>();
 
     CommonContext::initGameConfig();
 
@@ -67,8 +66,6 @@ void ServerContext::Initialize(int argc, char** argv) {
         GetGameConfig());
 
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
-
-    m_logic->OnInit();
 
     m_script_binary_data_manager->BindModule([](lua_State* L) {
         BindTLModule(L);
@@ -103,7 +100,6 @@ void ServerContext::Update() {
     m_time->Update();
 
     m_script_component_manager->Update();
-    m_logic->OnUpdate(elapse_time);
 
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
@@ -119,9 +115,6 @@ void ServerContext::Update() {
 }
 
 void ServerContext::Shutdown() {
-    m_logic->OnQuit();
-    m_logic.reset();
-
     m_script_component_manager->Clear();
     m_scene_manager->Switch({});
 

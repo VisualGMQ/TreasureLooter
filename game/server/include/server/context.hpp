@@ -1,7 +1,6 @@
 #pragma once
 #include "common/context.hpp"
 
-class ServerLogic;
 class NetAddress;
 
 class ServerContext: public CommonContext {
@@ -21,8 +20,6 @@ public:
     void Shutdown() override;
 
     void NetListen(const NetAddress&, int peer_count);
-
-    std::unique_ptr<ServerLogic> m_logic;
 
 private:
     using CommonContext::CommonContext;

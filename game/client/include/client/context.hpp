@@ -3,7 +3,6 @@
 #include "common/context.hpp"
 #include "common/net/udp.hpp"
 
-class ClientLogic;
 class IDebugDrawer;
 class GamepadManager;
 class Touches;
@@ -59,7 +58,6 @@ public:
     std::unique_ptr<TilemapLayerRenderComponentManager>
         m_tilemap_layer_render_component_manager;
     std::unique_ptr<Renderer> m_renderer;
-    std::unique_ptr<ClientLogic> m_logic;
     UDPPeer m_net_peer;
     Camera m_camera;
 

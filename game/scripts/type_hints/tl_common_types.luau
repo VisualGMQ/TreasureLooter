@@ -1,4 +1,3 @@
---!nolua
 export type Entity = number
 export type TimeType = number
 export type TimerID = number
@@ -425,59 +424,5 @@ export type DebugDraw = {
 export type GetAngle = (from: { x: number, y: number }, to: { x: number, y: number }) -> number
 export type DecomposeVector = (velocity: Vec2, tangent: Vec2) -> DecompositionResult
 
-export type NetAddress = {
-	m_host: number,
-	m_port: number,
-	GetIP: (self: NetAddress) -> string,
-} & (() -> NetAddress) & ((ip: number, port: number) -> NetAddress) & ((ip: string, port: number) -> NetAddress)
 
-export type UDPPeer = {
-	Disconnect: (self: UDPPeer) -> (),
-	GetID: (self: UDPPeer) -> number,
-	IsValid: (self: UDPPeer) -> boolean,
-	InvalidID: number,
-} & (() -> UDPPeer)
-
-export type UDPPacketFlag = {
-    Reliable: number,
-    Unsequenced: number,
-    UnreliableFragment: number,
-}
-
-export type UDPPacketFlagFlags = {
-	Value: (self: UDPPacketFlagFlags) -> number,
-	Has: (self: UDPPacketFlagFlags, value: UDPPacketFlag) -> boolean,
-	Remove: (self: UDPPacketFlagFlags, value: UDPPacketFlag) -> (),
-	__bor: (self: UDPPacketFlagFlags, value: UDPPacketFlag) -> UDPPacketFlagFlags,
-	__band: (self: UDPPacketFlagFlags, value: UDPPacketFlag) -> UDPPacketFlagFlags,
-	__bnot: (self: UDPPacketFlagFlags) -> UDPPacketFlagFlags,
-	__tostring: (self: UDPPacketFlagFlags) -> string,
-} & (() -> UDPPacketFlagFlags) & ((UDPPacketFlag) -> UDPPacketFlagFlags) & ((number) -> UDPPacketFlagFlags)
-
-export type UDPHost = {
-	Connect: (self: UDPHost, address: NetAddress) -> UDPPeer,
-	Send: (self: UDPHost, peer: UDPPeer?, data: string, channel_id: number, flags: number) -> (),
-	Flush: (self: UDPHost) -> (),
-	HandleIncomingNetPacket: (self: UDPHost) -> (),
-	GetPeer: (self: UDPHost, id: number) -> UDPPeer,
-}
-
-export type CommonContext = {
-	GetAssetsManager: (self: CommonContext) -> AssetsManager,
-	GetSceneManager: (self: CommonContext) -> SceneManager,
-	GetTime: (self: CommonContext) -> Time,
-	GetTimerManager: (self: CommonContext) -> TimerManager,
-	GetScriptManager: (self: CommonContext) -> ScriptComponentManager,
-	GetTransformManager: (self: CommonContext) -> TransformManager,
-	GetTriggerComponentManager: (self: CommonContext) -> TriggerComponentManager,
-	GetRelationshipManager: (self: CommonContext) -> RelationshipManager,
-	GetBindPointsComponentManager: (self: CommonContext) -> BindPointsComponentManager,
-	GetCCTManager: (self: CommonContext) -> CCTManager,
-	GetPhysicsScene: (self: CommonContext) -> PhysicsScene,
-	GetStaticCollisionManager: (self: CommonContext) -> StaticCollisionManager,
-	GetEventDebugger: (self: CommonContext) -> EventDebugger,
-	GetDebugDraw: (self: CommonContext) -> DebugDraw,
-	GetTilemapCollisionComponentManager: (self: CommonContext) -> TilemapCollisionComponentManager,
-}
-
-return TL_Common
+return TL.Common

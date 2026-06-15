@@ -15,7 +15,6 @@
 #include "client/input/gamepad.hpp"
 #include "client/input/keyboard.hpp"
 #include "client/input/mouse.hpp"
-#include "client/logic.hpp"
 #include "client/renderer.hpp"
 #include "client/scene.hpp"
 #include "client/sprite.hpp"
@@ -78,7 +77,6 @@ void ClientContext::Initialize(int argc, char** argv) {
     m_scene_manager =
         std::unique_ptr<ClientSceneManager>(new ClientSceneManager{});
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
-    m_logic = std::make_unique<ClientLogic>();
 
     CommonContext::initGameConfig();
 
@@ -132,7 +130,6 @@ void ClientContext::Initialize(int argc, char** argv) {
     SceneHandle level =
         m_assets_manager->GetManager<Scene>().Load(game_config.m_entry_scene);
     m_scene_manager->Switch(level);
-    m_logic->OnInit();
 
     m_player_controller->RegisterVirtualController(level, game_config);
 
@@ -240,7 +237,6 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_touches->Update();
 
     m_script_component_manager->Update();
-    m_logic->OnUpdate(elapse);
 
     m_animation_player_manager->Update(elapse);
     m_ui_manager->HandleEvent();
@@ -249,7 +245,11 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
-    m_net_host->Flush();
+
+    if (m_net_host) {
+        m_net_host->Flush();
+    }
+
     m_event_system->Update();
     m_timer_manager->Update(elapse);
 }
@@ -270,8 +270,6 @@ void ClientContext::renderUpdate(TimeType elapse) {
     m_draw_order_manager->Update();
     m_script_component_manager->Render();
 
-    m_logic->OnRender();
-
     DrawCommandSubmitter draw_cmd_submitter;
     draw_cmd_submitter.Submit();
     m_renderer->ApplyDrawcall();
@@ -289,9 +287,6 @@ void ClientContext::renderUpdate(TimeType elapse) {
 }
 
 void ClientContext::Shutdown() {
-    m_logic->OnQuit();
-    m_logic.reset();
-
     m_script_component_manager->Clear();
     m_scene_manager->Switch({});
 

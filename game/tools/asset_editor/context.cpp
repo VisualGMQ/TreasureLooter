@@ -7,7 +7,6 @@
 #include "client/input/input.hpp"
 #include "client/input/keyboard.hpp"
 #include "client/input/mouse.hpp"
-#include "client/logic.hpp"
 #include "client/sprite.hpp"
 #include "client/tilemap_render_component.hpp"
 #include "common/asset_manager.hpp"
