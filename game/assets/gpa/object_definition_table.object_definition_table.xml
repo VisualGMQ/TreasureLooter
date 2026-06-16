@@ -1,0 +1,20 @@
+<ObjectDefinitionTable>
+	<uuid>0e6bb46a-db3e-4025-84e4-e8d0fe7c6689</uuid>
+	<payload>
+		<objects>
+			<elem>
+				<key>CharacterDID1</key>
+				<value>assets/gpa/monsters/waggo/waggo.character_def.xml</value>
+			</elem>
+			<elem>
+				<key>CharacterDID2</key>
+				<value>assets/gpa/monsters/slime2/slime2.character_def.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID1</key>
+				<value>assets/gpa/weapons/weapon.item.xml</value>
+			</elem>
+		</objects>
+	</payload>
+</ObjectDefinitionTable>
+

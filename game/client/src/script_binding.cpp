@@ -13,10 +13,8 @@
 #include "common/physics.hpp"
 #include "common/relationship.hpp"
 #include "common/scene.hpp"
-#include "common/script/event_binding.hpp"
-#include "common/script/luabridge_include.hpp"
+#include "common/script/lua_event_listener.hpp"
 #include "common/script/script.hpp"
-#include "common/script/script_event_registry.hpp"
 #include "common/static_collision.hpp"
 #include "common/tilemap.hpp"
 #include "common/tilemap_layer_collision_component.hpp"
@@ -35,19 +33,19 @@
 #include "client/ui.hpp"
 #include "client/window.hpp"
 
-static void registerLuaScriptEventBindings() {
-    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseHoverEvent, "UIMouseHoverEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseDownEvent, "UIMouseDownEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseUpEvent, "UIMouseUpEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(UIMouseClickedEvent, "UIMouseClickedEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(UICheckToggledEvent, "UICheckToggledEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(UIDragEvent, "UIDragEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(TriggerEnterEvent, "TriggerEnterEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(TriggerTouchEvent, "TriggerTouchEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(TriggerLeaveEvent, "TriggerLeaveEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(EventDebugger::DebugEvent, "DebugEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(TimerEvent, "TimerEvent");
-    TL_REGISTER_EVENT_TO_SCRIPT(TimerStopEvent, "TimerStopEvent");
+static void registerLuaScriptEventBindings(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginClass<EventSystem>("EventSystem")
+            TL_BIND_LUA_EVENT_LISTENER(UIMouseHoverEvent, "UIMouseHoverEvent")
+                TL_BIND_LUA_EVENT_LISTENER(UIMouseDownEvent, "UIMouseDownEvent")
+                    TL_BIND_LUA_EVENT_LISTENER(UIMouseUpEvent, "UIMouseUpEvent")
+                        TL_BIND_LUA_EVENT_LISTENER(UIMouseClickedEvent,
+                                                   "UIMouseClickedEvent")
+                            TL_BIND_LUA_EVENT_LISTENER(UICheckToggledEvent,
+                                                       "UICheckToggledEvent")
+                                TL_BIND_LUA_EVENT_LISTENER(UIDragEvent,
+                                                           "UIDragEvent")
+        .endClass();
 }
 
 // clang-format off
@@ -263,6 +261,42 @@ static void bindTilemapRenderComponent(lua_State* L) {
 static void bindUI(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
+            .beginClass<UITextInput>("UITextInput")
+                .addProperty("m_align", &UITextInput::m_align, true)
+                .addProperty("m_color", &UITextInput::m_color, true)
+                .addFunction("GetText", +[](const UITextInput* t) -> std::string {
+                    return t->GetText().str();
+                })
+                .addFunction("SetText", +[](UITextInput* t, const std::string& text) {
+                    t->SetText(text);
+                })
+                .addFunction("GetFontPt", &UITextInput::GetFontPt)
+                .addFunction("SetFontPt", &UITextInput::SetFontPt)
+                .addFunction("GetFontFilename", +[](const UITextInput* t) -> std::string {
+                    auto font = t->GetFont();
+                    if (auto filename = font.GetFilename()) {
+                        return filename->string();
+                    }
+                    return "";
+                })
+                .addFunction("GetFont", &UITextInput::GetFont)
+                .addFunction("SetFont", &UITextInput::SetFont)
+                .addFunction("GetCursorPos", +[](const UITextInput* t) -> int {
+                    return static_cast<int>(t->GetCursorPos());
+                })
+                .addFunction("SetCursorPos", +[](UITextInput* t, int pos) {
+                    t->SetCursorPos(static_cast<size_t>(pos));
+                })
+                .addFunction("MoveCursorLeft", &UITextInput::MoveCursorLeft)
+                .addFunction("MoveCursorRight", &UITextInput::MoveCursorRight)
+                .addFunction("MoveCursorHome", &UITextInput::MoveCursorHome)
+                .addFunction("MoveCursorEnd", &UITextInput::MoveCursorEnd)
+                .addFunction("DeleteBeforeCursor", &UITextInput::DeleteBeforeCursor)
+                .addFunction("DeleteAfterCursor", &UITextInput::DeleteAfterCursor)
+                .addFunction("GetTextImageSize", &UITextInput::GetTextImageSize)
+                .addFunction("GetCursorX", &UITextInput::GetCursorX)
+                .addFunction("RefreshText", &UITextInput::RefreshText)
+            .endClass()
             .beginClass<UIWidget>("UIWidget")
                 .addProperty("m_use_clip", &UIWidget::m_use_clip, true)
                 .addProperty("m_disabled", &UIWidget::m_disabled, true)
@@ -270,6 +304,9 @@ static void bindUI(lua_State* L) {
                 .addProperty("m_can_be_selected", &UIWidget::m_can_be_selected, true)
                 .addProperty("m_margin", &UIWidget::m_margin, true)
                 .addProperty("m_padding", &UIWidget::m_padding, true)
+                .addFunction("GetTextInput", +[](UIWidget* w) -> UITextInput* {
+                    return w->m_text_input.get();
+                })
             .endClass()
             .beginClass<UIComponentManager>("UIComponentManager")
                 .addFunction("Get", +[](UIComponentManager* m, Entity e) {
@@ -354,9 +391,14 @@ static void bindClientContext(lua_State* L) {
                                  return ctx->m_tilemap_layer_render_component_manager
                                      .get();
                              })
-                .addFunction("GetNetPeer", +[](ClientContext* ctx) -> UDPPeer& {
-                    return ctx->m_net_peer;
-                })
+            .addFunction("ConnectToServer", &ClientContext::ConnectToServer)
+            .addFunction("GetNetPeer", +[](ClientContext* ctx) -> UDPPeer& {
+                            return ctx->m_net_peer;
+                        })
+            .addFunction("GetConfig",
+                         +[](ClientContext* ctx) -> const ClientConfig* {
+                             return &ctx->GetConfig();
+                         })
             .endClass()
             .addFunction("GetContext", +[]() -> ClientContext* {
                 return &ClientContext::GetInst();
@@ -367,7 +409,7 @@ static void bindClientContext(lua_State* L) {
 // clang-format on
 
 void BindClientModule(lua_State* L) {
-    registerLuaScriptEventBindings();
+    registerLuaScriptEventBindings(L);
     bindTilemapRenderComponent(L);
     bindInput(L);
     bindCamera(L);

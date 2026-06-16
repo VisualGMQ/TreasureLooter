@@ -14,17 +14,29 @@
         <element name="radius" type="float" default="100"/>
     </class>
 
-    <asset name="GameConfig" extension=".game_config">
+    <asset name="CommonConfig" extension=".common_config">
         <!-- don't use handle, due to asset rely on GameConfig itself! -->
         <element name="entry_scene" type="Path"/>
-        <element name="input_config" type="Path"/>
 
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
+    </asset>
+
+    <asset name="ClientConfig" extension=".client_config">
+        <!-- don't use handle, due to asset rely on ClientConfig itself! -->
+        <element name="global_script" type="Path"/>
+        <element name="input_config" type="Path"/>
+
         <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
         <element name="logic_size" type="Vec2UI" default="{1024, 720}"/>
         <element name="virtual_joystick" type="VirtualJoystickConfig"/>
         <element name="virtual_attack_button" type="VirtualButtonConfig"/>
         <handle  name="default_font" type="Font"/>
+        <unordered_map name="lua_paths" key="std::string" value="std::string"/>
+    </asset>
+
+    <asset name="ServerConfig" extension=".server_config">
+        <!-- don't use handle, due to asset rely on ClientConfig itself! -->
+        <element name="global_script" type="Path"/>
         <unordered_map name="lua_paths" key="std::string" value="std::string"/>
     </asset>
 </schema>

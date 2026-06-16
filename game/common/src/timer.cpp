@@ -60,6 +60,11 @@ void Time::End() {
     SDL_Delay(m_fps_require_time - elapse_time);
 }
 
+std::ostream& operator<<(std::ostream& o, TimerID id) {
+    o << "TimerID(" << static_cast<std::underlying_type_t<TimerID>>(id) << ")";
+    return o;
+}
+
 TimerEvent::TimerEvent(TimerEventType type, TimerID id)
     : m_type{type}, m_timer_id{id} {}
 

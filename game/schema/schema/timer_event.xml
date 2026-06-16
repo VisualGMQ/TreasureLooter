@@ -1,6 +1,7 @@
 <schema>
     <enum name="TimerEventType">
         <item name="Unknown"/>
+        <item name="Cooldown"/>
         <item name="DigFinish"/>
     </enum>
 </schema>

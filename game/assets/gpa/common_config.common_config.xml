@@ -1,0 +1,7 @@
+<CommonConfig>
+	<uuid>d37a7207-d50f-47d8-ac7b-862aa8571623</uuid>
+	<payload>
+        <entry_scene>assets/gpa/scenes/game.scene.xml</entry_scene>
+		<tile_in_chunk_size x="10" y="10"/>
+	</payload>
+</CommonConfig>

@@ -23,7 +23,9 @@ public:
     Color m_color{0, 0, 0, 1};
 
     void SetFont(FontHandle font);
+    FontHandle GetFont() const;
     void SetFontPt(uint32_t pt);
+    uint32_t GetFontPt() const;
 
     const UTF8String& GetText() const;
     void SetText(const std::string& text);
@@ -67,15 +69,15 @@ public:
     Color m_color{0, 0, 0, 1};
 
     void SetFont(FontHandle);
+    void SetFontSize(uint32_t pt);
     void ChangeText(const std::string& text);
-    void ChangeTextPt(uint32_t pt);
     Vec2 GetTextImageSize() const;
     [[nodiscard]] const std::string& GetText() const;
     Image& GetTextImage();
 
 private:
     FontHandle m_font;
-    uint32_t m_pt = 16;
+    uint32_t m_pt_size = 16;
     std::string m_text;
     Image m_text_image;
 

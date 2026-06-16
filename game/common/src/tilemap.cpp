@@ -17,8 +17,6 @@ constexpr unsigned FLIPPED_VERTICALLY_FLAG = 0x4;
 constexpr unsigned FLIPPED_DIAGONALLY_FLAG = 0x2;
 constexpr unsigned ROTATED_HEXAGONAL_120_FLAG = 0x1;
 
-constexpr std::string_view TilemapPropertyName_EnableYSort = "enable_y_sort";
-
 TilemapLayer::TilemapLayer(const std::string& name, Type type)
     : m_type{type}, m_name{name} {}
 

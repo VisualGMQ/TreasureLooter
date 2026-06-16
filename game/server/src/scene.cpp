@@ -4,6 +4,7 @@
 #include "common/relationship.hpp"
 #include "common/script/script.hpp"
 #include "common/transform.hpp"
+#include "server/context.hpp"
 
 Entity ServerScene::GetUIRootEntity() const {
     return null_entity;
@@ -20,14 +21,6 @@ void ServerScene::initRootEntity(const Path& script_path) {
     COMMON_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     COMMON_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity,
                                                           m_root_entity);
-
-    if (!script_path.empty()) {
-        auto& mgr = COMMON_CONTEXT.m_assets_manager
-                        ->GetManager<ScriptBinaryData>();
-        auto handle = mgr.Load(script_path, true);
-        COMMON_CONTEXT.m_script_component_manager->RegisterEntity(
-            m_root_entity, m_root_entity, handle);
-    }
 }
 
 SceneHandle ServerSceneManager::Load(const Path& filename, bool force) {
@@ -39,5 +32,10 @@ SceneHandle ServerSceneManager::Load(const Path& filename, bool force) {
 }
 
 SceneHandle ServerSceneManager::Create(SceneDefinitionHandle handle) {
-    return store(nullptr, UUIDv4::CreateV4(), std::make_unique<ServerScene>(handle));
+    return store(nullptr, UUIDv4::CreateV4(),
+                 std::make_unique<ServerScene>(handle));
+}
+
+void ServerSceneManager::Switch(SceneHandle scene) {
+    SceneManager::Switch(scene);
 }

@@ -1,18 +1,13 @@
-local TL_Common = require("@type_hints/tl_common_types")
-local TL_Client = require("@type_hints/tl_client_types")
-
-
-local ImGui = require("@type_hints/imgui_types")
 local ComponentDisplay = require("@client/component_display")
 
 local _M = {}
 
 local debug_event_value: number = 0
 
-local selected_entity: TL_Common.Entity = TL_Common.null_entity
+local selected_entity: Entity = TL_Common.null_entity
 
 local function context_debug_fill_rect_world(
-	ctx: TL_Client.ClientContext,
+	ctx: ClientContext,
 	px: number,
 	py: number,
 	half: number,
@@ -27,7 +22,7 @@ local function context_debug_fill_rect_world(
 	end
 end
 
-local function draw_entity_tree(entity: TL_Common.Entity, display_name: string, relationship_mgr: TL_Common.RelationshipManager)
+local function draw_entity_tree(entity: Entity, display_name: string, relationship_mgr: RelationshipManager)
 	ImGui.PushID(entity)
 
 	local relationship = relationship_mgr:Get(entity)
@@ -63,7 +58,7 @@ local COLLAPSE_FLAGS = bit32.bor(
 	ImGui.TreeNodeFlags_DefaultOpen
 )
 
-local function draw_hierarchy_section(ctx: TL_Client.ClientContext)
+local function draw_hierarchy_section(ctx: ClientContext)
 	if ImGui.TreeNodeEx("Hierarchy###debug_panel_hierarchy", COLLAPSE_FLAGS) then
 		local scene = ctx:GetSceneManager():GetCurrentScene()
 		if scene == nil then
@@ -76,7 +71,7 @@ local function draw_hierarchy_section(ctx: TL_Client.ClientContext)
 	end
 end
 
-local function draw_inspector_section(ctx: TL_Client.ClientContext)
+local function draw_inspector_section(ctx: ClientContext)
 	if ImGui.TreeNodeEx("Inspector###debug_panel_inspector", COLLAPSE_FLAGS) then
 		if selected_entity == TL_Common.null_entity then
 			ImGui.Text("Select an entity in Hierarchy.")
@@ -86,7 +81,7 @@ local function draw_inspector_section(ctx: TL_Client.ClientContext)
 	end
 end
 
-local function draw_selected_entity_marker(ctx: TL_Client.ClientContext)
+local function draw_selected_entity_marker(ctx: ClientContext)
 	if selected_entity == TL_Common.null_entity then
 		return
 	end
@@ -95,12 +90,12 @@ local function draw_selected_entity_marker(ctx: TL_Client.ClientContext)
 	local px: number?, py: number? = nil, nil
 	local transform_mgr = ctx:GetTransformManager()
 	if transform_mgr:Has(e) then
-		local w = ComponentDisplay.TransformWorldPosition(transform_mgr:Get(e) :: TL_Common.Transform)
+		local w = ComponentDisplay.TransformWorldPosition(transform_mgr:Get(e) :: Transform)
 		px, py = w.x, w.y
 	else
 		local cct_mgr = ctx:GetCCTManager()
 		if cct_mgr:Has(e) then
-			local w = (cct_mgr:Get(e) :: TL_Common.CharacterController):GetPosition()
+			local w = (cct_mgr:Get(e) :: CharacterController):GetPosition()
 			px, py = w.x, w.y
 		end
 	end
@@ -111,8 +106,8 @@ local function draw_selected_entity_marker(ctx: TL_Client.ClientContext)
 end
 
 function _M.ShowDebugPanel()
-	local ctx: TL_Client.ClientContext = TL_Client.GetContext()
-	local event_debugger: TL_Common.EventDebugger = ctx:GetEventDebugger()
+	local ctx: ClientContext = TL_Client.GetContext()
+	local event_debugger: EventDebugger = ctx:GetEventDebugger()
 	if not ImGui.Begin("Debug panel") then
 		ImGui.End()
 		return

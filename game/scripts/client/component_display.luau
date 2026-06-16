@@ -1,9 +1,3 @@
-local TL_Common = require("@type_hints/tl_common_types")
-local TL_Client = require("@type_hints/tl_client_types")
-
-
-local ImGui = require("@type_hints/imgui_types")
-
 local _M = {}
 
 local READ_F_SPEED = 0
@@ -66,8 +60,8 @@ end
 local COLLISION_GROUP_TYPE_NAMES: { string } =
 	{ "CCT", "Obstacle", "Coin", "WeaponAttack", "Interactable" }
 
-local function collision_group_active_names(g: TL_Common.CollisionGroup): string
-	local cgt = (TL :: any).CollisionGroupType
+local function collision_group_active_names(g: CollisionGroup): string
+	local cgt = TL_Schema.CollisionGroupType
 	if type(cgt) ~= "table" then
 		return ""
 	end
@@ -86,7 +80,7 @@ local function collision_group_active_names(g: TL_Common.CollisionGroup): string
 	return table.concat(parts, ", ")
 end
 
-function _M.DisplayPhysicsShapeReadonly(id_suffix: string, shape: TL_Common.PhysicsShape)
+function _M.DisplayPhysicsShapeReadonly(id_suffix: string, shape: PhysicsShape)
 	ImGui.PushID(id_suffix)
 	readonly_drag_int("GetOwner (entity)", shape:GetOwner())
 	readonly_drag_int("GetType", shape:GetType())
@@ -103,27 +97,27 @@ function _M.DisplayPhysicsShapeReadonly(id_suffix: string, shape: TL_Common.Phys
 	ImGui.PopID()
 end
 
-function _M.TransformWorldPosition(t: TL_Common.Transform): TL_Common.Vec2
+function _M.TransformWorldPosition(t: Transform): Vec2
 	local ok, w = pcall(function()
 		return (t :: any):GetGlobalPosition()
 	end)
 	if ok and w ~= nil then
-		return w :: TL_Common.Vec2
+		return w :: Vec2
 	end
 	return t.m_position
 end
 
-local function bind_point_world_position(pt: any): TL_Common.Vec2
+local function bind_point_world_position(pt: any): Vec2
 	local ok, w = pcall(function()
 		return pt:GetGlobalPosition()
 	end)
 	if ok and w ~= nil then
-		return w :: TL_Common.Vec2
+		return w :: Vec2
 	end
 	return pt.m_position
 end
 
-local function script_manager_is_enable(script_mgr: TL_Common.ScriptComponentManager, e: TL_Common.Entity): boolean?
+local function script_manager_is_enable(script_mgr: ScriptComponentManager, e: Entity): boolean?
 	local ok, v = pcall(function()
 		return (script_mgr :: any):IsEnable(e)
 	end)
@@ -133,7 +127,7 @@ local function script_manager_is_enable(script_mgr: TL_Common.ScriptComponentMan
 	return nil
 end
 
-local function context_get_draw_order_manager(ctx: TL_Client.ClientContext): any
+local function context_get_draw_order_manager(ctx: ClientContext): any
 	local ok, m = pcall(function()
 		return (ctx :: any):GetDrawOrderManager()
 	end)
@@ -143,7 +137,7 @@ local function context_get_draw_order_manager(ctx: TL_Client.ClientContext): any
 	return nil
 end
 
-function _M.DisplayVec2(name: string, v: TL_Common.Vec2)
+function _M.DisplayVec2(name: string, v: Vec2)
 	ImGui.PushID(name)
 	ImGui.Text(name)
 	ImGui.SameLine()
@@ -153,7 +147,7 @@ function _M.DisplayVec2(name: string, v: TL_Common.Vec2)
 	ImGui.PopID()
 end
 
-local function display_color_rgba(title: string, c: TL_Common.Color)
+local function display_color_rgba(title: string, c: Color)
 	ImGui.PushID(title)
 	ImGui.Text(title)
 	readonly_drag_float("r", c.r)
@@ -163,7 +157,7 @@ local function display_color_rgba(title: string, c: TL_Common.Color)
 	ImGui.PopID()
 end
 
-function _M.DisplayTransform(t: TL_Common.Transform)
+function _M.DisplayTransform(t: Transform)
 	ImGui.PushID("Transform")
 	_M.DisplayVec2("m_position (local)", t.m_position)
 	local rot_deg = 0
@@ -181,12 +175,14 @@ function _M.DisplayTransform(t: TL_Common.Transform)
 	ImGui.PopID()
 end
 
-function _M.DisplayRelationship(rel: TL_Common.Relationship)
+function _M.DisplayRelationship(rel: Relationship)
 	ImGui.PushID("Relationship")
-	if rel.m_children and #rel.m_children > 0 then
+	local children_count = rel:GetChildrenCount()
+	if children_count > 0 then
 		local parts = {}
-		for i, c in ipairs(rel.m_children) do
-			parts[i] = tostring(c)
+		for i = 0, children_count - 1 do
+			local child = rel:Get(i)
+			parts[i] = tostring(child)
 		end
 		ImGui.Text("children: " .. table.concat(parts, ", "))
 	else
@@ -195,7 +191,7 @@ function _M.DisplayRelationship(rel: TL_Common.Relationship)
 	ImGui.PopID()
 end
 
-function _M.DisplaySprite(s: TL_Client.Sprite)
+function _M.DisplaySprite(s: Sprite)
 	ImGui.PushID("Sprite")
 	local img = s.m_image
 	if img ~= nil and img:IsValid() then
@@ -217,7 +213,7 @@ function _M.DisplaySprite(s: TL_Client.Sprite)
 	ImGui.PopID()
 end
 
-function _M.DisplayDrawOrder(order: TL_Client.DrawOrder)
+function _M.DisplayDrawOrder(order: DrawOrder)
 	ImGui.PushID("DrawOrder")
 	readonly_drag_int("m_z_order", order.m_z_order)
 	readonly_checkbox("m_enable_y_sorting", order.m_enable_y_sorting)
@@ -225,7 +221,7 @@ function _M.DisplayDrawOrder(order: TL_Client.DrawOrder)
 	ImGui.PopID()
 end
 
-function _M.DisplayAnimationPlayer(ap: TL_Client.AnimationPlayer)
+function _M.DisplayAnimationPlayer(ap: AnimationPlayer)
 	ImGui.PushID("AnimationPlayer")
 	readonly_checkbox("IsPlaying", ap:IsPlaying())
 	readonly_checkbox("IsAutoPlayEnabled", ap:IsAutoPlayEnabled())
@@ -267,7 +263,7 @@ local function inspect_script_value(label: string, v: any, depth: number)
 	ImGui.PopID()
 end
 
-function _M.DisplayScript(script_mgr: TL_Common.ScriptComponentManager, e: TL_Common.Entity)
+function _M.DisplayScript(script_mgr: ScriptComponentManager, e: Entity)
 	ImGui.PushID("Script")
 	local script_en = script_manager_is_enable(script_mgr, e)
 	if script_en ~= nil then
@@ -289,7 +285,22 @@ function _M.DisplayScript(script_mgr: TL_Common.ScriptComponentManager, e: TL_Co
 	ImGui.PopID()
 end
 
-function _M.DisplayUIWidget(ui: TL_Client.UIWidget)
+function _M.DisplayUITextInput(ti: UITextInput)
+	ImGui.PushID("UITextInput")
+	readonly_drag_int("m_align", ti.m_align)
+	display_color_rgba("m_color", ti.m_color)
+	ImGui.Text("text: " .. ti:GetText())
+	readonly_drag_int("font_pt", ti:GetFontPt())
+	local font_file = ti:GetFontFilename()
+	ImGui.Text("font: " .. (font_file ~= "" and font_file or "(none)"))
+	readonly_drag_int("cursor_pos", ti:GetCursorPos())
+	readonly_drag_float("cursor_x", ti:GetCursorX())
+	local sz = ti:GetTextImageSize()
+	_M.DisplayVec2("text_image_size", sz)
+	ImGui.PopID()
+end
+
+function _M.DisplayUIWidget(ui: UIWidget)
 	ImGui.PushID("UIWidget")
 	readonly_checkbox("m_use_clip", ui.m_use_clip)
 	readonly_checkbox("m_disabled", ui.m_disabled)
@@ -297,24 +308,26 @@ function _M.DisplayUIWidget(ui: TL_Client.UIWidget)
 	readonly_checkbox("m_can_be_selected", ui.m_can_be_selected)
 	_M.DisplayVec2("m_margin", ui.m_margin)
 	_M.DisplayVec2("m_padding", ui.m_padding)
-	ImGui.PopID()
-end
-
-function _M.DisplayTilemapRenderComponent(tc: TL_Client.TilemapRenderComponent)
-	ImGui.PushID("TilemapRender")
-	readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
-	local col = tc:GetTilemapCollision()
-	if col then
-		ImGui.Text("collision m_topleft")
-		readonly_drag_float("x##tc_col", col.m_topleft.x)
-		readonly_drag_float("y##tc_col", col.m_topleft.y)
-	else
-		ImGui.Text("collision: nil")
+	local ti = ui:GetTextInput()
+	if ti ~= nil then
+		ImGui.SeparatorText("UITextInput")
+		_M.DisplayUITextInput(ti)
 	end
 	ImGui.PopID()
 end
 
-function _M.DisplayTilemapCollisionComponent(tc: TL_Client.TilemapCollisionComponent)
+function _M.DisplayTilemapRenderComponent(tc: TilemapRenderComponent)
+	ImGui.PushID("TilemapRender")
+	readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
+	if tc:GetTilemap() then
+		ImGui.Text("has tilemap ptr")
+	else
+		ImGui.Text("tilemap: nil")
+	end
+	ImGui.PopID()
+end
+
+function _M.DisplayTilemapCollisionComponent(tc: TilemapCollisionComponent)
 	ImGui.PushID("TilemapCollision")
 	readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
 	local col = tc:GetTilemapCollision()
@@ -328,7 +341,7 @@ function _M.DisplayTilemapCollisionComponent(tc: TL_Client.TilemapCollisionCompo
 	ImGui.PopID()
 end
 
-function _M.DisplayTrigger(tr: TL_Common.Trigger)
+function _M.DisplayTrigger(tr: Trigger)
 	ImGui.PushID("Trigger")
 	ImGui.Text("GetEventType: " .. tostring(tr:GetEventType()))
 	readonly_checkbox("IsTriggerEveryFrameWhenTouch", tr:IsTriggerEveryFrameWhenTouch())
@@ -354,7 +367,7 @@ function _M.DisplayTrigger(tr: TL_Common.Trigger)
 	ImGui.PopID()
 end
 
-function _M.DisplayBindPoints(bind_mgr: TL_Common.BindPointsComponentManager, e: TL_Common.Entity)
+function _M.DisplayBindPoints(bind_mgr: BindPointsComponentManager, e: Entity)
 	ImGui.PushID("BindPoints")
 	local ok, err = pcall(function()
 		local bp = bind_mgr:Get(e)
@@ -383,7 +396,7 @@ function _M.DisplayBindPoints(bind_mgr: TL_Common.BindPointsComponentManager, e:
 	ImGui.PopID()
 end
 
-function _M.DisplayStaticCollision(sc: TL_Common.StaticCollision)
+function _M.DisplayStaticCollision(sc: StaticCollision)
 	ImGui.PushID("StaticCollision")
 	local n = sc:GetPhysicsShapeCount()
 	readonly_drag_int("physics shape count", n)
@@ -410,7 +423,7 @@ function _M.DisplayStaticCollision(sc: TL_Common.StaticCollision)
 	ImGui.PopID()
 end
 
-function _M.DisplayCharacterController(cct: TL_Common.CharacterController)
+function _M.DisplayCharacterController(cct: CharacterController)
 	ImGui.PushID("CCT")
 	readonly_drag_float("GetPosition.x", cct:GetPosition().x)
 	readonly_drag_float("GetPosition.y", cct:GetPosition().y)
@@ -428,37 +441,37 @@ function _M.DisplayCharacterController(cct: TL_Common.CharacterController)
 end
 
 --- 根据 ctx / entity 绘制各 Component（由 debug Inspector 调用）
-function _M.DisplayInspector(ctx: TL_Client.ClientContext, e: TL_Common.Entity)
+function _M.DisplayInspector(ctx: ClientContext, e: Entity)
 	ImGui.Text(string.format("Entity: %d", e))
 
 	local transform_mgr = ctx:GetTransformManager()
 	if transform_mgr:Has(e) then
 		ImGui.SeparatorText("Transform")
-		_M.DisplayTransform(transform_mgr:Get(e) :: TL_Common.Transform)
+		_M.DisplayTransform(transform_mgr:Get(e) :: Transform)
 	end
 
 	local relationship_mgr = ctx:GetRelationshipManager()
 	if relationship_mgr:Has(e) then
 		ImGui.SeparatorText("Relationship")
-		_M.DisplayRelationship(relationship_mgr:Get(e) :: TL_Common.Relationship)
+		_M.DisplayRelationship(relationship_mgr:Get(e) :: Relationship)
 	end
 
 	local sprite_mgr = ctx:GetSpriteManager()
 	if sprite_mgr:Has(e) then
 		ImGui.SeparatorText("Sprite")
-		_M.DisplaySprite(sprite_mgr:Get(e) :: TL_Client.Sprite)
+		_M.DisplaySprite(sprite_mgr:Get(e) :: Sprite)
 	end
 
 	local draw_order_mgr = context_get_draw_order_manager(ctx)
 	if draw_order_mgr ~= nil and draw_order_mgr:Has(e) then
 		ImGui.SeparatorText("DrawOrder")
-		_M.DisplayDrawOrder(draw_order_mgr:Get(e) :: TL_Client.DrawOrder)
+		_M.DisplayDrawOrder(draw_order_mgr:Get(e) :: DrawOrder)
 	end
 
 	local anim_mgr = ctx:GetAnimationPlayerManager()
 	if anim_mgr:Has(e) then
 		ImGui.SeparatorText("AnimationPlayer")
-		_M.DisplayAnimationPlayer(anim_mgr:Get(e) :: TL_Client.AnimationPlayer)
+		_M.DisplayAnimationPlayer(anim_mgr:Get(e) :: AnimationPlayer)
 	end
 
 	local script_mgr = ctx:GetScriptManager()
@@ -470,25 +483,25 @@ function _M.DisplayInspector(ctx: TL_Client.ClientContext, e: TL_Common.Entity)
 	local ui_mgr = ctx:GetUIManager()
 	if ui_mgr:Has(e) then
 		ImGui.SeparatorText("UIWidget")
-		_M.DisplayUIWidget(ui_mgr:Get(e) :: TL_Client.UIWidget)
+		_M.DisplayUIWidget(ui_mgr:Get(e) :: UIWidget)
 	end
 
 	local tile_render_mgr = ctx:GetTilemapRenderComponentManager()
 	if tile_render_mgr:Has(e) then
 		ImGui.SeparatorText("TilemapRenderComponent")
-		_M.DisplayTilemapRenderComponent(tile_render_mgr:Get(e) :: TL_Client.TilemapRenderComponent)
+		_M.DisplayTilemapRenderComponent(tile_render_mgr:Get(e) :: TilemapRenderComponent)
 	end
 
 	local tile_collision_mgr = ctx:GetTilemapCollisionComponentManager()
 	if tile_collision_mgr:Has(e) then
 		ImGui.SeparatorText("TilemapCollisionComponent")
-		_M.DisplayTilemapCollisionComponent(tile_collision_mgr:Get(e) :: TL_Client.TilemapCollisionComponent)
+		_M.DisplayTilemapCollisionComponent(tile_collision_mgr:Get(e) :: TilemapCollisionComponent)
 	end
 
 	local trig_mgr = ctx:GetTriggerComponentManager()
 	if trig_mgr:Has(e) then
 		ImGui.SeparatorText("Trigger")
-		_M.DisplayTrigger(trig_mgr:Get(e) :: TL_Common.Trigger)
+		_M.DisplayTrigger(trig_mgr:Get(e) :: Trigger)
 	end
 
 	local bind_mgr = ctx:GetBindPointsComponentManager()
@@ -500,14 +513,14 @@ function _M.DisplayInspector(ctx: TL_Client.ClientContext, e: TL_Common.Entity)
 	local cct_mgr = ctx:GetCCTManager()
 	if cct_mgr:Has(e) then
 		ImGui.SeparatorText("CharacterController")
-		_M.DisplayCharacterController(cct_mgr:Get(e) :: TL_Common.CharacterController)
+		_M.DisplayCharacterController(cct_mgr:Get(e) :: CharacterController)
 	end
 
 	local static_col_mgr = ctx:GetStaticCollisionManager()
 	if static_col_mgr:Has(e) then
 		ImGui.SeparatorText("StaticCollision")
 		readonly_checkbox("IsEnable", static_col_mgr:IsEnable(e))
-		_M.DisplayStaticCollision(static_col_mgr:Get(e) :: TL_Common.StaticCollision)
+		_M.DisplayStaticCollision(static_col_mgr:Get(e) :: StaticCollision)
 	end
 end
 

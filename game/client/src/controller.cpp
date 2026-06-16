@@ -94,7 +94,7 @@ ControllerAxises PlayerController::MakeAxises(const std::string& x_name,
 }
 
 void PlayerController::RegisterVirtualController(
-    SceneHandle level, const GameConfig& game_config) {
+    SceneHandle level, const ClientConfig& game_config) {
 #ifdef TL_ANDROID
     if (level) {
         initVirualJoystick(level, game_config);
@@ -153,15 +153,15 @@ void PlayerController::DestroyVirtualController(SceneHandle level) {
 }
 
 void PlayerController::initVirualJoystick(SceneHandle level,
-                                          const GameConfig& game_config) {
+                                          const ClientConfig& client_config) {
     PrefabHandle joystick_prefab = m_assets_mgr.GetManager<Prefab>().Load(
         "assets/gpa/ui/android_joystick.prefab.xml");
     Transform transform;
-    transform.m_size.w = game_config.m_virtual_joystick.m_radius;
-    transform.m_size.h = game_config.m_virtual_joystick.m_radius;
+    transform.m_size.w = client_config.m_virtual_joystick.m_radius;
+    transform.m_size.h = client_config.m_virtual_joystick.m_radius;
     transform.m_position =
         static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize()) -
-        game_config.m_virtual_joystick.m_offset;
+        client_config.m_virtual_joystick.m_offset;
     Entity virtual_joystick_entity = level->Instantiate(joystick_prefab);
 
     SDL_WindowEvent resize_event{};
@@ -178,7 +178,7 @@ void PlayerController::initVirualJoystick(SceneHandle level,
     ui_relationship->AddChild(virtual_joystick_entity);
     m_virtual_joystick.m_ui_entity = virtual_joystick_entity;
     m_virtual_joystick.m_max_drag_dist =
-        game_config.m_virtual_joystick.m_max_drag_dist;
+        client_config.m_virtual_joystick.m_max_drag_dist;
 
     m_virtual_joystick.m_drag_event = m_event_system.AddListener<UIDragEvent>(
         std::bind(&PlayerController::handleJoystickDragEvent, this,
@@ -190,15 +190,15 @@ void PlayerController::initVirualJoystick(SceneHandle level,
 }
 
 void PlayerController::initVirualAttackButton(SceneHandle level,
-                                              const GameConfig& game_config) {
+                                              const ClientConfig& client_config) {
     PrefabHandle button_prefab = m_assets_mgr.GetManager<Prefab>().Load(
         "assets/gpa/ui/attack_button.prefab.xml");
     Transform transform;
-    transform.m_size.w = game_config.m_virtual_attack_button.m_radius;
-    transform.m_size.h = game_config.m_virtual_attack_button.m_radius;
+    transform.m_size.w = client_config.m_virtual_attack_button.m_radius;
+    transform.m_size.h = client_config.m_virtual_attack_button.m_radius;
     transform.m_position =
         static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize()) -
-        game_config.m_virtual_attack_button.m_offset;
+        client_config.m_virtual_attack_button.m_offset;
     Entity entity = level->Instantiate(button_prefab);
     *m_transform_mgr.Get(entity) = transform;
 

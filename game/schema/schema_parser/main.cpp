@@ -293,23 +293,14 @@ int main(int argc, char** argv) {
                   << binding_output_dir / "binding.cpp" << std::endl;
     }
 
-    // generate schema_types.luau.inc to output_dir (schema_generate/schema);
-    // CMake wraps this fragment into scripts/tl_schema_types.luau.
+    // generate schema.d.luau (complete luau-lsp definition file);
+    // CMake copies it into scripts/type_hints/schema.d.luau.
     {
-        std::string code = GenerateSchemaTypesLuauCode(manager);
-        std::ofstream file(schema_output_dir / "schema_types.luau.inc");
+        std::string code = GenerateSchemaTypesLuauDefinitionCode(manager);
+        std::ofstream file(schema_output_dir / "schema.d.luau");
         file.write(code.c_str(), code.length());
-        std::cout << "generate schema_types.luau.inc to : "
-                  << schema_output_dir / "schema_types.luau.inc" << std::endl;
-    }
-
-    // generate proto_types.luau.inc
-    {
-        std::string code = GenerateProtoTypesLuauCode(manager);
-        std::ofstream file(schema_output_dir / "proto_types.luau.inc");
-        file.write(code.c_str(), code.length());
-        std::cout << "generate proto_types.luau.inc to : "
-                  << schema_output_dir / "proto_types.luau.inc" << std::endl;
+        std::cout << "generate schema.d.luau to : "
+                  << schema_output_dir / "schema.d.luau" << std::endl;
     }
 
     // generate cpp_asset_extension.hpp

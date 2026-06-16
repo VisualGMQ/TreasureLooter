@@ -8,10 +8,6 @@
 				<keyframes>
 					<keyframe>
 						<time>0.000000</time>
-						<value x="0.000000" y="0.000000"/>
-					</keyframe>
-					<keyframe>
-						<time>0.000000</time>
 						<value x="0.000000" y="16.000000"/>
 					</keyframe>
 					<keyframe>
@@ -24,6 +20,10 @@
 					</keyframe>
 					<keyframe>
 						<time>0.900000</time>
+						<value x="0.000000" y="0.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>1.200000</time>
 						<value x="0.000000" y="0.000000"/>
 					</keyframe>
 				</keyframes>

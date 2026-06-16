@@ -35,7 +35,7 @@
 								<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 							</value>
 						</sprite>
-						<script/>
+						<client_script/>
 					</payload>
 				</prefab>
 			</elem>
@@ -71,7 +71,7 @@
 								<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 							</value>
 						</sprite>
-						<script/>
+						<client_script/>
 					</payload>
 				</prefab>
 			</elem>

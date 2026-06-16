@@ -2,6 +2,7 @@
 
 #include "client/animation_player.hpp"
 #include "client/image.hpp"
+#include "client/ui.hpp"
 #include "common/cct.hpp"
 #include "common/collision_group.hpp"
 #include "common/dialog.hpp"
@@ -13,6 +14,7 @@
 #include "schema/display/bind_point_schema.hpp"
 #include "schema/display/collision_group_schema.hpp"
 #include "schema/display/common.hpp"
+#include <map>
 #include <type_traits>
 
 void InstanceDisplay(const char* name, int& value) {
@@ -780,15 +782,15 @@ void InstanceDisplay(const char* name, CharacterController& cct) {
 }
 
 void InstanceDisplay(const char* name, CollisionGroup& group) {
-    // NOTE: use static cached_data to trace CollisionGroupTypes. I know it will
-    // be larger with different group then make memory increase, but
-    // this is only a small tool, it won't out of use your memory :-)
-    static std::unordered_map<uintptr_t, std::vector<CollisionGroupType>>
-        cached_data;
+    ImGui::PushID(name);
 
-    uintptr_t address = reinterpret_cast<uintptr_t>(std::addressof(group));
-    if (auto it = cached_data.find(address); it == cached_data.end()) {
-        auto& collision_group_types = cached_data[address];
+    using Key = std::pair<uintptr_t, std::string>;
+    static std::map<Key, std::vector<CollisionGroupType>> cached_data;
+
+    Key key = {reinterpret_cast<uintptr_t>(std::addressof(group)), name};
+    auto& collision_group_types = cached_data[key];
+
+    if (collision_group_types.empty()) {
         for (uint32_t i = 0; i < kCollisionGroupType_Count; i++) {
             CollisionGroupType type = static_cast<CollisionGroupType>(i);
             if (group.Has(type)) {
@@ -796,10 +798,6 @@ void InstanceDisplay(const char* name, CollisionGroup& group) {
             }
         }
     }
-
-    auto underlying = group.GetUnderlying();
-    std::vector<CollisionGroupType>& collision_group_types =
-        cached_data[address];
 
     auto old_data = collision_group_types;
     InstanceDisplay("CollisionGroup", collision_group_types);
@@ -812,6 +810,8 @@ void InstanceDisplay(const char* name, CollisionGroup& group) {
             group.Add(collision_group_type);
         }
     }
+
+    ImGui::PopID();
 }
 
 void InstanceDisplay(const char* name, const CollisionGroup& group) {
@@ -819,8 +819,7 @@ void InstanceDisplay(const char* name, const CollisionGroup& group) {
     ImGui::PushID(&group);
 
     std::vector<CollisionGroupType> collision_groups;
-    for (unsigned i = 0; i < sizeof(std::underlying_type_t<CollisionGroupType>);
-         i++) {
+    for (uint32_t i = 0; i < kCollisionGroupType_Count; i++) {
         auto type = static_cast<CollisionGroupType>(i);
         if (group.Has(type)) {
             collision_groups.push_back(type);
@@ -883,4 +882,55 @@ void InstanceDisplay(const char* name, const Color& color) {
 
 void InstanceDisplay(const char* name, Color& color) {
     ImGui::DragFloat4(name, (float*)&color, 0.1, 0, 1);
+}
+
+void InstanceDisplay(const char* name, UITextInput& value) {
+    ImGui::Text("%s", name);
+
+    InstanceDisplay("align", value.m_align);
+    InstanceDisplay("color", value.m_color);
+
+    FontHandle font = value.GetFont();
+    FontHandle old_font = font;
+    InstanceDisplay("font", font);
+    if (old_font != font) {
+        value.SetFont(font);
+    }
+
+    uint32_t pt = value.GetFontPt();
+    uint32_t old_pt = pt;
+    InstanceDisplay("font_pt", pt);
+    if (pt != old_pt) {
+        value.SetFontPt(pt);
+    }
+
+    std::string text = value.GetText().str();
+    std::string old_text = text;
+    InstanceDisplay("text", text);
+    if (text != old_text) {
+        value.SetText(text);
+    }
+
+    size_t cursor_pos = value.GetCursorPos();
+    unsigned long long cp = static_cast<unsigned long long>(cursor_pos);
+    unsigned long long old_cp = cp;
+    InstanceDisplay("cursor_pos", cp);
+    if (cp != old_cp) {
+        value.SetCursorPos(static_cast<size_t>(cp));
+    }
+}
+
+void InstanceDisplay(const char* name, const UITextInput& value) {
+    ImGui::BeginDisabled(true);
+    ImGui::Text("%s", name);
+    InstanceDisplay("align", value.m_align);
+    InstanceDisplay("color", value.m_color);
+    const FontHandle font = value.GetFont();
+    InstanceDisplay("font", font);
+    const uint32_t pt = value.GetFontPt();
+    InstanceDisplay("font_pt", pt);
+    InstanceDisplay("text", value.GetText().view());
+    const unsigned long long cp = static_cast<unsigned long long>(value.GetCursorPos());
+    InstanceDisplay("cursor_pos", cp);
+    ImGui::EndDisabled();
 }

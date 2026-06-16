@@ -54,9 +54,15 @@ bool Scene::IsInited() const {
     return m_inited;
 }
 
-Entity Scene::Instantiate(PrefabHandle prefab) {
+Entity Scene::Instantiate(PrefabHandle prefab, const Transform* transform) {
     Entity entity = COMMON_CONTEXT.CreateEntity();
-    registerEntity(entity, {prefab->m_transform.value_or(Transform{}), prefab});
+    Transform trans;
+    if (transform) {
+        trans = *transform;
+    } else {
+        trans = prefab->m_transform.value_or(Transform{});
+    }
+    registerEntity(entity, {trans, prefab});
     m_entities.insert(entity);
     return entity;
 }

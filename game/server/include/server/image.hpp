@@ -5,8 +5,8 @@
 // trivial, don't do anything, just placeholder
 class ServerImage : public ImageBase {
 public:
-    Vec2 GetSize() const override;
-    SDL_Texture* GetTexture() const override;
+    [[nodiscard]] Vec2 GetSize() const override;
+    [[nodiscard]] SDL_Texture* GetTexture() const override;
     void ChangeColorMask(const Color&) override;
 };
 

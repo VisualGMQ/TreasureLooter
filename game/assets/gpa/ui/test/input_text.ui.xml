@@ -24,7 +24,7 @@
 				<right>2.000000</right>
 				<top>2.000000</top>
 				<bottom>2.000000</bottom>
-				<scale>10.000000</scale>
+				<border_scale>10.000000</border_scale>
 			</image_9grid>
 		</normal_theme>
 		<padding x="4.000000" y="0.000000"/>

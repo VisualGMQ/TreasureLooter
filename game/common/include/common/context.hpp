@@ -1,6 +1,8 @@
 #pragma once
 #include "common/entity.hpp"
 #include "common/math.hpp"
+#include "common/path.hpp"
+#include "net/sync.hpp"
 #include "schema/config.hpp"
 #include <memory>
 
@@ -14,8 +16,8 @@ class RelationshipManager;
 class TransformManager;
 class IAssetsManager;
 class Scene;
-struct GameConfig;
 class ScriptComponentManager;
+class Script;
 class Renderer;
 class PhysicsScene;
 class TilemapLayerCollisionComponentManager;
@@ -24,6 +26,8 @@ class StaticCollisionManager;
 class EventSystem;
 class EventDebugger;
 class UDPHost;
+class EntityNameManager;
+class ReplicateComponentManager;
 
 class CommonContext {
 public:
@@ -60,15 +64,18 @@ public:
     virtual void AttachComponentsOnEntity(Entity, const EntityInstance&);
     virtual void RemoveAllComponentsOnEntity(Entity);
 
+    // Create the global (autoload-style) script from a path. No-op if empty.
+    void InitGlobalScript(const Path& script_path);
+
     bool IsRunning() const;
 
     Entity CreateEntity();
 
+    const CommonConfig& GetCommonConfig() const;
+
     [[nodiscard]] bool ShouldExit() const;
     [[nodiscard]] bool IsInited() const;
     void Exit();
-    [[nodiscard]] const GameConfig& GetGameConfig() const;
-
     [[nodiscard]] const std::vector<std::string_view>& GetOSArgs() const;
     [[nodiscard]] std::string_view GetAppPath() const;
 
@@ -89,14 +96,18 @@ public:
         m_tilemap_layer_collision_component_manager;
     std::unique_ptr<ScriptBinaryDataManager> m_script_binary_data_manager;
     std::unique_ptr<ScriptComponentManager> m_script_component_manager;
+    // Global script: created at startup, not attached to any entity, ticked at
+    // the start of every frame and kept alive across scene switches.
+    std::unique_ptr<Script> m_global_script;
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
+    std::unique_ptr<EntityNameManager> m_entity_name_manager;
+    std::unique_ptr<ReplicateComponentManager> m_replicate_component_manager;
     std::unique_ptr<UDPHost> m_net_host;
 
 protected:
     class ImGuiContext* m_imgui_context{};
 
-    // call by child class
-    void initGameConfig();
+    void initCommonConfig();
 
 private:
     static CommonContext* m_current_context;
@@ -104,8 +115,9 @@ private:
 
     bool m_should_exit = true;
     bool m_is_inited = false;
-    GameConfig m_game_config;
     std::underlying_type_t<Entity> m_last_entity = 1;
+
+    CommonConfig m_common_config;
 };
 
 #define COMMON_CONTEXT ::CommonContext::GetInst()

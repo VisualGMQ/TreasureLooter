@@ -1,195 +1,60 @@
-local TL_Common = require("@type_hints/tl_common_types")
-local TL_Client = require("@type_hints/tl_client_types")
-local TL_Schema = require("@type_hints/tl_schema_types")
-
-
-local Character = require("@client/character")
-local Weapon = require("@client/weapon")
-local ItemBehavior = require("@client/item_behavior")
-
+local ClientGameObject = require("@client/gameobject")
+local ClientAttackComponent = require("@client/components/attack")
+local ClientMoveComponent = require("@client/components/move")
+local ClientWeaponComponent = require("@client/components/weapon")
+local Creation = require("@common/creation")
 local _M = {}
+_M.__index = _M
+setmetatable(_M, {__index = Creation})
 
-function _M.CreateWeapon(definition: TL_Schema.WeaponDefinitionHandle) : (TL_Common.Entity, Weapon.Weapon?)
-    if not definition:IsValid() then
-        return TL_Common.null_entity
+export type ClientCreation = typeof(_M)
+
+function _M.ConvertCharacterDefinitionToGODefinition(entity:Entity, config:CharacterDefinitionHandle, weapon_entity:Entity):ClientGameObject.ClientGameObjectDefinition
+    local definition = {}::ClientGameObject.ClientGameObjectDefinition
+    local ctx = TL_Client.GetContext()
+    local move_definition = {} ::ClientMoveComponent.ClientMoveComponentDefinition
+    move_definition = {
+        m_cct = ctx:GetCCTManager():Get(entity),
+        m_speed = config.m_speed,
+        m_move_down_anim = config.m_move_down_animation,
+        m_move_up_anim = config.m_move_up_animation,
+        m_move_left_anim = config.m_move_left_animation,
+        m_move_right_anim = config.m_move_right_animation,
+    }
+    definition.m_move_component_definition = move_definition
+
+    if weapon_entity ~= TL_Common.null_entity then
+        local weapon_definition = {}::ClientWeaponComponent.ClientWeaponComponentDefinition
+        weapon_definition.m_weapon_entity = weapon_entity
+        definition.m_weapon_component_definition = weapon_definition
     end
-
-    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
-
-    local scene = ctx:GetSceneManager():GetCurrentScene()
-    if not scene then
-        return TL_Common.null_entity
-    end
-
-    local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
-    -- create control node
-    local prefab_handle = prefab_manager:Create()
-
-    prefab_handle.m_transform = TL_Common.Transform()
-    local control_entity = scene:Instantiate(prefab_handle)
-    prefab_manager:Unload(prefab_handle)
-
-    -- fill weapon prefab
-    prefab_handle = prefab_manager:Create()
-    if not prefab_handle:IsValid() then
-        return TL_Common.null_entity
-    end
-
-    prefab_handle.m_transform = TL_Common.Transform()
-    prefab_handle.m_sprite = definition.m_sprite
-
-    prefab_handle.m_draw_order = TL_Client.DrawOrderDefinition()
-    prefab_handle.m_draw_order.m_enable_y_sorting = false
-    prefab_handle.m_draw_order.m_draw_layer = TL_Schema.DrawLayer.TilemapArch
-
-    prefab_handle.m_animation = TL_Client.AnimationPlayerDefinition()
-    prefab_handle.m_animation.m_animation = definition.m_attack_animation
-    prefab_handle.m_animation.m_auto_play = false
-    prefab_handle.m_animation.m_loop = 0
-    prefab_handle.m_animation.m_rate = 1.0
-
-    prefab_handle.m_trigger = definition.m_hit_shapes
-
-    local weapon_entity = scene:Instantiate(prefab_handle)
-    prefab_manager:Unload(prefab_handle)
-
-    -- put weapon entity under control node
-
-    local control_relationship = ctx:GetRelationshipManager():Get(control_entity)
-    control_relationship:AddChild(weapon_entity)
-
-    -- init script by definition
-    return control_entity, Weapon.new(control_entity, definition)
+    return definition
 end
 
-function _M.CreateCharacter(transform: TL_Common.Transform, definition: TL_Schema.CharacterDefinitionHandle, player_related_definition: TL_Schema.PlayerRelatedDefinition) : (TL_Common.Entity, Character.Character?)
-    if not definition:IsValid()  then
-        TL_Common.Log("invalid character config")
-        return TL_Common.null_entity
+function _M.ConvertItemDefinitionToGODefinition(entity:Entity, config:ItemDefinitionHandle):ClientGameObject.ClientGameObjectDefinition
+    local definition = {}::ClientGameObject.ClientGameObjectDefinition
+    local ctx = TL_Client.GetContext()
+    local attack_definition = {}::ClientAttackComponent.ClientAttackComponentDefinition
+
+    local name_mgr = ctx:GetEntityNameManager()
+    local weapon_entity = name_mgr:FindChildByName(entity, "weapon")
+
+    if weapon_entity == TL_Common.null_entity then
+        ctx:Log("create item failed: no weapon entity")
+        return definition
     end
 
-    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
-
-    local scene = ctx:GetSceneManager():GetCurrentScene()
-    if not scene then
-        TL_Common.Log("scene not exists")
-        return TL_Common.null_entity
+    if config.m_attackable then
+        attack_definition.m_anim_player = ctx:GetAnimationPlayerManager():Get(weapon_entity)
+        attack_definition.m_attack_anim = config.m_attackable.m_attack_animation
+        attack_definition.m_cooldown = config.m_attackable.m_cooldown
+        attack_definition.m_damage = config.m_attackable.m_damage
+        attack_definition.m_hit_area = ctx:GetTriggerComponentManager():Get(weapon_entity)
+        attack_definition.m_transform = ctx:GetTransformManager():Get(entity)
+        definition.m_attack_component_definition = attack_definition
     end
+    return definition
 
-    local prefab = ctx:GetAssetsManager():GetPrefabManager():Create()
-
-    if not prefab:IsValid() then
-        return TL_Common.null_entity
-    end
-
-    -- create weapon as child entity
-    local weapon = nil
-    local weapon_entity = TL_Common.null_entity
-    if definition.m_weapon ~= nil then
-        -- weapon_entity, weapon = _M.CreateWeapon(definition.m_weapon)
-    end
-
-    local pickaxe = nil
-    local pickaxe_entity = TL_Common.null_entity
-    if definition.m_pickaxe ~= nil then
-        -- pickaxe_entity, pickaxe = _M.CreateWeapon(definition.m_pickaxe)
-    end
-
-    -- fill prefab
-    local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
-    local prefab_handle = prefab_manager:Create()
-
-    prefab_handle.m_transform = transform
-    prefab_handle.m_script = definition.m_script
-    prefab_handle.m_sprite = TL_Client.Sprite()
-    prefab_handle.m_sprite.m_image = definition.m_sprite_sheet
-    prefab_handle.m_sprite.m_size.x = 16
-    prefab_handle.m_sprite.m_size.y = 16
-    prefab_handle.m_sprite.m_region.m_size.x = 16
-    prefab_handle.m_sprite.m_region.m_size.y = 16
-
-    prefab_handle.m_draw_order = TL_Schema.DrawOrderDefinition()
-    prefab_handle.m_draw_order.m_enable_y_sorting = false
-    prefab_handle.m_draw_order.m_draw_layer = TL_Schema.DrawLayer.TilemapArch
-
-    prefab_handle.m_animation = TL_Schema.AnimationPlayerDefinition()
-    prefab_handle.m_animation.m_animation = definition.m_move_down_animation
-    prefab_handle.m_animation.m_auto_play = true
-    prefab_handle.m_animation.m_loop = -1
-    prefab_handle.m_animation.m_rate = 1.0
-
-    local physics_shape_info_mgr = ctx:GetAssetsManager():GetPhysicsShapeDefinitionManager()
-    prefab_handle.m_cct = definition.m_cct
-
-    local entity = scene:Instantiate(prefab_handle)
-    physics_shape_info_mgr:Unload(prefab_handle.m_cct.m_physics_shape)
-    prefab_manager:Unload(prefab_handle)
-
-    -- set weapon as children
-    local relationship = ctx:GetRelationshipManager():Get(entity)
-    if weapon and weapon_entity ~= TL_Common.null_entity then
-        relationship:AddChild(weapon_entity)
-    end
-
-    if pickaxe and pickaxe_entity ~= TL_Common.null_entity then
-        relationship:AddChild(pickaxe_entity)
-    end
-
-    ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
-
-    return entity, Character.new(entity, definition, weapon, pickaxe)
-end
-
--- return value:
--- index 0 : TL_Common.Entity
--- index 1 : ItemBehavior.ItemBehavior
-function _M.CreateItem(transform: TL_Common.Transform, definition: TL_Schema.ItemDefinitionHandle): (TL_Common.Entity, ItemBehavior.Item?)
-    if not definition:IsValid()  then
-        TL_Common.Log("invalid item definition")
-        return TL_Common.null_entity
-    end
-
-    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
-
-    local scene = ctx:GetSceneManager():GetCurrentScene()
-    if not scene then
-        TL_Common.Log("scene not exists")
-        return TL_Common.null_entity
-    end
-
-    local prefab = ctx:GetAssetsManager():GetPrefabManager():Create()
-
-    if not prefab:IsValid() then
-        TL_Common.Log("prefab invalid")
-        return TL_Common.null_entity
-    end
-
-    -- fill prefab
-    local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
-    local prefab_handle = prefab_manager:Create()
-
-    prefab_handle.m_transform = transform
-    prefab_handle.m_sprite = TL_Client.Sprite()
-    prefab_handle.m_sprite = definition.m_sprite
-
-    prefab_handle.m_draw_order = TL_Schema.DrawOrderDefinition()
-    prefab_handle.m_draw_order.m_enable_y_sorting = false
-    prefab_handle.m_draw_order.m_draw_layer = TL_Schema.DrawLayer.TilemapArch
-
-    prefab_handle.m_script = definition.m_script
-
-    local collisions = prefab_handle.m_static_collision.m_collisions
-    table.insert(collisions, definition.m_collision)
-    prefab_handle.m_static_collision.m_collisions = collisions
-
-    local entity = scene:Instantiate(prefab_handle)
-    prefab_manager:Unload(prefab_handle)
-
-    ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
-
-    return entity, ItemBehavior.Item.new(definition)
 end
 
 return _M
-
-

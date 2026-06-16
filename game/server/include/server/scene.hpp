@@ -17,4 +17,5 @@ class ServerSceneManager : public SceneManager {
 public:
     SceneHandle Load(const Path& filename, bool force = false) override;
     SceneHandle Create(SceneDefinitionHandle) override;
+    void Switch(SceneHandle) override;
 };

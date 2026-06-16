@@ -7,6 +7,7 @@
 #include "common/context.hpp"
 #include "common/debug_drawer.hpp"
 #include "common/entity.hpp"
+#include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
 #include "common/handle.hpp"
 #include "common/image.hpp"
@@ -40,14 +41,14 @@
 #include <type_traits>
 
 #include "common/font.hpp"
-#include "common/type_index.hpp"
+#include "common/script/lua_event_listener.hpp"
 #include "schema/scene_definition.hpp"
 
 int TL_Log(lua_State* L) {
     const int argc = lua_gettop(L);
     std::string msg;
-    for (int i = 1; i <= argc; ++i) {
-        if (i > 1) {
+    for (int i = 2; i <= argc; ++i) {
+        if (i > 2) {
             msg += " ";
         }
 
@@ -116,6 +117,21 @@ static int ScriptComponentManager_GetTable(lua_State* L) {
     return 1;
 }
 
+void registerLuaScriptEventBindigns(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginClass<EventSystem>("EventSystem")
+            TL_BIND_LUA_EVENT_LISTENER(TimerEvent, "TimerEvent")
+            TL_BIND_LUA_EVENT_LISTENER(TimerStopEvent, "TimerStopEvent")
+            TL_BIND_LUA_EVENT_LISTENER(TriggerEnterEvent, "TriggerEnterEvent")
+            TL_BIND_LUA_EVENT_LISTENER(TriggerLeaveEvent, "TriggerLeaveEvent")
+            TL_BIND_LUA_EVENT_LISTENER(TriggerTouchEvent, "TriggerTouchEvent")
+            TL_BIND_LUA_EVENT_LISTENER(EventDebugger::DebugEvent, "DebugEvent")
+            .addFunction("Remove", +[](EventSystem*, EventListenerID id) {
+                LuaEventListenerRegistry::Remove(id);
+            })
+        .endClass();
+}
+
 void bindScriptBinaryDataManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Common")
@@ -142,14 +158,6 @@ void bindScriptBinaryDataManager(lua_State* L) {
             .addFunction("Has", &ScriptComponentManager::Has)
             .addFunction("Get", ScriptComponentManager_GetTable)
             .addFunction("IsEnable", &ScriptComponentManager::IsEnable)
-            .addFunction(
-                "SubscribeEvent",
-                +[](ScriptComponentManager* m, Entity entity,
-                    const std::string& event_name) {
-                    if (m) {
-                        m->SubscribeEvent(entity, event_name);
-                    }
-                })
         .endClass()
         .endNamespace();
 }
@@ -257,6 +265,7 @@ void bindMath(lua_State* L) {
             .endClass()
             .addFunction("GetAngle", &GetAngle)
             .addFunction("DecomposeVector", &DecomposeVector)
+            .addFunction("Rotate", &Rotate)
             .beginClass<DecompositionResult>("DecompositionResult")
                 .addProperty("m_tangent", &DecompositionResult::m_tangent, true)
                 .addProperty("m_normal", &DecompositionResult::m_normal, true)
@@ -526,8 +535,25 @@ void bindContext(lua_State* L) {
                 .addFunction("GetNetHost", +[](CommonContext* ctx) -> UDPHost* {
                     return ctx->m_net_host.get();
                 })
+                .addFunction("GetEntityNameManager",
+                             +[](CommonContext* ctx) -> EntityNameManager* {
+                                 return ctx->m_entity_name_manager.get();
+                             })
+                .addFunction("GetCommonConfig",
+                             +[](CommonContext* ctx) -> const CommonConfig* {
+                                 return &ctx->GetCommonConfig();
+                             })
+                .addFunction("Log", TL_Log)
+                .addFunction("GetEventSystem",
+                             +[](CommonContext* ctx) -> EventSystem* {
+                                 return ctx->m_event_system.get();
+                             })
             .endClass()
-            .addFunction("Log", TL_Log)
+            .addFunction("GetContext", +[]() -> CommonContext* {
+                return &CommonContext::GetInst();
+            })
+            .addProperty("null_event_listener_id",
+                         +[]() -> int { return 0; })
         .endNamespace();
 }
 
@@ -913,6 +939,7 @@ void bindTrigger(lua_State* L) {
                 .addFunction("IsTriggerEveryFrameWhenTouch", &Trigger::IsTriggerEveryFrameWhenTouch)
                 .addFunction("GetTouchingShapes", &Trigger::GetTouchingShapes)
                 .addFunction("GetUnderlyingShapes", &Trigger::GetUnderlyingShapes)
+                .addFunction("GetOwner", &Trigger::GetOwner)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
@@ -954,9 +981,33 @@ void bindRelationship(lua_State* L) {
         .endNamespace();
 }
 
+void bindEntityName(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
+            .beginClass<EntityName>("EntityName")
+                .addProperty("m_name", &EntityName::m_name, true)
+            .endClass()
+            .beginClass<EntityNameManager>("EntityNameManager")
+                .addFunction("Get", +[](EntityNameManager* m, Entity e) {
+                    return m->Get(e);
+                })
+                .addFunction("Has", +[](EntityNameManager* m, Entity e) {
+                    return m->Has(e);
+                })
+                .addFunction("FindChildByName", &EntityNameManager::FindChildByName)
+                .addFunction("FindChildrenByName", &EntityNameManager::FindChildrenByName)
+            .endClass()
+        .endNamespace();
+}
+
 void bindFontManager(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Common")
+            .beginClass<FontBase>("Font")
+                .addFunction("IsValid", &FontBase::IsValid)
+                .addFunction("GetHeight", &FontBase::GetHeight)
+                .addFunction("SetFontSize", &FontBase::SetFontSize)
+            .endClass()
             .beginClass<FontManagerBase>("FontManager")
                 .addFunction("Load",
                              +[](FontManagerBase* m, const std::string& path) {
@@ -1082,6 +1133,7 @@ void bindHandleTypes(lua_State* L) {
     BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
     BindHandle<Tilemap>("TilemapHandle", L, "Tilemap");
+    BindHandle<FontBase>("FontHandle", L, "Font");
 }
 
 void bindEntity(lua_State* L) {
@@ -1141,20 +1193,9 @@ void bindUDP(lua_State* L) {
                                  &UDPHost::Connect))
                 .addFunction("Send",
                              +[](UDPHost* h, const UDPPeer* peer,
-                                 const std::string& data, int channel_id,
-                                 int flags) {
-                                 h->Send(peer,
-                                         reinterpret_cast<const std::byte*>(
-                                             data.data()),
-                                         static_cast<int>(data.size()),
-                                         channel_id,
-                                         static_cast<UDPPacketFlag>(flags));
-                             },
-                             +[](UDPHost* h, const UDPPeer* peer,
                                  const proto::NetMsg& net_msg, int channel_id,
-                                 int flags) {
-                                 h->Send(peer, net_msg, channel_id,
-                                         static_cast<UDPPacketFlag>(flags));
+                                 Flags<UDPPacketFlag> flags = UDPPacketFlag::Reliable) {
+                                 h->Send(peer, net_msg, channel_id, flags);
                              })
                 .addFunction("Flush", &UDPHost::Flush)
                 .addFunction("HandleIncomingNetPacket",
@@ -1165,7 +1206,7 @@ void bindUDP(lua_State* L) {
             .endClass()
         .endNamespace();
 
-    bindFlags<UDPPacketFlag>("UDPPacketFlagFlags", L);
+    bindFlags<UDPPacketFlag>("UDPPacketFlags", L);
 }
 
 // clang-format on
@@ -1187,6 +1228,7 @@ void bindAllTypes(lua_State* L) {
     bindTilemapCollisionComponent(L);
     bindTrigger(L);
     bindRelationship(L);
+    bindEntityName(L);
     bindSceneManager(L);
     bindFontManager(L);
     bindAnimationManager(L);
@@ -1206,5 +1248,6 @@ void BindTLModule(lua_State* L) {
     BindSchema(L);
     BindProtoModule(L);
     BindProtoEvent(L);
+    registerLuaScriptEventBindigns(L);
     bindImGui(L);
 }

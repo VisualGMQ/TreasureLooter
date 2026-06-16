@@ -21,7 +21,9 @@ Entity Relationship::Get(size_t index) const {
 }
 
 void Relationship::AddChild(Entity entity) {
+    TL_RETURN_IF_FALSE(entity != null_entity);
     auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
+    TL_RETURN_IF_NULL(relationship);
 
     m_children.push_back(entity);
     relationship->m_parent = m_owner;
@@ -43,7 +45,8 @@ void Relationship::RemoveChild(Entity entity) {
 void Relationship::RemoveFromParent() {
     TL_RETURN_IF_FALSE(m_owner != null_entity);
 
-    auto parent_relationship = COMMON_CONTEXT.m_relationship_manager->Get(GetParent());
+    auto parent_relationship =
+        COMMON_CONTEXT.m_relationship_manager->Get(GetParent());
 
     if (parent_relationship) {
         parent_relationship->RemoveChild(m_owner);

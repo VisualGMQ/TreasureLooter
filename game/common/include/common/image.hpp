@@ -2,6 +2,7 @@
 #include "SDL3/SDL.h"
 #include "common/math.hpp"
 #include "common/asset_manager_interface.hpp"
+#include "schema/common.hpp"
 
 class ImageBase {
 public:

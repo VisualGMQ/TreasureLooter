@@ -4,6 +4,10 @@
         <element name="y" type="float" proto_id="2"/>
     </class>
 
+    <class name="Echo" proto_id="1">
+        <element name="msg" type="std::string" proto_id="1"/>
+    </class>
+
     <class name="TalkMsg" proto_id="2">
         <element name="msg" type="std::string" proto_id="1"/>
     </class>
@@ -14,7 +18,7 @@
     <class name="Disconnect" proto_id="4">
     </class>
 
-    <class name="Enter" proto_id="5">
+    <class name="Spawn" proto_id="5">
         <element name="id" type="uint32_t" proto_id="1"/>
         <element name="position" type="NetVec2" proto_id="2"/>
     </class>

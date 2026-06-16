@@ -16,9 +16,17 @@ void UITextInput::SetFont(FontHandle font) {
     regenerateText();
 }
 
+FontHandle UITextInput::GetFont() const {
+    return m_font;
+}
+
 void UITextInput::SetFontPt(uint32_t pt) {
     m_pt = pt;
     regenerateText();
+}
+
+uint32_t UITextInput::GetFontPt() const {
+    return m_pt;
 }
 
 const UTF8String& UITextInput::GetText() const {
@@ -143,6 +151,8 @@ void UITextInput::HandleTextInput(const SDL_TextInputEvent& event) {
 }
 
 void UIText::SetFont(FontHandle font) {
+    TL_RETURN_IF_FALSE(font != m_font);
+
     m_font = font;
     regenerateText();
 }
@@ -152,8 +162,8 @@ void UIText::ChangeText(const std::string& text) {
     regenerateText();
 }
 
-void UIText::ChangeTextPt(uint32_t pt) {
-    m_pt = pt;
+void UIText::SetFontSize(uint32_t pt) {
+    m_pt_size = pt;
     regenerateText();
 }
 
@@ -170,11 +180,9 @@ Image& UIText::GetTextImage() {
 }
 
 void UIText::regenerateText() {
-    if (m_text.empty()) {
-        return;
-    }
+    TL_RETURN_IF_FALSE(!m_text.empty());
 
-    m_font->SetFontSize(m_pt);
+    m_font->SetFontSize(m_pt_size);
 
     m_text_image = Image{*CLIENT_CONTEXT.m_renderer,
                          m_font->GenerateText(m_text, m_color)};
@@ -402,6 +410,7 @@ UIWidget::UIWidget(UIWidgetDefinitionHandle info) {
         m_text->m_color = info->m_text->m_color;
         m_text->m_align = info->m_text->m_align;
         m_text->SetFont(info->m_text->m_font);
+        m_text->SetFontSize(info->m_text->m_font_size);
         m_text->ChangeText(info->m_text->m_text);
     }
 
@@ -733,12 +742,10 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
         Region src;
         src.m_size = theme->m_image->GetSize();
         theme->m_image->ChangeColorMask(theme->m_background_color);
-        if (theme->m_image_9grid.m_scale > 0 &&
-            theme->m_image_9grid.m_right > theme->m_image_9grid.m_left &&
-            theme->m_image_9grid.m_top < theme->m_image_9grid.m_bottom) {
+        if (theme->m_image_9grid.m_border_scale > 0) {
             renderer.DrawImage9Grid(
                 *theme->m_image, src, dst, Color::White, theme->m_image_9grid,
-                theme->m_image_9grid.m_scale, z_order, false, y);
+                theme->m_image_9grid.m_border_scale, z_order, false, y);
         } else {
             renderer.DrawImage(*theme->m_image, src, dst, Color::White, 0, {},
                                Flip::None, z_order, false, y);

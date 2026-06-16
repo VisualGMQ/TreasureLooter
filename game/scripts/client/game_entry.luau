@@ -1,218 +1,112 @@
-local TL_Common = require("@type_hints/tl_common_types")
-local TL_Client = require("@type_hints/tl_client_types")
-local TL_Schema = require("@type_hints/tl_schema_types")
-
-
-local ScriptBehavior = require("@client/script_behavior")
-local Creation = require("@client/creation")
+local GameEntry = require("@common/game_entry")
+local ClientCreation = require("@client/creation")
 local DebugPanel = require("@client/debug_panel")
-local PlayerBehavior = require("@client/player_behavior")
-local LuaContext = require("@client/context")
+local ClientGameObjectBehavior = require("@client/gameobject_behavior")
 
-local GameEntry = {}
-GameEntry.__index = GameEntry
-setmetatable(GameEntry, { __index = ScriptBehavior })
+local ClientGameEntry = {}
+ClientGameEntry.__index = ClientGameEntry
+setmetatable(ClientGameEntry, { __index = GameEntry })
 
-type GameEntryData = { }
+type ClientGameEntryData = {}
+export type ClientGameEntry = typeof(ClientGameEntry) & ClientGameEntryData & GameEntry.GameEntry
 
-export type GameEntry = typeof(setmetatable({}::GameEntryData, GameEntry))
+ClientGameEntry.k_default_script = TL_Common.Path("scripts/client/gameobject_behavior.luau")
 
-function GameEntry.new(entity: TL_Common.Entity) : GameEntry
-    local self = ScriptBehavior.new(entity)
-    return setmetatable(self, GameEntry)
+function ClientGameEntry.new(entity: Entity) : ClientGameEntry
+    local self = setmetatable(GameEntry.new(entity), ClientGameEntry)
+    return self
 end
 
-function GameEntry.OnInit(self: GameEntry)
-    local ctx: TL_Client.ClientContext = TL_Client.GetContext()
+function ClientGameEntry.CreatePrefab(self:ClientGameEntry, scene: Scene, prefab:PrefabHandle, transform:Transform):Entity
+    return scene:Instantiate(prefab, transform)
+end
 
-    local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load("assets/gpa/levels/main.level.xml")
-    if not level_definition then
-        TL_Common.Log("load level definition failed: nil")
-        return
-    end
+function ClientGameEntry.CreateCharacter(self:ClientGameEntry, scene:Scene, spawn_info:ObjectSpawnDefinition):Entity
+    local ctx = TL_Client.GetContext()
 
-    local scene_manager = ctx:GetSceneManager()
-
-    local scene = scene_manager:GetCurrentScene()
-
-    if not scene then
-        TL_Common.Log("create scene failed")
-        return
-    end
-
-    local root_entity = scene:GetRootEntity()
-    local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
-
-    local prefab_manager = ctx:GetAssetsManager():GetPrefabManager()
-
-    -- create map layers
-    local tilemap = level_definition.m_map_definition.m_map
-
-    local map_layer_entities = {}
-
-    for _, layer: TL_Schema.MapLayerDefinition in ipairs(level_definition.m_map_definition.m_layers) do
-        local prefab = prefab_manager:Create()
-
-        prefab.m_transform = TL_Common.Transform()
-        prefab.m_draw_order = layer.m_draw_order
-        prefab.m_tilemap_layer = TL_Schema.TilemapLayerDefinition()
-        prefab.m_tilemap_layer.m_position = TL_Common.Vec2.ZERO
-        prefab.m_tilemap_layer.m_layer_name = layer.m_name
-        prefab.m_tilemap_layer.m_tilemap = tilemap
-
-        local entity = scene:Instantiate(prefab)
-        map_layer_entities[layer.m_name] = entity
-        root_relationship:AddChild(entity)
-
-        prefab_manager:Unload(prefab)
-    end
-
-    -- record all spawn points
-    local spawn_point_infos = {}
-
-    for i = 0, tilemap:GetLayerCount() - 1 do
-        local layer = tilemap:GetLayer(i)
-        if (not layer) or layer:GetType() ~= TL_Common.TilemapLayerType.Object then
-            continue
-        end
-
-        local object_layer = layer:AsObjectLayer()
-        if not object_layer then
-            continue
-        end
-        for j = 0, object_layer:GetObjectCount() - 1 do
-            local object = object_layer:GetObject(j)
-            if object and object:GetType() == TL_Common.TilemapObjectType.Point then
-                local point = object:AsPoint()
-                if point then
-                    spawn_point_infos[object:GetName()] = point
-                end
-            end
-        end
-    end
-
-    for name, v in pairs(spawn_point_infos) do
-        TL_Common.Log("spaw point: ", name)
-    end
-
-    local player_put_on_layer_entity = map_layer_entities[level_definition.m_map_definition.m_player_put_on_layer]
-    if not player_put_on_layer_entity then
-        TL_Common.Log("no player put on layer")
-        return
-    end
-
-    local player_put_on_layer_relationship = ctx:GetRelationshipManager():Get(player_put_on_layer_entity)
-
-    -- record global state
-    LuaContext.m_player_layer_entity = player_put_on_layer_entity
-
-    -- create player
-    local script_mgr = ctx:GetScriptManager()
-
-    local player_spawn_point = spawn_point_infos[level_definition.m_map_definition.m_player_spawn_point]
-    if player_spawn_point then
-        local definition = level_definition.m_map_definition.m_player_character
-        local transform: TL_Common.Transform = TL_Common.Transform()
-        transform.m_position = player_spawn_point
-
-        local entity, character = Creation.CreateCharacter(transform, definition)
-
-        if not character then
-            TL_Common.Log("failed to create player, entity is null")
-            return
-        end
-        character:SetTeamID(level_definition.m_map_definition.m_player_team_id)
-        local player_script = script_mgr:Get(entity)
-        if player_script then
-            local behavior = player_script :: PlayerBehavior.PlayerBehavior
-            behavior:_init(character, level_definition.m_map_definition.m_player_related_definition)
-        end
-        TL_Common.Log("create player")
-
-        player_put_on_layer_relationship:AddChild(entity)
-        TL_Common.Log("put player on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+    local spawn_point = self.m_spawn_points[spawn_info.m_spawn_point_name]
+    local transform = TL_Common.Transform()
+    if spawn_point then
+        transform.m_position = spawn_point.m_position
     else
-        TL_Common.Log("no player spawn point")
+        ctx:Log("spawn character ", spawn_info.m_did, "'s spawn point is nil, spawn point name = ", spawn_info.m_spawn_point_name)
     end
 
-    -- create other components
-    for spawn_point_name, spawn_object_info: TL_Schema.ObjectSpawnDefinition in pairs(level_definition.m_spawn_objects) do
-        local spawn_point = spawn_point_infos[spawn_point_name]
+    local definition = self.m_object_definitions:GetCharacter(spawn_info.m_did)
+    local prefab = ClientCreation.ConvertCharacterDefinitionToPrefab(definition)
 
-        local asset_path = spawn_object_info.m_asset
+    if spawn_info.m_client_script:empty() then
+        prefab.m_client_script = ClientGameEntry.k_default_script
+    else
+        prefab.m_client_script = spawn_info.m_client_script
+    end
 
-        TL_Common.Log("spawning ", asset_path, " at spawn point ", spawn_point_name)
+    local entity = self:CreatePrefab(scene, prefab, transform)
 
-        if not spawn_point then
-            TL_Common.Log("spawn failed: no spaw point")
-            continue
-        end
+    ctx:Log("spawn character ", spawn_info.m_did,
+            " on SpawnPoint(", spawn_info.m_spawn_point_name, ")",
+            ", on Layer(", spawn_info.m_spawn_on_layer, ")")
 
-        if TL_Schema.FilenameIsCharacterDefinition(spawn_object_info.m_asset) then
-            local transform = TL_Common.Transform()
-            transform.m_position = spawn_point
-            local handle = ctx:GetAssetsManager():GetCharacterDefinitionManager():Load(asset_path, false)
-            if not handle:IsValid() then
-                TL_Common.Log("spawn failed: can't load asset")
-                continue
-            end
-
-            local entity, character = Creation.CreateCharacter(transform, handle)
-            if character == nil then
-                TL_Common.Log("spawn failed: create character failed")
-                continue
-            end
-            character:SetTeamID(spawn_object_info.m_team_id)
-            local script = script_mgr:Get(entity)
-            if script then
-                script:_init(character)
-            end
-
-            player_put_on_layer_relationship:AddChild(entity)
-            TL_Common.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
-        elseif TL_Schema.FilenameIsPrefab(asset_path) then
-            local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(asset_path)
-            if not prefab:IsValid() then
-                TL_Common.Log("spawn failed: can't load prefab")
-                continue
-            end
-
-            local entity = scene:Instantiate(prefab)
-            player_put_on_layer_relationship:AddChild(entity)
-            TL_Common.Log("put prefab on layer ", level_definition.m_map_definition.m_player_put_on_layer)
-        elseif TL_Schema.FilenameIsItemDefinition(asset_path) then
-            local transform = TL_Common.Transform()
-            transform.m_position = spawn_point
-            local handle = ctx:GetAssetsManager():GetItemDefinitionManager():Load(asset_path, false)
-            if not handle:IsValid() then
-                TL_Common.Log("spawn failed: can't load asset")
-                continue
-            end
-
-            local entity, item = Creation.CreateItem(transform, handle)
-            if entity == TL_Common.null_entity then
-                TL_Common.Log("spawn failed: create item failed")
-                continue
-            end
-
-            local script = script_mgr:Get(entity)
-
-            if script then
-                script:_init(item)
-            end
-
-            player_put_on_layer_relationship:AddChild(entity)
-            TL_Common.Log("put object on layer ", level_definition.m_map_definition.m_player_put_on_layer)
+    local weapon_entity = TL_Common.null_entity
+    if definition.m_init_weapon ~= TL_Schema.DID.Invalid then
+        local weapon_spawn_definition = TL_Schema.ObjectSpawnDefinition()
+        weapon_spawn_definition.m_did = definition.m_init_weapon
+        weapon_entity = self:CreateItem(scene, weapon_spawn_definition)
+        local weapon_relationship = ctx:GetRelationshipManager():Get(weapon_entity)
+        if weapon_relationship then
+            weapon_relationship:RemoveFromParent()
+            local parent_relationship = ctx:GetRelationshipManager():Get(entity)
+            parent_relationship:AddChild(weapon_entity)
         else
-            TL_Common.Log("spawn failed: no support file type")
+            ctx:Log("weapon don't has relationship component")
         end
     end
+
+    local script = ctx:GetScriptManager():Get(entity) :: ClientGameObjectBehavior.ClientGameObjectBehavior
+    if script then
+        local go_definition = ClientCreation.ConvertCharacterDefinitionToGODefinition(entity, definition, weapon_entity)
+        script:initGameObject(go_definition)
+    end
+
+    return entity
 end
 
-function GameEntry.OnRender(self: GameEntry)
+function ClientGameEntry.CreateItem(self:ClientGameEntry, scene:Scene, spawn_info:ObjectSpawnDefinition): Entity
+    local ctx = TL_Client.GetContext()
+
+    local spawn_point = self.m_spawn_points[spawn_info.m_spawn_point_name]
+    local transform = TL_Common.Transform()
+    if spawn_point then
+        transform.m_position = spawn_point.m_position
+    else
+        ctx:Log("spawn item ", spawn_info.m_did, "'s spawn point is nil: spawn point name = ", spawn_info.m_spawn_point_name)
+    end
+
+    local definition = self.m_object_definitions:GetItem(spawn_info.m_did)
+    local prefab = ClientCreation.ConvertItemDefinitionToPrefab(definition)
+
+    if spawn_info.m_client_script:empty() then
+        prefab.m_client_script = ClientGameEntry.k_default_script
+    else
+        prefab.m_client_script = spawn_info.m_client_script
+    end
+
+    local entity = self:CreatePrefab(scene, prefab, transform)
+    local script = ctx:GetScriptManager():Get(entity) :: ClientGameObjectBehavior.ClientGameObjectBehavior
+    if script then
+        local go_definition = ClientCreation.ConvertItemDefinitionToGODefinition(entity, definition)
+        script:initGameObject(go_definition)
+    end
+
+    ctx:Log("spawn item ", spawn_info.m_did,
+            " on SpawnPoint(", spawn_info.m_spawn_point_name, ")",
+            ", on Layer(", spawn_info.m_spawn_on_layer, ")")
+
+    return entity
+end
+
+function ClientGameEntry.OnRender(self:ClientGameEntry)
     DebugPanel.ShowDebugPanel()
 end
 
-return GameEntry
-
-
+return ClientGameEntry

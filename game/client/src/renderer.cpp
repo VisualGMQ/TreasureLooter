@@ -334,10 +334,10 @@ struct ApplyDrawCmdVisitor {
         src_rect.h = cmd.m_src.m_size.h;
 
         auto top_left = cmd.m_dst.m_center - cmd.m_dst.m_half_size;
-        dst_rect.x = top_left.x;
-        dst_rect.y = top_left.y;
-        dst_rect.w = cmd.m_dst.m_half_size.w * 2.0f;
-        dst_rect.h = cmd.m_dst.m_half_size.h * 2.0f;
+        dst_rect.x = std::roundf(top_left.x);
+        dst_rect.y = std::roundf(top_left.y);
+        dst_rect.w = std::roundf(cmd.m_dst.m_half_size.w * 2.0f);
+        dst_rect.h = std::roundf(cmd.m_dst.m_half_size.h * 2.0f);
 
         SDL_FPoint rot_center{cmd.m_rot_center.x, cmd.m_rot_center.y};
 
@@ -367,11 +367,13 @@ struct ApplyDrawCmdVisitor {
         };
         TL_RETURN_IF_FALSE(IsRectsIntersect(m_window_rect, aabb));
 
-        SDL_FRect rect = {cmd.m_src.m_topleft.x, cmd.m_src.m_topleft.y,
-                          cmd.m_src.m_size.w, cmd.m_src.m_size.h};
-        SDL_FPoint sdl_tl{cmd.m_origin.x, cmd.m_origin.y},
-            sdl_tr{cmd.m_right.x, cmd.m_right.y},
-            sdl_bl{cmd.m_down.x, cmd.m_down.y};
+        SDL_FRect rect = {std::roundf(cmd.m_src.m_topleft.x),
+                          std::roundf(cmd.m_src.m_topleft.y),
+                          std::roundf(cmd.m_src.m_size.w),
+                          std::roundf(cmd.m_src.m_size.h)};
+        SDL_FPoint sdl_tl{std::roundf(cmd.m_origin.x), std::roundf(cmd.m_origin.y)},
+            sdl_tr{std::roundf(cmd.m_right.x), std::roundf(cmd.m_right.y)},
+            sdl_bl{std::roundf(cmd.m_down.x), std::roundf(cmd.m_down.y)};
         SDL_SetTextureColorModFloat(cmd.m_image->GetTexture(), m_color.r,
                                     m_color.g, m_color.b);
         SDL_SetTextureAlphaModFloat(cmd.m_image->GetTexture(), m_color.a);

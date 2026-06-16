@@ -514,8 +514,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
         "CollisionGroupType must be unsigned");
 
     std::vector<CollisionGroupType> types;
-    for (int i = 0; i < sizeof(std::underlying_type_t<CollisionGroupType>);
-         i++) {
+    for (uint32_t i = 0; i < kCollisionGroupType_Count; i++) {
         auto type = static_cast<CollisionGroupType>(i);
         if (payload.Has(type)) {
             types.push_back(type);

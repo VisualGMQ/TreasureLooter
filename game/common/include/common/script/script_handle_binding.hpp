@@ -40,11 +40,13 @@ int HandleForwardCall(lua_State* L) {
 template <typename T>
 void BindHandle(const std::string& name,
                 lua_State* L,
-                const char* t_class_name) {
+                const char* t_class_name,
+                const char* namespace_name = "TL_Common") {
     using handle_type = Handle<T>;
     luabridge::getGlobalNamespace(L)
-           .beginNamespace("TL_Common")
+           .beginNamespace(namespace_name)
 			.beginClass<handle_type>(name.c_str())
+			.template addConstructor<void ()>()
 			.addFunction(
 				"IsValid",
 				+[](handle_type handle) { return static_cast<bool>(handle); })

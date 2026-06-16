@@ -1,0 +1,21 @@
+<ServerConfig>
+	<uuid>a0d42962-c2e3-4f51-b88f-4c8113eb3307</uuid>
+	<payload>
+		<global_script>scripts/server/server_entry.luau</global_script>
+		<lua_paths>
+			<elem>
+				<key>server</key>
+				<value>scripts/server</value>
+			</elem>
+			<elem>
+				<key>common</key>
+				<value>scripts/common</value>
+			</elem>
+			<elem>
+				<key>type_hints</key>
+				<value>scripts/type_hints</value>
+			</elem>
+		</lua_paths>
+	</payload>
+</ServerConfig>
+

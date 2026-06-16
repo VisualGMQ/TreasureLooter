@@ -1,7 +1,8 @@
 #include "common/tilemap_layer_collision_component.hpp"
 
 TilemapLayerCollisionComponent::TilemapLayerCollisionComponent(
-    Entity entity, const TilemapLayerDefinition& create_info) {
+    Entity entity, const TilemapLayerDefinition& create_info,
+    const Vec2UI& tile_in_chunk_size) {
     TL_RETURN_IF_FALSE(create_info.m_tilemap);
 
     m_tilemap_handle = create_info.m_tilemap;
@@ -31,16 +32,15 @@ TilemapLayerCollisionComponent::TilemapLayerCollisionComponent(
         create_info.m_layer_name,
         create_info.m_tilemap.GetFilename()->string());
 
-    auto& game_config = COMMON_CONTEXT.GetGameConfig();
     auto& physics_scene = COMMON_CONTEXT.m_physics_scene;
 
     auto tilemap = create_info.m_tilemap;
 
     auto tile_size = tilemap->GetTileSize();
     m_tilemap_collision = PhysicsScene::TilemapCollision::Proxy{
-        physics_scene->CreateTilemapCollision(
-            create_info.m_position, Vec2UI(tile_size.w, tile_size.h),
-            game_config.m_tile_in_chunk_size)};
+        physics_scene->CreateTilemapCollision(create_info.m_position,
+                                              Vec2UI(tile_size.w, tile_size.h),
+                                              tile_in_chunk_size)};
 
     if (m_tilemap_layer->GetType() == TilemapLayer::Type::Tiled) {
         auto tiled_layer = m_tilemap_layer->AsTiledLayer();

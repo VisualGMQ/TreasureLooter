@@ -64,7 +64,6 @@ struct VirtualButton {
 class TransformManager;
 class AssetsManager;
 class RelationshipManager;
-class GameConfig;
 
 class PlayerController {
 public:
@@ -77,7 +76,7 @@ public:
     ControllerAxises MakeAxises(const std::string& x_name,
                                 const std::string& y_name);
 
-    void RegisterVirtualController(SceneHandle level, const GameConfig&);
+    void RegisterVirtualController(SceneHandle level, const ClientConfig&);
     void DestroyVirtualController(SceneHandle level);
 
 private:
@@ -99,8 +98,8 @@ private:
     VirtualJoystick m_virtual_joystick;
     VirtualButton m_virtual_attack_button;
 
-    void initVirualJoystick(SceneHandle level, const GameConfig&);
-    void initVirualAttackButton(SceneHandle level, const GameConfig&);
+    void initVirualJoystick(SceneHandle level, const ClientConfig&);
+    void initVirualAttackButton(SceneHandle level, const ClientConfig&);
 
     void handleJoystickDragEvent(EventListenerID id, const UIDragEvent&);
     void handleJoystickReleaseEvent(EventListenerID id, const UIMouseUpEvent&);

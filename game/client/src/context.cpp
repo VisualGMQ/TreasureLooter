@@ -21,7 +21,6 @@
 #include "client/tilemap_render_component.hpp"
 #include "client/ui.hpp"
 #include "client/window.hpp"
-#include "common/uuid.hpp"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
@@ -40,6 +39,7 @@
 #include "common/tilemap_layer_collision_component.hpp"
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
+#include "common/uuid.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "schema/asset_info.hpp"
@@ -72,21 +72,24 @@ void ClientContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 
     CommonContext::Initialize(argc, argv);
-    m_assets_manager =
-        std::unique_ptr<ClientAssetsManager>(new ClientAssetsManager{});
-    m_scene_manager =
-        std::unique_ptr<ClientSceneManager>(new ClientSceneManager{});
+    m_assets_manager = std::make_unique<ClientAssetsManager>();
+    m_scene_manager = std::make_unique<ClientSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
 
-    CommonContext::initGameConfig();
+    // must call here, due to it rely on assets manager
+    CommonContext::initCommonConfig();
 
-    auto& game_config = GetGameConfig();
+    initClientConfig();
 
-    m_script_binary_data_manager->Initialize(game_config);
+    auto& client_config = GetConfig();
+
+    m_script_binary_data_manager->Initialize(client_config.m_lua_paths);
     m_script_binary_data_manager->BindModule([](lua_State* L) {
         BindTLModule(L);
         BindClientModule(L);
     });
+
+    InitGlobalScript(client_config.m_global_script);
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
@@ -119,19 +122,19 @@ void ClientContext::Initialize(int argc, char** argv) {
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 #endif
 
-    m_window->Resize(game_config.m_logic_size);
-    m_camera.ChangeScale(game_config.m_camera_scale);
+    m_window->Resize(client_config.m_logic_size);
+    m_camera.ChangeScale(client_config.m_camera_scale);
 
     m_input_manager->Initialize(
         m_assets_manager->GetManager<InputConfig>().Load(
-            game_config.m_input_config),
+            client_config.m_input_config),
         *this);
 
-    SceneHandle level =
-        m_assets_manager->GetManager<Scene>().Load(game_config.m_entry_scene);
+    SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
+        GetCommonConfig().m_entry_scene);
     m_scene_manager->Switch(level);
 
-    m_player_controller->RegisterVirtualController(level, game_config);
+    m_player_controller->RegisterVirtualController(level, client_config);
 
     m_time->SetFPS(240);
 }
@@ -214,6 +217,15 @@ void ClientContext::AttachComponentsOnEntity(Entity entity,
     if (prefab.m_ui) {
         m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
+    if (prefab.m_net_replicat_info) {
+        m_replicate_component_manager->RegisterEntity(
+            entity, prefab.m_net_replicat_info->m_raw_entity);
+    }
+    if (!prefab.m_client_script.empty()) {
+        auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
+        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
+        m_script_component_manager->RegisterEntity(entity, entity, handle);
+    }
 }
 
 void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
@@ -224,6 +236,10 @@ void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
     m_draw_order_manager->RemoveEntity(entity);
 
     CommonContext::RemoveAllComponentsOnEntity(entity);
+}
+
+const ClientConfig& ClientContext::GetConfig() const {
+    return m_config;
 }
 
 void ClientContext::logicUpdate(TimeType elapse) {
@@ -239,6 +255,9 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_mouse->Update();
     m_touches->Update();
 
+    if (m_global_script) {
+        m_global_script->Update();
+    }
     m_script_component_manager->Update();
 
     m_animation_player_manager->Update(elapse);
@@ -270,8 +289,11 @@ void ClientContext::renderUpdate(TimeType elapse) {
     m_renderer->Clear();
     beginImGui();
 
-    m_draw_order_manager->Update();
+    if (m_global_script) {
+        m_global_script->Render();
+    }
     m_script_component_manager->Render();
+    m_draw_order_manager->Update();
 
     DrawCommandSubmitter draw_cmd_submitter;
     draw_cmd_submitter.Submit();
@@ -289,7 +311,21 @@ void ClientContext::renderUpdate(TimeType elapse) {
     m_renderer->Present();
 }
 
+void ClientContext::initClientConfig() {
+    auto handle = m_assets_manager->GetManager<ClientConfig>().Load(
+        std::string{"assets/gpa/client_config"} +
+        ClientConfig_AssetExtension.data());
+    if (!handle) {
+        LOGC("client config not found!");
+        SDL_Quit();
+        return;
+    }
+    m_config = *handle;
+    m_assets_manager->GetManager<ClientConfig>().Unload(handle);
+}
+
 void ClientContext::Shutdown() {
+    m_global_script.reset();
     m_script_component_manager->Clear();
     m_scene_manager->Switch({});
 

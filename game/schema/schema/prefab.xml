@@ -11,7 +11,12 @@
     <import>ui_config</import>
     <import>bind_point_schema</import>
 
+    <class name="ReplicateInfo">
+        <element name="raw_entity" type="Entity"/>
+    </class>
+
     <asset name="Prefab" extension=".prefab">
+        <option type="std::string" name="name"/>
         <option type="Transform" name="transform"/>
         <option type="DrawOrderDefinition" name="draw_order"/>
         <option type="SpriteDefinition" name="sprite"/>
@@ -22,7 +27,9 @@
         <option type="TriggerDefinition" name="trigger"/>
         <option type="StaticCollisionDefinition" name="static_collision" />
         <array type="BindPointDefinition" name="bind_points"/>
-        <element type="Path" name="script" />
+        <element type="Path" name="client_script" />
+        <element type="Path" name="server_script" />
         <handle type="UIWidgetDefinition" name="ui"/>
+        <option type="ReplicateInfo" name="net_replicat_info"/>
     </asset>
 </schema>

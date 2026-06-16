@@ -2,23 +2,6 @@
 
 #include "common/context.hpp"
 #include "common/profile.hpp"
-#include "imgui.h"
-
-constexpr bool NullEventListenerID::operator==(EventListenerID id) const {
-    return static_cast<uint32_t>(id) == 0;
-}
-
-constexpr bool NullEventListenerID::operator!=(EventListenerID id) const {
-    return !(*this == id);
-}
-
-constexpr bool NullEventListenerID::operator==(NullEventListenerID) const {
-    return true;
-}
-
-constexpr bool NullEventListenerID::operator!=(NullEventListenerID) const {
-    return false;
-}
 
 void EventSystem::HandleEvent(const SDL_Event& event) {
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||

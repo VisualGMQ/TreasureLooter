@@ -44,6 +44,8 @@ public:
     void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
     void RemoveAllComponentsOnEntity(Entity) override;
 
+    const ClientConfig& GetConfig() const;
+
     std::unique_ptr<Window> m_window;
     std::unique_ptr<PlayerController> m_player_controller;
     std::unique_ptr<Keyboard> m_keyboard;
@@ -68,14 +70,18 @@ protected:
     ClientContext() = default;
 
     static std::unique_ptr<ClientContext> instance;
-private:
 
+private:
     void initImGui();
     void shutdownImGui();
 
     void logicUpdate(TimeType elapse);
     void logicPostUpdate(TimeType elapse);
     void renderUpdate(TimeType elapse);
+
+    void initClientConfig();
+
+    ClientConfig m_config;
 };
 
 #define CLIENT_CONTEXT ::ClientContext::GetInst()

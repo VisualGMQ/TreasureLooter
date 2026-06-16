@@ -14,6 +14,10 @@ void BindServerModule(lua_State* L) {
                                  int peer_count) {
                                  ctx->NetListen(addr, peer_count);
                              })
+                .addFunction("GetConfig",
+                             +[](ServerContext* ctx) -> const ServerConfig* {
+                                 return &ctx->GetConfig();
+                             })
             .endClass()
             .addFunction("GetContext", +[]() -> ServerContext* {
                 return &ServerContext::GetInst();

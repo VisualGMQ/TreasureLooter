@@ -1,7 +1,0 @@
-export type NetMsg = {
-{{#fields}}
-	{{{field}}}: (self: NetMsg) -> {{{type}}},
-	set_{{{field}}}: (self: NetMsg, value: {{{type}}}) -> (),
-	has_{{{field}}}: (self: NetMsg) -> boolean,
-{{/fields}}
-} & (() -> NetMsg)

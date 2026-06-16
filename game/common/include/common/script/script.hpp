@@ -13,9 +13,6 @@
 #include "common/script/luabridge_include.hpp"
 
 #include <string_view>
-#include <unordered_set>
-
-struct GameConfig;
 
 class ScriptBinaryData {
 public:
@@ -40,7 +37,7 @@ public:
     ScriptBinaryDataManager();
     ~ScriptBinaryDataManager();
 
-    void Initialize(const GameConfig&);
+    void Initialize(const std::unordered_map<std::string, std::string>& lua_paths);
 
     ScriptBinaryDataHandle Load(const Path& filename,
                                 bool force = false) override;
@@ -64,29 +61,6 @@ public:
     void Update();
     void Render();
 
-    void SubscribeEvent(std::string_view event_name);
-
-    template <typename T>
-    bool IsSubscribedToEventType() const {
-        return m_subscribed_events.count(TypeIndexGenerator::Get<T>()) != 0;
-    }
-
-    template <typename T>
-    void HandleEvent(const T& event, std::string_view event_name) {
-        TL_RETURN_IF_FALSE(m_L && m_table_ref != LUA_NOREF && m_inited);
-        TL_RETURN_IF_FALSE(IsSubscribedToEventType<T>());
-
-        std::string method;
-        method.reserve(event_name.size() + 2);
-        method = "On";
-        method.append(event_name);
-        auto prepare = prepareFn(method);
-        TL_RETURN_IF_FALSE(prepare);
-
-        auto result = prepare.m_fn(prepare.m_instance, event);
-        checkAndPrintErrorResult(result, method);
-    }
-
     int GetScriptTableRef() const { return m_table_ref; }
 
     lua_State* GetVM() const { return m_L; }
@@ -95,7 +69,7 @@ private:
     lua_State* m_L{};
     int m_table_ref{LUA_NOREF};
     Entity m_entity{};
-    std::unordered_set<TypeIndex> m_subscribed_events;
+    Path m_filename;
 
     bool m_inited = false;
 
@@ -131,35 +105,7 @@ public:
     void Update();
     void Render();
 
-    void SubscribeEvent(Entity entity, const std::string& event_name);
-
-    template <typename T>
-    void HandleEvent(const T& event, std::string_view event_name) {
-        auto level = COMMON_CONTEXT.m_scene_manager->GetCurrentScene();
-        TL_RETURN_IF_FALSE(level);
-
-        doHandleEvent(level->GetRootEntity(), event, event_name);
-    }
-
 private:
     void doUpdate(Entity);
     void doRender(Entity);
-
-    template <typename T>
-    void doHandleEvent(Entity entity, const T& event,
-                       std::string_view event_name) {
-        if (auto it = m_components.find(entity); it != m_components.end()) {
-            TL_RETURN_IF_FALSE(it->second.m_enable);
-
-            if (it->second.m_component->IsSubscribedToEventType<T>()) {
-                it->second.m_component->HandleEvent(event, event_name);
-            }
-        }
-
-        auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
-        TL_RETURN_IF_FALSE(relationship);
-        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            doHandleEvent(relationship->Get(i), event, event_name);
-        }
-    }
 };

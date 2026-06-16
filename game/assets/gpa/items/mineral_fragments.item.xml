@@ -39,7 +39,7 @@
             <item>Stackable</item>
         </behavior>
         <type>Mine</type>
-        <script>scripts/client/item_behavior.luau</script>
+        <client_script>scripts/client/item_behavior.luau</client_script>
     </payload>
 </ItemDefinition>
 

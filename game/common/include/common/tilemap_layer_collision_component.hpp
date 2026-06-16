@@ -9,7 +9,8 @@
 class TilemapLayerCollisionComponent {
 public:
     TilemapLayerCollisionComponent(Entity entity,
-                                   const TilemapLayerDefinition& create_info);
+                                   const TilemapLayerDefinition& create_info,
+                                   const Vec2UI& tile_in_chunk_size);
 
     [[nodiscard]] const TilemapLayer* GetLayer() const;
     [[nodiscard]] const Tilemap* GetTilemap() const;

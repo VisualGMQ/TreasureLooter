@@ -20,12 +20,14 @@
         <element name="right" type="float" default="0" />
         <element name="top" type="float" default="0" />
         <element name="bottom" type="float" default="0" />
-        <element name="scale" type="float" default="1.0f" />
+        <element name="border_scale" type="float" default="1.0f" />
     </class>
 
-    <enum name="EntityType">
-        <item name="Normal" />
-        <item name="Player" />
+    <enum name="ImageAddressMode">
+        <!--DON'T change default value! copied from SDL_TextureAddressMode directly -->
+        <item name="Auto" defualt="0"/>
+        <item name="Clamp" default="1"/>
+        <item name="Wrap" default="2"/>
     </enum>
 
     <enum name="FPSOption">

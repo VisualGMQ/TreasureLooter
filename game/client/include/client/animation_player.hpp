@@ -7,8 +7,8 @@ public:
     virtual ~AnimationTrackPlayerBase() = default;
     virtual void Update(TimeType) = 0;
     virtual void Rewind() = 0;
-    virtual AnimationTrackType GetType() const = 0;
-    virtual TimeType GetFinishTime() const = 0;
+    [[nodiscard]] virtual AnimationTrackType GetType() const = 0;
+    [[nodiscard]] virtual TimeType GetFinishTime() const = 0;
 };
 
 template <typename T>
@@ -51,13 +51,13 @@ public:
 
     virtual T GetValue() const = 0;
 
-    bool NeedSync() const { return m_cur_frame >= 0; }
+    [[nodiscard]] bool NeedSync() const { return m_cur_frame >= 0; }
 
     auto& GetTrack() const { return m_track; }
 
-    AnimationTrackType GetType() const override { return m_track.GetType(); }
+    [[nodiscard]] AnimationTrackType GetType() const override { return m_track.GetType(); }
 
-    TimeType GetFinishTime() const override { return m_track.GetFinishTime(); }
+    [[nodiscard]] TimeType GetFinishTime() const override { return m_track.GetFinishTime(); }
 
 protected:
     const IAnimationTrack<T>& m_track;
@@ -127,28 +127,28 @@ public:
     void Stop();
     void Rewind();
     void SetLoop(int);
-    bool IsPlaying() const;
+    [[nodiscard]] bool IsPlaying() const;
 
-    int GetLoopCount() const;
-    TimeType GetCurTime() const;
-    TimeType GetMaxTime() const;
+    [[nodiscard]] int GetLoopCount() const;
+    [[nodiscard]] TimeType GetCurTime() const;
+    [[nodiscard]] TimeType GetMaxTime() const;
 
     void ChangeAnimation(const Path& filename);
     void ChangeAnimation(AnimationHandle);
     void ChangeAnimation(UUIDv4);
     void ClearAnimation();
-    bool HasAnimation() const;
+    [[nodiscard]] bool HasAnimation() const;
 
     void Update(TimeType delta_time);
     void Sync(Entity entity);
 
     void SetRate(float rate);
-    float GetRate() const;
+    [[nodiscard]] float GetRate() const;
 
-    AnimationHandle GetAnimation() const;
+    [[nodiscard]] AnimationHandle GetAnimation() const;
 
     void EnableAutoPlay(bool enable);
-    bool IsAutoPlayEnabled() const;
+    [[nodiscard]] bool IsAutoPlayEnabled() const;
 
 private:
     AnimationHandle m_animation;

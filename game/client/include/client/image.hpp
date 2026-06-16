@@ -14,10 +14,10 @@ public:
     Image& operator=(Image&&) noexcept;
     ~Image();
 
-    Vec2 GetSize() const;
+    [[nodiscard]] Vec2 GetSize() const override;
 
-    [[nodiscard]] SDL_Texture* GetTexture() const;
-    void ChangeColorMask(const Color& color);
+    [[nodiscard]] SDL_Texture* GetTexture() const override;
+    void ChangeColorMask(const Color& color) override;
 
 private:
     SDL_Texture* m_texture{};

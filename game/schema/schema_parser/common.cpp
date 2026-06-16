@@ -110,25 +110,7 @@ MustacheManager::MustacheManager()
       m_cpp_asset_def_mustache{readMustache(
           "schema/schema_parser/mustaches/asset/cpp_asset_def.mustache")},
       m_cpp_asset_def_header_mustache{readMustache(
-          "schema/schema_parser/mustaches/asset/cpp_asset_def_header.mustache")},
-      m_proto_class_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/proto_class_luau.mustache")},
-      m_proto_net_msg_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/proto_net_msg_luau.mustache")},
-      m_proto_net_msg_wrapper_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/proto_net_msg_wrapper_luau.mustache")},
-      m_schema_class_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/schema_class_luau.mustache")},
-      m_schema_enum_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/schema_enum_luau.mustache")},
-      m_schema_flags_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/schema_flags_luau.mustache")},
-      m_schema_asset_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/schema_asset_luau.mustache")},
-      m_schema_filename_is_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/schema_filename_is_luau.mustache")},
-      m_schema_asset_manager_luau_mustache{readMustache(
-          "schema/schema_parser/mustaches/schema_hint/schema_asset_manager_luau.mustache")} {}
+          "schema/schema_parser/mustaches/asset/cpp_asset_def_header.mustache")} {}
 
 kainjow::mustache::mustache MustacheManager::readMustache(
     const std::filesystem::path& path) {

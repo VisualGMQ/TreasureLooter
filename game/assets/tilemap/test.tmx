@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="33">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="34">
  <tileset firstgid="1" source="TilesetFloor.tsx"/>
  <tileset firstgid="573" source="TilesetNature.tsx"/>
  <tileset firstgid="1077" source="TilesetHouse.tsx"/>
@@ -130,6 +130,9 @@
    <point/>
   </object>
   <object id="32" name="mineral_fragment_spawn_point2" x="328" y="329">
+   <point/>
+  </object>
+  <object id="33" name="weapon_spawn_point" x="201.024" y="240.148">
    <point/>
   </object>
  </objectgroup>

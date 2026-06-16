@@ -110,6 +110,10 @@ bool Trigger::IsTriggerEveryFrameWhenTouch() const {
     return m_trig_every_frame_when_touch;
 }
 
+Entity Trigger::GetOwner() const {
+    return m_entity;
+}
+
 void Trigger::Update() {
     TL_RETURN_IF_TRUE(m_physics_data.empty());
 

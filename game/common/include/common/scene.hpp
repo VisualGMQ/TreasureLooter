@@ -25,17 +25,17 @@ public:
 
     void PoseUpdate();
 
-    bool IsInited() const;
+    [[nodiscard]] bool IsInited() const;
 
     /**
      * instantiate entity but don't put into level scene
      */
-    Entity Instantiate(PrefabHandle);
+    Entity Instantiate(PrefabHandle, const Transform* = nullptr);
 
     void RemoveEntity(Entity);
 
-    Entity GetRootEntity() const;
-    virtual Entity GetUIRootEntity() const = 0;
+    [[nodiscard]] Entity GetRootEntity() const;
+    [[nodiscard]] virtual Entity GetUIRootEntity() const = 0;
 
 protected:
     virtual void registerEntity(Entity, const EntityInstance&) = 0;
@@ -68,7 +68,7 @@ public:
     
     virtual SceneHandle Create(SceneDefinitionHandle) = 0;
 
-    void Switch(SceneHandle);
+    virtual void Switch(SceneHandle);
 
     void PoseUpdate();
 

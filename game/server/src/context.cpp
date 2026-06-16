@@ -36,6 +36,19 @@
 
 std::unique_ptr<ServerContext> ServerContext::instance;
 
+void ServerContext::initServerConfig() {
+    auto handle = m_assets_manager->GetManager<ServerConfig>().Load(
+        std::string{"assets/gpa/server_config"} +
+        ServerConfig_AssetExtension.data());
+    if (!handle) {
+        LOGC("server config not found!");
+        SDL_Quit();
+        return;
+    }
+    m_config = *handle;
+    m_assets_manager->GetManager<ServerConfig>().Unload(handle);
+}
+
 void ServerContext::Init() {
     if (!instance) {
         instance = std::unique_ptr<ServerContext>(new ServerContext());
@@ -60,10 +73,12 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_scene_manager = std::make_unique<ServerSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
 
-    CommonContext::initGameConfig();
+    // must call here, due to it rely on assets manager
+    CommonContext::initCommonConfig();
 
-    m_assets_manager->GetManager<ScriptBinaryData>().Initialize(
-        GetGameConfig());
+    initServerConfig();
+
+    m_assets_manager->GetManager<ScriptBinaryData>().Initialize(m_config.m_lua_paths);
 
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 
@@ -72,7 +87,14 @@ void ServerContext::Initialize(int argc, char** argv) {
         BindServerModule(L);
     });
 
-    m_time->SetFPS(60);
+    InitGlobalScript(m_config.m_global_script);
+
+
+    SceneHandle level =
+        m_assets_manager->GetManager<Scene>().Load(GetCommonConfig().m_entry_scene);
+    m_scene_manager->Switch(level);
+
+    m_time->SetFPS(24);
 }
 
 void ServerContext::HandleEvents(const SDL_Event& event) {
@@ -99,13 +121,20 @@ void ServerContext::Update() {
 
     m_time->Update();
 
+    if (m_global_script) {
+        m_global_script->Update();
+    }
     m_script_component_manager->Update();
 
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
-    m_net_host->Flush();
+
+    if (m_net_host) {
+        m_net_host->Flush();
+    }
+
     m_event_system->Update();
     m_timer_manager->Update(elapse_time);
 
@@ -115,10 +144,27 @@ void ServerContext::Update() {
 }
 
 void ServerContext::Shutdown() {
+    m_global_script.reset();
     m_script_component_manager->Clear();
     m_scene_manager->Switch({});
 
     CommonContext::Shutdown();
+}
+
+const ServerConfig& ServerContext::GetConfig() const {
+    return m_config;
+}
+
+void ServerContext::AttachComponentsOnEntity(Entity entity,
+                                             const EntityInstance& instance) {
+    CommonContext::AttachComponentsOnEntity(entity, instance);
+
+    auto& prefab = *instance.m_prefab;
+    if (!prefab.m_server_script.empty()) {
+        auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
+        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_server_script);
+        m_script_component_manager->RegisterEntity(entity, entity, handle);
+    }
 }
 
 void ServerContext::NetListen(const NetAddress& address, int peer_count) {

@@ -1,0 +1,221 @@
+<SceneDefinition>
+	<uuid>07d509e2-002a-4db5-a6d9-34be27027a2f</uuid>
+	<payload>
+		<script_path/>
+		<entities>
+			<elem>
+				<transform>
+					<value>
+						<position x="700.000000" y="400.000000"/>
+						<scale x="400.000000" y="200.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>
+					<uuid>d87218d6-4452-4246-b3b0-e8ae182ac0ce</uuid>
+					<payload>
+						<name>
+							<value>StartGameButton</value>
+						</name>
+						<client_script/>
+						<ui>
+							<uuid>bbe9f475-5641-4b22-8edb-6ce298dc6fcf</uuid>
+							<payload>
+								<anchor>
+									<item>None</item>
+								</anchor>
+								<enable_draw>true</enable_draw>
+								<use_clip>true</use_clip>
+								<disabled>false</disabled>
+								<selected>false</selected>
+								<can_be_selected>false</can_be_selected>
+								<text>
+									<value>
+										<text>Start Game</text>
+										<font>assets/fonts/zpix.ttf</font>
+										<font_size>64</font_size>
+										<color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+										<align>Center</align>
+										<resize_by_text>false</resize_by_text>
+									</value>
+								</text>
+								<normal_theme>
+									<background_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+									<border_color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+									<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+									<image>assets/UI/Theme/ThemeWood/button_normal.png</image>
+									<image_9grid>
+										<left>2.000000</left>
+										<right>2.000000</right>
+										<top>2.000000</top>
+										<bottom>2.000000</bottom>
+										<border_scale>10.000000</border_scale>
+									</image_9grid>
+								</normal_theme>
+								<down_theme>
+									<value>
+										<background_color r="0.000000" g="1.000000" b="1.000000" a="1.000000"/>
+										<border_color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+										<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+										<image>assets/UI/Theme/ThemeWood/button_pressed.png</image>
+										<image_9grid>
+											<left>2.000000</left>
+											<right>2.000000</right>
+											<top>2.000000</top>
+											<bottom>2.000000</bottom>
+											<border_scale>10.000000</border_scale>
+										</image_9grid>
+									</value>
+								</down_theme>
+								<padding x="0.000000" y="0.000000"/>
+								<margin x="0.000000" y="0.000000"/>
+							</payload>
+						</ui>
+					</payload>
+				</prefab>
+			</elem>
+			<elem>
+				<transform>
+					<value>
+						<position x="700.000000" y="600.000000"/>
+						<scale x="400.000000" y="100.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>
+					<uuid>17256dab-45d4-4b27-ae4d-25e862871e1e</uuid>
+					<payload>
+						<name>
+							<value>IPTextInput</value>
+						</name>
+						<client_script/>
+						<ui>
+							<uuid>9215ca92-c81d-4117-91d1-553d73d40113</uuid>
+							<payload>
+								<anchor>
+									<item>None</item>
+								</anchor>
+								<enable_draw>true</enable_draw>
+								<use_clip>true</use_clip>
+								<disabled>false</disabled>
+								<selected>false</selected>
+								<can_be_selected>false</can_be_selected>
+								<text_input>
+									<value>
+										<text>Please Input Server IP</text>
+										<font>assets/fonts/zpix.ttf</font>
+										<font_size>24</font_size>
+										<color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+										<align>Center</align>
+									</value>
+								</text_input>
+								<normal_theme>
+									<background_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+									<border_color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+									<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+									<image>assets/UI/Theme/ThemeWood/button_normal.png</image>
+									<image_9grid>
+										<left>2.000000</left>
+										<right>2.000000</right>
+										<top>2.000000</top>
+										<bottom>2.000000</bottom>
+										<border_scale>10.000000</border_scale>
+									</image_9grid>
+								</normal_theme>
+								<down_theme>
+									<value>
+										<background_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+										<border_color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+										<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+										<image>assets/UI/Theme/ThemeWood/button_pressed.png</image>
+										<image_9grid>
+											<left>2.000000</left>
+											<right>2.000000</right>
+											<top>2.000000</top>
+											<bottom>2.000000</bottom>
+											<border_scale>10.000000</border_scale>
+										</image_9grid>
+									</value>
+								</down_theme>
+								<padding x="0.000000" y="0.000000"/>
+								<margin x="0.000000" y="0.000000"/>
+							</payload>
+						</ui>
+					</payload>
+				</prefab>
+			</elem>
+			<elem>
+				<transform>
+					<value>
+						<position x="700.000000" y="700.000000"/>
+						<scale x="400.000000" y="200.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>
+					<uuid>fce3df56-40fa-45c8-a616-fe86b71c7e24</uuid>
+					<payload>
+						<name>
+							<value>ConnectButton</value>
+						</name>
+						<client_script/>
+						<ui>
+							<uuid>df29b744-5fca-411a-b041-4bdd10179ac9</uuid>
+							<payload>
+								<anchor>
+									<item>None</item>
+								</anchor>
+								<enable_draw>true</enable_draw>
+								<use_clip>true</use_clip>
+								<disabled>false</disabled>
+								<selected>false</selected>
+								<can_be_selected>false</can_be_selected>
+								<text>
+									<value>
+										<text>Connect To Server</text>
+										<font>assets/fonts/zpix.ttf</font>
+										<font_size>24</font_size>
+										<color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+										<align>Center</align>
+										<resize_by_text>false</resize_by_text>
+									</value>
+								</text>
+								<normal_theme>
+									<background_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+									<border_color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+									<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+									<image>assets/UI/Theme/ThemeWood/button_normal.png</image>
+									<image_9grid>
+										<left>0.000000</left>
+										<right>0.000000</right>
+										<top>0.000000</top>
+										<bottom>0.000000</bottom>
+										<border_scale>1.000000</border_scale>
+									</image_9grid>
+								</normal_theme>
+								<down_theme>
+									<value>
+										<background_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+										<border_color r="0.000000" g="0.000000" b="0.000000" a="1.000000"/>
+										<foreground_color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+										<image>assets/UI/Theme/ThemeWood/button_pressed.png</image>
+										<image_9grid>
+											<left>2.000000</left>
+											<right>2.000000</right>
+											<top>2.000000</top>
+											<bottom>2.000000</bottom>
+											<border_scale>10.000000</border_scale>
+										</image_9grid>
+									</value>
+								</down_theme>
+								<padding x="0.000000" y="0.000000"/>
+								<margin x="0.000000" y="0.000000"/>
+							</payload>
+						</ui>
+					</payload>
+				</prefab>
+			</elem>
+		</entities>
+	</payload>
+</SceneDefinition>
+

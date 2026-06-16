@@ -32,6 +32,7 @@ class CollisionGroup;
 class CharacterController;
 class Trigger;
 class Image;
+class UITextInput;
 
 void InstanceDisplay(const char* name, int& value);
 void InstanceDisplay(const char* name, const int& value);
@@ -90,6 +91,8 @@ void InstanceDisplay(const char* name, const Trigger::PhysicsData&);
 void InstanceDisplay(const char* name, PhysicsShape&);
 void InstanceDisplay(const char* name, const Color&);
 void InstanceDisplay(const char* name, Color&);
+void InstanceDisplay(const char* name, UITextInput&);
+void InstanceDisplay(const char* name, const UITextInput&);
 
 template <typename T>
 void ShowSelectAssetFileDialog(Handle<T>& value,

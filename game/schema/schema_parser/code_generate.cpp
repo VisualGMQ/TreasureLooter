@@ -198,10 +198,6 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
         include_datas << kainjow::mustache::data{
             "include",
             include_mustache.render({"filename", "\"common/handle.hpp\""})};
-        include_datas << kainjow::mustache::data{
-            "include",
-            include_mustache.render(
-                {"filename", "\"common/script/script_handle_binding.hpp\""})};
     }
 
     for (auto& import_filename : schema_info.m_imports) {
@@ -1470,38 +1466,6 @@ bool IsLuauPrimitiveType(const std::string& name) {
     return name == "number" || name == "string" || name == "boolean";
 }
 
-std::string EnsureTLPrefixForSchema(
-    const std::string& luau_type,
-    const std::unordered_set<std::string>& schema_defined_type_names) {
-    std::string out;
-    out.reserve(luau_type.size() * 2);
-    for (size_t i = 0; i < luau_type.size();) {
-        if (luau_type[i] == ' ' || luau_type[i] == '{' || luau_type[i] == '}' ||
-            luau_type[i] == ',' || luau_type[i] == '?' || luau_type[i] == ':') {
-            out += luau_type[i++];
-            continue;
-        }
-        if ((luau_type[i] >= 'a' && luau_type[i] <= 'z') ||
-            (luau_type[i] >= 'A' && luau_type[i] <= 'Z') ||
-            luau_type[i] == '_') {
-            size_t start = i;
-            while (i < luau_type.size() &&
-                   (std::isalnum(static_cast<unsigned char>(luau_type[i])) ||
-                    luau_type[i] == '_'))
-                ++i;
-            std::string id = luau_type.substr(start, i - start);
-            const bool is_primitive = IsLuauPrimitiveType(id);
-            const bool is_schema_type =
-                (schema_defined_type_names.count(id) != 0);
-            if (!is_primitive && !is_schema_type) out += "TL.";
-            out += id;
-            continue;
-        }
-        out += luau_type[i++];
-    }
-    return out;
-}
-
 bool IsLuaKeyword(const std::string& name) {
     static const std::unordered_set<std::string> keywords = {
         "and",      "break",  "do",   "else", "elseif", "end",   "false", "for",
@@ -1552,319 +1516,145 @@ std::string CppToLuauForProto(const std::string& cpp_type) {
     return cpp_type;
 }
 
-std::string GenerateClassLuauType(
-    const ClassInfo& info,
-    const std::unordered_set<std::string>& schema_defined_type_names,
-    bool use_tl_prefix) {
-    std::string out = "export type " + info.m_name + " = {\n";
-    for (const auto& p : info.m_properties) {
-        std::string luau_type = ConvertCppTypeToLuauType(p.m_type);
-        if (p.m_is_optional && luau_type.back() != '?') luau_type += "?";
-        if (use_tl_prefix)
-            luau_type =
-                EnsureTLPrefixForSchema(luau_type, schema_defined_type_names);
-        std::string key = IsLuaKeyword(p.m_name) ? ("[\"" + p.m_name + "\"]")
-                                                 : "m_" + p.m_name;
-        out += "\t" + key + ": " + luau_type + ",\n";
-    }
-    out += "} & (() -> " + info.m_name + ")\n";
-    return out;
-}
+std::string GenerateSchemaTypesLuauDefinitionCode(
+    const SchemaInfoManager& manager) {
+    // Emits a luau-lsp definition file (schema.d.luau): every schema type is a
+    // global `export type`, and the runtime `TL_Schema` namespace is declared
+    // as a global value via `declare`. Mirrors the namespace produced by
+    // schema/binding/binding.cpp (`beginNamespace("TL_Schema")`).
+    std::string types;
+    std::string ns;  // body of `declare TL_Schema: { ... }`
 
-std::string GenerateEnumLuauType(const EnumInfo& info) {
-    std::string out = "export type " + info.m_name + " = {\n";
-    for (const auto& item : info.m_items) {
-        std::string key = IsLuaKeyword(item.m_name)
-                              ? ("[\"" + item.m_name + "\"]")
-                              : item.m_name;
-        out += "\t" + key + ": number,\n";
-    }
-    out += "}\n";
-    return out;
-}
-
-std::string GenerateAssetHandleLuauType(const std::string& asset_class_name) {
-    std::string handle_name = asset_class_name + "Handle";
-    return "export type " + handle_name +
-           " = { IsValid: (self: " + handle_name + ") -> boolean, " +
-           "GetFilename: (self: " + handle_name + ") -> Path?, " +
-           "GetUUID: (self: " + handle_name + ") -> UUID } & " +
-           asset_class_name + "\n";
-}
-
-std::string GenerateAssetLoadSaveLuauTypes(
-    const std::string& asset_class_name) {
-    std::string out;
-    out += "export type LoadAsset" + asset_class_name + " = (path: Path) -> " +
-           asset_class_name + "\n";
-    out += "export type SaveAsset" + asset_class_name +
-           " = (handle: " + asset_class_name + "Handle, path: Path) -> ()\n";
-    return out;
-}
-
-std::string GenerateAssetFilenameIsLuauType(
-    const std::string& asset_class_name) {
-    return "export type FilenameIs" + asset_class_name +
-           " = (filename: Path) -> boolean\n";
-}
-
-std::string GenerateFlagsLuauType(const std::string& enum_class_name) {
-    const std::string flags_name = enum_class_name + "Flags";
-    std::string out;
-    out += "export type " + flags_name + " = {\n";
-    out += "\tValue: (self: " + flags_name + ") -> number,\n";
-    out += "\tHas: (self: " + flags_name + ", value: " + enum_class_name +
-           ") -> boolean,\n";
-    out += "\tRemove: (self: " + flags_name + ", value: " + enum_class_name +
-           ") -> (),\n";
-    out += "\t__bor: (self: " + flags_name + ", value: " + enum_class_name +
-           ") -> " + flags_name + ",\n";
-    out += "\t__band: (self: " + flags_name + ", value: " + enum_class_name +
-           ") -> " + flags_name + ",\n";
-    out += "\t__bnot: (self: " + flags_name + ") -> " + flags_name + ",\n";
-    out += "\t__tostring: (self: " + flags_name + ") -> string,\n";
-    out += "} & (() -> " + flags_name + ") & ((" + enum_class_name + ") -> " +
-           flags_name + ") & ((number) -> " + flags_name + ")\n";
-    return out;
-}
-
-std::string GenerateGenericAssetManagerLuauType(
-    const std::string& asset_class_name) {
-    const std::string manager_name = asset_class_name + "AssetManager";
-    const std::string handle_name = asset_class_name + "Handle";
-    std::string out;
-    out += "export type " + manager_name + " = {\n";
-    out += "\tCreate: (self: " + manager_name + ") -> " + handle_name + ",\n";
-    out += "\tLoad: (self: " + manager_name +
-           ", path: string, force: boolean?) -> " + handle_name + ",\n";
-    out += "\tFind: (self: " + manager_name + ", path: string) -> " +
-           handle_name + ",\n";
-    out += "\tUnload: (self: " + manager_name + ", handle: " + handle_name +
-           ") -> (),\n";
-    out += "\tReload: (self: " + manager_name + ", handle: " + handle_name +
-           ") -> (),\n";
-    out += "\tClear: (self: " + manager_name + ") -> (),\n";
-    out += "}\n";
-    return out;
-}
-
-std::string GenerateSchemaTypesLuauCode(const SchemaInfoManager& manager) {
-    std::unordered_set<std::string> schema_defined_type_names;
-    for (const auto& schema : manager.m_infos) {
-        for (const auto& clazz : schema.m_classes) {
-            schema_defined_type_names.insert(clazz.m_name);
-            if (clazz.is_asset)
-                schema_defined_type_names.insert(clazz.m_name + "Handle");
-            for (const auto& prop : clazz.m_properties) {
-                if (prop.m_is_flags) {
-                    std::string flags_inner =
-                        extractFlagsInnerType(prop.m_type);
-                    if (!flags_inner.empty())
-                        schema_defined_type_names.insert(flags_inner + "Flags");
-                }
-            }
-        }
-        for (const auto& enum_info : schema.m_enums)
-            schema_defined_type_names.insert(enum_info.m_name);
-    }
-
-    auto& class_t = MustacheManager::GetInst().m_schema_class_luau_mustache;
-    auto& enum_t = MustacheManager::GetInst().m_schema_enum_luau_mustache;
-    auto& flags_t = MustacheManager::GetInst().m_schema_flags_luau_mustache;
-    auto& asset_t = MustacheManager::GetInst().m_schema_asset_luau_mustache;
-    auto& fnis_t =
-        MustacheManager::GetInst().m_schema_filename_is_luau_mustache;
-    auto& amgr_t =
-        MustacheManager::GetInst().m_schema_asset_manager_luau_mustache;
-
-    std::string out;
     std::unordered_set<std::string> emitted_classes;
     std::unordered_set<std::string> emitted_enums;
     std::unordered_set<std::string> emitted_handles;
     std::unordered_set<std::string> emitted_flags;
-    std::unordered_set<std::string> emitted_generic_asset_managers;
+    std::unordered_set<std::string> emitted_asset_managers;
     std::unordered_set<std::string> emitted_filename_is_types;
-    std::vector<std::string> generic_asset_types;
 
-    bool use_tl_prefix = false;
     for (const auto& schema : manager.m_infos) {
         for (const auto& clazz : schema.m_classes) {
-            if (emitted_classes.insert(clazz.m_name).second) {
-                kainjow::mustache::data cdata;
-                cdata.set("class_name", clazz.m_name);
-                kainjow::mustache::data props{
-                    kainjow::mustache::data::type::list};
+            const std::string& name = clazz.m_name;
+            if (emitted_classes.insert(name).second) {
+                types += "export type " + name + " = {\n";
                 for (const auto& p : clazz.m_properties) {
-                    std::string luau_type =
-                        ConvertCppTypeToLuauType(p.m_type);
+                    std::string luau_type = ConvertCppTypeToLuauType(p.m_type);
                     if (p.m_is_optional && luau_type.back() != '?')
                         luau_type += "?";
-                    if (use_tl_prefix)
-                        luau_type = EnsureTLPrefixForSchema(
-                            luau_type, schema_defined_type_names);
-                    std::string key =
-                        IsLuaKeyword(p.m_name)
-                            ? ("[\"" + p.m_name + "\"]")
-                            : "m_" + p.m_name;
-                    kainjow::mustache::data pd;
-                    pd.set("key", key);
-                    pd.set("luau_type", luau_type);
-                    props << pd;
+                    std::string key = IsLuaKeyword(p.m_name)
+                                          ? ("[\"" + p.m_name + "\"]")
+                                          : "m_" + p.m_name;
+                    types += "\t" + key + ": " + luau_type + ",\n";
                 }
-                cdata.set("properties", props);
-                out += class_t.render(cdata) + "\n";
+                types += "}\n\n";
+
+                // every schema class has addConstructor<void()>
+                ns += "\t" + name + ": () -> " + name + ",\n";
             }
-            if (clazz.is_asset &&
-                emitted_handles.insert(clazz.m_name + "Handle").second) {
-                kainjow::mustache::data adata;
-                adata.set("class_name", clazz.m_name);
-                adata.set("handle_name", clazz.m_name + "Handle");
-                out += asset_t.render(adata);
-            }
-            if (clazz.is_asset &&
-                emitted_filename_is_types.insert(clazz.m_name).second) {
-                out += fnis_t.render({"class_name", clazz.m_name});
-            }
-            if (clazz.is_asset &&
-                emitted_generic_asset_managers.insert(clazz.m_name).second) {
-                generic_asset_types.push_back(clazz.m_name);
-                kainjow::mustache::data mdata;
-                mdata.set("class_name", clazz.m_name);
-                mdata.set("handle_name", clazz.m_name + "Handle");
-                out += amgr_t.render(mdata);
+
+            if (clazz.is_asset) {
+                const std::string handle = name + "Handle";
+                if (emitted_handles.insert(handle).second) {
+                    types += "export type " + handle +
+                             " = { IsValid: (self: " + handle +
+                             ") -> boolean, GetFilename: (self: " + handle +
+                             ") -> Path?, GetUUID: (self: " + handle +
+                             ") -> UUID } & " + name + "\n\n";
+
+                    // handle has addConstructor<void()> (see BindHandle)
+                    ns += "\t" + handle + ": () -> " + handle + ",\n";
+                }
+                const std::string mgr = name + "AssetManager";
+                if (emitted_asset_managers.insert(mgr).second) {
+                    types += "export type " + mgr + " = {\n";
+                    types += "\tCreate: (self: " + mgr + ") -> " + handle +
+                             ",\n";
+                    types += "\tLoad: (self: " + mgr +
+                             ", path: Path, force: boolean?) -> " + handle +
+                             ",\n";
+                    types += "\tFind: (self: " + mgr + ", path: Path) -> " +
+                             handle + ",\n";
+                    types += "\tUnload: (self: " + mgr + ", handle: " + handle +
+                             ") -> (),\n";
+                    types += "\tReload: (self: " + mgr + ", handle: " + handle +
+                             ") -> (),\n";
+                    types += "\tClear: (self: " + mgr + ") -> (),\n";
+                    types += "}\n\n";
+                }
+                if (emitted_filename_is_types.insert(name).second) {
+                    types += "export type FilenameIs" + name +
+                             " = (filename: Path) -> boolean\n\n";
+                }
+                ns += "\tLoadAsset" + name + ": (path: Path) -> " + name + ",\n";
+                ns += "\tSaveAsset" + name + ": (handle: " + handle +
+                      ", path: Path) -> (),\n";
+                ns += "\tFilenameIs" + name + ": (filename: Path) -> boolean,\n";
             }
         }
+
         for (const auto& cpp_def : schema.m_cpp_asset_defs) {
             if (emitted_filename_is_types.insert(cpp_def.m_asset_name).second) {
-                out += fnis_t.render({"class_name", cpp_def.m_asset_name});
+                types += "export type FilenameIs" + cpp_def.m_asset_name +
+                         " = (filename: Path) -> boolean\n\n";
+                ns += "\tFilenameIs" + cpp_def.m_asset_name +
+                      ": (filename: Path) -> boolean,\n";
             }
         }
+
         for (const auto& enum_info : schema.m_enums) {
-            if (emitted_flags.insert(enum_info.m_name).second) {
-                kainjow::mustache::data fdata;
-                fdata.set("flags_name", enum_info.m_name + "Flags");
-                fdata.set("enum_name", enum_info.m_name);
-                out += flags_t.render(fdata);
-            }
-            if (emitted_enums.insert(enum_info.m_name).second) {
-                kainjow::mustache::data edata;
-                edata.set("enum_name", enum_info.m_name);
-                kainjow::mustache::data items{
-                    kainjow::mustache::data::type::list};
+            const std::string& ename = enum_info.m_name;
+            if (emitted_enums.insert(ename).second) {
+                // enum values are plain integers at runtime
+                types += "export type " + ename + " = number\n\n";
+
+                // value table under TL_Schema (e.g. TL_Schema.Foo.Bar)
+                ns += "\t" + ename + ": {\n";
                 for (const auto& item : enum_info.m_items) {
                     std::string key = IsLuaKeyword(item.m_name)
                                           ? ("[\"" + item.m_name + "\"]")
                                           : item.m_name;
-                    items << kainjow::mustache::data{"key", key};
+                    ns += "\t\t" + key + ": number,\n";
                 }
-                edata.set("items", items);
-                out += enum_t.render(edata) + "\n";
+                ns += "\t},\n";
+            }
+            const std::string flags = ename + "Flags";
+            if (emitted_flags.insert(flags).second) {
+                types += "export type " + flags + " = {\n";
+                types += "\tValue: (self: " + flags + ") -> number,\n";
+                types += "\tHas: (self: " + flags + ", value: " + ename +
+                         ") -> boolean,\n";
+                types += "\tRemove: (self: " + flags + ", value: " + ename +
+                         ") -> (),\n";
+                types += "\t__bor: (self: " + flags + ", value: " + ename +
+                         ") -> " + flags + ",\n";
+                types += "\t__band: (self: " + flags + ", value: " + ename +
+                         ") -> " + flags + ",\n";
+                types += "\t__bnot: (self: " + flags + ") -> " + flags + ",\n";
+                types += "\t__tostring: (self: " + flags + ") -> string,\n";
+                types += "}\n\n";
+
+                ns += "\t" + flags + ": (() -> " + flags + ") & ((" + ename +
+                      ") -> " + flags + ") & ((number) -> " + flags + "),\n";
             }
         }
     }
 
-    out += "\n-- Schema values (enums, FilenameIs*, asset managers, "
-           "LoadAsset*, etc.) are "
-           "bound under TL_Schema.\n";
-    return out;
-}
-
-std::string GenerateProtoTypesLuauCode(const SchemaInfoManager& mgr) {
     std::string out;
-    auto& class_t = MustacheManager::GetInst().m_proto_class_luau_mustache;
-    auto& net_msg_t = MustacheManager::GetInst().m_proto_net_msg_luau_mustache;
-    auto& wrapper_t =
-        MustacheManager::GetInst().m_proto_net_msg_wrapper_luau_mustache;
-
-    for (auto& schema_info : mgr.m_infos) {
-        for (auto& class_info : schema_info.m_classes) {
-            if (!class_info.ShouldGenProto()) {
-                continue;
-            }
-
-            kainjow::mustache::data cdata;
-            cdata.set("class_name", class_info.m_name);
-            cdata.set("has_schema", true);
-
-            kainjow::mustache::data fields_list{
-                kainjow::mustache::data::type::list};
-            for (auto& property : class_info.m_properties) {
-                if (!property.m_proto_id) {
-                    continue;
-                }
-
-                kainjow::mustache::data fdata;
-                fdata.set("field", "m_" + property.m_name);
-                fdata.set("luau_type", CppToLuauForProto(property.m_type));
-
-                bool is_message =
-                    CppTypeToProtoType.find(property.m_type) ==
-                    CppTypeToProtoType.end();
-                if (is_message) {
-                    fdata.set("has_has", true);
-                }
-                fields_list << fdata;
-            }
-            cdata.set("fields", fields_list);
-
-            out += class_t.render(cdata) + "\n";
-        }
-    }
-
-    // NetMsg oneof type
-    {
-        kainjow::mustache::data ndata;
-        kainjow::mustache::data nfields{kainjow::mustache::data::type::list};
-        for (auto& schema_info : mgr.m_infos) {
-            for (auto& class_info : schema_info.m_classes) {
-                if (!class_info.m_proto_id) {
-                    continue;
-                }
-                kainjow::mustache::data fdata;
-                fdata.set("field",
-                          "m_" + toSnakeCase(class_info.m_name));
-                fdata.set("type", class_info.m_name);
-                fdata.set("has_has", true);
-                nfields << fdata;
-            }
-            for (auto& enum_info : schema_info.m_enums) {
-                if (!enum_info.m_proto_id) {
-                    continue;
-                }
-                kainjow::mustache::data fdata;
-                fdata.set("field",
-                          "m_" + toSnakeCase(enum_info.m_name));
-                fdata.set("type", enum_info.m_name);
-                fdata.set("has_has", true);
-                nfields << fdata;
-            }
-        }
-        ndata.set("fields", nfields);
-        out += net_msg_t.render(ndata) + "\n";
-    }
-
-    // NetMsg<proto::T> wrapper types
-    for (auto& schema_info : mgr.m_infos) {
-        for (auto& class_info : schema_info.m_classes) {
-            if (!class_info.m_proto_id) {
-                continue;
-            }
-            kainjow::mustache::data wdata;
-            wdata.set("wrapper_name", "NetMsg_" + class_info.m_name);
-            wdata.set("type", class_info.m_name);
-            out += wrapper_t.render(wdata) + "\n";
-        }
-        for (auto& enum_info : schema_info.m_enums) {
-            if (!enum_info.m_proto_id) {
-                continue;
-            }
-            kainjow::mustache::data wdata;
-            wdata.set("wrapper_name", "NetMsg_" + enum_info.m_name);
-            wdata.set("type", enum_info.m_name);
-            out += wrapper_t.render(wdata) + "\n";
-        }
-    }
-
+    out += "--!strict\n";
+    out += "----------------- GENERATED BY schema_parser, DON'T MODIFY! "
+           "-----------------\n";
+    out += "-- luau-lsp definition file for the `TL_Schema` C++ binding "
+           "namespace.\n";
+    out += "-- Loaded through luau-lsp's `types.definitionFiles`; all types "
+           "below are global\n";
+    out += "-- and `TL_Schema` is a global value (no `require` needed). "
+           "Depends on common.d.luau.\n\n";
+    out += types;
+    out += "-- The runtime global table created by "
+           "`beginNamespace(\"TL_Schema\")`.\n";
+    out += "declare TL_Schema: {\n";
+    out += ns;
+    out += "}\n";
     return out;
 }
 

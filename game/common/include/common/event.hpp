@@ -10,10 +10,21 @@
 enum class EventListenerID : uint32_t {};
 
 struct NullEventListenerID {
-    constexpr bool operator==(EventListenerID) const;
-    constexpr bool operator!=(EventListenerID) const;
-    constexpr bool operator==(NullEventListenerID) const;
-    constexpr bool operator!=(NullEventListenerID) const;
+    constexpr bool operator==(EventListenerID id) const {
+        return static_cast<uint32_t>(id) == 0;
+    }
+    constexpr bool operator!=(EventListenerID id) const {
+        return !(*this == id);
+    }
+    constexpr bool operator==(NullEventListenerID) const {
+        return true;
+    }
+    constexpr bool operator!=(NullEventListenerID) const {
+        return false;
+    }
+    constexpr operator EventListenerID() const {
+        return static_cast<EventListenerID>(0);
+    }
 };
 
 constexpr NullEventListenerID null_event_listener_id;

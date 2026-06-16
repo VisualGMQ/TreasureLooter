@@ -5,7 +5,6 @@
 #include "common/path.hpp"
 #include "common/profile.hpp"
 #include "common/script/script_binding.hpp"
-#include "common/script/script_event_registry.hpp"
 #include "common/script/script_require.hpp"
 #include "common/storage.hpp"
 
@@ -75,8 +74,8 @@ ScriptBinaryDataManager::~ScriptBinaryDataManager() {
     if (m_L) lua_close(m_L);
 }
 
-void ScriptBinaryDataManager::Initialize(const GameConfig& game_config) {
-    for (auto& [name, path] : game_config.m_lua_paths) {
+void ScriptBinaryDataManager::Initialize(const std::unordered_map<std::string, std::string>& lua_paths) {
+    for (auto& [name, path] : lua_paths) {
         m_require_context.RegisterAliasPath(name, path);
     }
 
@@ -178,17 +177,18 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
     TL_RETURN_IF_NULL_WITH_LOG(m_L, LOGE, "[Luau]: VM is null");
 
     std::string script_path = handle->GetPath().string();
+    m_filename = script_path;
 
     bool from_cache = LuauRequireContext::GetCached(m_L, script_path);
     if (!from_cache) {
         const std::vector<char>& source = handle->GetContent();
         TL_RETURN_IF_FALSE_WITH_LOG(!source.empty(), LOGE,
-                                    "[Luau]: script content empty");
+                                    "[Luau]: script {} content empty", m_filename);
 
         size_t bytecode_size = 0;
         char* bytecode =
             luau_compile(source.data(), source.size(), nullptr, &bytecode_size);
-        TL_RETURN_IF_NULL_WITH_LOG(bytecode, LOGE, "[Luau]: compile failed");
+        TL_RETURN_IF_NULL_WITH_LOG(bytecode, LOGE, "[Luau]: compile {} failed", m_filename);
 
         int load_result = luau_load(m_L, handle->GetClassName().c_str(),
                                     bytecode, bytecode_size, 0);
@@ -196,7 +196,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
 
         if (load_result != 0) {
             const char* err = lua_tostring(m_L, -1);
-            LOGE("[Luau]: load failed: {}", err ? err : "unknown");
+            LOGE("[Luau]: load {} failed: {}", m_filename, err ? err : "unknown");
             lua_pop(m_L, 1);
             return;
         }
@@ -204,7 +204,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
         int pcall_result = lua_pcall(m_L, 0, 1, 0);
         if (pcall_result != LUA_OK) {
             const char* err = lua_tostring(m_L, -1);
-            LOGE("[Luau]: script run failed: {}", err ? err : "unknown");
+            LOGE("[Luau]: script {} run failed: {}", m_filename, err ? err : "unknown");
             lua_pop(m_L, 1);
             return;
         }
@@ -213,8 +213,9 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
     }
 
     if (!lua_istable(m_L, -1)) {
-        LOGE("[Luau]: script must return a table: name {}, with OnInit & "
+        LOGE("[Luau]: script {} must return a table: name {}, with OnInit & "
              "OnUpdate & OnRender & OnQuit",
+             m_filename,
              handle->GetClassName());
         lua_pop(m_L, 1);
         return;
@@ -264,22 +265,6 @@ void Script::Render() {
     callMethodNoArg("OnRender");
 }
 
-void Script::SubscribeEvent(std::string_view event_name) {
-    if (auto id = ScriptEventRegistry::Lookup(event_name);
-        id != kInvalidTypeIndex) {
-        m_subscribed_events.insert(id);
-    } else {
-        LOGE("[Script]: SubscribeEvent unknown name: {}", event_name);
-    }
-}
-
-void ScriptComponentManager::SubscribeEvent(Entity entity,
-                                            const std::string& event_name) {
-    if (Script* script = Get(entity)) {
-        script->SubscribeEvent(event_name);
-    }
-}
-
 void Script::callMethodNoArg(const char* method) {
     auto prepare = prepareFn(method);
     TL_RETURN_IF_FALSE(prepare);
@@ -317,7 +302,7 @@ void Script::checkAndPrintErrorResult(const luabridge::LuaResult& result,
     bool success = std::any_of(msg.begin(), msg.end(), [](unsigned char ch) {
         return !std::isspace(ch);
     });
-    LOGE("[Luau] {}: {}", method, success ? msg : fallback);
+    LOGE("[Luau] {} {}: {}", m_filename, method, success ? msg : fallback);
 }
 
 Script::PrepareInfo Script::prepareFn(std::string_view method) {

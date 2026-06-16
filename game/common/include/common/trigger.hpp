@@ -70,6 +70,7 @@ public:
 
     void EnableTriggerEveryFrameWhenTouch(bool);
     bool IsTriggerEveryFrameWhenTouch() const;
+    [[nodiscard]] Entity GetOwner() const;
 
     void Update();
 

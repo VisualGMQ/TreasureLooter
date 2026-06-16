@@ -50,6 +50,6 @@ void bind{{{type}}}TypeFromSchema(lua_State* L) {
         .endClass()
         .endNamespace();
     {{#is_asset}}
-    BindHandle<{{{type}}}>("{{{type}}}Handle", L, "{{{type}}}");
+    BindHandle<{{{type}}}>("{{{type}}}Handle", L, "{{{type}}}", "TL_Schema");
     {{/is_asset}}
 }

@@ -3,6 +3,9 @@
 #include <memory>
 #include <unordered_map>
 
+#include "spdlog/fmt/ostr.h"
+#include "spdlog/spdlog.h"
+
 #include "schema/timer_event.hpp"
 
 /**
@@ -41,6 +44,12 @@ private:
 };
 
 enum class TimerID : uint32_t {};
+
+std::ostream& operator<<(std::ostream& o, TimerID);
+
+// for spdlog output
+template <>
+struct fmt::formatter<TimerID> : fmt::ostream_formatter {};
 
 struct NullTimerID {
     constexpr bool operator==(NullTimerID) const { return true; }

@@ -18,6 +18,9 @@ public:
     void HandleEvents(const SDL_Event& event) override;
     void Update() override;
     void Shutdown() override;
+    void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
+
+    const ServerConfig& GetConfig() const;
 
     void NetListen(const NetAddress&, int peer_count);
 
@@ -25,6 +28,10 @@ private:
     using CommonContext::CommonContext;
 
     static std::unique_ptr<ServerContext> instance;
+
+    ServerConfig m_config;
+
+    void initServerConfig();
 };
 
 #define SERVER_CONTEXT ServerContext::GetInst()
