@@ -1,7 +1,7 @@
 <SceneDefinition>
 	<uuid>e112e8a6-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<script_path></script_path>
+		<script_path/>
 		<entities>
 			<elem>
 				<transform>
@@ -32,6 +32,16 @@
 					</value>
 				</transform>
 				<prefab>assets/gpa/ui/test/checkbox.prefab.xml</prefab>
+			</elem>
+			<elem>
+				<transform>
+					<value>
+						<position x="100.000000" y="250.000000"/>
+						<scale x="400.000000" y="40.000000"/>
+						<rotation>0.000000</rotation>
+					</value>
+				</transform>
+				<prefab>assets/gpa/ui/test/input_text.prefab.xml</prefab>
 			</elem>
 		</entities>
 	</payload>

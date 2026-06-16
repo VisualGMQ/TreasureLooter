@@ -35,14 +35,14 @@ public:
     void RemoveEntity(Entity);
 
     Entity GetRootEntity() const;
-    Entity GetUIRootEntity() const;
+    virtual Entity GetUIRootEntity() const = 0;
 
 protected:
     virtual void registerEntity(Entity, const EntityInstance&) = 0;
     virtual void initRootEntity(const Path& script_path) = 0;
+    virtual void initEntities(SceneDefinitionHandle level_content);
 
     Entity m_root_entity{};
-    Entity m_ui_root_entity{};
 
     std::unordered_set<Entity> m_entities;
 

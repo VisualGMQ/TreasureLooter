@@ -41,8 +41,9 @@ void EventSystem::HandleEvent(const SDL_Event& event) {
         event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
         EnqueueEvent(event.window);
     }
-
-    // TODO: more events
+    if (event.type == SDL_EVENT_TEXT_INPUT) {
+        EnqueueEvent(event.text);
+    }
 }
 
 void EventSystem::Update() {

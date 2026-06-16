@@ -4,6 +4,8 @@
 #include "client/ui.hpp"
 #include "client/window.hpp"
 #include "common/asset_manager.hpp"
+#include "common/macros.hpp"
+#include "common/transform.hpp"
 
 void ClientScene::OnEnter() {
     Scene::OnEnter();
@@ -36,6 +38,10 @@ void ClientScene::OnQuit() {
         m_window_resize_event_listener_id);
 
     Scene::OnQuit();
+}
+
+Entity ClientScene::GetUIRootEntity() const {
+    return m_ui_root_entity;
 }
 
 void ClientScene::registerEntity(Entity entity,
@@ -72,6 +78,32 @@ void ClientScene::initRootEntity(const Path& script_path) {
                 .Load(script_path);
         CLIENT_CONTEXT.m_script_component_manager->RegisterEntity(
             m_root_entity, m_root_entity, handle);
+    }
+}
+
+void ClientScene::initEntities(SceneDefinitionHandle level_content) {
+    auto root_rel =
+        COMMON_CONTEXT.m_relationship_manager->Get(m_root_entity);
+    auto ui_root_rel =
+        COMMON_CONTEXT.m_relationship_manager->Get(m_ui_root_entity);
+
+    for (auto& instance : level_content->m_entities) {
+        Entity entity = Instantiate(instance.m_prefab);
+        TL_CONTINUE_IF_FALSE(entity != null_entity);
+
+        if (instance.m_transform) {
+            auto* transform =
+                COMMON_CONTEXT.m_transform_manager->Get(entity);
+            if (transform) {
+                *transform = *instance.m_transform;
+            }
+        }
+
+        if (CLIENT_CONTEXT.m_ui_manager->Get(entity) && ui_root_rel) {
+            ui_root_rel->AddChild(entity);
+        } else if (root_rel) {
+            root_rel->AddChild(entity);
+        }
     }
 }
 

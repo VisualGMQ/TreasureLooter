@@ -5,6 +5,10 @@
 #include "common/script/script.hpp"
 #include "common/transform.hpp"
 
+Entity ServerScene::GetUIRootEntity() const {
+    return null_entity;
+}
+
 void ServerScene::registerEntity(Entity entity,
                                  const EntityInstance& instance) {
     COMMON_CONTEXT.AttachComponentsOnEntity(entity, instance);

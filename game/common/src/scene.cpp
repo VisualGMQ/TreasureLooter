@@ -69,12 +69,11 @@ Entity Scene::GetRootEntity() const {
     return m_root_entity;
 }
 
-Entity Scene::GetUIRootEntity() const {
-    return m_ui_root_entity;
-}
+void Scene::initEntities(SceneDefinitionHandle) {}
 
 void Scene::initByDescription(SceneDefinitionHandle level_content) {
     initRootEntity(level_content->m_script_path);
+    initEntities(level_content);
 }
 
 void Scene::doRemoveEntities() {

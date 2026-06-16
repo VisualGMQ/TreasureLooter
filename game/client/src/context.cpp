@@ -146,6 +146,9 @@ void ClientContext::HandleEvents(const SDL_Event& event) {
     }
     if (event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_KEY_DOWN) {
         m_keyboard->HandleEvent(event.key);
+        m_event_system->EnqueueEvent(event.key);
+    } else if (event.type == SDL_EVENT_TEXT_INPUT) {
+        m_event_system->EnqueueEvent(event.text);
     } else if (event.type == SDL_EVENT_FINGER_UP ||
                event.type == SDL_EVENT_FINGER_DOWN ||
                event.type == SDL_EVENT_FINGER_MOTION ||
@@ -240,7 +243,7 @@ void ClientContext::logicUpdate(TimeType elapse) {
 
     m_animation_player_manager->Update(elapse);
     m_ui_manager->HandleEvent();
-    m_ui_manager->Update();
+    m_ui_manager->Update(elapse);
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();

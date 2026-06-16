@@ -60,6 +60,14 @@
         <element name="spacing" type="float" default="0" />
     </class>
 
+    <class name="UITextInputInfo">
+        <element name="text" type="std::string" />
+        <handle name="font" type="Font" />
+        <element name="font_size" type="uint32_t" default="16" />
+        <element name="color" type="Color" default="Color::Black" />
+        <element name="align" type="UITextAlign" default="UITextAlign::Center" />
+    </class>
+
     <asset name="UIWidgetDefinition" extension=".ui">
         <flags name="anchor" type="UIAnchor" />
         <element name="enable_draw" type="bool" default="true" />
@@ -68,6 +76,7 @@
         <element name="selected" type="bool" default="false" />
         <element name="can_be_selected" type="bool" default="false" />
         <option name="text" type="TextInfo" />
+        <option name="text_input" type="UITextInputInfo" />
         <element name="normal_theme" type="UITheme" />
         <option name="hover_theme" type="UITheme" />
         <option name="down_theme" type="UITheme" />

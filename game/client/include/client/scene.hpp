@@ -8,12 +8,16 @@ public:
     
     void OnEnter() override;
     void OnQuit() override;
+
+    Entity GetUIRootEntity() const override;
     
 protected:
     void registerEntity(Entity, const EntityInstance&) override;
     void initRootEntity(const Path& script_path) override;
+    void initEntities(SceneDefinitionHandle level_content) override;
     
 private:
+    Entity m_ui_root_entity{};
     EventListenerID m_window_resize_event_listener_id{};
 };
 
