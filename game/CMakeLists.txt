@@ -88,11 +88,15 @@ set(PROTOBUF_SCRIPT_BINDING_FILES "${schema_final_path}/proto/proto_binding.hpp"
                                   "${schema_final_path}/proto/proto_convert.hpp" "${schema_final_path}/proto/proto_convert.cpp")
 set(SCHEMA_DLUAU_GENERATED "${schema_final_path}/schema.d.luau")
 set(LUAU_TYPES_HINT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts/type_hints")
+set(LUAU_COMMON_HINT_FILE "${LUAU_TYPES_HINT_DIR}/common.d.luau")
+set(LUAU_CLIENT_HINT_FILE "${LUAU_TYPES_HINT_DIR}/client.d.luau")
+set(LUAU_SERVER_HINT_FILE "${LUAU_TYPES_HINT_DIR}/server.d.luau")
+set(LUAU_SCHEMA_HINT_FILE "${SCHEMA_DLUAU_GENERATED}")
 set(LUAU_DEF_FRAGMENTS
-    "${LUAU_TYPES_HINT_DIR}/common.d.luau"
-    "${LUAU_TYPES_HINT_DIR}/client.d.luau"
-    "${LUAU_TYPES_HINT_DIR}/server.d.luau"
-    "${SCHEMA_DLUAU_GENERATED}")
+    ${LUAU_COMMON_HINT_FILE}
+    ${LUAU_CLIENT_HINT_FILE}
+    ${LUAU_SERVER_HINT_FILE}
+    ${LUAU_SCHEMA_HINT_FILE})
 set(LUAU_COMBINED_DLUAU_FILE "${LUAU_TYPES_HINT_DIR}/tl.d.luau")
 
 if (NEED_SCHEMA_PARSER)
@@ -119,7 +123,10 @@ if (NEED_SCHEMA_PARSER)
 
     add_custom_command(OUTPUT ${LUAU_COMBINED_DLUAU_FILE}
         COMMAND ${CMAKE_COMMAND}
-            "-DPARTS=${LUAU_DEF_FRAGMENTS}"
+            -DCOMMON_HINT_FILE=${LUAU_COMMON_HINT_FILE}
+            -DCLIENT_HINT_FILE=${LUAU_CLIENT_HINT_FILE}
+            -DSERVER_HINT_FILE=${LUAU_SERVER_HINT_FILE}
+            -DSCHEMA_HINT_FILE=${LUAU_SCHEMA_HINT_FILE}
             -DOUT=${LUAU_COMBINED_DLUAU_FILE}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/concat_defs.cmake
         DEPENDS ${LUAU_DEF_FRAGMENTS}
