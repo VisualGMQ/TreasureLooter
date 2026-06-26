@@ -91,13 +91,23 @@ export type AnimationPlayer = {
 	EnableAutoPlay: (self: AnimationPlayer, enable: boolean) -> (),
 	IsAutoPlayEnabled: (self: AnimationPlayer) -> boolean,
 }
-export type AnimationPlayerManager = {
-	Get: (self: AnimationPlayerManager, entity: Entity) -> AnimationPlayer?,
-	Has: (self: AnimationPlayerManager, entity: Entity) -> boolean,
-	IsEnable: (self: AnimationPlayerManager, entity: Entity) -> boolean,
-	Enable: (self: AnimationPlayerManager, entity: Entity) -> (),
-	Disable: (self: AnimationPlayerManager, entity: Entity) -> (),
-	RegisterEntity: (self: AnimationPlayerManager, entity: Entity, def: AnimationPlayerDefinition) -> (),
+
+export type MultiAnimationPlayer = {
+	GetAnimation: (self: MultiAnimationPlayer, index: number) -> AnimationPlayer?,
+	GetAnimationCount: (self: MultiAnimationPlayer) -> number,
+	PlayAll: (self: MultiAnimationPlayer) -> (),
+	PauseAll: (self: MultiAnimationPlayer) -> (),
+	StopAll: (self: MultiAnimationPlayer) -> (),
+	RewindAll: (self: MultiAnimationPlayer) -> (),
+}
+
+export type MultiAnimationPlayerManager = {
+	Get: (self: MultiAnimationPlayerManager, entity: Entity) -> MultiAnimationPlayer?,
+	Has: (self: MultiAnimationPlayerManager, entity: Entity) -> boolean,
+	IsEnable: (self: MultiAnimationPlayerManager, entity: Entity) -> boolean,
+	Enable: (self: MultiAnimationPlayerManager, entity: Entity) -> (),
+	Disable: (self: MultiAnimationPlayerManager, entity: Entity) -> (),
+	RegisterEntity: (self: MultiAnimationPlayerManager, entity: Entity, def: MultiAnimationPlayerDefinition) -> (),
 }
 
 export type TilemapRenderComponent = {
@@ -165,7 +175,7 @@ export type ClientContext = CommonContext & {
 	GetRenderer: (self: ClientContext) -> Renderer,
 	GetWindow: (self: ClientContext) -> Window,
 	GetInputManager: (self: ClientContext) -> InputManager,
-	GetAnimationPlayerManager: (self: ClientContext) -> AnimationPlayerManager,
+	GetMultiAnimationPlayerManager: (self: ClientContext) -> MultiAnimationPlayerManager,
 	GetUIManager: (self: ClientContext) -> UIComponentManager,
 	GetTilemapRenderComponentManager: (self: ClientContext) -> TilemapRenderComponentManager,
 	GetNetPeer: (self: ClientContext) -> UDPPeer,
@@ -187,6 +197,7 @@ declare TL_Client: {
 	-- schema definition constructors registered under this namespace
 	DrawOrderDefinition: () -> DrawOrderDefinition,
 	AnimationPlayerDefinition: () -> AnimationPlayerDefinition,
+	MultiAnimationPlayerDefinition: () -> MultiAnimationPlayerDefinition,
 
 	-- sub-namespaces
 	ActionState: ActionStateNamespace,

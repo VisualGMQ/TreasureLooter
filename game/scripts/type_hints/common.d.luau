@@ -104,7 +104,9 @@ export type Image = {
 
 export type ScriptBinaryData = {}
 
-export type Animation = {}
+export type Animation = {
+	GetFinishTime: (self: Animation) -> TimeType,
+}
 
 export type Font = {
 	IsValid: (self: Font) -> boolean,

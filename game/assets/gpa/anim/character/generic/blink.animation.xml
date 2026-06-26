@@ -1,0 +1,26 @@
+<Animation>
+	<uuid>8520f662-7a13-449e-91a9-0e6f6e624317</uuid>
+	<payload>
+		<tracks>
+			<track>
+				<binding_point>SpriteColor</binding_point>
+				<type>Discrete</type>
+				<keyframes>
+					<keyframe>
+						<time>0.000000</time>
+						<value r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.050000</time>
+						<value r="1.000000" g="0.000000" b="0.000000" a="1.000000"/>
+					</keyframe>
+					<keyframe>
+						<time>0.100000</time>
+						<value r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+					</keyframe>
+				</keyframes>
+			</track>
+		</tracks>
+		<bind_point_tracks/>
+	</payload>
+</Animation>

@@ -19,6 +19,13 @@ function _M.OnInit(self:PlayerBehavior)
 end
 
 function _M.OnUpdate(self:PlayerBehavior, elapse_time:TimeType)
+    if self.m_gameobject.m_hp_component:IsDead() then
+        if self.m_gameobject.m_move_component then
+            self.m_gameobject.m_move_component:StopMove()
+        end
+        return
+    end
+
     local ctx = TL_Client.GetContext()
 	local input_manager = ctx:GetInputManager()
 

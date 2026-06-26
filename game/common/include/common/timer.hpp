@@ -151,6 +151,7 @@ public:
     Timer& Create(TimeType interval, TimerEventType event_type, int loop = 0);
 
     void Remove(TimerID);
+    void Remove(const Timer& timer);
 
     void Clear();
 

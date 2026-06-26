@@ -21,7 +21,7 @@
         <option type="DrawOrderDefinition" name="draw_order"/>
         <option type="SpriteDefinition" name="sprite"/>
         <array  type="PrefabHandle" name="children"/>
-        <option type="AnimationPlayerDefinition" name="animation"/>
+        <option type="MultiAnimationPlayerDefinition" name="animations"/>
         <option type="TilemapLayerDefinition" name="tilemap_layer"/>
         <option type="CCTDefinition" name="cct"/>
         <option type="TriggerDefinition" name="trigger"/>

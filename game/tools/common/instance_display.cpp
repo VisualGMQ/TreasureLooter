@@ -729,6 +729,24 @@ void InstanceDisplay(const char* name, AnimationPlayer& player) {
     }
 }
 
+void InstanceDisplay(const char* name, const AnimationPlayer& animation) {
+    ImGui::Text("%s", name);
+    AnimationHandle anim = animation.GetAnimation();
+    InstanceDisplay("animation", anim);
+}
+
+void InstanceDisplay(const char* name, MultiAnimationPlayer& player) {
+    ImGui::Text("%s", name);
+    std::vector<AnimationPlayer>& anims = player.GetAnimations();
+    InstanceDisplay("players", anims);
+}
+
+void InstanceDisplay(const char* name, const MultiAnimationPlayer& player) {
+    ImGui::Text("%s", name);
+    const std::vector<AnimationPlayer>& anims = player.GetAnimations();
+    InstanceDisplay("players", anims);
+}
+
 void InstanceDisplay(const char* name, Entity e) {
     ImGui::Text("%s", name);
     ImGui::Text("entity: %uld", static_cast<uint32_t>(e));

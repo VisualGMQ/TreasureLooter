@@ -15,6 +15,7 @@
         <item name = "SpriteImage"/>
         <item name = "SpriteFlip"/>
         <item name = "SpriteAnchor"/>
+        <item name = "SpriteColor"/>
 
         <item name = "BindPoint"/> <!-- trivial enum. only for convenient serialization -->
     </enum>

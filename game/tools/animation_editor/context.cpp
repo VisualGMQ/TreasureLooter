@@ -207,12 +207,12 @@ void AnimationEditorContext::update() {
     if (m_preview_entity == null_entity || !m_should_play_preview) {
         return;
     }
-    auto* player = m_animation_player_manager->Get(m_preview_entity);
-    if (!player || !player->HasAnimation()) {
+    auto* multi = m_animation_player_manager->Get(m_preview_entity);
+    if (!multi || multi->GetAnimationCount() == 0 || !multi->GetAnimation(0).HasAnimation()) {
         return;
     }
-    player->Update(ImGui::GetIO().DeltaTime);
-    player->Sync(m_preview_entity);
+    multi->Update(ImGui::GetIO().DeltaTime);
+    multi->Sync(m_preview_entity);
 }
 
 void AnimationEditorContext::renderScenePreview() {
@@ -364,8 +364,8 @@ void AnimationEditorContext::showInspectorPanel() {
     }
 
     ImGui::Separator();
-    ImGui::Text("Time: %.3f / %.3f", player->GetCurTime(),
-                player->GetMaxTime());
+    ImGui::Text("Time: %.3f / %.3f", player->GetAnimation(0).GetCurTime(),
+                player->GetAnimation(0).GetMaxTime());
     ImGui::Text("Scale: %.2fx", m_camera.GetScale().x);
 
     ImGui::SeparatorText("Selected Keyframe");
@@ -490,12 +490,12 @@ void AnimationEditorContext::showTimelinePanel() {
     if (player) {
         if (ImGui::Button("Play")) {
             m_should_play_preview = true;
-            player->Play();
+            player->GetAnimation(0).Play();
         }
         ImGui::SameLine();
         if (ImGui::Button("Pause")) {
             m_should_play_preview = false;
-            player->Pause();
+            player->GetAnimation(0).Pause();
         }
         ImGui::SameLine();
         if (ImGui::Button("Stop")) {
@@ -1096,13 +1096,15 @@ void AnimationEditorContext::attachPreviewPrefab(const Prefab& prefab) {
         m_sprite_manager->ReplaceComponent(m_preview_entity,
                                            prefab.m_sprite.value());
     }
-    if (prefab.m_animation) {
+    if (prefab.m_animations) {
         m_animation_player_manager->RegisterEntity(m_preview_entity,
-                                                   prefab.m_animation.value());
+                                                   prefab.m_animations.value());
     } else if (m_current_animation) {
         AnimationPlayerDefinition def;
         def.m_animation = m_current_animation;
-        m_animation_player_manager->RegisterEntity(m_preview_entity, def);
+        MultiAnimationPlayerDefinition multi_def;
+        multi_def.m_animations.push_back(def);
+        m_animation_player_manager->RegisterEntity(m_preview_entity, multi_def);
     }
     if (!prefab.m_bind_points.empty()) {
         m_bind_point_component_manager->RegisterEntity(m_preview_entity,
@@ -1120,7 +1122,9 @@ void AnimationEditorContext::ensurePreviewPlayer() {
     m_sprite_manager->ReplaceComponent(m_preview_entity, sprite);
     AnimationPlayerDefinition def;
     def.m_animation = m_current_animation;
-    m_animation_player_manager->RegisterEntity(m_preview_entity, def);
+    MultiAnimationPlayerDefinition multi_def;
+    multi_def.m_animations.push_back(def);
+    m_animation_player_manager->RegisterEntity(m_preview_entity, multi_def);
 }
 
 void AnimationEditorContext::newAnimation() {
@@ -1194,9 +1198,9 @@ void AnimationEditorContext::refreshPlayerAnimationBinding() {
         return;
     }
     if (m_current_animation) {
-        player->ChangeAnimation(m_current_animation);
-    } else if (player->HasAnimation()) {
-        m_current_animation = player->GetAnimation();
+        player->GetAnimation(0).ChangeAnimation(m_current_animation);
+    } else if (player->GetAnimation(0).HasAnimation()) {
+        m_current_animation = player->GetAnimation(0).GetAnimation();
         if (auto filename = m_current_animation.GetFilename(); filename) {
             m_animation_file_path = *filename;
             changeWindowTitle(m_animation_file_path);

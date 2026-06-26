@@ -42,6 +42,13 @@ function _M.OnQuit(self:SlimeBehavior)
 end
 
 function _M.OnUpdate(self:SlimeBehavior, elapse_time:TimeType)
+    if self.m_gameobject.m_hp_component:IsDead() then
+        if self.m_gameobject.m_move_component then
+            self.m_gameobject.m_move_component:StopMove()
+        end
+        return
+    end
+
     if self.m_move_dir == TL_Common.Vec2.ZERO then
         self.m_move_cooldown -= elapse_time
     end

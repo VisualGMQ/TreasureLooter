@@ -181,6 +181,10 @@ void TimerManager::Remove(TimerID timer) {
     m_timers.erase(timer);
 }
 
+void TimerManager::Remove(const Timer& timer) {
+    Remove(timer.GetID());
+}
+
 void TimerManager::Clear() {
     m_timers.clear();
 }
