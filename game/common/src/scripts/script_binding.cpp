@@ -618,7 +618,9 @@ void bindTimer(lua_State* L) {
             .endClass()
             .beginClass<TimerManager>("TimerManager")
                 .addFunction("Create", &TimerManager::Create)
-                .addFunction("Remove", &TimerManager::Remove)
+                .addFunction("Remove",
+                             +[](TimerManager* m, TimerID id) { m->Remove(id); },
+                             +[](TimerManager* m, const Timer& t) { m->Remove(t); })
                 .addFunction("Find", &TimerManager::Find)
             .endClass()
         .endNamespace();
@@ -1134,6 +1136,13 @@ void bindHandleTypes(lua_State* L) {
     BindHandle<Animation>("AnimationHandle", L, "Animation");
     BindHandle<Tilemap>("TilemapHandle", L, "Tilemap");
     BindHandle<FontBase>("FontHandle", L, "Font");
+
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
+            .beginClass<Animation>("Animation")
+                .addFunction("GetFinishTime", &Animation::GetFinishTime)
+            .endClass()
+        .endNamespace();
 }
 
 void bindEntity(lua_State* L) {

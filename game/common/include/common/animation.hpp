@@ -99,6 +99,8 @@ public:
 
     auto& GetBindPointTracks() { return m_bind_point_tracks; }
 
+    [[nodiscard]] TimeType GetFinishTime() const;
+
 private:
     std::unordered_map<AnimationBindingPoint,
                        std::unique_ptr<AnimationTrackBase>>

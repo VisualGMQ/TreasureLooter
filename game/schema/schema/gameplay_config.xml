@@ -71,6 +71,10 @@
         <handle name="move_up_animation" type="Animation" />
         <handle name="move_down_animation" type="Animation" />
 
+        <handle name="hurt_animation" type="Animation" />
+        <handle name="dead_animation" type="Animation" />
+        <element name="invincible_time" type="TimeType" default="1" />
+
         <element name="init_weapon" type="DID" default="DID::Invalid" />
         <!--<handle name="pickaxe" type="WeaponDefinition" />-->
     </asset>

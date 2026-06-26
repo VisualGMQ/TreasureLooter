@@ -219,18 +219,29 @@ static void bindAnimationPlayer(lua_State* L) {
                 .addFunction("EnableAutoPlay", &AnimationPlayer::EnableAutoPlay)
                 .addFunction("IsAutoPlayEnabled", &AnimationPlayer::IsAutoPlayEnabled)
             .endClass()
-            .beginClass<AnimationPlayerManager>("AnimationPlayerManager")
-                .addFunction("Get", +[](AnimationPlayerManager* m, Entity e) {
+            .beginClass<MultiAnimationPlayer>("MultiAnimationPlayer")
+                .addFunction("GetAnimation",
+                             +[](MultiAnimationPlayer* p, size_t index) -> AnimationPlayer* {
+                                 return &p->GetAnimation(index);
+                             })
+                .addFunction("GetAnimationCount", &MultiAnimationPlayer::GetAnimationCount)
+                .addFunction("PlayAll", &MultiAnimationPlayer::PlayAll)
+                .addFunction("PauseAll", &MultiAnimationPlayer::PauseAll)
+                .addFunction("StopAll", &MultiAnimationPlayer::StopAll)
+                .addFunction("RewindAll", &MultiAnimationPlayer::RewindAll)
+            .endClass()
+            .beginClass<MultiAnimationPlayerManager>("MultiAnimationPlayerManager")
+                .addFunction("Get", +[](MultiAnimationPlayerManager* m, Entity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
+                .addFunction("Has", +[](MultiAnimationPlayerManager* m, Entity e) {
                     return m->Has(e);
                 })
-                .addFunction("IsEnable", &AnimationPlayerManager::IsEnable)
-                .addFunction("Enable", &AnimationPlayerManager::Enable)
-                .addFunction("Disable", &AnimationPlayerManager::Disable)
+                .addFunction("IsEnable", &MultiAnimationPlayerManager::IsEnable)
+                .addFunction("Enable", &MultiAnimationPlayerManager::Enable)
+                .addFunction("Disable", &MultiAnimationPlayerManager::Disable)
                 .addFunction("RegisterEntity",
-                             +[](AnimationPlayerManager* m, Entity e, const AnimationPlayerDefinition& def) {
+                             +[](MultiAnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
                                  m->RegisterEntity(e, def);
                              })
             .endClass()
@@ -377,8 +388,8 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> InputManager* {
                                  return ctx->m_input_manager.get();
                              })
-                .addFunction("GetAnimationPlayerManager",
-                             +[](ClientContext* ctx) -> AnimationPlayerManager* {
+                .addFunction("GetMultiAnimationPlayerManager",
+                             +[](ClientContext* ctx) -> MultiAnimationPlayerManager* {
                                  return ctx->m_animation_player_manager.get();
                              })
                 .addFunction("GetUIManager",

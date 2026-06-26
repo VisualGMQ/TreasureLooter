@@ -1,6 +1,13 @@
-if(NOT PARTS OR NOT OUT)
-  message(FATAL_ERROR "concat_defs.cmake: PARTS and OUT required")
+if(NOT OUT)
+  message(FATAL_ERROR "concat_defs.cmake: OUT required")
 endif()
+
+set(PARTS "")
+foreach(var IN ITEMS COMMON_HINT_FILE CLIENT_HINT_FILE SERVER_HINT_FILE SCHEMA_HINT_FILE)
+  if(DEFINED ${var})
+    list(APPEND PARTS "${${var}}")
+  endif()
+endforeach()
 
 set(COMBINED "--!strict\n")
 set(COMBINED "${COMBINED}----------------- COMBINED luau-lsp definition file (GENERATED). Edit the *.d.luau fragments instead. -----------------\n")

@@ -25,4 +25,10 @@ function _M.GetEntity(self:GameObject):Entity
     return self._entity
 end
 
+function _M.Destroy(self:GameObject)
+    local ctx = TL_Client.GetContext()
+    local scene = ctx:GetSceneManager():GetCurrentScene()
+    scene:RemoveEntity(self:GetEntity())
+end
+
 return _M

@@ -74,6 +74,16 @@ void Animation::AddTracks(const SpriteRowColumnAnimationInfo& info) {
         std::move(region_size_track);
 }
 
+TimeType Animation::GetFinishTime() const {
+    TimeType max_time = 0;
+    for (auto& track : m_tracks) {
+        max_time = track.second->GetFinishTime() > max_time
+                       ? track.second->GetFinishTime()
+                       : max_time;
+    }
+    return max_time;
+}
+
 template <>
 AssetLoadResult<Animation> LoadAsset<Animation>(const Path& filename) {
     auto file = IOStream::CreateFromFile(filename, IOMode::Read, true);

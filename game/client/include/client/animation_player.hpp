@@ -122,6 +122,9 @@ public:
     AnimationPlayer() = default;
     explicit AnimationPlayer(const AnimationPlayerDefinition&);
 
+    AnimationPlayer(AnimationPlayer&&) noexcept = default;
+    AnimationPlayer& operator=(AnimationPlayer&&) noexcept = default;
+
     void Play();
     void Pause();
     void Stop();
@@ -166,7 +169,36 @@ private:
     float m_rate = 1.0;
 };
 
-class AnimationPlayerManager : public ComponentManager<AnimationPlayer> {
+class MultiAnimationPlayer {
+public:
+    MultiAnimationPlayer() = default;
+
+    explicit MultiAnimationPlayer(const MultiAnimationPlayerDefinition& definition);
+
+    [[nodiscard]] const AnimationPlayer& GetAnimation(size_t) const;
+    [[nodiscard]] AnimationPlayer& GetAnimation(size_t);
+    [[nodiscard]] size_t GetAnimationCount() const { return m_players.size(); }
+    void AddAnimation(AnimationPlayer&&);
+    [[nodiscard]] AnimationPlayer& AddAnimation(const AnimationPlayerDefinition&);
+    [[nodiscard]] AnimationPlayer& AddAnimation(AnimationHandle);
+    void RemoveAnimation(const AnimationPlayer&);
+
+    std::vector<AnimationPlayer>& GetAnimations();
+    const std::vector<AnimationPlayer>& GetAnimations() const;
+
+    void Update(TimeType elapse_time);
+    void Sync(Entity);
+
+    void PlayAll();
+    void PauseAll();
+    void StopAll();
+    void RewindAll();
+
+private:
+    std::vector<AnimationPlayer> m_players;
+};
+
+class MultiAnimationPlayerManager : public ComponentManager<MultiAnimationPlayer> {
 public:
     void Update(TimeType delta_time);
 };

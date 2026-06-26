@@ -18,6 +18,7 @@ export type ClientMoveComponent = typeof(_M) & ClientMoveComponentData & MoveCom
 
 export type ClientMoveComponentDefinition = {
     m_cct:CharacterController?,
+	m_anim:AnimationPlayer,
 	m_speed:number,
     m_move_up_anim:AnimationHandle,
     m_move_down_anim:AnimationHandle,
@@ -26,17 +27,16 @@ export type ClientMoveComponentDefinition = {
 }
 
 function _M.new(gameobject, definition: ClientMoveComponentDefinition):ClientMoveComponent
-    local self = MoveComponent.new(gameobject, definition.m_cct, definition.m_speed)
+    local self = MoveComponent.new(gameobject, definition.m_cct, definition.m_speed) :: ClientMoveComponent
     local ctx = TL_Client.GetContext()
     local entity = gameobject:GetEntity()
     self._direction = Common.Direction.Down
-    self._anim_player = ctx:GetAnimationPlayerManager():Get(entity)
+	self._anim_player = definition.m_anim
     self._move_up_anim = definition.m_move_up_anim
     self._move_down_anim = definition.m_move_down_anim
     self._move_left_anim = definition.m_move_left_anim
     self._move_right_anim = definition.m_move_right_anim
     self._sprite = ctx:GetSpriteManager():Get(entity)
-    self._anim_player = ctx:GetAnimationPlayerManager():Get(entity)
     return setmetatable(self, _M)
 end
 

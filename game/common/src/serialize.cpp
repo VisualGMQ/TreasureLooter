@@ -669,6 +669,13 @@ rapidxml::xml_node<>* serializeAnimTrack(CommonContext& ctx,
     }
 #undef TARGET_TYPE
 
+#define TARGET_TYPE Color
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::SpriteColor) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::BindPoint) {
         HANDLE_LINEAR_TRACK_SERIALIZE();
@@ -775,7 +782,7 @@ deserializeTrack(CommonContext& ctx, rapidxml::xml_node<>& node) {
     }
 #undef TARGET_TYPE
 
-#define TARGET_TYPE float
+#define TARGET_TYPE Degrees
     HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformRotation) {
         HANDLE_CREATE_TRACK();
         HANDLE_LINEAR_TRACK_DESERIALIZE();
@@ -821,6 +828,14 @@ deserializeTrack(CommonContext& ctx, rapidxml::xml_node<>& node) {
 
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteAnchor) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Color
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::SpriteColor) {
         HANDLE_CREATE_TRACK();
         HANDLE_LINEAR_TRACK_DESERIALIZE();
         HANDLE_DISCRETE_TRACK_DESERIALIZE();

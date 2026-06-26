@@ -13,7 +13,7 @@ class DrawOrderManager;
 class PlayerController;
 class UIComponentManager;
 class AnimationManager;
-class AnimationPlayerManager;
+class MultiAnimationPlayerManager;
 class TilemapLayerRenderComponentManager;
 class InputManager;
 class Window;
@@ -53,7 +53,7 @@ public:
     std::unique_ptr<Touches> m_touches;
     std::unique_ptr<GamepadManager> m_gamepad_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
-    std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
+    std::unique_ptr<MultiAnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<DrawOrderManager> m_draw_order_manager;
     std::unique_ptr<InputManager> m_input_manager;
     std::unique_ptr<UIComponentManager> m_ui_manager;

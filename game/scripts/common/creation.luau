@@ -18,12 +18,26 @@ function _M.ConvertCharacterDefinitionToPrefab(config:CharacterDefinitionHandle)
     prefab_handle.m_draw_order.m_enable_y_sorting = true
     prefab_handle.m_draw_order.m_draw_layer = TL_Schema.DrawLayer.TilemapArch
 
-    local anim_player = TL_Schema.AnimationPlayerDefinition()
-    anim_player.m_animation = config.m_move_down_animation
-    anim_player.m_auto_play = false
-    anim_player.m_loop = -1
-    anim_player.m_rate = 1.0
-    prefab_handle.m_animation = anim_player
+    -- move down anim
+    local move_anim_player = TL_Schema.AnimationPlayerDefinition()
+    move_anim_player.m_animation = config.m_move_down_animation
+    move_anim_player.m_auto_play = false
+    move_anim_player.m_loop = -1
+    move_anim_player.m_rate = 1.0
+    local multi_anim = TL_Schema.MultiAnimationPlayerDefinition()
+    local anims = multi_anim.m_animations
+    table.insert(anims, move_anim_player)
+
+    -- hurt anim
+    local hurt_anim_player = TL_Schema.AnimationPlayerDefinition()
+    hurt_anim_player.m_loop = 0
+    hurt_anim_player.m_rate = 1.0
+    hurt_anim_player.m_auto_play = false
+    hurt_anim_player.m_animation = config.m_hurt_animation
+    table.insert(anims, hurt_anim_player)
+
+    multi_anim.m_animations = anims
+    prefab_handle.m_animations = multi_anim
 
     prefab_handle.m_cct = config.m_cct
     return prefab_handle
@@ -76,7 +90,11 @@ function _M.convertItemWeaponDefinitionToPrefab(config:ItemDefinitionHandle):Pre
         anim_player.m_auto_play = false
         anim_player.m_loop = 0
         anim_player.m_rate = 1.0
-        prefab_handle.m_animation = anim_player
+        local multi_anim = TL_Schema.MultiAnimationPlayerDefinition()
+        local anim_list = multi_anim.m_animations
+        table.insert(anim_list, anim_player)
+        multi_anim.m_animations = anim_list
+        prefab_handle.m_animations = multi_anim
 
         local trigger_definition = TL_Schema.TriggerDefinition()
 
@@ -88,13 +106,6 @@ function _M.convertItemWeaponDefinitionToPrefab(config:ItemDefinitionHandle):Pre
         trigger_definition.m_trig_every_frame_when_touch = false
         trigger_definition.m_event_type = TL_Schema.TriggerEventType.WeaponAttack
         prefab_handle.m_trigger = trigger_definition
-
-        local anim_player_definition = TL_Schema.AnimationPlayerDefinition()
-        anim_player_definition.m_animation = config.m_attackable.m_attack_animation
-        anim_player_definition.m_auto_play = false
-        anim_player_definition.m_loop = 0
-        anim_player_definition.m_rate = 1.0
-        prefab_handle.m_animation = anim_player_definition
     end
 
     return prefab_handle

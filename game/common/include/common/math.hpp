@@ -265,6 +265,16 @@ struct Color {
         : r{r}, g{g}, b{b}, a{a} {}
 
     float r{}, g{}, b{}, a = 1;
+
+    friend Color operator+(const Color& lhs, const Color& rhs) {
+        return {lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a + rhs.a};
+    }
+    friend Color operator-(const Color& lhs, const Color& rhs) {
+        return {lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a - rhs.a};
+    }
+    friend Color operator*(const Color& c, float s) {
+        return {c.r * s, c.g * s, c.b * s, c.a * s};
+    }
 };
 
 struct Radians;

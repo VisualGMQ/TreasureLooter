@@ -6,4 +6,8 @@
         <element name = "auto_play" type = "bool" default="false"/>
         <handle name = "animation" type="Animation"/>
     </class>
+
+    <class name="MultiAnimationPlayerDefinition">
+        <array name = "animations" type="AnimationPlayerDefinition"/>
+    </class>
 </schema>

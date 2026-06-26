@@ -233,6 +233,22 @@ function _M.DisplayAnimationPlayer(ap: AnimationPlayer)
 	ImGui.PopID()
 end
 
+function _M.DisplayMultiAnimationPlayer(multi: MultiAnimationPlayer)
+	ImGui.PushID("MultiAnimationPlayer")
+	local count = multi:GetAnimationCount()
+	if count == 0 then
+		ImGui.Text("(empty)")
+		ImGui.PopID()
+		return
+	end
+	for i = 0, count - 1 do
+		ImGui.PushID(tostring(i))
+		_M.DisplayAnimationPlayer(multi:GetAnimation(i) :: AnimationPlayer)
+		ImGui.PopID()
+	end
+	ImGui.PopID()
+end
+
 local function inspect_script_value(label: string, v: any, depth: number)
 	ImGui.PushID(tostring(depth) .. "\0" .. label)
 	if depth > 10 then
@@ -468,10 +484,10 @@ function _M.DisplayInspector(ctx: ClientContext, e: Entity)
 		_M.DisplayDrawOrder(draw_order_mgr:Get(e) :: DrawOrder)
 	end
 
-	local anim_mgr = ctx:GetAnimationPlayerManager()
+	local anim_mgr = ctx:GetMultiAnimationPlayerManager()
 	if anim_mgr:Has(e) then
 		ImGui.SeparatorText("AnimationPlayer")
-		_M.DisplayAnimationPlayer(anim_mgr:Get(e) :: AnimationPlayer)
+		_M.DisplayMultiAnimationPlayer(anim_mgr:Get(e) :: MultiAnimationPlayer)
 	end
 
 	local script_mgr = ctx:GetScriptManager()

@@ -2,6 +2,7 @@ local ClientGameObject = require("@client/gameobject")
 local ClientAttackComponent = require("@client/components/attack")
 local ClientMoveComponent = require("@client/components/move")
 local ClientWeaponComponent = require("@client/components/weapon")
+local ClientHpComponent = require("@client/components/hp")
 local Creation = require("@common/creation")
 local _M = {}
 _M.__index = _M
@@ -12,16 +13,25 @@ export type ClientCreation = typeof(_M)
 function _M.ConvertCharacterDefinitionToGODefinition(entity:Entity, config:CharacterDefinitionHandle, weapon_entity:Entity):ClientGameObject.ClientGameObjectDefinition
     local definition = {}::ClientGameObject.ClientGameObjectDefinition
     local ctx = TL_Client.GetContext()
-    local move_definition = {} ::ClientMoveComponent.ClientMoveComponentDefinition
-    move_definition = {
-        m_cct = ctx:GetCCTManager():Get(entity),
-        m_speed = config.m_speed,
-        m_move_down_anim = config.m_move_down_animation,
-        m_move_up_anim = config.m_move_up_animation,
-        m_move_left_anim = config.m_move_left_animation,
-        m_move_right_anim = config.m_move_right_animation,
-    }
+    local multi_anim_players = ctx:GetMultiAnimationPlayerManager():Get(entity)
+
+    local move_definition = {}::ClientMoveComponent.ClientMoveComponentDefinition
+    move_definition.m_cct = ctx:GetCCTManager():Get(entity)
+    move_definition.m_speed = config.m_speed
+    move_definition.m_move_down_anim = config.m_move_down_animation
+    move_definition.m_move_up_anim = config.m_move_up_animation
+    move_definition.m_move_left_anim = config.m_move_left_animation
+    move_definition.m_move_right_anim = config.m_move_right_animation
+    move_definition.m_anim = multi_anim_players:GetAnimation(0)
     definition.m_move_component_definition = move_definition
+
+    local hp_definition = {}::ClientHpComponent.ClientHpComponentDefinition
+    hp_definition.m_anim_player = multi_anim_players:GetAnimation(1)
+    hp_definition.m_hp = config.m_hp
+    hp_definition.m_hurt_anim = config.m_hurt_animation
+    hp_definition.m_dead_anim = config.m_dead_animation
+    hp_definition.m_invincible_time = config.m_invincible_time
+    definition.m_hp_component_definition = hp_definition
 
     if weapon_entity ~= TL_Common.null_entity then
         local weapon_definition = {}::ClientWeaponComponent.ClientWeaponComponentDefinition
@@ -45,7 +55,7 @@ function _M.ConvertItemDefinitionToGODefinition(entity:Entity, config:ItemDefini
     end
 
     if config.m_attackable then
-        attack_definition.m_anim_player = ctx:GetAnimationPlayerManager():Get(weapon_entity)
+        attack_definition.m_anim_player = ctx:GetMultiAnimationPlayerManager():Get(weapon_entity):GetAnimation(0)
         attack_definition.m_attack_anim = config.m_attackable.m_attack_animation
         attack_definition.m_cooldown = config.m_attackable.m_cooldown
         attack_definition.m_damage = config.m_attackable.m_damage

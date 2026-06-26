@@ -6,6 +6,7 @@
 #include "common/script/luabridge_include.hpp"
 
 #include <string>
+#include <sstream>
 
 namespace detail {
 
@@ -33,6 +34,43 @@ int HandleForwardCall(lua_State* L) {
     int nargs = lua_gettop(L) - 1;
     lua_call(L, nargs, LUA_MULTRET);
     return lua_gettop(L);
+}
+
+template <typename T>
+int handleToStringImpl(lua_State* L) {
+    using handle_type = Handle<T>;
+    auto result = luabridge::Stack<handle_type>::get(L, 1);
+    if (!result) return 0;
+    auto h = *result;
+    size_t len;
+    const char* name_str = lua_tolstring(L, lua_upvalueindex(1), &len);
+    std::ostringstream oss;
+    oss << std::string(name_str, len) << '(';
+    if (h) {
+        auto filename = h.GetFilename();
+        if (filename) oss << filename->string();
+        oss << '[' << h.GetUUID() << ']';
+    } else {
+        oss << "invalid";
+    }
+    oss << ')';
+    lua_pushstring(L, oss.str().c_str());
+    return 1;
+}
+
+template <typename T>
+void setHandleToString(lua_State* L, const std::string& name) {
+    using handle_type = Handle<T>;
+    lua_pushlightuserdata(L, const_cast<void*>(luabridge::detail::getClassRegistryKey<handle_type>()));
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return;
+    }
+    lua_pushstring(L, name.c_str());
+    luabridge::lua_pushcclosure_x(L, &handleToStringImpl<T>, 1);
+    lua_setfield(L, -2, "__tostring");
+    lua_pop(L, 1);
 }
 
 }  // namespace detail
@@ -106,6 +144,8 @@ void BindHandle(const std::string& name,
 					return luabridge::LuaRef(L);
 				})
 			.endClass()
-			.endNamespace();
+            .endNamespace();
+
+    detail::setHandleToString<T>(L, name);
 }
 

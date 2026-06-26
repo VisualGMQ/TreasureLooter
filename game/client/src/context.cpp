@@ -114,7 +114,7 @@ void ClientContext::Initialize(int argc, char** argv) {
         *m_input_manager, *m_event_system, *m_assets_manager,
         *m_transform_manager, *m_relationship_manager);
 
-    m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
+    m_animation_player_manager = std::make_unique<MultiAnimationPlayerManager>();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new DebugDrawer{});
@@ -210,9 +210,9 @@ void ClientContext::AttachComponentsOnEntity(Entity entity,
         m_draw_order_manager->RegisterEntity(entity,
                                              prefab.m_draw_order.value());
     }
-    if (prefab.m_animation) {
+    if (prefab.m_animations) {
         m_animation_player_manager->RegisterEntity(entity,
-                                                   prefab.m_animation.value());
+                                                   prefab.m_animations.value());
     }
     if (prefab.m_ui) {
         m_ui_manager->RegisterEntity(entity, prefab.m_ui);
