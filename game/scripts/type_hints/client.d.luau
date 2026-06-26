@@ -168,6 +168,12 @@ export type UIMouseClickedEvent = { m_entity: Entity }
 export type UICheckToggledEvent = { m_entity: Entity, m_checked: boolean }
 export type UIDragEvent = { m_entity: Entity }
 
+export type AnimationEndEvent = {
+	GetAnimationPlayerID: (self: AnimationEndEvent) -> number,
+	GetEntity: (self: AnimationEndEvent) -> Entity,
+	GetAnimation: (self: AnimationEndEvent) -> AnimationHandle,
+}
+
 export type ClientContext = CommonContext & {
 	GetCamera: (self: ClientContext) -> Camera,
 	GetSpriteManager: (self: ClientContext) -> SpriteManager,

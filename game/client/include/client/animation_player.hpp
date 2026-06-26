@@ -2,6 +2,9 @@
 #include "common/animation.hpp"
 #include "schema/anim_player.hpp"
 
+enum class AnimationPlayerID : uint32_t {};
+inline constexpr AnimationPlayerID null_animation_player_id = static_cast<AnimationPlayerID>(0);
+
 class AnimationTrackPlayerBase {
 public:
     virtual ~AnimationTrackPlayerBase() = default;
@@ -119,11 +122,13 @@ class AnimationPlayer {
 public:
     static constexpr int InfLoop = -1;
 
-    AnimationPlayer() = default;
+    AnimationPlayer();
     explicit AnimationPlayer(const AnimationPlayerDefinition&);
 
     AnimationPlayer(AnimationPlayer&&) noexcept = default;
     AnimationPlayer& operator=(AnimationPlayer&&) noexcept = default;
+
+    [[nodiscard]] AnimationPlayerID GetID() const;
 
     void Play();
     void Pause();
@@ -154,6 +159,10 @@ public:
     [[nodiscard]] bool IsAutoPlayEnabled() const;
 
 private:
+    static std::underlying_type_t<AnimationPlayerID> next_id;
+
+    AnimationPlayerID m_id = null_animation_player_id;
+    Entity m_entity = null_entity;
     AnimationHandle m_animation;
 
     std::unordered_map<AnimationBindingPoint,
@@ -201,4 +210,19 @@ private:
 class MultiAnimationPlayerManager : public ComponentManager<MultiAnimationPlayer> {
 public:
     void Update(TimeType delta_time);
+};
+
+class AnimationEndEvent {
+public:
+    AnimationEndEvent(AnimationPlayerID animation_player_id, Entity entity, AnimationHandle animation)
+        : m_animation_player_id(animation_player_id), m_entity(entity), m_animation(animation) {}
+
+    [[nodiscard]] AnimationPlayerID GetAnimationPlayerID() const { return m_animation_player_id; }
+    [[nodiscard]] Entity GetEntity() const { return m_entity; }
+    [[nodiscard]] AnimationHandle GetAnimation() const { return m_animation; }
+
+private:
+    AnimationPlayerID m_animation_player_id;
+    Entity m_entity;
+    AnimationHandle m_animation;
 };

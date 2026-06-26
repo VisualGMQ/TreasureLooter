@@ -16,6 +16,7 @@ type AttackComponentData = {
     _can_attack:boolean,
     _cooldown_timer_event_id:EventListenerID,
     _hit_area_event_id:EventListenerID,
+    _anim_end_event_id:EventListenerID,
     _aim_dir:Vec2,
 }
 
@@ -40,6 +41,7 @@ function _M.new(gameobject, definition:AttackComponentDefinition):AttackComponen
     self._transform = definition.m_transform
     self._can_attack = true
     self._aim_dir = self.k_init_forward_dir
+    self.m_hit_area:Disable()
 
     local ctx = TL_Common.GetContext()
     local event_system = ctx:GetEventSystem()
@@ -53,6 +55,13 @@ function _M.new(gameobject, definition:AttackComponentDefinition):AttackComponen
     self._cooldown_timer_event_id = event_system:AddTimerEvent(
         function(id:EventListenerID, event:TimerEvent)
             self:onAttackCooldown(id, event)
+        end
+    )
+    self._anim_end_event_id = event_system:AddAnimationEndEvent(
+        function(id:EventListenerID, event:AnimationEndEvent)
+            if event:GetAnimationPlayerID() == self._anim_player:GetID() then
+                self.m_hit_area:Disable()
+            end
         end
     )
     return setmetatable(self, _M)
@@ -72,6 +81,7 @@ function _M.Attack(self:AttackComponent)
         return
     end
 
+    self.m_hit_area:Enable()
     self._anim_player:ChangeAnimation(self.m_attack_anim)
     self._anim_player:SetLoop(0)
     self._anim_player:Play()
@@ -110,6 +120,7 @@ function _M.OnQuit(self:AttackComponent)
     local ctx = TL_Common.GetContext()
     ctx:GetEventSystem():Remove(self._cooldown_timer_event_id)
     ctx:GetEventSystem():Remove(self._hit_area_event_id)
+    ctx:GetEventSystem():Remove(self._anim_end_event_id)
 end
 
 return _M

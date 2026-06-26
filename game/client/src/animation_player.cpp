@@ -6,11 +6,20 @@
 #include "common/bind_point.hpp"
 #include "common/profile.hpp"
 
-AnimationPlayer::AnimationPlayer(const AnimationPlayerDefinition& create_info) {
+std::underlying_type_t<AnimationPlayerID> AnimationPlayer::next_id = 1;
+
+AnimationPlayer::AnimationPlayer() : m_id{static_cast<AnimationPlayerID>(next_id++)} {}
+
+AnimationPlayer::AnimationPlayer(const AnimationPlayerDefinition& create_info)
+    : m_id{static_cast<AnimationPlayerID>(next_id++)} {
     EnableAutoPlay(create_info.m_auto_play);
     SetLoop(create_info.m_loop);
     SetRate(create_info.m_rate);
     ChangeAnimation(create_info.m_animation);
+}
+
+AnimationPlayerID AnimationPlayer::GetID() const {
+    return m_id;
 }
 
 void AnimationPlayer::Play() {
@@ -264,6 +273,8 @@ void AnimationPlayer::Update(TimeType delta_time) {
         } else {
             Pause();
             m_cur_time = GetMaxTime();
+            COMMON_CONTEXT.m_event_system->EnqueueEvent<AnimationEndEvent>(
+                AnimationEndEvent{m_id, m_entity, m_animation});
         }
     }
 }
@@ -292,6 +303,7 @@ void AnimationPlayer::Update(TimeType delta_time) {
 
 void AnimationPlayer::Sync(Entity entity) {
     TL_RETURN_IF_FALSE(m_animation);
+    m_entity = entity;
     auto& ctx = CLIENT_CONTEXT;
 
     if (auto transform = ctx.m_transform_manager->Get(entity)) {
@@ -372,9 +384,9 @@ void AnimationPlayer::Sync(Entity entity) {
                 HANDLE_DISCRETE_TRACK();
                 HANDLE_LINEAR_TRACK();
 #undef BINDING_TARGET
+            }
         }
     }
-}
 }
 
 void AnimationPlayer::SetRate(float rate) {

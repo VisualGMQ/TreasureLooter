@@ -477,6 +477,7 @@ export type EventSystem = {
 	AddUIMouseClickedEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIMouseClickedEvent) -> ()) -> EventListenerID,
 	AddUICheckToggledEvent: (self: EventSystem, cb: (id: EventListenerID, event: UICheckToggledEvent) -> ()) -> EventListenerID,
 	AddUIDragEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIDragEvent) -> ()) -> EventListenerID,
+	AddAnimationEndEvent: (self: EventSystem, cb: (id: EventListenerID, event: AnimationEndEvent) -> ()) -> EventListenerID,
 	Remove: (self: EventSystem, id: EventListenerID) -> (),
 }
 

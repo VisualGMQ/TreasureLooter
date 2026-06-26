@@ -942,6 +942,8 @@ void bindTrigger(lua_State* L) {
                 .addFunction("GetTouchingShapes", &Trigger::GetTouchingShapes)
                 .addFunction("GetUnderlyingShapes", &Trigger::GetUnderlyingShapes)
                 .addFunction("GetOwner", &Trigger::GetOwner)
+                .addFunction("Enable", &Trigger::Enable)
+                .addFunction("Disable", &Trigger::Disable)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))

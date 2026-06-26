@@ -29,7 +29,9 @@ function _M.OnInit(self:SlimeBehavior)
 
     local es = ctx:GetEventSystem()
     self.m_timer_listener = es:AddTimerEvent(function(id, event)
-        if event:GetID() ~= self.m_change_move_dir_timer:GetID() then return end
+        if event:GetID() ~= self.m_change_move_dir_timer:GetID() then
+            return
+        end
         self.m_move_dir = TL_Common.Vec2.ZERO
     end)
 end

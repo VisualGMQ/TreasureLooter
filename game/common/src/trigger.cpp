@@ -114,6 +114,14 @@ Entity Trigger::GetOwner() const {
     return m_entity;
 }
 
+void Trigger::Enable() const {
+    COMMON_CONTEXT.m_trigger_component_manager->Enable(m_entity);
+}
+
+void Trigger::Disable() const {
+    COMMON_CONTEXT.m_trigger_component_manager->Disable(m_entity);
+}
+
 void Trigger::Update() {
     TL_RETURN_IF_TRUE(m_physics_data.empty());
 
@@ -209,7 +217,7 @@ void TriggerComponentManager::Disable(Entity entity) {
     auto trigger = Get(entity);
     TL_RETURN_IF_NULL(trigger);
 
-    ComponentManager<Trigger>::Enable(entity);
+    ComponentManager<Trigger>::Disable(entity);
     for (auto& data : trigger->m_physics_data) {
         data.m_shape->SetQueryEnable(false);
     }

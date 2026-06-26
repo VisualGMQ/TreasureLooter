@@ -44,7 +44,8 @@ static void registerLuaScriptEventBindings(lua_State* L) {
                             TL_BIND_LUA_EVENT_LISTENER(UICheckToggledEvent,
                                                        "UICheckToggledEvent")
                                 TL_BIND_LUA_EVENT_LISTENER(UIDragEvent,
-                                                           "UIDragEvent")
+                                                            "UIDragEvent")
+            TL_BIND_LUA_EVENT_LISTENER(AnimationEndEvent, "AnimationEndEvent")
         .endClass();
 }
 
@@ -192,6 +193,10 @@ static void bindDrawOrder(lua_State* L) {
         .endNamespace();
 }
 
+template <>
+struct luabridge::Stack<AnimationPlayerID>
+    : public luabridge::Enum<AnimationPlayerID> {};
+
 static void bindAnimationPlayer(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
@@ -218,6 +223,12 @@ static void bindAnimationPlayer(lua_State* L) {
                 .addFunction("GetRate", &AnimationPlayer::GetRate)
                 .addFunction("EnableAutoPlay", &AnimationPlayer::EnableAutoPlay)
                 .addFunction("IsAutoPlayEnabled", &AnimationPlayer::IsAutoPlayEnabled)
+                .addFunction("GetID", &AnimationPlayer::GetID)
+            .endClass()
+            .beginClass<AnimationEndEvent>("AnimationEndEvent")
+                .addFunction("GetAnimationPlayerID", &AnimationEndEvent::GetAnimationPlayerID)
+                .addFunction("GetEntity", &AnimationEndEvent::GetEntity)
+                .addFunction("GetAnimation", &AnimationEndEvent::GetAnimation)
             .endClass()
             .beginClass<MultiAnimationPlayer>("MultiAnimationPlayer")
                 .addFunction("GetAnimation",
