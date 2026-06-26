@@ -250,6 +250,7 @@ Vec2 Mirror(const Vec2 &p, const Vec2 &axis_position, const Vec2 &axis_dir);
 struct Color {
     static const Color Red;
     static const Color Green;
+    static const Color Gray;
     static const Color Blue;
     static const Color Yellow;
     static const Color Purple;

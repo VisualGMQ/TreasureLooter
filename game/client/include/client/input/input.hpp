@@ -116,12 +116,17 @@ public:
 
     void SetConfig(ClientContext& context, InputConfigHandle config);
 
+    void Enable();
+    void Disable();
+    bool IsEnabled() const;
+
     void AcceptFingerAxisEvent(const std::string& name, float value);
     void AcceptFingerButton(const std::string& name, Action::State state);
 
 private:
     std::unordered_map<std::string, Axis> m_axis_mappings;
     std::unordered_map<std::string, Action> m_action_mappings;
+    bool m_enabled = true;
 
     void loadAxisConfig(ClientContext& context, const InputAxisConfig&);
     void loadActionConfig(ClientContext& context, const InputActionConfig&);

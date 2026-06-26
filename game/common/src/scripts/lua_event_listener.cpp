@@ -1,9 +1,9 @@
 #include "common/script/lua_event_listener.hpp"
 
 EventSystem* LuaEventListenerRegistry::s_es = nullptr;
-std::unordered_map<int, luabridge::LuaRef>
+std::unordered_map<EventListenerID, luabridge::LuaRef>
     LuaEventListenerRegistry::s_callbacks;
-std::unordered_map<int, std::function<void()>>
+std::unordered_map<EventListenerID, std::function<void()>>
     LuaEventListenerRegistry::s_removers;
 
 void LuaEventListenerRegistry::Initialize(EventSystem* es) {
@@ -11,13 +11,12 @@ void LuaEventListenerRegistry::Initialize(EventSystem* es) {
 }
 
 void LuaEventListenerRegistry::Remove(EventListenerID id) {
-    int key = static_cast<int>(id);
-    auto it = s_removers.find(key);
+    auto it = s_removers.find(id);
     if (it != s_removers.end()) {
         it->second();
         s_removers.erase(it);
     }
-    s_callbacks.erase(key);
+    s_callbacks.erase(id);
 }
 
 void LuaEventListenerRegistry::Clear() {

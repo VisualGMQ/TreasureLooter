@@ -1,10 +1,8 @@
 <CharacterDefinition>
-	<uuid>20501351-0000-0000-0000-000000000000</uuid>
+	<uuid>37dd6461-3193-4b3c-bc70-674ef2363548</uuid>
 	<payload>
 		<sprite_sheet>assets/Characters/Statue/SpriteSheet.png</sprite_sheet>
 		<faceset>assets/Characters/Statue/Faceset.png</faceset>
-		<speed>150.000000</speed>
-		<hp>3</hp>
 		<cct>
 			<skin>0.100000</skin>
 			<min_disp>0.001000</min_disp>
@@ -30,13 +28,27 @@
 				</payload>
 			</physics_shape>
 		</cct>
-		<move_left_animation>assets/gpa/anim/character/generic/status_walk_left.animation.xml</move_left_animation>
-		<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
-		<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
-		<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
-		<hurt_animation>assets/gpa/anim/character/generic/blink.animation.xml</hurt_animation>
-		<dead_animation>assets/gpa/anim/character/generic/dead.animation.xml</dead_animation>
+		<move>
+			<speed>150.000000</speed>
+			<move_left_animation>assets/gpa/anim/character/generic/status_walk_left.animation.xml</move_left_animation>
+			<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
+			<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
+			<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
+		</move>
+		<hp>
+			<hp>3</hp>
+			<hurt_animation>assets/gpa/anim/character/generic/blink.animation.xml</hurt_animation>
+			<dead_animation>assets/gpa/anim/character/generic/dead.animation.xml</dead_animation>
+		</hp>
+		<interact>
+			<value>
+				<detect_range>50.000000</detect_range>
+				<can_interact_range>20.000000</can_interact_range>
+				<collision_mask>
+					<elem>Interactable</elem>
+				</collision_mask>
+			</value>
+		</interact>
 		<init_weapon>ItemDID1</init_weapon>
 	</payload>
 </CharacterDefinition>
-

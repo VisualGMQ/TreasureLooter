@@ -1,0 +1,53 @@
+<SkillDefinition>
+	<uuid>1ce50000-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<phases>
+			<elem>
+				<animation>assets/gpa/anim/fx/element/ice2.animation.xml</animation>
+				<collision>
+					<collision>
+						<value>
+							<event_type>WeaponAttack</event_type>
+							<physics_shapes>
+								<elem>
+									<uuid>1ce50001-0000-0000-0000-000000000000</uuid>
+									<payload>
+										<is_rect>false</is_rect>
+										<rect>
+											<center x="0.000000" y="0.000000"/>
+											<half_size x="0.000000" y="0.000000"/>
+										</rect>
+										<circle>
+											<center x="0.000000" y="0.000000"/>
+											<radius>16.000000</radius>
+										</circle>
+										<collision_layer/>
+										<collision_mask>
+											<elem>CCT</elem>
+										</collision_mask>
+									</payload>
+								</elem>
+							</physics_shapes>
+							<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
+						</value>
+					</collision>
+					<begin_time>
+						<value>0.500000</value>
+					</begin_time>
+				</collision>
+				<delay>0.000000</delay>
+				<damage>1</damage>
+				<loop>0</loop>
+				<is_aoe>true</is_aoe>
+			</elem>
+		</phases>
+		<buffs>
+			<elem>
+				<type>Freeze</type>
+				<duration>2.000000</duration>
+			</elem>
+		</buffs>
+		<script>scripts/client/behaviors/skills/ice_spike.luau</script>
+		<hit_fx_did>Invalid</hit_fx_did>
+	</payload>
+</SkillDefinition>

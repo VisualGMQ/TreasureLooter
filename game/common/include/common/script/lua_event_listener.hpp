@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 
 class LuaEventListenerRegistry {
 public:
@@ -24,11 +25,21 @@ public:
             }
         };
 
-        EventListenerID eid = s_es->AddListener<T>(listener);
-        int key = static_cast<int>(eid);
-        s_callbacks.emplace(key, cb);
-        s_removers.emplace(key, [eid]() { s_es->RemoveListener<T>(eid); });
-        return eid;
+        EventListenerID listener_id = s_es->AddListener<T>(listener);
+        s_callbacks.emplace(listener_id, cb);
+        s_removers.emplace(listener_id, [listener_id]() {
+            s_es->RemoveListener<T>(listener_id);
+        });
+        return listener_id;
+    }
+
+    template <typename T>
+    static EventListenerID Add(const EventListener<T>& listener) {
+        EventListenerID listener_id = s_es->AddListener<T>(listener);
+        s_removers.emplace(listener_id, [listener_id]() {
+            s_es->RemoveListener<T>(listener_id);
+        });
+        return listener_id;
     }
 
     static void Remove(EventListenerID id);
@@ -36,14 +47,14 @@ public:
 
 private:
     static EventSystem* s_es;
-    static std::unordered_map<int, luabridge::LuaRef> s_callbacks;
-    static std::unordered_map<int, std::function<void()>> s_removers;
+    static std::unordered_map<EventListenerID, luabridge::LuaRef> s_callbacks;
+    static std::unordered_map<EventListenerID, std::function<void()>>
+        s_removers;
 };
 
-#define TL_BIND_LUA_EVENT_LISTENER(EventType, EventName)             \
-    .addFunction(                                                    \
-        "Add" EventName,                                             \
-        +[](EventSystem*, luabridge::LuaRef cb) -> int {             \
-            return static_cast<int>(                                  \
-                LuaEventListenerRegistry::Add<EventType>(cb));        \
+#define TL_BIND_LUA_EVENT_LISTENER(EventType, EventName)                  \
+    .addFunction(                                                         \
+        "Add" EventName, +[](EventSystem*, luabridge::LuaRef cb) -> int { \
+            return static_cast<int>(                                      \
+                LuaEventListenerRegistry::Add<EventType>(cb));            \
         })

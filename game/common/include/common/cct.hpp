@@ -6,6 +6,7 @@
 
 class CharacterController {
 public:
+    friend class CCTManager;
     explicit CharacterController(Entity entity,
                                  const CCTDefinition& create_info);
 
@@ -31,4 +32,8 @@ private:
     static bool EnableDebugOutput;
 };
 
-class CCTManager : public ComponentManager<CharacterController> {};
+class CCTManager : public ComponentManager<CharacterController> {
+public:
+    void Enable(Entity entity) override;
+    void Disable(Entity entity) override;
+};

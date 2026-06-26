@@ -5,5 +5,7 @@
         <item name="Coin"/>
         <item name="WeaponAttack"/>
         <item name="Interactable" />
+        <item name="Pickupable" />
+        <item name="Material" />
     </enum>
 </schema>

@@ -113,6 +113,10 @@ function _M.ShowDebugPanel()
 		return
 	end
 
+	local time = ctx:GetTime()
+	ImGui.Text("FPS: " .. tostring(time:GetFPS()) .. "  (unlimit: " .. tostring(time:GetUnlimitFPS()) .. ")")
+	ImGui.Separator()
+
 	local physics = ctx:GetPhysicsScene()
 	local debug_draw = physics:IsEnableDebugDraw()
 	local _, changed = ImGui.Checkbox("Physics scene debug draw", debug_draw)
@@ -147,5 +151,3 @@ function _M.ShowDebugPanel()
 end
 
 return _M
-
-

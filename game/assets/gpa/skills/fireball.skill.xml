@@ -1,0 +1,44 @@
+<SkillDefinition>
+	<uuid>d3443ee8-006f-4b23-bef7-e826be821674</uuid>
+	<payload>
+		<phases>
+			<elem>
+				<animation>assets/gpa/anim/fx/projectile/fire_ball.animation.xml</animation>
+				<collision>
+					<collision>
+						<value>
+							<event_type>WeaponAttack</event_type>
+							<physics_shapes>
+								<elem>
+									<uuid>da3f9c74-030e-4e9d-b606-830a3d4a7255</uuid>
+									<payload>
+										<is_rect>false</is_rect>
+										<rect>
+											<center x="0.000000" y="0.000000"/>
+											<half_size x="0.000000" y="0.000000"/>
+										</rect>
+										<circle>
+											<center x="0.000000" y="0.000000"/>
+											<radius>8.000000</radius>
+										</circle>
+										<collision_layer/>
+										<collision_mask>
+											<elem>CCT</elem>
+											<elem>Obstacle</elem>
+										</collision_mask>
+									</payload>
+								</elem>
+							</physics_shapes>
+							<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
+						</value>
+					</collision>
+				</collision>
+				<delay>0.000000</delay>
+				<damage>1</damage>
+				<loop>-1</loop>
+			</elem>
+		</phases>
+		<script>scripts/client/behaviors/skills/fireball.luau</script>
+		<hit_fx_did>Invalid</hit_fx_did>
+	</payload>
+</SkillDefinition>

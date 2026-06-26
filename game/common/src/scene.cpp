@@ -4,6 +4,7 @@
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
 #include "common/context.hpp"
+#include "common/event.hpp"
 #include "common/macros.hpp"
 #include "common/relationship.hpp"
 #include "common/tilemap_layer_collision_component.hpp"
@@ -117,7 +118,9 @@ void Scene::doRemoveEntityWithChildren(Entity entity) {
     }
 
     COMMON_CONTEXT.RemoveAllComponentsOnEntity(entity);
-    
+
+    COMMON_CONTEXT.m_event_system->EnqueueEvent(RemoveEntityEvent{entity});
+
     m_entities.erase(entity);
 }
 

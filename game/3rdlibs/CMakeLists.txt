@@ -45,3 +45,4 @@ set(protobuf_LOCAL_DEPENDENCIES_ONLY ON)
 add_3rdlib(protobuf)
 
 add_3rdlib(enet)
+add_3rdlib(fts_fuzzy_match)

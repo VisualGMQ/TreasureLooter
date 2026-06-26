@@ -14,6 +14,38 @@
 				<key>ItemDID1</key>
 				<value>assets/gpa/weapons/weapon.item.xml</value>
 			</elem>
+			<elem>
+				<key>ItemDID2</key>
+				<value>assets/gpa/items/bar_gold.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID3</key>
+				<value>assets/gpa/items/mine.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID4</key>
+				<value>assets/gpa/items/arrow_tower.item.xml</value>
+			</elem>
+			<elem>
+				<key>FXDID1</key>
+				<value>assets/gpa/anim/fx/hint_arrow.fx.xml</value>
+			</elem>
+			<elem>
+				<key>FXDID2</key>
+				<value>assets/gpa/anim/fx/smoke/circluar_smoke.fx.xml</value>
+			</elem>
+			<elem>
+				<key>SkillDID1</key>
+				<value>assets/gpa/skills/fireball.skill.xml</value>
+			</elem>
+			<elem>
+				<key>SkillDID2</key>
+				<value>assets/gpa/skills/rock_fell.skill.xml</value>
+			</elem>
+			<elem>
+				<key>SkillDID3</key>
+				<value>assets/gpa/skills/ice_spike.skill.xml</value>
+			</elem>
 		</objects>
 	</payload>
 </ObjectDefinitionTable>

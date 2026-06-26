@@ -1,0 +1,24 @@
+<FXDefinition>
+	<uuid>b9c8d7e6-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<sprite>
+			<image>assets/FX/Smoke/SmokeCircular/SpriteSheet.png</image>
+			<region>
+				<topleft x="0.000000" y="0.000000"/>
+				<size x="30.000000" y="14.000000"/>
+			</region>
+			<size x="30.000000" y="14.000000"/>
+			<anchor x="0.000000" y="0.000000"/>
+			<flip>
+				<item>None</item>
+			</flip>
+			<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+		</sprite>
+		<animation>
+			<loop>0</loop>
+			<rate>1.000000</rate>
+			<auto_play>false</auto_play>
+			<animation>assets/gpa/anim/fx/smoke/circluar_smoke.animation.xml</animation>
+		</animation>
+	</payload>
+</FXDefinition>

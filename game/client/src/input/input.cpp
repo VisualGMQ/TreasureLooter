@@ -195,6 +195,9 @@ void InputManager::AcceptFingerButton(const std::string& name, Action::State sta
 }
 
 const Axis& InputManager::GetAxis(const std::string& name) const {
+    if (!m_enabled) {
+        return InvalidAxis;
+    }
     if (auto it = m_axis_mappings.find(name); it != m_axis_mappings.end()) {
         return it->second;
     }
@@ -202,10 +205,25 @@ const Axis& InputManager::GetAxis(const std::string& name) const {
 }
 
 const Action& InputManager::GetAction(const std::string& name) const {
+    if (!m_enabled) {
+        return InvalidAction;
+    }
     if (auto it = m_action_mappings.find(name); it != m_action_mappings.end()) {
         return it->second;
     }
     return InvalidAction;
+}
+
+void InputManager::Enable() {
+    m_enabled = true;
+}
+
+void InputManager::Disable() {
+    m_enabled = false;
+}
+
+bool InputManager::IsEnabled() const {
+    return m_enabled;
 }
 
 Axises InputManager::MakeAxises(const std::string& x_name,

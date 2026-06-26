@@ -158,6 +158,8 @@ void CommonContext::AttachComponentsOnEntity(Entity entity,
 
     m_transform_manager->RegisterEntity(
         entity, transform ? *transform : prefab.m_transform.value());
+    // update global mat
+    m_transform_manager->Get(entity)->UpdateMat(nullptr);
     if (prefab.m_tilemap_layer) {
         m_tilemap_layer_collision_component_manager->RegisterEntity(
             entity, TilemapLayerCollisionComponent{

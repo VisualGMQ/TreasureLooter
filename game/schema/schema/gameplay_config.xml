@@ -1,11 +1,13 @@
 <schema>
     <include>common/image.hpp</include>
     <include>common/animation.hpp</include>
+    <include>common/collision_group.hpp</include>
     <import>common</import>
     <import>physics_schema</import>
     <import>scene_definition</import>
     <import>tilemap_schema</import>
     <import>sprite</import>
+    <import>anim_player</import>
 
     <enum name="TeamID">
         <item name="invalid" />
@@ -25,6 +27,20 @@
 
         <item name="ItemDID1" value="0x20000"/>
         <item name="ItemDID2"/>
+        <item name="ItemDID3"/>
+        <item name="ItemDID4"/>
+
+        <item name="FXDID1" value="0x40000"/>
+        <item name="FXDID2"/>
+        <item name="FXDID3"/>
+        <item name="FXDID4"/>
+        <item name="FXDID5"/>
+
+        <item name="SkillDID1" value="0x80000"/>
+        <item name="SkillDID2"/>
+        <item name="SkillDID3"/>
+        <item name="SkillDID4"/>
+        <item name="SkillDID5"/>
 
         <!--add whatever DID you need-->
     </enum>
@@ -43,6 +59,7 @@
 
         <item name="Pickupable" value="0x08" />
         <item name="Stackable" value="0x10" />
+        <item name="Constructable" value="0x20" />
     </enum>
 
     <class name="Attackable">
@@ -52,37 +69,125 @@
         <element name="damage" type="float" default="1"/>
     </class>
 
+    <class name="SpawnObjectComponentDefinition">
+        <element name="object_did" type="DID" />
+        <element name="count" type="int" default="-1" />
+        <array name="spawn_animations" type="AnimationHandle" />
+    </class>
+
+    <class name="ConstructMaterial">
+        <element name="material_did" type="DID" />
+        <element name="count" type="uint32_t" default="1" />
+    </class>
+
+    <class name="ConstructPhase">
+        <array name="materials" type="ConstructMaterial" />
+        <element name="sprite" type="SpriteDefinition" />
+    </class>
+
+    <class name="ConstructableComponentDefinition">
+        <array name="phases" type="ConstructPhase" />
+        <element name="material_accept_range" type="float" default="30" />
+        <element name="fx_on_accept_material" type="DID" default="DID::Invalid" />
+    </class>
+
+    <class name="SkillPhaseCollision">
+        <option name="collision" type="TriggerDefinition"/>
+        <option name="begin_time" type="TimeType"/>
+        <option name="end_time" type="TimeType"/>
+    </class>
+
+    <class name="SkillPhase">
+        <handle name="animation" type="Animation"/>
+        <element name="collision" type="SkillPhaseCollision"/>
+        <element name="delay" type="TimeType" default="0"/>
+        <element name="damage" type="uint32_t" default="0"/>
+        <element name="loop" type="int" default="0"/>
+        <element name="is_aoe" type="bool" default="false"/>
+    </class>
+
+    <enum name="BuffType">
+        <item name="None" value="0" />
+        <item name="Invincible" value="0x01"/>
+        <item name="SpeedUp" value="0x02"/>
+        <item name="SpeedDown" value="0x04"/>
+        <item name="Fire" value="0x08"/>
+        <item name="Freeze" value="0x10"/>
+    </enum>
+
+    <class name="BuffDefinition">
+        <element name="type" type="BuffType" value="BuffType::None"/>
+        <element name="duration" type="TimeType" default="3"/>
+        <!--only used by the SpeedDown buff; ratio to scale movement speed (default 0.5)-->
+        <option name="speed_slow_factor" type="float"/>
+    </class>
+
+    <asset name="SkillDefinition" extension=".skill">
+        <array name="phases" type="SkillPhase"/>
+        <array name="buffs" type="BuffDefinition"/>
+        <element name="script" type="Path"/>
+        <element name="hit_fx_did" type="DID" default="DID::Invalid"/>
+    </asset>
+
     <asset name="ItemDefinition" extension=".item">
         <flags name="behavior" type="ItemBehavior" />
         <element name="sprite" type="SpriteDefinition" />
+        <handle name="collision" type="PhysicsShapeDefinition"/>
         <option name="attackable" type="Attackable" />
+        <option name="spawn_object" type="SpawnObjectComponentDefinition" />
+        <option name="constructable" type="ConstructableComponentDefinition" />
     </asset>
 
-    <asset name="CharacterDefinition" extension=".character_def">
-        <handle name="sprite_sheet" type="Image" />
-        <handle name="faceset" type="Image" />
-        <element name="speed" type="float" default="100" />
-        <element name="hp" type="uint32_t" default="1" />
+    <asset name="FXDefinition" extension=".fx">
+        <element name="sprite" type="SpriteDefinition" />
+        <element name="animation" type="AnimationPlayerDefinition" />
+    </asset>
 
-        <element name="cct" type="CCTDefinition" />
+    <class name="MoveComponentDefinition">
+        <element name="speed" type="float" default="100" />
 
         <handle name="move_left_animation" type="Animation" />
         <handle name="move_right_animation" type="Animation" />
         <handle name="move_up_animation" type="Animation" />
         <handle name="move_down_animation" type="Animation" />
+    </class>
+
+    <class name="HpComponentDefinition">
+        <element name="hp" type="uint32_t" default="1" />
 
         <handle name="hurt_animation" type="Animation" />
         <handle name="dead_animation" type="Animation" />
         <element name="invincible_time" type="TimeType" default="1" />
+    </class>
+
+    <class name="InteractComponentDefinition">
+        <element name="detect_range" type="float" default="50" />
+        <element name="can_interact_range" type="float" default="30" />
+        <element name="collision_mask" type="CollisionGroup" />
+    </class>
+
+    <asset name="CharacterDefinition" extension=".character_def">
+        <handle name="sprite_sheet" type="Image" />
+        <handle name="faceset" type="Image" />
+
+        <element name="cct" type="CCTDefinition" />
+
+        <element name="move" type="MoveComponentDefinition" />
+        <element name="hp" type="HpComponentDefinition" />
+        <option name="interact" type="InteractComponentDefinition" />
 
         <element name="init_weapon" type="DID" default="DID::Invalid" />
         <!--<handle name="pickaxe" type="WeaponDefinition" />-->
+
+        <array name="skills" type="DID"/>
+
+        <!--key: skill in skills list, value: action name-->
+        <unorderd_map name="skill_action_binding" key="size_t" value="std::string"/>
+        <unorderd_map name="skill_cooldowns" key="size_t" value="TimeType"/>
     </asset>
 
     <class name="PlayerRelatedDefinition">
-        <handle name="interactable_hint_image" type="Image" />
-        <handle name="interactable_hint_animation" type="Animation" />
-        <element name="interact_check_area" type="TriggerDefinition" />
+        <element name="hint_fx_did" type="DID" default="DID::Invalid" />
     </class>
 
     <class name="MapLayerDefinition">
@@ -93,8 +198,6 @@
     <class name="MapDefinition">
         <handle name="map" type="Tilemap" />
         <array name="layers" type="MapLayerDefinition" />
-
-        <element name="player_related_definition" type="PlayerRelatedDefinition" />
     </class>
 
     <class name="ObjectSpawnDefinition">
@@ -109,10 +212,17 @@
 
     <asset name="LevelDefinition" extension=".level">
         <element name="map_definition" type="MapDefinition" />
+        <element name="land" type="std::string" />
+        <element name="player_related_definition" type="PlayerRelatedDefinition" />
         <array name="spawn_objects" type="ObjectSpawnDefinition"/>
     </asset>
 
     <asset name="ObjectDefinitionTable" extension=".object_definition_table">
         <unordered_map name="objects" key="DID" value="Path"/>
+    </asset>
+
+    <asset name="BuffAppliersTable" extension=".buff_appliers">
+        <!--key: buff type, value: script path-->
+        <unordered_map name="buffs" key="BuffType" value="Path"/>
     </asset>
 </schema>

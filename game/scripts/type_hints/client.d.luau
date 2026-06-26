@@ -78,6 +78,7 @@ export type AnimationPlayer = {
 	Stop: (self: AnimationPlayer) -> (),
 	Rewind: (self: AnimationPlayer) -> (),
 	SetLoop: (self: AnimationPlayer, loop: number) -> (),
+	SetCurTime: (self: AnimationPlayer, time: TimeType) -> (),
 	IsPlaying: (self: AnimationPlayer) -> boolean,
 	GetLoopCount: (self: AnimationPlayer) -> number,
 	GetCurTime: (self: AnimationPlayer) -> number,
@@ -168,6 +169,12 @@ export type UIMouseClickedEvent = { m_entity: Entity }
 export type UICheckToggledEvent = { m_entity: Entity, m_checked: boolean }
 export type UIDragEvent = { m_entity: Entity }
 
+export type AnimationEndEvent = {
+	GetAnimationPlayerID: (self: AnimationEndEvent) -> number,
+	GetEntity: (self: AnimationEndEvent) -> Entity,
+	GetAnimation: (self: AnimationEndEvent) -> AnimationHandle,
+}
+
 export type ClientContext = CommonContext & {
 	GetCamera: (self: ClientContext) -> Camera,
 	GetSpriteManager: (self: ClientContext) -> SpriteManager,
@@ -180,6 +187,7 @@ export type ClientContext = CommonContext & {
 	GetTilemapRenderComponentManager: (self: ClientContext) -> TilemapRenderComponentManager,
 	GetNetPeer: (self: ClientContext) -> UDPPeer,
 	GetConfig: (self: ClientContext) -> ClientConfig,
+	GetDebugPanel: (self: ClientContext) -> DebugPanel,
 	ConnectToServer: (self: ClientContext, address: NetAddress) -> (),
 }
 
@@ -188,6 +196,11 @@ export type ActionStateNamespace = {
 	Pressing: number,
 	Released: number,
 	Releasing: number,
+}
+
+export type DebugPanel = {
+	RegisterCmd: (self: DebugPanel, name: string, cmd: (args: {string}) -> ()) -> (),
+	ExecuteCmd: (self: DebugPanel, name: string, args: {string}) -> (),
 }
 
 -- The runtime global table created by `beginNamespace("TL_Client")`.

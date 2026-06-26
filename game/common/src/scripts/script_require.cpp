@@ -40,6 +40,34 @@ bool LuauRequireContext::moduleNameToPath(const std::string& modname,
     return true;
 }
 
+bool LuauRequireContext::PathToModuleName(const Path& file_path,
+                                          std::string& out_modname) const {
+    auto path_str = file_path.string();
+    std::replace(path_str.begin(), path_str.end(), '\\', '/');
+
+    for (auto& [alias, alias_path] : m_alias_paths) {
+        auto alias_str = alias_path.string();
+        std::replace(alias_str.begin(), alias_str.end(), '\\', '/');
+
+        if (path_str.size() > alias_str.size() &&
+            path_str.compare(0, alias_str.size(), alias_str) == 0) {
+            auto relative = path_str.substr(alias_str.size());
+            if (!relative.empty() &&
+                (relative[0] == '/' || relative[0] == '\\')) {
+                relative = relative.substr(1);
+            }
+            // strip .luau extension
+            if (relative.size() > 5 &&
+                relative.compare(relative.size() - 5, 5, ".luau") == 0) {
+                relative = relative.substr(0, relative.size() - 5);
+            }
+            out_modname = alias + "/" + relative;
+            return true;
+        }
+    }
+    return false;
+}
+
 void LuauRequireContext::InitModuleRegisterTable(lua_State* L) {
     lua_newtable(L);
     lua_setfield(L, LUA_REGISTRYINDEX,

@@ -58,7 +58,7 @@ end
 
 -- Names must match `CollisionGroupType` in schema / TL bindings.
 local COLLISION_GROUP_TYPE_NAMES: { string } =
-	{ "CCT", "Obstacle", "Coin", "WeaponAttack", "Interactable" }
+	{ "CCT", "Obstacle", "Coin", "WeaponAttack", "Interactable", "Material" }
 
 local function collision_group_active_names(g: CollisionGroup): string
 	local cgt = TL_Schema.CollisionGroupType
@@ -486,7 +486,7 @@ function _M.DisplayInspector(ctx: ClientContext, e: Entity)
 
 	local anim_mgr = ctx:GetMultiAnimationPlayerManager()
 	if anim_mgr:Has(e) then
-		ImGui.SeparatorText("AnimationPlayer")
+        ImGui.SeparatorText("MultiAnimationPlayer")
 		_M.DisplayMultiAnimationPlayer(anim_mgr:Get(e) :: MultiAnimationPlayer)
 	end
 

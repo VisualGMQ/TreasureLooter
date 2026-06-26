@@ -1,0 +1,2 @@
+add_library(fts_fuzzy_match INTERFACE)
+target_include_directories(fts_fuzzy_match INTERFACE .)

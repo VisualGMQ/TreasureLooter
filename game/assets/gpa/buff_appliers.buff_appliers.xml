@@ -1,0 +1,15 @@
+<BuffAppliersTable>
+	<uuid>b4ff0001-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<buffs>
+			<elem>
+				<key>SpeedDown</key>
+				<value>@common/buff/speed_down</value>
+			</elem>
+			<elem>
+				<key>Freeze</key>
+				<value>@common/buff/freeze</value>
+			</elem>
+		</buffs>
+	</payload>
+</BuffAppliersTable>
