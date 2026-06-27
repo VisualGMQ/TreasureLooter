@@ -649,6 +649,8 @@ void bindCCT(lua_State* L) {
                 .addFunction("Has", +[](CCTManager* m, Entity e) {
                     return m->Has(e);
                 })
+                .addFunction("Enable", &CCTManager::Enable)
+                .addFunction("Disable", &CCTManager::Disable)
             .endClass()
         .endNamespace();
 }

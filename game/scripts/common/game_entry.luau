@@ -1,6 +1,7 @@
 local ScriptBehavior = require("@common/script_behavior")
 local ObjectDefinitionTable = require("@common/object_def_table")
 local DID = require("@common/did")
+local World = require("@common/world")
 
 local GameEntry = {}
 GameEntry.__index = GameEntry
@@ -106,7 +107,7 @@ function GameEntry.gatherSpawnPoints(level_definition: LevelDefinitionHandle, ma
     return spawn_point_infos
 end
 
-function GameEntry.createMapLayers(scene: Scene, root_relationship: Relationship, map_definition:MapDefinition):{[string]:Entity}
+function GameEntry.createMapLayers(scene: Scene, root_relationship: Relationship, map_definition:MapDefinition, land:string):{[string]:Entity}
     local ctx = TL_Common.GetContext()
     local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
 
@@ -125,6 +126,10 @@ function GameEntry.createMapLayers(scene: Scene, root_relationship: Relationship
         map_layer_entities[layer.m_name] = entity
         root_relationship:AddChild(entity)
 
+        if layer.m_name == land then
+            World.GetInst().m_land_entity = entity
+        end
+
         prefab_mgr:Unload(prefab)
     end
 
@@ -137,7 +142,9 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
     local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
 
     self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
-    self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition)
+    self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
+
+    self:CreatePlayerHint(scene, level_definition.m_player_related_definition)
 
     -- create objects
     for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
@@ -188,6 +195,10 @@ function GameEntry.CreateItem(self:GameEntry, scene:Scene, spawn_info:ObjectSpaw
 end
 
 function GameEntry.CreatePrefab(self: GameEntry, scene:Scene, prefab: PrefabHandle, transform:Transform)
+    assert(false, "shouldn't step into here")
+end
+
+function GameEntry.CreatePlayerHint(self: GameEntry, scene:Scene, player_related_definition:PlayerRelatedDefinition)
     assert(false, "shouldn't step into here")
 end
 

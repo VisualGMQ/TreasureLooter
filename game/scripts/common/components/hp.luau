@@ -28,6 +28,26 @@ function _M.Hurt(self:HpComponent, damage: number)
 
     self.m_hp -= damage
     self._invincible_timer:Start()
+
+    if self:IsDead() then
+        self:disableCollision()
+    end
+end
+
+-- when dead the body should not block other characters anymore
+function _M.disableCollision(self:HpComponent)
+    local ctx = TL_Common.GetContext()
+    local entity = self:GetGameObject():GetEntity()
+
+    local cct_mgr = ctx:GetCCTManager()
+    if cct_mgr:Has(entity) then
+        cct_mgr:Disable(entity)
+    end
+
+    local static_collision_mgr = ctx:GetStaticCollisionManager()
+    if static_collision_mgr:Has(entity) then
+        static_collision_mgr:Disable(entity)
+    end
 end
 
 function _M.IsDead(self:HpComponent):boolean

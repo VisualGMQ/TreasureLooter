@@ -366,6 +366,8 @@ export type CharacterController = {
 export type CCTManager = {
 	Get: (self: CCTManager, entity: Entity) -> CharacterController?,
 	Has: (self: CCTManager, entity: Entity) -> boolean,
+	Enable: (self: CCTManager, entity: Entity) -> (),
+	Disable: (self: CCTManager, entity: Entity) -> (),
 }
 
 export type OverlapResult = {

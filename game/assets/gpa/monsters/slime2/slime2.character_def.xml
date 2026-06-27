@@ -3,8 +3,6 @@
 	<payload>
 		<sprite_sheet>assets/Characters/Slime2/Slime2.png</sprite_sheet>
 		<faceset>assets/Characters/Slime2/Faceset.png</faceset>
-		<speed>30.000000</speed>
-		<hp>3</hp>
 		<cct>
 			<skin>0.100000</skin>
 			<min_disp>0.001000</min_disp>
@@ -30,15 +28,19 @@
 				</payload>
 			</physics_shape>
 		</cct>
-		<move_left_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_left_animation>
-		<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
-		<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
-		<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
-		<hurt_animation>assets/gpa/anim/character/generic/blink.animation.xml</hurt_animation>
-		<dead_animation>assets/gpa/anim/character/generic/dead.animation.xml</dead_animation>
-		<client_script>scripts/client/slime.luau</client_script>
-		<invincible_time>1</invincible_time>
+		<move>
+			<speed>30.000000</speed>
+			<move_left_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_left_animation>
+			<move_right_animation>assets/gpa/anim/character/generic/status_walk_right.animation.xml</move_right_animation>
+			<move_up_animation>assets/gpa/anim/character/generic/status_walk_up.animation.xml</move_up_animation>
+			<move_down_animation>assets/gpa/anim/character/generic/status_walk_down.animation.xml</move_down_animation>
+		</move>
+		<hp>
+			<hp>3</hp>
+			<hurt_animation>assets/gpa/anim/character/generic/blink.animation.xml</hurt_animation>
+			<dead_animation>assets/gpa/anim/character/generic/dead.animation.xml</dead_animation>
+			<invincible_time>1</invincible_time>
+		</hp>
 		<init_weapon>Invalid</init_weapon>
-		<interact_range>0.000000</interact_range>
 	</payload>
 </CharacterDefinition>

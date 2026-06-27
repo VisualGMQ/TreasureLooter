@@ -1,11 +1,13 @@
 <schema>
     <include>common/image.hpp</include>
     <include>common/animation.hpp</include>
+    <include>common/collision_group.hpp</include>
     <import>common</import>
     <import>physics_schema</import>
     <import>scene_definition</import>
     <import>tilemap_schema</import>
     <import>sprite</import>
+    <import>anim_player</import>
 
     <enum name="TeamID">
         <item name="invalid" />
@@ -25,6 +27,12 @@
 
         <item name="ItemDID1" value="0x20000"/>
         <item name="ItemDID2"/>
+
+        <item name="FXDID1" value="0x40000"/>
+        <item name="FXDID2"/>
+        <item name="FXDID3"/>
+        <item name="FXDID4"/>
+        <item name="FXDID5"/>
 
         <!--add whatever DID you need-->
     </enum>
@@ -55,34 +63,54 @@
     <asset name="ItemDefinition" extension=".item">
         <flags name="behavior" type="ItemBehavior" />
         <element name="sprite" type="SpriteDefinition" />
+        <handle name="collision" type="PhysicsShapeDefinition"/>
         <option name="attackable" type="Attackable" />
     </asset>
 
-    <asset name="CharacterDefinition" extension=".character_def">
-        <handle name="sprite_sheet" type="Image" />
-        <handle name="faceset" type="Image" />
-        <element name="speed" type="float" default="100" />
-        <element name="hp" type="uint32_t" default="1" />
+    <asset name="FXDefinition" extension=".fx">
+        <element name="sprite" type="SpriteDefinition" />
+        <element name="animation" type="AnimationPlayerDefinition" />
+    </asset>
 
-        <element name="cct" type="CCTDefinition" />
+    <class name="MoveComponentDefinition">
+        <element name="speed" type="float" default="100" />
 
         <handle name="move_left_animation" type="Animation" />
         <handle name="move_right_animation" type="Animation" />
         <handle name="move_up_animation" type="Animation" />
         <handle name="move_down_animation" type="Animation" />
+    </class>
+
+    <class name="HpComponentDefinition">
+        <element name="hp" type="uint32_t" default="1" />
 
         <handle name="hurt_animation" type="Animation" />
         <handle name="dead_animation" type="Animation" />
         <element name="invincible_time" type="TimeType" default="1" />
+    </class>
+
+    <class name="InteractComponentDefinition">
+        <element name="detect_range" type="float" default="50" />
+        <element name="can_interact_range" type="float" default="30" />
+        <element name="collision_mask" type="CollisionGroup" />
+    </class>
+
+    <asset name="CharacterDefinition" extension=".character_def">
+        <handle name="sprite_sheet" type="Image" />
+        <handle name="faceset" type="Image" />
+
+        <element name="cct" type="CCTDefinition" />
+
+        <element name="move" type="MoveComponentDefinition" />
+        <element name="hp" type="HpComponentDefinition" />
+        <option name="interact" type="InteractComponentDefinition" />
 
         <element name="init_weapon" type="DID" default="DID::Invalid" />
         <!--<handle name="pickaxe" type="WeaponDefinition" />-->
     </asset>
 
     <class name="PlayerRelatedDefinition">
-        <handle name="interactable_hint_image" type="Image" />
-        <handle name="interactable_hint_animation" type="Animation" />
-        <element name="interact_check_area" type="TriggerDefinition" />
+        <element name="hint_fx_did" type="DID" default="DID::Invalid" />
     </class>
 
     <class name="MapLayerDefinition">
@@ -93,8 +121,6 @@
     <class name="MapDefinition">
         <handle name="map" type="Tilemap" />
         <array name="layers" type="MapLayerDefinition" />
-
-        <element name="player_related_definition" type="PlayerRelatedDefinition" />
     </class>
 
     <class name="ObjectSpawnDefinition">
@@ -109,6 +135,8 @@
 
     <asset name="LevelDefinition" extension=".level">
         <element name="map_definition" type="MapDefinition" />
+        <element name="land" type="std::string" />
+        <element name="player_related_definition" type="PlayerRelatedDefinition" />
         <array name="spawn_objects" type="ObjectSpawnDefinition"/>
     </asset>
 

@@ -1,12 +1,16 @@
 local ClientGameObjectBehavior = require("@client/gameobject_behavior")
 local ClientGameObject = require("@client/gameobject")
 local ClientAttackComponent = require("@client/components/attack")
+local ClientWorld = require("@client/world")
+
+local k_put_down_distance = 20
 
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ClientGameObjectBehavior })
 
-type PlayerBehaviorData = {}
+type PlayerBehaviorData = {
+}
 
 export type PlayerBehavior = typeof(_M) & PlayerBehaviorData & ClientGameObjectBehavior.ClientGameObjectBehavior
 
@@ -16,6 +20,10 @@ function _M.new(entity:Entity)
 end
 
 function _M.OnInit(self:PlayerBehavior)
+    local world = ClientWorld.GetInst() :: ClientWorld.ClientWorld
+    local interact = self.m_gameobject.m_interact_component
+    TL_Client.GetContext():Log("player hint = ", world.m_player_hint)
+    interact:SetHintFX(world.m_player_hint)
 end
 
 function _M.OnUpdate(self:PlayerBehavior, elapse_time:TimeType)
@@ -44,8 +52,26 @@ function _M.OnUpdate(self:PlayerBehavior, elapse_time:TimeType)
             weapon_go.m_attack_component:SetAimDir(dir)
 
             local action = input_manager:GetAction("Attack")
-            if action:IsPressed(0) then
+            if action:IsPressed(0) and not self.m_gameobject.m_raise_up_component:IsHolding() then
                 weapon_go.m_attack_component:Attack(dir)
+            end
+        end
+    end
+
+    if self.m_gameobject.m_interact_component then
+        self.m_gameobject.m_interact_component:Update(elapse_time)
+
+        local interact_action = input_manager:GetAction("Interact")
+        if interact_action:IsPressed(0) then
+            local obj = self.m_gameobject.m_interact_component:GetInteractObject()
+            local picked_up = false
+            if obj then
+                picked_up = self.m_gameobject.m_raise_up_component:TryRaiseUp(obj)
+            end
+            if not picked_up then
+                local facing = self.m_gameobject.m_move_component:GetLastMoveDirection()
+                local drop_position = self.m_gameobject.m_transform:GetGlobalPosition() + facing * k_put_down_distance
+                self.m_gameobject.m_raise_up_component:PutDown(drop_position)
             end
         end
     end

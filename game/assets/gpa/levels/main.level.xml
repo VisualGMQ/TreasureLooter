@@ -19,34 +19,10 @@
 					</draw_order>
 				</elem>
 			</layers>
-			<player_related_definition>
-				<interactable_hint_image>assets/UI/Arrow.png</interactable_hint_image>
-				<interactable_hint_animation>assets/gpa/anim/item/interactable_hint_floating.animation.xml</interactable_hint_animation>
-				<interact_check_area>
-					<event_type>InteractableDetect</event_type>
-					<physics_shapes>
-						<elem>
-							<uuid>9c993085-4c86-4443-adf2-3813751dfa2a</uuid>
-							<payload>
-								<is_rect>false</is_rect>
-								<rect>
-									<center x="0.000000" y="0.000000"/>
-									<half_size x="0.000000" y="0.000000"/>
-								</rect>
-								<circle>
-									<center x="0.000000" y="20.000000"/>
-									<radius>10.000000</radius>
-								</circle>
-								<collision_mask>
-									<elem>Interactable</elem>
-								</collision_mask>
-							</payload>
-						</elem>
-					</physics_shapes>
-					<trig_every_frame_when_touch>false</trig_every_frame_when_touch>
-				</interact_check_area>
-			</player_related_definition>
 		</map_definition>
+		<player_related_definition>
+			<hint_fx_did>FXDID1</hint_fx_did>
+		</player_related_definition>
 		<spawn_objects>
 			<elem>
 				<did>CharacterDID1</did>
@@ -69,15 +45,36 @@
 				</team_id>
 			</elem>
 			<elem>
-				<did>ItemDID1</did>
-				<client_script>scripts/client/behaviors/weapon_behavior.luau</client_script>
+				<did>ItemDID2</did>
+				<client_script/>
 				<server_script/>
-				<spawn_point_name>weapon_spawn_point</spawn_point_name>
+				<spawn_point_name>mineral_fragment_spawn_point</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID2</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>mineral_fragment_spawn_point</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID2</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>mineral_fragment_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
 				<team_id>
 					<value>invalid</value>
 				</team_id>
 			</elem>
 		</spawn_objects>
+		<land>arch</land>
 	</payload>
 </LevelDefinition>

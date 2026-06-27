@@ -15,6 +15,10 @@ function _M.new(entity:Entity)
 end
 
 function _M.OnUpdate(self:WeaponBehavior, elapse_time:TimeType)
+    if not self.m_gameobject.m_attack_component then
+        return
+    end
+
     local ctx = TL_Client.GetContext()
 	local input_manager = ctx:GetInputManager()
 

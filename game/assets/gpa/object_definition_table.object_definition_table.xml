@@ -14,6 +14,14 @@
 				<key>ItemDID1</key>
 				<value>assets/gpa/weapons/weapon.item.xml</value>
 			</elem>
+			<elem>
+				<key>ItemDID2</key>
+				<value>assets/gpa/items/bar_gold.item.xml</value>
+			</elem>
+			<elem>
+				<key>FXDID1</key>
+				<value>assets/gpa/anim/fx/hint_arrow.fx.xml</value>
+			</elem>
 		</objects>
 	</payload>
 </ObjectDefinitionTable>

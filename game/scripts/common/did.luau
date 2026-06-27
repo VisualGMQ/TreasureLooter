@@ -9,5 +9,9 @@ function _M.IsItemDID(did:DID):boolean
     return bit32.band(did, TL_Schema.DID.ItemDID1) ~= 0
 end
 
+function _M.IsFXDID(did:DID):boolean
+    return bit32.band(did, TL_Schema.DID.FXDID1) ~= 0
+end
+
 
 return _M
