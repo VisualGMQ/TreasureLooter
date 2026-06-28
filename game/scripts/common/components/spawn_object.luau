@@ -9,6 +9,7 @@ setmetatable(_M, Component)
 
 type SpawningObject = {
 	controller_entity: Entity,
+	item_entity: Entity,
 	target_x: number,
 	elapsed: number,
 	duration: number,
@@ -19,6 +20,7 @@ type SpawnObjectComponentData = {
 	_count: number,
 	_spawn_animations: { AnimationHandle },
 	_spawning_objects: { SpawningObject },
+	_idle_controllers: { Entity },
 }
 
 export type SpawnObjectComponent = typeof(_M) & SpawnObjectComponentData & Component.Component
@@ -38,7 +40,46 @@ function _M.new(gameobject, definition: SpawnObjectComponentDefinition): SpawnOb
 	self._count = definition.m_count
 	self._spawn_animations = definition.m_spawn_animations or {}
 	self._spawning_objects = {}
+	self._idle_controllers = {}
 	return setmetatable(self, _M)
+end
+
+-- 获取或创建一个空闲控制器，并挂载到矿下，位置重置为 (0,0)
+function _M._borrowController(self: SpawnObjectComponent, ctx, scene, mine_entity): Entity
+	local controller_entity
+	if #self._idle_controllers > 0 then
+		controller_entity = self._idle_controllers[#self._idle_controllers]
+		table.remove(self._idle_controllers)
+		local ctl_transform = ctx:GetTransformManager():Get(controller_entity)
+		if ctl_transform then
+			ctl_transform.m_position = TL_Common.Vec2(0, 0)
+		end
+		return controller_entity
+	end
+
+	local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
+	local controller_prefab = prefab_mgr:Create()
+	controller_prefab.m_transform = TL_Common.Transform()
+	controller_prefab.m_draw_order = TL_Schema.DrawOrderDefinition()
+	controller_prefab.m_draw_order.m_enable_y_sorting = true
+	controller_prefab.m_draw_order.m_draw_layer = TL_Schema.DrawLayer.TilemapArch
+
+	local controller_transform = TL_Common.Transform()
+	controller_transform.m_position = TL_Common.Vec2(0, 0)
+
+	controller_entity = scene:Instantiate(controller_prefab, controller_transform)
+	prefab_mgr:Unload(controller_prefab)
+
+	local mine_relationship = ctx:GetRelationshipManager():Get(mine_entity)
+	if mine_relationship then
+		local ctl_relationship = ctx:GetRelationshipManager():Get(controller_entity)
+		if ctl_relationship then
+			ctl_relationship:RemoveFromParent()
+		end
+		mine_relationship:AddChild(controller_entity)
+	end
+
+	return controller_entity
 end
 
 function _M.Spawn(self: SpawnObjectComponent, mine_position: Vec2)
@@ -94,28 +135,7 @@ function _M.Spawn(self: SpawnObjectComponent, mine_position: Vec2)
 		prefab.m_animations = multi_anim
 	end
 
-	-- 控制器节点：初始在 (0,0)，后续 Update 平滑移动到 target_x
-	local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
-	local controller_prefab = prefab_mgr:Create()
-	controller_prefab.m_transform = TL_Common.Transform()
-	controller_prefab.m_draw_order = TL_Schema.DrawOrderDefinition()
-	controller_prefab.m_draw_order.m_enable_y_sorting = true
-	controller_prefab.m_draw_order.m_draw_layer = TL_Schema.DrawLayer.TilemapArch
-
-	local controller_transform = TL_Common.Transform()
-	controller_transform.m_position = TL_Common.Vec2(0, 0)
-
-	local controller_entity = scene:Instantiate(controller_prefab, controller_transform)
-	prefab_mgr:Unload(controller_prefab)
-
-	local mine_relationship = ctx:GetRelationshipManager():Get(mine_entity)
-	if mine_relationship then
-		local ctl_relationship = ctx:GetRelationshipManager():Get(controller_entity)
-		if ctl_relationship then
-			ctl_relationship:RemoveFromParent()
-		end
-		mine_relationship:AddChild(controller_entity)
-	end
+	local controller_entity = self:_borrowController(ctx, scene, mine_entity)
 
 	-- 生成物：在控制器下 (0,0)，动画 TransformPosition 只管 Y 弹跳
 	local item_transform = TL_Common.Transform()
@@ -151,6 +171,7 @@ function _M.Spawn(self: SpawnObjectComponent, mine_position: Vec2)
 
 	table.insert(self._spawning_objects, {
 		controller_entity = controller_entity,
+		item_entity = entity,
 		target_x = target_x,
 		elapsed = 0,
 		duration = 1.0,
@@ -160,6 +181,7 @@ end
 function _M.Update(self: SpawnObjectComponent, elapse_time: TimeType)
 	local ctx = TL_Common.GetContext()
 	local transform_mgr = ctx:GetTransformManager()
+	local mine_entity = self._gameobject:GetEntity()
 
 	local i = 1
 	while i <= #self._spawning_objects do
@@ -167,6 +189,29 @@ function _M.Update(self: SpawnObjectComponent, elapse_time: TimeType)
 		obj.elapsed += elapse_time
 
 		if obj.elapsed >= obj.duration then
+			-- 停止动画，防止动画帧覆盖后续 reparent 设置的位置
+			local client_ctx = TL_Client.GetContext()
+			local multi_anim = client_ctx:GetMultiAnimationPlayerManager():Get(obj.item_entity)
+			if multi_anim then
+				multi_anim:StopAll()
+			end
+
+			-- 将生成物从控制器挪到矿物直接子节点，保留世界坐标
+			local item_transform = transform_mgr:Get(obj.item_entity)
+			local mine_relationship = ctx:GetRelationshipManager():Get(mine_entity)
+			local item_relationship = ctx:GetRelationshipManager():Get(obj.item_entity)
+			if item_transform and mine_relationship and item_relationship then
+				local global_pos = item_transform:GetGlobalPosition()
+				item_relationship:RemoveFromParent()
+				mine_relationship:AddChild(obj.item_entity)
+				local mine_transform = transform_mgr:Get(mine_entity)
+				if mine_transform then
+					item_transform.m_position = global_pos - mine_transform:GetGlobalPosition()
+				end
+			end
+
+			-- 控制器归还到空闲池
+			table.insert(self._idle_controllers, obj.controller_entity)
 			table.remove(self._spawning_objects, i)
 			continue
 		end

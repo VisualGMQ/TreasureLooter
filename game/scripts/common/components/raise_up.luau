@@ -69,6 +69,13 @@ function _M.TryRaiseUp(self:RaiseUpComponent, gameobject:any):boolean
     gameobject.m_transform.m_position = TL_Common.Vec2(0, 0)
     self:onItemRaise(gameobject, #self._items)
 
+    -- 停止正在播放的动画，防止动画帧覆盖位置
+    local client_ctx = TL_Client.GetContext()
+    local multi_anim = client_ctx:GetMultiAnimationPlayerManager():Get(item_entity)
+    if multi_anim then
+        multi_anim:StopAll()
+    end
+
     -- carried items shouldn't be detected as ground interactables anymore
     local static_collision_mgr = ctx:GetStaticCollisionManager()
     if static_collision_mgr:Has(item_entity) then
