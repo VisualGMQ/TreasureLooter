@@ -22,7 +22,6 @@ end
 function _M.OnInit(self:PlayerBehavior)
     local world = ClientWorld.GetInst() :: ClientWorld.ClientWorld
     local interact = self.m_gameobject.m_interact_component
-    TL_Client.GetContext():Log("player hint = ", world.m_player_hint)
     interact:SetHintFX(world.m_player_hint)
 end
 
@@ -72,6 +71,20 @@ function _M.OnUpdate(self:PlayerBehavior, elapse_time:TimeType)
                 local facing = self.m_gameobject.m_move_component:GetLastMoveDirection()
                 local drop_position = self.m_gameobject.m_transform:GetGlobalPosition() + facing * k_put_down_distance
                 self.m_gameobject.m_raise_up_component:PutDown(drop_position)
+            end
+        end
+
+        local dig_action = input_manager:GetAction("Dig")
+        if dig_action:IsPressed(0) then
+            local obj = self.m_gameobject.m_interact_component:GetInteractObject()
+            if obj then
+                local go = obj :: ClientGameObject.ClientGameObject
+                if go.m_item_component and go.m_item_component:GetBehavior():Has(TL_Schema.ItemBehavior.Diggable) then
+                    if go.m_spawn_object_component then
+                        local mine_pos = go.m_transform:GetGlobalPosition()
+                        go.m_spawn_object_component:Spawn(mine_pos)
+                    end
+                end
             end
         end
     end

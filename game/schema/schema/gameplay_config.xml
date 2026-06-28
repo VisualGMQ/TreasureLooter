@@ -27,6 +27,7 @@
 
         <item name="ItemDID1" value="0x20000"/>
         <item name="ItemDID2"/>
+        <item name="ItemDID3"/>
 
         <item name="FXDID1" value="0x40000"/>
         <item name="FXDID2"/>
@@ -60,11 +61,18 @@
         <element name="damage" type="float" default="1"/>
     </class>
 
+    <class name="SpawnObjectComponentDefinition">
+        <element name="object_did" type="DID" />
+        <element name="count" type="int" default="-1" />
+        <array name="spawn_animations" type="AnimationHandle" />
+    </class>
+
     <asset name="ItemDefinition" extension=".item">
         <flags name="behavior" type="ItemBehavior" />
         <element name="sprite" type="SpriteDefinition" />
         <handle name="collision" type="PhysicsShapeDefinition"/>
         <option name="attackable" type="Attackable" />
+        <option name="spawn_object" type="SpawnObjectComponentDefinition" />
     </asset>
 
     <asset name="FXDefinition" extension=".fx">

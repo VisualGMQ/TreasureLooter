@@ -6,6 +6,7 @@ local ClientItemComponent = require("@client/components/item")
 local ClientInteractComponent = require("@client/components/interact")
 local ClientFXComponent = require("@client/components/fx")
 local ClientRaiseUpComponent = require("@client/components/raise_up")
+local ClientSpawnObjectComponent = require("@client/components/spawn_object")
 local GameObject = require("@common/gameobject")
 
 local _M = {}
@@ -21,6 +22,7 @@ type ClientGameObjectData = {
     m_interact_component:ClientInteractComponent.ClientInteractComponent,
     m_fx_component:ClientFXComponent.FXComponent,
     m_raise_up_component:ClientRaiseUpComponent.ClientRaiseUpComponent,
+    m_spawn_object_component:ClientSpawnObjectComponent.ClientSpawnObjectComponent,
 }
 export type ClientGameObject = typeof(_M) & ClientGameObjectData & GameObject.GameObject
 
@@ -33,6 +35,7 @@ export type ClientGameObjectDefinition = {
     m_item_component_definition:ClientItemComponent.ClientItemComponentDefinition,
     m_interact_component_definition:ClientInteractComponent.ClientInteractComponentDefinition,
     m_fx_component_definition:ClientFXComponent.FXComponentDefinition,
+    m_spawn_object_component_definition:ClientSpawnObjectComponent.ClientSpawnObjectComponentDefinition,
 }
 
 function _M.new(entity:Entity, definition:ClientGameObjectDefinition):ClientGameObject
@@ -58,6 +61,9 @@ function _M.new(entity:Entity, definition:ClientGameObjectDefinition):ClientGame
     if definition.m_fx_component_definition then
         self.m_fx_component = ClientFXComponent.new(self, definition.m_fx_component_definition)
     end
+    if definition.m_spawn_object_component_definition then
+        self.m_spawn_object_component = ClientSpawnObjectComponent.new(self, definition.m_spawn_object_component_definition)
+    end
     self.m_raise_up_component = ClientRaiseUpComponent.new(self)
     return setmetatable(self, _M)
 end
@@ -67,7 +73,9 @@ function _M.GetEntity(self:ClientGameObject):Entity
 end
 
 function _M.OnUpdate(self:ClientGameObject, elapse_time:TimeType)
-    self.m_move_component:Update(elapse_time)
+    if self.m_spawn_object_component then
+        self.m_spawn_object_component:Update(elapse_time)
+    end
 end
 
 function _M.OnQuit(self:ClientGameObject)
@@ -101,6 +109,10 @@ function _M.OnQuit(self:ClientGameObject)
 
     if self.m_raise_up_component then
         self.m_raise_up_component:OnQuit()
+    end
+
+    if self.m_spawn_object_component then
+        self.m_spawn_object_component:OnQuit()
     end
 end
 

@@ -19,6 +19,10 @@
 				<value>assets/gpa/items/bar_gold.item.xml</value>
 			</elem>
 			<elem>
+				<key>ItemDID3</key>
+				<value>assets/gpa/items/mine.item.xml</value>
+			</elem>
+			<elem>
 				<key>FXDID1</key>
 				<value>assets/gpa/anim/fx/hint_arrow.fx.xml</value>
 			</elem>

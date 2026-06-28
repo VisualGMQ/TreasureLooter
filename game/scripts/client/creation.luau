@@ -6,6 +6,7 @@ local ClientHpComponent = require("@client/components/hp")
 local ClientItemComponent = require("@client/components/item")
 local ClientInteractComponent = require("@client/components/interact")
 local ClientFXComponent = require("@client/components/fx")
+local ClientSpawnObjectComponent = require("@client/components/spawn_object")
 local ClientWorld = require("@client/world")
 local Creation = require("@common/creation")
 local _M = {}
@@ -64,6 +65,14 @@ function _M.ConvertItemDefinitionToGODefinition(entity:Entity, did:DID, config:I
     local item_definition = {}::ClientItemComponent.ClientItemComponentDefinition
     item_definition.m_behavior = config.m_behavior
     definition.m_item_component_definition = item_definition
+
+    if config.m_spawn_object then
+        local spawn_object_definition = {}::ClientSpawnObjectComponent.ClientSpawnObjectComponentDefinition
+        spawn_object_definition.m_object_did = config.m_spawn_object.m_object_did
+        spawn_object_definition.m_count = config.m_spawn_object.m_count
+        spawn_object_definition.m_spawn_animations = config.m_spawn_object.m_spawn_animations
+        definition.m_spawn_object_component_definition = spawn_object_definition
+    end
 
     return definition
 end

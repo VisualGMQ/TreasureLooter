@@ -98,7 +98,21 @@ function _M.PutDown(self:RaiseUpComponent, position:Vec2):any?
     if item_relationship and land_relationship then
         item_relationship:RemoveFromParent()
         land_relationship:AddChild(item_entity)
-        gameobject.m_transform.m_position = position
+
+        -- 停止动画，防止后续帧覆盖位置
+        local client_ctx = TL_Client.GetContext()
+        local multi_anim = client_ctx:GetMultiAnimationPlayerManager():Get(item_entity)
+        if multi_anim then
+            multi_anim:StopAll()
+        end
+
+        -- position 是世界坐标，需转换为 land_entity 下的本地坐标
+        local land_transform = ctx:GetTransformManager():Get(World.GetInst().m_land_entity)
+        if land_transform then
+            gameobject.m_transform.m_position = position - land_transform:GetGlobalPosition()
+        else
+            gameobject.m_transform.m_position = position
+        end
     end
 
     -- back on the ground, make it interactable again

@@ -46,6 +46,7 @@ function GameEntry.OnInit(self: GameEntry)
     local ctx = TL_Common.GetContext()
     local object_definition_table_handle = ctx:GetAssetsManager():GetObjectDefinitionTableManager():Load("assets/gpa/object_definition_table.object_definition_table.xml")
     self.m_object_definitions = ObjectDefinitionTable.new(object_definition_table_handle)
+    World.GetInst().m_object_definitions = self.m_object_definitions
     self:ChangeLevel(TL_Common.Path("assets/gpa/levels/main.level.xml"))
 end
 

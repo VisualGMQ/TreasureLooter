@@ -1,8 +1,11 @@
+local ObjectDefinitionTable = require("@common/object_def_table")
+
 local _M = {}
 _M.__index = _M
 
 type WorldData = {
     m_land_entity:Entity,
+    m_object_definitions: ObjectDefinitionTable.ObjectDefinitionTable,
 }
 
 export type World = typeof(_M) & WorldData

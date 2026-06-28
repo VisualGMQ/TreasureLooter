@@ -21,7 +21,7 @@
 				</gamepad>
 			</elem>
 			<elem>
-				<name>PutItemDown</name>
+				<name>Dig</name>
 				<keyboard>
 					<elem>L</elem>
 				</keyboard>

@@ -23,4 +23,10 @@ function _M.OnQuit(self:ClientGameObjectBehavior)
     self.m_gameobject:OnQuit()
 end
 
+function _M.OnUpdate(self:ClientGameObjectBehavior, elapse_time:TimeType)
+    if self.m_gameobject then
+        self.m_gameobject:OnUpdate(elapse_time)
+    end
+end
+
 return _M
