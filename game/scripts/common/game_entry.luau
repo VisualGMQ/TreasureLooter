@@ -170,10 +170,13 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
         local definition = self.m_object_definitions:Get(spawn_info.m_did)
 
         if DID.IsCharacterDID(spawn_info.m_did) then
-            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, self.m_spawn_points, self.m_object_definitions)
+            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
             relationship:AddChild(entity)
         elseif DID.IsItemDID(did) then
-            local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, self.m_spawn_points, self.m_object_definitions)
+            local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
+            relationship:AddChild(entity)
+        elseif DID.IsFXDID(did) then
+            local entity = self.m_creation_strategy:CreateFX(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
             relationship:AddChild(entity)
         elseif TL_Schema.FilenameIsPrefab(definition:GetFilename()) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(definition:GetFilename())

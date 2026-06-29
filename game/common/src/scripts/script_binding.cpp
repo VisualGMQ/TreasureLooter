@@ -126,6 +126,7 @@ void registerLuaScriptEventBindigns(lua_State* L) {
             TL_BIND_LUA_EVENT_LISTENER(TriggerLeaveEvent, "TriggerLeaveEvent")
             TL_BIND_LUA_EVENT_LISTENER(TriggerTouchEvent, "TriggerTouchEvent")
             TL_BIND_LUA_EVENT_LISTENER(EventDebugger::DebugEvent, "DebugEvent")
+            TL_BIND_LUA_EVENT_LISTENER(RemoveEntityEvent, "RemoveEntityEvent")
             .addFunction("Remove", +[](EventSystem*, EventListenerID id) {
                 LuaEventListenerRegistry::Remove(id);
             })
@@ -755,6 +756,9 @@ void bindEvent(lua_State* L) {
             .beginClass<TimerStopEvent>("TimerStopEvent")
                 .addFunction("GetID", &TimerStopEvent::GetID)
                 .addFunction("GetEventType", &TimerStopEvent::GetEventType)
+            .endClass()
+            .beginClass<RemoveEntityEvent>("RemoveEntityEvent")
+                .addProperty("m_entity", &RemoveEntityEvent::m_entity)
             .endClass()
     .endNamespace();
 }

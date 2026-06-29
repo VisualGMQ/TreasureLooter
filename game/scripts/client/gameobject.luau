@@ -8,6 +8,7 @@ local ClientFXComponent = require("@client/components/fx")
 local ClientRaiseUpComponent = require("@client/components/raise_up")
 local ClientSpawnObjectComponent = require("@client/components/spawn_object")
 local ClientSpawnedComponent = require("@client/components/spawned")
+local ClientConstructableComponent = require("@client/components/constructable")
 local GameObject = require("@common/gameobject")
 
 local _M = {}
@@ -25,6 +26,7 @@ type ClientGameObjectData = {
     m_raise_up_component:ClientRaiseUpComponent.ClientRaiseUpComponent,
     m_spawn_object_component:ClientSpawnObjectComponent.ClientSpawnObjectComponent,
     m_spawned_component:ClientSpawnedComponent.ClientSpawnedComponent,
+    m_constructable_component:ClientConstructableComponent.ClientConstructableComponent,
 }
 export type ClientGameObject = typeof(_M) & ClientGameObjectData & GameObject.GameObject
 
@@ -38,6 +40,7 @@ export type ClientGameObjectDefinition = {
     m_interact_component_definition:ClientInteractComponent.ClientInteractComponentDefinition,
     m_fx_component_definition:ClientFXComponent.FXComponentDefinition,
     m_spawn_object_component_definition:ClientSpawnObjectComponent.ClientSpawnObjectComponentDefinition,
+    m_constructable_component_definition:ClientConstructableComponent.ClientConstructableComponentDefinition,
 }
 
 function _M.new(entity:Entity, definition:ClientGameObjectDefinition):ClientGameObject
@@ -65,6 +68,9 @@ function _M.new(entity:Entity, definition:ClientGameObjectDefinition):ClientGame
     end
     if definition.m_spawn_object_component_definition then
         self.m_spawn_object_component = ClientSpawnObjectComponent.new(self, definition.m_spawn_object_component_definition)
+    end
+    if definition.m_constructable_component_definition then
+        self.m_constructable_component = ClientConstructableComponent.new(self, definition.m_constructable_component_definition)
     end
     self.m_raise_up_component = ClientRaiseUpComponent.new(self)
     return setmetatable(self, _M)
@@ -119,6 +125,10 @@ function _M.OnQuit(self:ClientGameObject)
 
     if self.m_spawned_component then
         self.m_spawned_component:OnQuit()
+    end
+
+    if self.m_constructable_component then
+        self.m_constructable_component:OnQuit()
     end
 end
 

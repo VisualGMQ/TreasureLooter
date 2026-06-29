@@ -19,15 +19,15 @@ void bind{{{type}}}TypeFromSchema(lua_State* L) {
         .template addConstructor<void ()>()
         {{#property_entries}}
         {{#is_optional}}
-        .addProperty("{{{property_name}}}",
-                     +[](const {{{type}}}* self) -> {{{optional_inner_type}}}* {
-                         auto* mut_self = const_cast<{{{type}}}*>(self);
-                         auto& opt = mut_self->{{{property_name}}};
-                         if (!opt) {
-                             opt.emplace();
-                         }
-                         return &opt.value();
-                     },
+         .addProperty("{{{property_name}}}",
+                      +[](const {{{type}}}* self) -> {{{optional_inner_type}}}* {
+                          auto* mut_self = const_cast<{{{type}}}*>(self);
+                          auto& opt = mut_self->{{{property_name}}};
+                          if (!opt) {
+                              return nullptr;
+                          }
+                          return &opt.value();
+                      },
                      +[]({{{type}}}* self, const {{{optional_inner_type}}}& value) {
                          self->{{{property_name}}} = value;
                      })

@@ -1,0 +1,132 @@
+<ItemDefinition>
+	<uuid>a1b2c3d4-0000-0000-0000-000000000000</uuid>
+	<payload>
+		<behavior>
+			<item>Constructable</item>
+		</behavior>
+		<sprite>
+			<image>assets/Backgrounds/Tilesets/TilesetVillageAbandoned.png</image>
+			<region>
+				<topleft x="256.000000" y="64.000000"/>
+				<size x="32.000000" y="32.000000"/>
+			</region>
+			<size x="32.000000" y="32.000000"/>
+			<anchor x="0.000000" y="0.000000"/>
+			<flip>
+				<item>None</item>
+			</flip>
+			<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+		</sprite>
+		<collision>
+			<uuid>d5e6f7a8-0000-0000-0000-000000000000</uuid>
+			<payload>
+				<is_rect>true</is_rect>
+				<rect>
+					<center x="0.000000" y="0.000000"/>
+					<half_size x="16.000000" y="16.000000"/>
+				</rect>
+				<circle>
+					<center x="0.000000" y="0.000000"/>
+					<radius>0.000000</radius>
+				</circle>
+				<collision_layer>
+					<elem>Obstacle</elem>
+				</collision_layer>
+				<collision_mask>
+					<elem>CCT</elem>
+				</collision_mask>
+			</payload>
+		</collision>
+		<constructable>
+			<value>
+				<phases>
+					<elem>
+						<materials>
+							<elem>
+								<material_did>ItemDID2</material_did>
+								<count>3</count>
+							</elem>
+						</materials>
+						<sprite>
+							<image>assets/Backgrounds/Tilesets/TilesetVillageAbandoned.png</image>
+							<region>
+								<topleft x="96.000000" y="48.000000"/>
+								<size x="32.000000" y="32.000000"/>
+							</region>
+							<size x="32.000000" y="32.000000"/>
+							<anchor x="0.000000" y="0.000000"/>
+							<flip>
+								<item>None</item>
+							</flip>
+							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+						</sprite>
+					</elem>
+					<elem>
+						<materials>
+							<elem>
+								<material_did>ItemDID2</material_did>
+								<count>3</count>
+							</elem>
+						</materials>
+						<sprite>
+							<image>assets/Backgrounds/Tilesets/TilesetTowers.png</image>
+							<region>
+								<topleft x="64.000000" y="64.000000"/>
+								<size x="32.000000" y="32.000000"/>
+							</region>
+							<size x="32.000000" y="32.000000"/>
+							<anchor x="0.000000" y="0.000000"/>
+							<flip>
+								<item>None</item>
+							</flip>
+							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+						</sprite>
+					</elem>
+					<elem>
+						<materials>
+							<elem>
+								<material_did>ItemDID2</material_did>
+								<count>3</count>
+							</elem>
+						</materials>
+						<sprite>
+							<image>assets/Backgrounds/Tilesets/TilesetTowers.png</image>
+							<region>
+								<topleft x="32.000000" y="64.000000"/>
+								<size x="32.000000" y="32.000000"/>
+							</region>
+							<size x="32.000000" y="32.000000"/>
+							<anchor x="0.000000" y="0.000000"/>
+							<flip>
+								<item>None</item>
+							</flip>
+							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+						</sprite>
+					</elem>
+					<elem>
+						<materials>
+							<elem>
+								<material_did>ItemDID2</material_did>
+								<count>3</count>
+							</elem>
+						</materials>
+						<sprite>
+							<image>assets/Backgrounds/Tilesets/TilesetTowers.png</image>
+							<region>
+								<topleft x="0.000000" y="64.000000"/>
+								<size x="32.000000" y="32.000000"/>
+							</region>
+							<size x="32.000000" y="32.000000"/>
+							<anchor x="0.000000" y="0.000000"/>
+							<flip>
+								<item>None</item>
+							</flip>
+							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+						</sprite>
+					</elem>
+				</phases>
+				<fx_on_accept_material>FXDID2</fx_on_accept_material>
+			</value>
+		</constructable>
+	</payload>
+</ItemDefinition>

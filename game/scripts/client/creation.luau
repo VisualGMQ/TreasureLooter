@@ -7,12 +7,15 @@ local ClientItemComponent = require("@client/components/item")
 local ClientInteractComponent = require("@client/components/interact")
 local ClientFXComponent = require("@client/components/fx")
 local ClientSpawnObjectComponent = require("@client/components/spawn_object")
+local ClientConstructableComponent = require("@client/components/constructable")
 local ClientWorld = require("@client/world")
 local ClientGameObjectBehavior = require("@client/gameobject_behavior")
 local Creation = require("@common/creation")
 local _M = {}
 _M.__index = _M
 setmetatable(_M, {__index = Creation})
+
+local k_default_script = TL_Common.Path("scripts/client/gameobject_behavior.luau")
 
 export type ClientCreation = typeof(_M)
 
@@ -75,6 +78,14 @@ function _M.ConvertItemDefinitionToGODefinition(entity:Entity, did:DID, config:I
         definition.m_spawn_object_component_definition = spawn_object_definition
     end
 
+    if config.m_constructable then
+        local constructable_definition = {}::ClientConstructableComponent.ClientConstructableComponentDefinition
+        constructable_definition.m_phases = config.m_constructable.m_phases
+        constructable_definition.m_material_accept_range = config.m_constructable.m_material_accept_range
+        constructable_definition.m_fx_on_accept_material = config.m_constructable.m_fx_on_accept_material
+        definition.m_constructable_component_definition = constructable_definition
+    end
+
     return definition
 end
 
@@ -119,6 +130,32 @@ function _M.ConvertFXDefinitionToGODefinition(entity:Entity, did:DID, config:FXD
     return definition
 end
 
+function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+    local ctx = TL_Client.GetContext()
+
+    local fx_definition = object_definitions:GetFX(spawn_info.m_did)
+    local client_script = spawn_info.m_client_script
+    if client_script:empty() then
+        client_script = k_default_script
+    end
+
+    local prefab = Creation.ConvertFXDefinitionToPrefab(fx_definition)
+    prefab.m_client_script = client_script
+
+    local transform = TL_Common.Transform()
+    transform.m_position = position
+
+    local entity = scene:Instantiate(prefab, transform)
+    ctx:GetAssetsManager():GetPrefabManager():Unload(prefab)
+
+    local script = ctx:GetScriptManager():Get(entity)
+    if script then
+        local go_definition = _M.ConvertFXDefinitionToGODefinition(entity, TL_Schema.DID.Invalid, fx_definition)
+        script:initGameObject(go_definition)
+    end
+    return entity
+end
+
 -- create the player interactable hint fx entity and store it in ClientWorld.m_player_hint
 function _M.CreatePlayerHintFX(scene:Scene, did:DID, config:FXDefinitionHandle, client_script:Path):Entity
     local ctx = TL_Client.GetContext()
@@ -149,22 +186,15 @@ function _M.CreatePlayerHintFX(scene:Scene, did:DID, config:FXDefinitionHandle, 
     return entity
 end
 
-local k_default_script = TL_Common.Path("scripts/client/gameobject_behavior.luau")
-
 function _M.CreatePrefab(self, scene:Scene, prefab:PrefabHandle, transform:Transform): Entity
     return scene:Instantiate(prefab, transform)
 end
 
-function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, spawn_points:{[string]:any}, object_definitions): Entity
+function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
     local ctx = TL_Client.GetContext()
 
-    local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
     local transform = TL_Common.Transform()
-    if spawn_point then
-        transform.m_position = spawn_point.m_position
-    else
-        ctx:Log("spawn item ", spawn_info.m_did, "'s spawn point is nil: spawn point name = ", spawn_info.m_spawn_point_name)
-    end
+    transform.m_position = position
 
     local definition = object_definitions:GetItem(spawn_info.m_did)
     local prefab = _M.ConvertItemDefinitionToPrefab(definition)
@@ -180,6 +210,10 @@ function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, spaw
     if script then
         local go_definition = _M.ConvertItemDefinitionToGODefinition(entity, spawn_info.m_did, definition)
         script:initGameObject(go_definition)
+
+        if script.m_gameobject.m_constructable_component then
+            script.m_gameobject.m_constructable_component:StepToNextPhase()
+        end
     end
 
     ctx:Log("spawn item ", spawn_info.m_did,
@@ -207,16 +241,11 @@ function _M._createWeaponController(self, scene:Scene, character_entity:Entity):
     return controller_entity
 end
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, spawn_points:{[string]:any}, object_definitions): Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
     local ctx = TL_Client.GetContext()
 
-    local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
     local transform = TL_Common.Transform()
-    if spawn_point then
-        transform.m_position = spawn_point.m_position
-    else
-        ctx:Log("spawn character ", spawn_info.m_did, "'s spawn point is nil, spawn point name = ", spawn_info.m_spawn_point_name)
-    end
+    transform.m_position = position
 
     local definition = object_definitions:GetCharacter(spawn_info.m_did)
     local prefab = Creation.ConvertCharacterDefinitionToPrefab(definition)
@@ -237,7 +266,7 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
     if definition.m_init_weapon ~= TL_Schema.DID.Invalid then
         local weapon_spawn_definition = TL_Schema.ObjectSpawnDefinition()
         weapon_spawn_definition.m_did = definition.m_init_weapon
-        local weapon_item_entity = _M.CreateItem(self, scene, weapon_spawn_definition, spawn_points, object_definitions)
+        local weapon_item_entity = _M.CreateItem(self, scene, weapon_spawn_definition, TL_Common.Vec2(0, 0), object_definitions)
         local weapon_def = object_definitions:GetItem(definition.m_init_weapon)
 
         controller_entity = _M._createWeaponController(self, scene, entity)

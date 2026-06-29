@@ -33,6 +33,7 @@
 				<collision_layer>
 					<elem>Pickupable</elem>
 					<elem>Interactable</elem>
+					<elem>Material</elem>
 				</collision_layer>
 				<collision_mask>
 					<elem>Pickupable</elem>

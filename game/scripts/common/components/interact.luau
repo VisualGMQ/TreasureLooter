@@ -47,7 +47,10 @@ function _M.Update(self:InteractComponent, elapse_time:TimeType)
 
     local shapes = self.m_interact_area:GetTouchingShapes()
     for _, shape in ipairs(shapes) do
-        local entity = shape:GetOwner()
+        local ok, entity = pcall(function() return shape:GetOwner() end)
+        if not ok or entity == TL_Common.null_entity then
+            continue
+        end
         local script = script_mgr:Get(entity)
         if script and script.m_gameobject then
             local go = script.m_gameobject

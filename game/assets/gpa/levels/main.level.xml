@@ -25,6 +25,16 @@
 		</player_related_definition>
 		<spawn_objects>
 			<elem>
+				<did>ItemDID4</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>tower_spawn_point1</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
 				<did>ItemDID3</did>
 				<client_script/>
 				<server_script/>

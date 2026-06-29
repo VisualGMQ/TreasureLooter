@@ -9,17 +9,11 @@ function _M.CreatePrefab(self, scene:Scene, prefab:PrefabHandle, transform:Trans
     return scene:Instantiate(prefab, transform)
 end
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, spawn_points:{[string]:any}, object_definitions):Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions):Entity
     local ctx = TL_Client.GetContext()
 
-    local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
-    if not spawn_point then
-        ctx:Log("spawn character failed: no spawn point ", spawn_info.m_spawn_point_name)
-        return TL_Common.null_entity
-    end
-
     local transform = TL_Common.Transform()
-    transform.m_position = spawn_point.m_position
+    transform.m_position = position
 
     local definition = object_definitions:GetCharacter(spawn_info.m_did)
     local prefab = Creation.ConvertCharacterDefinitionToPrefab(definition)

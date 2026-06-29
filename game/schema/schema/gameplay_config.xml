@@ -28,6 +28,7 @@
         <item name="ItemDID1" value="0x20000"/>
         <item name="ItemDID2"/>
         <item name="ItemDID3"/>
+        <item name="ItemDID4"/>
 
         <item name="FXDID1" value="0x40000"/>
         <item name="FXDID2"/>
@@ -52,6 +53,7 @@
 
         <item name="Pickupable" value="0x08" />
         <item name="Stackable" value="0x10" />
+        <item name="Constructable" value="0x20" />
     </enum>
 
     <class name="Attackable">
@@ -67,12 +69,29 @@
         <array name="spawn_animations" type="AnimationHandle" />
     </class>
 
+    <class name="ConstructMaterial">
+        <element name="material_did" type="DID" />
+        <element name="count" type="uint32_t" default="1" />
+    </class>
+
+    <class name="ConstructPhase">
+        <array name="materials" type="ConstructMaterial" />
+        <element name="sprite" type="SpriteDefinition" />
+    </class>
+
+    <class name="ConstructableComponentDefinition">
+        <array name="phases" type="ConstructPhase" />
+        <element name="material_accept_range" type="float" default="30" />
+        <element name="fx_on_accept_material" type="DID" default="DID::Invalid" />
+    </class>
+
     <asset name="ItemDefinition" extension=".item">
         <flags name="behavior" type="ItemBehavior" />
         <element name="sprite" type="SpriteDefinition" />
         <handle name="collision" type="PhysicsShapeDefinition"/>
         <option name="attackable" type="Attackable" />
         <option name="spawn_object" type="SpawnObjectComponentDefinition" />
+        <option name="constructable" type="ConstructableComponentDefinition" />
     </asset>
 
     <asset name="FXDefinition" extension=".fx">

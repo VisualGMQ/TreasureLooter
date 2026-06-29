@@ -2,6 +2,7 @@
 #include "SDL3/SDL.h"
 #include "common/log.hpp"
 #include "common/type_index.hpp"
+#include "common/entity.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -165,15 +166,19 @@ public:
     struct DebugEvent {
         int m_value = 0;
     };
-    
+
     EventDebugger();
     ~EventDebugger();
-    
+
     void SendDebugEvent(int value);
-    
+
     uint32_t GetTriggeredCount() const;
-    
+
 private:
     EventListenerID m_listener_id;
     uint32_t m_triggered_count = 0;
+};
+
+struct RemoveEntityEvent {
+    Entity m_entity;
 };
