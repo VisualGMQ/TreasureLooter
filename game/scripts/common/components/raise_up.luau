@@ -23,11 +23,8 @@ function _M.IsHolding(self:RaiseUpComponent):boolean
     return #self._items > 0
 end
 
--- visual hooks, overridden by the client component (lift/restore the sprite via anchor)
-function _M.onItemRaise(self:RaiseUpComponent, gameobject:any, index:number)
-end
-
-function _M.onItemPutDown(self:RaiseUpComponent, gameobject:any)
+function _M.GetHoldingItemCount(self:RaiseUpComponent):number
+    return #self._items
 end
 
 function _M.TryRaiseUp(self:RaiseUpComponent, gameobject:any):boolean
@@ -61,22 +58,10 @@ function _M.TryRaiseUp(self:RaiseUpComponent, gameobject:any):boolean
         return false
     end
 
-    -- keep the item as a child of the owner so its global position always follows the owner.
-    -- y-sorting uses the global y (see sprite.cpp), so they occlude together; the visual
-    -- head/stack offset is done by onItemRaise (sprite anchor), which doesn't move the entity.
     item_relationship:RemoveFromParent()
     owner_relationship:AddChild(item_entity)
     gameobject.m_transform.m_position = TL_Common.Vec2(0, 0)
-    self:onItemRaise(gameobject, #self._items)
 
-    -- 停止正在播放的动画，防止动画帧覆盖位置
-    local client_ctx = TL_Client.GetContext()
-    local multi_anim = client_ctx:GetMultiAnimationPlayerManager():Get(item_entity)
-    if multi_anim then
-        multi_anim:StopAll()
-    end
-
-    -- carried items shouldn't be detected as ground interactables anymore
     local static_collision_mgr = ctx:GetStaticCollisionManager()
     if static_collision_mgr:Has(item_entity) then
         static_collision_mgr:Disable(item_entity)
@@ -98,22 +83,12 @@ function _M.PutDown(self:RaiseUpComponent, position:Vec2):any?
     local rel_mgr = ctx:GetRelationshipManager()
     local item_entity = gameobject:GetEntity()
 
-    self:onItemPutDown(gameobject)
-
     local item_relationship = rel_mgr:Get(item_entity)
     local land_relationship = rel_mgr:Get(World.GetInst().m_land_entity)
     if item_relationship and land_relationship then
         item_relationship:RemoveFromParent()
         land_relationship:AddChild(item_entity)
 
-        -- 停止动画，防止后续帧覆盖位置
-        local client_ctx = TL_Client.GetContext()
-        local multi_anim = client_ctx:GetMultiAnimationPlayerManager():Get(item_entity)
-        if multi_anim then
-            multi_anim:StopAll()
-        end
-
-        -- position 是世界坐标，需转换为 land_entity 下的本地坐标
         local land_transform = ctx:GetTransformManager():Get(World.GetInst().m_land_entity)
         if land_transform then
             gameobject.m_transform.m_position = position - land_transform:GetGlobalPosition()

@@ -7,6 +7,7 @@ local ClientInteractComponent = require("@client/components/interact")
 local ClientFXComponent = require("@client/components/fx")
 local ClientRaiseUpComponent = require("@client/components/raise_up")
 local ClientSpawnObjectComponent = require("@client/components/spawn_object")
+local ClientSpawnedComponent = require("@client/components/spawned")
 local GameObject = require("@common/gameobject")
 
 local _M = {}
@@ -23,6 +24,7 @@ type ClientGameObjectData = {
     m_fx_component:ClientFXComponent.FXComponent,
     m_raise_up_component:ClientRaiseUpComponent.ClientRaiseUpComponent,
     m_spawn_object_component:ClientSpawnObjectComponent.ClientSpawnObjectComponent,
+    m_spawned_component:ClientSpawnedComponent.ClientSpawnedComponent,
 }
 export type ClientGameObject = typeof(_M) & ClientGameObjectData & GameObject.GameObject
 
@@ -73,8 +75,8 @@ function _M.GetEntity(self:ClientGameObject):Entity
 end
 
 function _M.OnUpdate(self:ClientGameObject, elapse_time:TimeType)
-    if self.m_spawn_object_component then
-        self.m_spawn_object_component:Update(elapse_time)
+    if self.m_spawned_component then
+        self.m_spawned_component:Update(elapse_time)
     end
 end
 
@@ -113,6 +115,10 @@ function _M.OnQuit(self:ClientGameObject)
 
     if self.m_spawn_object_component then
         self.m_spawn_object_component:OnQuit()
+    end
+
+    if self.m_spawned_component then
+        self.m_spawned_component:OnQuit()
     end
 end
 

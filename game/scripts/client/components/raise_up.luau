@@ -19,31 +19,42 @@ function _M.new(gameobject):ClientRaiseUpComponent
     return setmetatable(self, _M)
 end
 
--- lift the carried item's sprite above the head via its anchor (anchor.y down(+) -> sprite up).
--- the entity transform stays on the owner, so y-sorting is unaffected.
-function _M.onItemRaise(self:ClientRaiseUpComponent, gameobject, index:number)
-    local entity = gameobject:GetEntity()
-    local sprite = TL_Client.GetContext():GetSpriteManager():Get(entity)
-    if not sprite then
-        return
+function _M.TryRaiseUp(self:ClientRaiseUpComponent, gameobject):boolean
+    -- Stop spawner first, before common TryRaiseUp reparents the item
+    if gameobject.m_spawned_component then
+        gameobject.m_spawned_component:Stop()
     end
-    local anchor_x = sprite.m_anchor.x
-    local anchor_y = sprite.m_anchor.y
-    self._origin_anchors[entity] = TL_Common.Vec2(anchor_x, anchor_y)
-    sprite.m_anchor = TL_Common.Vec2(anchor_x, anchor_y + _M.k_head_lift + _M.k_stack_height * index)
+
+    local last_item_index = self:GetHoldingItemCount()
+    if RaiseUpComponent.TryRaiseUp(self, gameobject) then
+        local entity = gameobject:GetEntity()
+        local sprite = TL_Client.GetContext():GetSpriteManager():Get(entity)
+        if not sprite then
+            return true
+        end
+        local anchor_x = sprite.m_anchor.x
+        local anchor_y = sprite.m_anchor.y
+        self._origin_anchors[entity] = TL_Common.Vec2(anchor_x, anchor_y)
+        sprite.m_anchor = TL_Common.Vec2(anchor_x, anchor_y + _M.k_head_lift + _M.k_stack_height * last_item_index)
+    end
+    return true
 end
 
-function _M.onItemPutDown(self:ClientRaiseUpComponent, gameobject)
-    local entity = gameobject:GetEntity()
-    local origin = self._origin_anchors[entity]
-    if not origin then
-        return
+function _M.PutDown(self:ClientRaiseUpComponent, position:Vec2)
+    local putdown_item = RaiseUpComponent.PutDown(self, position)
+    if putdown_item then
+        local entity = putdown_item:GetEntity()
+        local origin = self._origin_anchors[entity]
+        if not origin then
+            return putdown_item
+        end
+        local sprite = TL_Client.GetContext():GetSpriteManager():Get(entity)
+        if sprite then
+            sprite.m_anchor = TL_Common.Vec2(origin.x, origin.y)
+        end
+        self._origin_anchors[entity] = nil
     end
-    local sprite = TL_Client.GetContext():GetSpriteManager():Get(entity)
-    if sprite then
-        sprite.m_anchor = TL_Common.Vec2(origin.x, origin.y)
-    end
-    self._origin_anchors[entity] = nil
+    return putdown_item
 end
 
 return _M

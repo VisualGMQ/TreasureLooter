@@ -2,6 +2,7 @@ local ScriptBehavior = require("@common/script_behavior")
 local ObjectDefinitionTable = require("@common/object_def_table")
 local DID = require("@common/did")
 local World = require("@common/world")
+local Creation = require("@common/creation")
 
 local GameEntry = {}
 GameEntry.__index = GameEntry
@@ -19,12 +20,14 @@ type GameEntryData = {
     m_player_on_layer:Entity,
 
     m_object_definitions: ObjectDefinitionTable.ObjectDefinitionTable,
+    m_creation_strategy: typeof(Creation),
 }
 
 export type GameEntry = typeof(GameEntry) & GameEntryData & ScriptBehavior.ScriptBehavior
 
-function GameEntry.new(entity: Entity) : GameEntry
-    local self = ScriptBehavior.new(entity)
+function GameEntry.new(entity: Entity, creation_strategy: typeof(Creation)) : GameEntry
+    local self = ScriptBehavior.new(entity) :: GameEntryData
+    self.m_creation_strategy = creation_strategy
     return setmetatable(self, GameEntry)
 end
 
@@ -145,7 +148,7 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
     self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
 
-    self:CreatePlayerHint(scene, level_definition.m_player_related_definition)
+    self.m_creation_strategy:CreatePlayerHint(scene, level_definition.m_player_related_definition, self.m_object_definitions)
 
     -- create objects
     for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
@@ -167,10 +170,10 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
         local definition = self.m_object_definitions:Get(spawn_info.m_did)
 
         if DID.IsCharacterDID(spawn_info.m_did) then
-            local entity = self:CreateCharacter(scene, spawn_info)
+            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, self.m_spawn_points, self.m_object_definitions)
             relationship:AddChild(entity)
         elseif DID.IsItemDID(did) then
-            local entity = self:CreateItem(scene, spawn_info)
+            local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, self.m_spawn_points, self.m_object_definitions)
             relationship:AddChild(entity)
         elseif TL_Schema.FilenameIsPrefab(definition:GetFilename()) then
             local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(definition:GetFilename())
@@ -179,28 +182,12 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
                 continue
             end
 
-            local entity = self:CreatePrefab(scene, prefab, transform)
+            local entity = self.m_creation_strategy:CreatePrefab(scene, prefab, transform)
             relationship:AddChild(entity)
         else
             ctx:Log("spawn failed: no support file type")
         end
     end
-end
-
-function GameEntry.CreateCharacter(self:GameEntry, scene:Scene, spawn_info:ObjectSpawnDefinition): Entity
-    assert(false, "shouldn't step into here")
-end
-
-function GameEntry.CreateItem(self:GameEntry, scene:Scene, spawn_info:ObjectSpawnDefinition): Entity
-    assert(false, "shouldn't step into here")
-end
-
-function GameEntry.CreatePrefab(self: GameEntry, scene:Scene, prefab: PrefabHandle, transform:Transform)
-    assert(false, "shouldn't step into here")
-end
-
-function GameEntry.CreatePlayerHint(self: GameEntry, scene:Scene, player_related_definition:PlayerRelatedDefinition)
-    assert(false, "shouldn't step into here")
 end
 
 function GameEntry.OnRender(self: GameEntry)

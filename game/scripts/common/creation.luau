@@ -164,4 +164,22 @@ function _M.convertItemDefinitionToPrefab(config:ItemDefinitionHandle):PrefabHan
 
 end
 
+-- create entity functions, overridden by client/server Creation
+
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, spawn_points:{[string]:any}, object_definitions): Entity
+    assert(false, "shouldn't step into here")
+end
+
+function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, spawn_points:{[string]:any}, object_definitions): Entity
+    assert(false, "shouldn't step into here")
+end
+
+function _M.CreatePrefab(self, scene:Scene, prefab:PrefabHandle, transform:Transform): Entity
+    assert(false, "shouldn't step into here")
+end
+
+function _M.CreatePlayerHint(self, scene:Scene, player_related_definition:PlayerRelatedDefinition, object_definitions)
+    assert(false, "shouldn't step into here")
+end
+
 return _M
