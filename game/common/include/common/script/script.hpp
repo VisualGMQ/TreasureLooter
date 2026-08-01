@@ -14,6 +14,12 @@
 
 #include <string_view>
 
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+#include "debugger.h"
+#endif
+
+static constexpr uint32_t LUAU_DEBUGGER_PORT = 8836;
+
 class ScriptBinaryData {
 public:
     explicit ScriptBinaryData(const Path& path);
@@ -35,7 +41,7 @@ using ScriptBinaryDataHandle = Handle<ScriptBinaryData>;
 class ScriptBinaryDataManager : public AssetManagerBase<ScriptBinaryData> {
 public:
     ScriptBinaryDataManager();
-    ~ScriptBinaryDataManager();
+    ~ScriptBinaryDataManager() override;
 
     void Initialize(const std::unordered_map<std::string, std::string>& lua_paths);
 
@@ -46,11 +52,20 @@ public:
     auto& GetRequireContext() { return m_require_context; }
 
     void BindModule(std::function<void(lua_State*)> bind_func);
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    void AddRequireToDebugger(lua_State* L, std::string_view path) const;
+#endif
 
 private:
     lua_State* m_L{};
-
     LuauRequireContext m_require_context;
+
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    std::unique_ptr<luau::debugger::Debugger> m_debugger;
+
+    void initLuauDebugger(lua_State*);
+    void terminateLuauDebugger(lua_State*);
+#endif
 };
 
 class Script {

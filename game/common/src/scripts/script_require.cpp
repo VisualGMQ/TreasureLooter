@@ -109,6 +109,10 @@ bool LuauRequireContext::loadAndRunModule(lua_State* L,
         return false;
     }
 
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    mgr.AddRequireToDebugger(L, loadPath);
+#endif
+
     // FIXME: maybe not need, luau_load executed code
     int pcall_result = lua_pcall(L, 0, 1, 0);
     if (pcall_result != LUA_OK) {

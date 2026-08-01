@@ -210,7 +210,7 @@ void CommonContext::InitGlobalScript(const Path& script_path) {
         return;
     }
     auto handle =
-        m_assets_manager->GetManager<ScriptBinaryData>().Load(script_path);
+        m_assets_manager->GetManager<ScriptBinaryData>().Load(script_path, false);
     m_global_script = std::make_unique<Script>(null_entity, handle);
 }
 

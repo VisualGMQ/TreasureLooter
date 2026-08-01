@@ -49,6 +49,17 @@ if (TL_ENABLE_PROFILE)
     target_compile_definitions(${COMMON_NAME} PUBLIC TL_ENABLE_PROFILE)
 endif()
 
+# target_link_libraries(${COMMON_NAME} PRIVATE
+#         $<IF:$<CONFIG:Debug>,Luau.Debugger,
+#         $<$<BOOL:${TL_ENABLE_LUAU_DEBUGGER_WHEN_RELEASE}>:Luau.Debugger>>)
+#
+# target_compile_definitions(${COMMON_NAME} PRIVATE
+#         $<IF:$<CONFIG:Debug>,TL_ENABLE_LUAU_DEBUGGER,
+#         $<$<BOOL:${TL_ENABLE_LUAU_DEBUGGER_WHEN_RELEASE}>:TL_ENABLE_LUAU_DEBUGGER>>)
+
+target_link_libraries(${COMMON_NAME} PRIVATE Luau.Debugger)
+target_compile_definitions(${COMMON_NAME} PRIVATE TL_ENABLE_LUAU_DEBUGGER)
+
 target_compile_definitions(${COMMON_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
     PRIVATE _CRT_SECURE_NO_WARNINGS)

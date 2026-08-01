@@ -12,6 +12,7 @@ add_subdirectory(3rdlibs)
 
 ################# options #####################
 option(TL_ENABLE_PROFILE "enable profile use tracy" OFF)
+option(TL_ENABLE_LUAU_DEBUGGER_WHEN_RELEASE "enable luau debugger under non-debug mode" OFF)
 
 ################ generate project path config file ################
 configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_path.xml)
