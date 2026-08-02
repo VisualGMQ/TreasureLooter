@@ -21,7 +21,6 @@
 #include "common/timer.hpp"
 #include "common/trigger.hpp"
 
-#include "client/animation_player.hpp"
 #include "client/camera.hpp"
 #include "client/context.hpp"
 #include "client/debug_panel.hpp"
@@ -44,7 +43,6 @@ static void registerLuaScriptEventBindings(lua_State* L) {
             TL_BIND_LUA_EVENT_LISTENER(UIMouseClickedEvent, "UIMouseClickedEvent")
             TL_BIND_LUA_EVENT_LISTENER(UICheckToggledEvent, "UICheckToggledEvent")
             TL_BIND_LUA_EVENT_LISTENER(UIDragEvent, "UIDragEvent")
-            TL_BIND_LUA_EVENT_LISTENER( AnimationEndEvent, "AnimationEndEvent")
         .endClass();
 }
 
@@ -184,73 +182,6 @@ static void bindDrawOrder(lua_State* L) {
                 })
                 .addFunction("RegisterEntity",
                              +[](DrawOrderManager* m, Entity e, const DrawOrderDefinition& def) {
-                                 m->RegisterEntity(e, def);
-                             })
-            .endClass()
-        .endNamespace();
-}
-
-template <>
-struct luabridge::Stack<AnimationPlayerID>
-    : public luabridge::Enum<AnimationPlayerID> {};
-
-static void bindAnimationPlayer(lua_State* L) {
-    luabridge::getGlobalNamespace(L)
-        .beginNamespace("TL_Client")
-            .beginClass<AnimationPlayer>("AnimationPlayer")
-                .addFunction("Play", &AnimationPlayer::Play)
-                .addFunction("Pause", &AnimationPlayer::Pause)
-                .addFunction("Stop", &AnimationPlayer::Stop)
-                .addFunction("Rewind", &AnimationPlayer::Rewind)
-                .addFunction("SetLoop", &AnimationPlayer::SetLoop)
-                .addFunction("SetCurTime", &AnimationPlayer::SetCurTime)
-                .addFunction("IsPlaying", &AnimationPlayer::IsPlaying)
-                .addFunction("GetLoopCount", &AnimationPlayer::GetLoopCount)
-                .addFunction("GetCurTime", &AnimationPlayer::GetCurTime)
-                .addFunction("GetMaxTime", &AnimationPlayer::GetMaxTime)
-                .addFunction("ChangeAnimation",
-                             +[](AnimationPlayer* p, AnimationHandle handle) {
-                                 p->ChangeAnimation(handle);
-                             })
-                .addFunction("ClearAnimation", &AnimationPlayer::ClearAnimation)
-                .addFunction("HasAnimation", &AnimationPlayer::HasAnimation)
-                .addFunction("Sync", +[](AnimationPlayer* p, Entity e) {
-                    p->Sync(e);
-                })
-                .addFunction("SetRate", &AnimationPlayer::SetRate)
-                .addFunction("GetRate", &AnimationPlayer::GetRate)
-                .addFunction("EnableAutoPlay", &AnimationPlayer::EnableAutoPlay)
-                .addFunction("IsAutoPlayEnabled", &AnimationPlayer::IsAutoPlayEnabled)
-                .addFunction("GetID", &AnimationPlayer::GetID)
-            .endClass()
-            .beginClass<AnimationEndEvent>("AnimationEndEvent")
-                .addFunction("GetAnimationPlayerID", &AnimationEndEvent::GetAnimationPlayerID)
-                .addFunction("GetEntity", &AnimationEndEvent::GetEntity)
-                .addFunction("GetAnimation", &AnimationEndEvent::GetAnimation)
-            .endClass()
-            .beginClass<MultiAnimationPlayer>("MultiAnimationPlayer")
-                .addFunction("GetAnimation",
-                             +[](MultiAnimationPlayer* p, size_t index) -> AnimationPlayer* {
-                                 return &p->GetAnimation(index);
-                             })
-                .addFunction("GetAnimationCount", &MultiAnimationPlayer::GetAnimationCount)
-                .addFunction("PlayAll", &MultiAnimationPlayer::PlayAll)
-                .addFunction("PauseAll", &MultiAnimationPlayer::PauseAll)
-                .addFunction("StopAll", &MultiAnimationPlayer::StopAll)
-                .addFunction("RewindAll", &MultiAnimationPlayer::RewindAll)
-            .endClass()
-            .beginClass<MultiAnimationPlayerManager>("MultiAnimationPlayerManager")
-                .addFunction("Get", +[](MultiAnimationPlayerManager* m, Entity e) {
-                    return m->Get(e);
-                })
-                .addFunction("Has", +[](MultiAnimationPlayerManager* m, Entity e) {
-                    return m->Has(e);
-                })
-                .addFunction("IsEnable", &MultiAnimationPlayerManager::IsEnable)
-                .addFunction("Enable", &MultiAnimationPlayerManager::Enable)
-                .addFunction("Disable", &MultiAnimationPlayerManager::Disable)
-                .addFunction("RegisterEntity",
-                             +[](MultiAnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
                                  m->RegisterEntity(e, def);
                              })
             .endClass()
@@ -397,15 +328,11 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> InputManager* {
                                  return ctx->m_input_manager.get();
                              })
-                .addFunction("GetMultiAnimationPlayerManager",
-                             +[](ClientContext* ctx) -> MultiAnimationPlayerManager* {
-                                 return ctx->m_animation_player_manager.get();
-                             })
                 .addFunction("GetUIManager",
                              +[](ClientContext* ctx) -> UIComponentManager* {
                                  return ctx->m_ui_manager.get();
                              })
-                .addFunction("GetDebugPanel", +[](ClientContext* ctx) -> DebugPanel* {
+                .addFunction("GetDebugPanel", +[](ClientContext* ctx) -> IDebugPanel* {
                                 return ctx->m_debug_panel.get();
                             })
                 .addFunction("GetTilemapRenderComponentManager",
@@ -432,14 +359,14 @@ static void bindClientContext(lua_State* L) {
 static void bindDebugPanel(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
-            .beginClass<DebugPanel>("DebugPanel")
+            .beginClass<IDebugPanel>("DebugPanel")
                 .addFunction("RegisterCmd",
-                             +[](DebugPanel* p, const std::string& name,
+                             +[](IDebugPanel* p, const std::string& name,
                                  luabridge::LuaRef cmd) {
                                  p->RegisterCmd(name, cmd);
                              })
                 .addFunction("ExecuteCmd",
-                             +[](DebugPanel* p, const std::string& name,
+                             +[](IDebugPanel* p, const std::string& name,
                                  const std::vector<std::string>& args) {
                                  p->ExecuteCmd(name, args);
                              })
@@ -456,7 +383,6 @@ void BindClientModule(lua_State* L) {
     bindCamera(L);
     bindSprite(L);
     bindDrawOrder(L);
-    bindAnimationPlayer(L);
     bindUI(L);
     bindClientUIEvents(L);
     bindClientContext(L);

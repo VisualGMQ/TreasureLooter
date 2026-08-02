@@ -5,7 +5,7 @@
 
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
-#include "client/animation_player.hpp"
+#include "common/animation_player.hpp"
 #include "client/asset_manager.hpp"
 #include "client/controller.hpp"
 #include "client/debug_drawer.hpp"
@@ -22,6 +22,7 @@
 #include "client/tilemap_render_component.hpp"
 #include "client/ui.hpp"
 #include "client/window.hpp"
+#include "common/animation_player.hpp"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
@@ -115,17 +116,14 @@ void ClientContext::Initialize(int argc, char** argv) {
         *m_input_manager, *m_event_system, *m_assets_manager,
         *m_transform_manager, *m_relationship_manager);
 
-    m_animation_player_manager =
-        std::make_unique<MultiAnimationPlayerManager>();
-
-    m_debug_panel = std::make_unique<DebugPanel>();
-    registerAllDebugCommands();
-
 #ifdef TL_DEBUG
-    m_debug_drawer = std::unique_ptr<IDebugDrawer>(new DebugDrawer{});
+    m_debug_panel = std::make_unique<DebugPanel>();
+    m_debug_drawer = std::make_unique<DebugDrawer>();
 #else
-    m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
+    m_debug_drawer = std::make_unique<TrivialDebugDrawer>();
+    m_debug_panel = std::make_unique<TrivialDebugPanel>();
 #endif
+    registerAllDebugCommands();
 
     m_window->Resize(client_config.m_logic_size);
     m_camera.ChangeScale(client_config.m_camera_scale);
@@ -134,6 +132,8 @@ void ClientContext::Initialize(int argc, char** argv) {
         m_assets_manager->GetManager<InputConfig>().Load(
             client_config.m_input_config),
         *this);
+
+    registerAllAnimationTracks();
 
     SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
         GetCommonConfig().m_entry_scene);
@@ -215,10 +215,6 @@ void ClientContext::AttachComponentsOnEntity(Entity entity,
         m_draw_order_manager->RegisterEntity(entity,
                                              prefab.m_draw_order.value());
     }
-    if (prefab.m_animations) {
-        m_animation_player_manager->RegisterEntity(entity,
-                                                   prefab.m_animations.value());
-    }
     if (prefab.m_ui) {
         m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
@@ -237,7 +233,6 @@ void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
     m_sprite_manager->RemoveEntity(entity);
     m_ui_manager->RemoveEntity(entity);
     m_tilemap_layer_render_component_manager->RemoveEntity(entity);
-    m_animation_player_manager->RemoveEntity(entity);
     m_draw_order_manager->RemoveEntity(entity);
 
     CommonContext::RemoveAllComponentsOnEntity(entity);
@@ -351,6 +346,42 @@ void ClientContext::registerAllDebugCommands() {
         });
 }
 
+void ClientContext::registerAllAnimationTracks() {
+    CommonContext::registerAllAnimationTracks();
+
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Sprite, decltype(Region::m_topleft),
+        AnimationBindingPoint::SpriteRegionPosition>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> Vec2& { return sprite.m_region.m_topleft; });
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Sprite, decltype(Region::m_size),
+        AnimationBindingPoint::SpriteRegionSize>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> Vec2& { return sprite.m_region.m_size; });
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Sprite, decltype(Sprite::m_anchor),
+        AnimationBindingPoint::SpriteAnchor>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> Vec2& { return sprite.m_anchor; });
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Sprite, decltype(Sprite::m_color), AnimationBindingPoint::SpriteColor>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> Color& { return sprite.m_color; });
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Sprite, decltype(Sprite::m_size), AnimationBindingPoint::SpriteSize>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> Vec2& { return sprite.m_size; });
+    AnimationPlayer::RegisterDiscreteTrackInfo<
+        Sprite, decltype(Sprite::m_flip), AnimationBindingPoint::SpriteFlip>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> Flags<Flip>& { return sprite.m_flip; });
+    AnimationPlayer::RegisterDiscreteTrackInfo<
+        Sprite, decltype(Sprite::m_image), AnimationBindingPoint::SpriteImage>(
+        *CLIENT_CONTEXT.m_sprite_manager,
+        +[](Sprite& sprite) -> ImageHandle& { return sprite.m_image; });
+}
+
 void ClientContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
@@ -375,7 +406,6 @@ void ClientContext::Shutdown() {
     m_keyboard.reset();
 
     m_sprite_manager.reset();
-    m_animation_player_manager.reset();
     shutdownImGui();
     m_renderer.reset();
     m_window.reset();

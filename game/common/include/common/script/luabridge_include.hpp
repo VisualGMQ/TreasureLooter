@@ -21,6 +21,7 @@
 #include "LuaBridge/Set.h"
 #include "LuaBridge/UnorderedMap.h"
 #include "LuaBridge/Vector.h"
+#include "common/animation_player.hpp"
 // clang-format on
 
 template <>
@@ -54,3 +55,7 @@ template <>
 struct luabridge::Stack<PhysicsShape::Type>
     : luabridge::Enum<PhysicsShape::Type, PhysicsShape::Type::Circle,
                       PhysicsShape::Type::Unknown, PhysicsShape::Type::Rect> {};
+
+template <>
+struct luabridge::Stack<AnimationPlayerID>
+    : public luabridge::Enum<AnimationPlayerID> {};

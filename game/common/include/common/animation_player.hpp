@@ -3,7 +3,8 @@
 #include "schema/anim_player.hpp"
 
 enum class AnimationPlayerID : uint32_t {};
-inline constexpr AnimationPlayerID null_animation_player_id = static_cast<AnimationPlayerID>(0);
+inline constexpr AnimationPlayerID null_animation_player_id =
+    static_cast<AnimationPlayerID>(0);
 
 class AnimationTrackPlayerBase {
 public:
@@ -36,9 +37,10 @@ public:
             return;
         }
 
-        // One delta per call; then advance across any keyframe boundaries crossed. (The old
-        // loop added delta_time every iteration, so a single large seek step multiplied by the
-        // number of crossed keyframes and jumped to the end of the track.)
+        // One delta per call; then advance across any keyframe boundaries
+        // crossed. (The old loop added delta_time every iteration, so a single
+        // large seek step multiplied by the number of crossed keyframes and
+        // jumped to the end of the track.)
         m_cur_time += delta_time;
         while (m_cur_frame + 1 < static_cast<int>(keyframes.size())) {
             const auto& next_frame = keyframes[m_cur_frame + 1];
@@ -58,9 +60,13 @@ public:
 
     auto& GetTrack() const { return m_track; }
 
-    [[nodiscard]] AnimationTrackType GetType() const override { return m_track.GetType(); }
+    [[nodiscard]] AnimationTrackType GetType() const override {
+        return m_track.GetType();
+    }
 
-    [[nodiscard]] TimeType GetFinishTime() const override { return m_track.GetFinishTime(); }
+    [[nodiscard]] TimeType GetFinishTime() const override {
+        return m_track.GetFinishTime();
+    }
 
 protected:
     const IAnimationTrack<T>& m_track;
@@ -122,6 +128,77 @@ class AnimationPlayer {
 public:
     static constexpr int InfLoop = -1;
 
+    template <typename Class, typename T>
+    using BindingPointPropertyGetterFn = T& (*)(Class&);
+
+    template <typename T, typename PropertyType,
+              AnimationBindingPoint binding_point,
+              AnimationTrackType track_type>
+    static void RegisterTrackInfo(
+        ComponentManager<T>& manager,
+        BindingPointPropertyGetterFn<T, PropertyType> property_getter) {
+        TL_ASSERT(property_getter);
+        auto sync_fn = [=, &manager](Entity entity,
+                                     AnimationTrackPlayerBase& track_player) {
+            T* component = manager.Get(entity);
+            TL_RETURN_IF_NULL(component);
+
+            auto& raw_track = static_cast<const AnimationTrackPlayer<
+                std::decay_t<PropertyType>, track_type>&>(track_player);
+            if (raw_track.NeedSync()) {
+                property_getter(*component) = raw_track.GetValue();
+            }
+        };
+
+        auto create_fn = [](AnimationPlayer& player,
+                            AnimationTrackBase& track_base) {
+            auto& raw_track =
+                static_cast<AnimationTrack<PropertyType, track_type>&>(
+                    track_base);
+            player.m_track_players[binding_point] = std::make_unique<
+                AnimationTrackPlayer<PropertyType, track_type>>(raw_track);
+        };
+
+        auto [it, success] = g_track_infos.try_emplace(binding_point);
+        if constexpr (track_type == AnimationTrackType::Linear) {
+            it->second.m_linear_sync_function = sync_fn;
+            it->second.m_linear_create_function = create_fn;
+        } else {
+            it->second.m_discrete_sync_function = sync_fn;
+            it->second.m_discrete_create_function = create_fn;
+        }
+    }
+
+    template <typename T, typename PropertyType,
+              AnimationBindingPoint binding_point>
+    static void RegisterDiscreteTrackInfo(
+        ComponentManager<T>& manager,
+        BindingPointPropertyGetterFn<T, PropertyType> property_getter) {
+        RegisterTrackInfo<T, PropertyType, binding_point,
+                          AnimationTrackType::Discrete>(manager,
+                                                        property_getter);
+    }
+
+    template <typename T, typename PropertyType,
+              AnimationBindingPoint binding_point>
+    static void RegisterLinearTrackInfo(
+        ComponentManager<T>& manager,
+        BindingPointPropertyGetterFn<T, PropertyType> property_getter) {
+        RegisterTrackInfo<T, PropertyType, binding_point,
+                          AnimationTrackType::Linear>(manager, property_getter);
+    }
+
+    template <typename T, typename PropertyType,
+              AnimationBindingPoint binding_point>
+    static void RegisterLinearDiscreteTrackInfo(
+        ComponentManager<T>& manager,
+        BindingPointPropertyGetterFn<T, PropertyType> property_getter) {
+        RegisterLinearTrackInfo<T, PropertyType, binding_point>(
+            manager, property_getter);
+        RegisterDiscreteTrackInfo<T, PropertyType, binding_point>(
+            manager, property_getter);
+    }
+
     AnimationPlayer();
     explicit AnimationPlayer(const AnimationPlayerDefinition&);
 
@@ -161,7 +238,21 @@ public:
     [[nodiscard]] bool IsAutoPlayEnabled() const;
 
 private:
-    static std::underlying_type_t<AnimationPlayerID> next_id;
+    static std::underlying_type_t<AnimationPlayerID> g_next_id;
+
+    struct TrackInfo {
+        using SyncFunction =
+            std::function<void(Entity, AnimationTrackPlayerBase&)>;
+        using TrackCreateFunction =
+            std::function<void(AnimationPlayer&, AnimationTrackBase&)>;
+
+        SyncFunction m_linear_sync_function;
+        SyncFunction m_discrete_sync_function;
+        TrackCreateFunction m_linear_create_function;
+        TrackCreateFunction m_discrete_create_function;
+    };
+
+    static std::unordered_map<AnimationBindingPoint, TrackInfo> g_track_infos;
 
     AnimationPlayerID m_id = null_animation_player_id;
     Entity m_entity = null_entity;
@@ -184,13 +275,17 @@ class MultiAnimationPlayer {
 public:
     MultiAnimationPlayer() = default;
 
-    explicit MultiAnimationPlayer(const MultiAnimationPlayerDefinition& definition);
+    explicit MultiAnimationPlayer(
+        const MultiAnimationPlayerDefinition& definition);
 
     [[nodiscard]] const AnimationPlayer& GetAnimation(size_t) const;
     [[nodiscard]] AnimationPlayer& GetAnimation(size_t);
+
     [[nodiscard]] size_t GetAnimationCount() const { return m_players.size(); }
+
     void AddAnimation(AnimationPlayer&&);
-    [[nodiscard]] AnimationPlayer& AddAnimation(const AnimationPlayerDefinition&);
+    [[nodiscard]] AnimationPlayer& AddAnimation(
+        const AnimationPlayerDefinition&);
     [[nodiscard]] AnimationPlayer& AddAnimation(AnimationHandle);
     void RemoveAnimation(const AnimationPlayer&);
 
@@ -209,18 +304,26 @@ private:
     std::vector<AnimationPlayer> m_players;
 };
 
-class MultiAnimationPlayerManager : public ComponentManager<MultiAnimationPlayer> {
+class MultiAnimationPlayerManager
+    : public ComponentManager<MultiAnimationPlayer> {
 public:
     void Update(TimeType delta_time);
 };
 
 class AnimationEndEvent {
 public:
-    AnimationEndEvent(AnimationPlayerID animation_player_id, Entity entity, AnimationHandle animation)
-        : m_animation_player_id(animation_player_id), m_entity(entity), m_animation(animation) {}
+    AnimationEndEvent(AnimationPlayerID animation_player_id, Entity entity,
+                      AnimationHandle animation)
+        : m_animation_player_id(animation_player_id),
+          m_entity(entity),
+          m_animation(animation) {}
 
-    [[nodiscard]] AnimationPlayerID GetAnimationPlayerID() const { return m_animation_player_id; }
+    [[nodiscard]] AnimationPlayerID GetAnimationPlayerID() const {
+        return m_animation_player_id;
+    }
+
     [[nodiscard]] Entity GetEntity() const { return m_entity; }
+
     [[nodiscard]] AnimationHandle GetAnimation() const { return m_animation; }
 
 private:

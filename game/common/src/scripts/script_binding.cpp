@@ -1,5 +1,6 @@
 #include "common/script/script_binding.hpp"
 #include "common/animation.hpp"
+#include "common/animation_player.hpp"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
@@ -127,6 +128,7 @@ void registerLuaScriptEventBindigns(lua_State* L) {
             TL_BIND_LUA_EVENT_LISTENER(TriggerTouchEvent, "TriggerTouchEvent")
             TL_BIND_LUA_EVENT_LISTENER(EventDebugger::DebugEvent, "DebugEvent")
             TL_BIND_LUA_EVENT_LISTENER(RemoveEntityEvent, "RemoveEntityEvent")
+            TL_BIND_LUA_EVENT_LISTENER(AnimationEndEvent, "AnimationEndEvent")
             .addFunction("Remove", +[](EventSystem*, EventListenerID id) {
                 LuaEventListenerRegistry::Remove(id);
             })
@@ -170,6 +172,69 @@ void bindScriptBinaryDataManager(lua_State* L) {
             .addFunction("Get", ScriptComponentManager_GetTable)
             .addFunction("IsEnable", &ScriptComponentManager::IsEnable)
         .endClass()
+        .endNamespace();
+}
+
+static void bindAnimationPlayer(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Client")
+            .beginClass<AnimationPlayer>("AnimationPlayer")
+                .addFunction("Play", &AnimationPlayer::Play)
+                .addFunction("Pause", &AnimationPlayer::Pause)
+                .addFunction("Stop", &AnimationPlayer::Stop)
+                .addFunction("Rewind", &AnimationPlayer::Rewind)
+                .addFunction("SetLoop", &AnimationPlayer::SetLoop)
+                .addFunction("SetCurTime", &AnimationPlayer::SetCurTime)
+                .addFunction("IsPlaying", &AnimationPlayer::IsPlaying)
+                .addFunction("GetLoopCount", &AnimationPlayer::GetLoopCount)
+                .addFunction("GetCurTime", &AnimationPlayer::GetCurTime)
+                .addFunction("GetMaxTime", &AnimationPlayer::GetMaxTime)
+                .addFunction("ChangeAnimation",
+                             +[](AnimationPlayer* p, AnimationHandle handle) {
+                                 p->ChangeAnimation(handle);
+                             })
+                .addFunction("ClearAnimation", &AnimationPlayer::ClearAnimation)
+                .addFunction("HasAnimation", &AnimationPlayer::HasAnimation)
+                .addFunction("Sync", +[](AnimationPlayer* p, Entity e) {
+                    p->Sync(e);
+                })
+                .addFunction("SetRate", &AnimationPlayer::SetRate)
+                .addFunction("GetRate", &AnimationPlayer::GetRate)
+                .addFunction("EnableAutoPlay", &AnimationPlayer::EnableAutoPlay)
+                .addFunction("IsAutoPlayEnabled", &AnimationPlayer::IsAutoPlayEnabled)
+                .addFunction("GetID", &AnimationPlayer::GetID)
+            .endClass()
+            .beginClass<AnimationEndEvent>("AnimationEndEvent")
+                .addFunction("GetAnimationPlayerID", &AnimationEndEvent::GetAnimationPlayerID)
+                .addFunction("GetEntity", &AnimationEndEvent::GetEntity)
+                .addFunction("GetAnimation", &AnimationEndEvent::GetAnimation)
+            .endClass()
+            .beginClass<MultiAnimationPlayer>("MultiAnimationPlayer")
+                .addFunction("GetAnimation",
+                             +[](MultiAnimationPlayer* p, size_t index) -> AnimationPlayer* {
+                                 return &p->GetAnimation(index);
+                             })
+                .addFunction("GetAnimationCount", &MultiAnimationPlayer::GetAnimationCount)
+                .addFunction("PlayAll", &MultiAnimationPlayer::PlayAll)
+                .addFunction("PauseAll", &MultiAnimationPlayer::PauseAll)
+                .addFunction("StopAll", &MultiAnimationPlayer::StopAll)
+                .addFunction("RewindAll", &MultiAnimationPlayer::RewindAll)
+            .endClass()
+            .beginClass<MultiAnimationPlayerManager>("MultiAnimationPlayerManager")
+                .addFunction("Get", +[](MultiAnimationPlayerManager* m, Entity e) {
+                    return m->Get(e);
+                })
+                .addFunction("Has", +[](MultiAnimationPlayerManager* m, Entity e) {
+                    return m->Has(e);
+                })
+                .addFunction("IsEnable", &MultiAnimationPlayerManager::IsEnable)
+                .addFunction("Enable", &MultiAnimationPlayerManager::Enable)
+                .addFunction("Disable", &MultiAnimationPlayerManager::Disable)
+                .addFunction("RegisterEntity",
+                             +[](MultiAnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
+                                 m->RegisterEntity(e, def);
+                             })
+            .endClass()
         .endNamespace();
 }
 
@@ -543,9 +608,13 @@ void bindContext(lua_State* L) {
                                  return ctx->m_tilemap_layer_collision_component_manager
                                       .get();
                               })
+                .addFunction("GetMultiAnimationPlayerManager",
+                             +[](CommonContext* ctx) -> MultiAnimationPlayerManager* {
+                                 return ctx->m_animation_player_manager.get();
+                             })
                 .addFunction("GetNetHost", +[](CommonContext* ctx) -> UDPHost* {
-                    return ctx->m_net_host.get();
-                })
+                                return ctx->m_net_host.get();
+                            })
                 .addFunction("GetEntityNameManager",
                              +[](CommonContext* ctx) -> EntityNameManager* {
                                  return ctx->m_entity_name_manager.get();
@@ -1300,6 +1369,7 @@ void bindAllTypes(lua_State* L) {
     bindDebugDraw(L);
     bindContext(L);
     bindAssetsManager(L);
+    bindAnimationPlayer(L);
     bindTimer(L);
     bindCCT(L);
     bindPhysics(L);

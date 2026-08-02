@@ -32,6 +32,24 @@
 
 CommonContext* CommonContext::m_current_context{};
 
+void CommonContext::registerAllAnimationTracks() {
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Transform, decltype(Transform::m_position),
+        AnimationBindingPoint::TransformPosition>(
+        *m_transform_manager,
+        +[](Transform& transform) -> Vec2& { return transform.m_position; });
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Transform, decltype(Transform::m_scale),
+        AnimationBindingPoint::TransformScale>(
+        *m_transform_manager,
+        +[](Transform& transform) -> Vec2& { return transform.m_scale; });
+    AnimationPlayer::RegisterLinearDiscreteTrackInfo<
+        Transform, decltype(Transform::m_rotation),
+        AnimationBindingPoint::TransformRotation>(
+        *m_transform_manager,
+        +[](Transform& transform) -> Degrees& { return transform.m_rotation; });
+}
+
 void CommonContext::initCommonConfig() {
     auto handle = m_assets_manager->GetManager<CommonConfig>().Load(
         std::string{"assets/gpa/common_config"} +
@@ -105,6 +123,8 @@ void CommonContext::Initialize(int argc, char** argv) {
         std::make_unique<BindPointsComponentManager>();
     m_tilemap_layer_collision_component_manager =
         std::make_unique<TilemapLayerCollisionComponentManager>();
+    m_animation_player_manager =
+        std::make_unique<MultiAnimationPlayerManager>();
     m_script_component_manager = std::make_unique<ScriptComponentManager>();
     m_replicate_component_manager =
         std::make_unique<ReplicateComponentManager>();
@@ -126,6 +146,7 @@ void CommonContext::Shutdown() {
 
     m_script_binary_data_manager.reset();
 
+    m_animation_player_manager.reset();
     m_trigger_component_manager.reset();
     m_bind_point_component_manager.reset();
     m_timer_manager.reset();
@@ -168,7 +189,13 @@ void CommonContext::AttachComponentsOnEntity(Entity entity,
     }
     if (prefab.m_cct) {
         m_cct_manager->RegisterEntity(entity, entity, prefab.m_cct.value());
-        m_cct_manager->Get(entity)->Teleport(transform->m_position);
+        if (transform) {
+            m_cct_manager->Get(entity)->Teleport(transform->m_position);
+        }
+    }
+    if (prefab.m_animations) {
+        m_animation_player_manager->RegisterEntity(entity,
+                                                   prefab.m_animations.value());
     }
     if (prefab.m_name) {
         m_entity_name_manager->RegisterEntity(entity, prefab.m_name.value());
@@ -197,6 +224,7 @@ void CommonContext::AttachComponentsOnEntity(Entity entity,
 }
 
 void CommonContext::RemoveAllComponentsOnEntity(Entity entity) {
+    m_animation_player_manager->RemoveEntity(entity);
     m_transform_manager->RemoveEntity(entity);
     m_relationship_manager->RemoveEntity(entity);
     m_tilemap_layer_collision_component_manager->RemoveEntity(entity);

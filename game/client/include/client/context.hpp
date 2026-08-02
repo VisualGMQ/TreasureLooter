@@ -3,6 +3,7 @@
 #include "common/context.hpp"
 #include "common/net/udp.hpp"
 
+class IDebugPanel;
 class IDebugDrawer;
 class GamepadManager;
 class Touches;
@@ -18,7 +19,6 @@ class TilemapLayerRenderComponentManager;
 class InputManager;
 class Window;
 class GameplayConfigManager;
-class DebugPanel;
 
 class ClientContext : public CommonContext {
 public:
@@ -54,7 +54,6 @@ public:
     std::unique_ptr<Touches> m_touches;
     std::unique_ptr<GamepadManager> m_gamepad_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
-    std::unique_ptr<MultiAnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<DrawOrderManager> m_draw_order_manager;
     std::unique_ptr<InputManager> m_input_manager;
     std::unique_ptr<UIComponentManager> m_ui_manager;
@@ -63,7 +62,7 @@ public:
     std::unique_ptr<Renderer> m_renderer;
     UDPPeer m_net_peer;
     Camera m_camera;
-    std::unique_ptr<DebugPanel> m_debug_panel;
+    std::unique_ptr<IDebugPanel> m_debug_panel;
 
 protected:
     void beginImGui();
@@ -83,6 +82,7 @@ private:
 
     void initClientConfig();
     void registerAllDebugCommands();
+    void registerAllAnimationTracks() override;
 
     ClientConfig m_config;
 };

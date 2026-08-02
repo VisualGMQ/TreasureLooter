@@ -82,13 +82,14 @@ void ServerContext::Initialize(int argc, char** argv) {
 
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 
+    registerAllAnimationTracks();
+
     m_script_binary_data_manager->BindModule([](lua_State* L) {
         BindCommonModule(L);
         BindServerModule(L);
     });
 
     InitGlobalScript(m_config.m_global_script);
-
 
     SceneHandle level =
         m_assets_manager->GetManager<Scene>().Load(GetCommonConfig().m_entry_scene);
@@ -126,6 +127,7 @@ void ServerContext::Update() {
     }
     m_script_component_manager->Update();
 
+    m_animation_player_manager->Update(elapse_time);
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();

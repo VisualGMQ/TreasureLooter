@@ -1,7 +1,7 @@
 #pragma once
 
 #include "client/context.hpp"
-#include "client/animation_player.hpp"
+#include "common/animation_player.hpp"
 
 // AnimationPlayer
 rapidxml::xml_node<>* Serialize(ClientContext& ctx,rapidxml::xml_document<>& doc,

@@ -1,6 +1,6 @@
 #include "instance_display.hpp"
 
-#include "client/animation_player.hpp"
+#include "common/animation_player.hpp"
 #include "client/image.hpp"
 #include "client/ui.hpp"
 #include "common/cct.hpp"
