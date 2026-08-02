@@ -726,7 +726,8 @@ uint32_t PhysicsScene::Overlap(const PhysicsShape &shape,
         TL_CONTINUE_IF_FALSE(IsRectsIntersect(tilemap_rect, bounding_box));
 
         Range2D<int> chunk_range, tile_range;
-        chunks.getOverlapChunkRange(bounding_box, tilemap_collision->GetTopLeft(),
+        chunks.getOverlapChunkRange(bounding_box,
+                                    tilemap_collision->GetTopLeft(),
                                     chunk_range, tile_range);
 
         for (int y = chunk_range.m_y.m_begin; y < chunk_range.m_y.m_end; y++) {
@@ -789,23 +790,8 @@ void PhysicsScene::RenderDebug() const {
     const Color DisableQueryColor = Color::Green;
 
     for (auto &shape : m_shapes) {
-        switch (shape->GetType()) {
-            case PhysicsShape::Type::Rect:
-                debug_drawer->DrawRect(*shape->AsRect(),
-                                       shape->IsQueryEnabled()
-                                           ? EnableQueryColor
-                                           : DisableQueryColor,
-                                       IDebugDrawer::kOneFrame, true);
-                break;
-            case PhysicsShape::Type::Circle:
-                debug_drawer->DrawCircle(*shape->AsCircle(),
-                                         shape->IsQueryEnabled()
-                                             ? EnableQueryColor
-                                             : DisableQueryColor,
-                                         IDebugDrawer::kOneFrame, true);
-                break;
-            default:;
-        }
+        RenderShape(*shape, shape->IsQueryEnabled() ? EnableQueryColor
+                                                    : DisableQueryColor);
     }
 
     // draw tiles
@@ -819,26 +805,9 @@ void PhysicsScene::RenderDebug() const {
                         for (auto &shape : chunk.Get(sx, sy)) {
                             TL_CONTINUE_IF_NULL(shape);
 
-                            switch (shape->GetType()) {
-                                case PhysicsShape::Type::Rect:
-                                    debug_drawer->DrawRect(
-                                        *shape->AsRect(),
-
-                                        shape->IsQueryEnabled()
-                                            ? EnableQueryColor
-                                            : DisableQueryColor,
-                                        IDebugDrawer::kOneFrame, true);
-                                    break;
-                                case PhysicsShape::Type::Circle:
-                                    debug_drawer->DrawCircle(
-                                        *shape->AsCircle(),
-                                        shape->IsQueryEnabled()
-                                            ? EnableQueryColor
-                                            : DisableQueryColor,
-                                        IDebugDrawer::kOneFrame, true);
-                                    break;
-                                default:;
-                            }
+                            RenderShape(*shape, shape->IsQueryEnabled()
+                                                    ? EnableQueryColor
+                                                    : DisableQueryColor);
                         }
                     }
                 }
@@ -857,12 +826,29 @@ void PhysicsScene::RenderDebug() const {
                 rect.m_half_size.y =
                     chunks.m_chunk_extent.h * chunks.m_tile_extent.h * 0.5;
                 rect.m_center = Vec2(x, y) * rect.m_half_size * 2.0 +
-                                rect.m_half_size + tilemap_collision->GetTopLeft();
+                                rect.m_half_size +
+                                tilemap_collision->GetTopLeft();
 
                 debug_drawer->DrawRect(rect, Color::Green,
                                        IDebugDrawer::kOneFrame, true);
             }
         }
+    }
+}
+
+void PhysicsScene::RenderShape(const PhysicsShape &shape,
+                               const Color &color) const {
+    const auto &debug_drawer = COMMON_CONTEXT.m_debug_drawer;
+    switch (shape.GetType()) {
+        case PhysicsShape::Type::Rect:
+            debug_drawer->DrawRect(*shape.AsRect(), color,
+                                   IDebugDrawer::kOneFrame, true);
+            break;
+        case PhysicsShape::Type::Circle:
+            debug_drawer->DrawCircle(*shape.AsCircle(), color,
+                                     IDebugDrawer::kOneFrame, true);
+            break;
+        default:;
     }
 }
 

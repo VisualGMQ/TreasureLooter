@@ -45,6 +45,10 @@ public:
 
     auto& GetRequireContext() { return m_require_context; }
 
+    bool PathToModuleName(const Path& file_path, std::string& out_modname) const {
+        return m_require_context.PathToModuleName(file_path, out_modname);
+    }
+
     void BindModule(std::function<void(lua_State*)> bind_func);
 
 private:

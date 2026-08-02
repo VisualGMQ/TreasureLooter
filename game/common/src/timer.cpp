@@ -34,6 +34,11 @@ TimeType Time::GetElapseTime() const {
     return m_elapsed_time;
 }
 
+uint32_t Time::GetFPS() const {
+    if (m_elapsed_time <= 0) return 0;
+    return static_cast<uint32_t>(1.0 / m_elapsed_time);
+}
+
 void Time::SetFPS(float fps) {
     m_limit_fps = fps;
     m_fps_require_time = 1000.0 / fps;
@@ -45,18 +50,23 @@ bool Time::IsFPSLimited() const {
 
 void Time::Begin() {
     TL_RETURN_IF_FALSE(m_limit_fps != kNoLimitFPS);
-    
+
     m_cur_frame_begin_time = std::chrono::steady_clock::now();
 }
 
 void Time::End() {
     TL_RETURN_IF_FALSE(m_limit_fps != kNoLimitFPS);
-    
+
     auto elapse = std::chrono::steady_clock::now() - m_cur_frame_begin_time;
-    float elapse_time= std::chrono::duration_cast<std::chrono::milliseconds>(elapse).count();
-    
+    float elapse_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(elapse).count();
+
+    if (elapse_time > 0) {
+        m_unlimit_fps = static_cast<uint32_t>(1000.0 / elapse_time);
+    }
+
     TL_RETURN_IF_FALSE(elapse_time < m_fps_require_time);
-    
+
     SDL_Delay(m_fps_require_time - elapse_time);
 }
 
@@ -65,26 +75,26 @@ std::ostream& operator<<(std::ostream& o, TimerID id) {
     return o;
 }
 
-TimerEvent::TimerEvent(TimerEventType type, TimerID id)
-    : m_type{type}, m_timer_id{id} {}
+TimerEvent::TimerEvent(TimerEventType type, Timer& timer)
+    : m_type{type}, m_timer{timer} {}
 
 TimerEventType TimerEvent::GetEventType() const {
     return m_type;
 }
 
-TimerID TimerEvent::GetID() const {
-    return m_timer_id;
+Timer& TimerEvent::GetTimer() const {
+    return m_timer;
 }
 
-TimerStopEvent::TimerStopEvent(TimerEventType type, TimerID id)
-    : m_type{type}, m_timer_id{id} {}
+TimerStopEvent::TimerStopEvent(TimerEventType type, Timer& timer)
+    : m_type{type}, m_timer{timer} {}
 
 TimerEventType TimerStopEvent::GetEventType() const {
     return m_type;
 }
 
-TimerID TimerStopEvent::GetID() const {
-    return m_timer_id;
+Timer& TimerStopEvent::GetTimer() const {
+    return m_timer;
 }
 
 Timer::Timer(TimerID id, TimeType time, TimerEventType event_type, int loop)
@@ -94,8 +104,41 @@ Timer::Timer(TimerID id, TimeType time, TimerEventType event_type, int loop)
     SetLoop(loop);
 }
 
+Timer::~Timer() {
+    COMMON_CONTEXT.m_event_system->RemoveListener<TimerEvent>(
+        m_timer_event_listener_id);
+    COMMON_CONTEXT.m_event_system->RemoveListener<TimerStopEvent>(
+        m_timer_stop_event_listener_id);
+}
+
 void Timer::SetInterval(TimeType interval) {
     m_interval = interval;
+}
+
+void Timer::SetTimerListener(const TimerListener& listener) {
+    m_timer_event_listener_id =
+        COMMON_CONTEXT.m_event_system->AddListener<TimerEvent>(
+            [listener, this](EventListenerID id, const TimerEvent& event) {
+                TL_RETURN_IF_FALSE(id == this->m_timer_event_listener_id);
+                listener(event);
+            });
+}
+
+void Timer::SetTimerStopListener(const TimerStopListener& listener) {
+    m_timer_event_listener_id =
+        COMMON_CONTEXT.m_event_system->AddListener<TimerStopEvent>(
+            [listener, this](EventListenerID id, const TimerStopEvent& event) {
+                TL_RETURN_IF_FALSE(id == this->m_timer_stop_event_listener_id);
+                listener(event);
+            });
+}
+
+void Timer::SetTimerListener(EventListenerID id) {
+    m_timer_event_listener_id = id;
+}
+
+void Timer::SetTimerStopListener(EventListenerID id) {
+    m_timer_stop_event_listener_id = id;
 }
 
 void Timer::Update(TimeType time) {
@@ -108,10 +151,10 @@ void Timer::Update(TimeType time) {
     if (m_cur_loop == 0) {
         if (m_cur_time >= m_interval) {
             COMMON_CONTEXT.m_event_system->EnqueueEvent<TimerEvent>(
-                TimerEvent{m_event_type, m_id});
+                TimerEvent{m_event_type, *this});
             Stop();
             COMMON_CONTEXT.m_event_system->EnqueueEvent<TimerStopEvent>(
-                TimerStopEvent{m_event_type, m_id});
+                TimerStopEvent{m_event_type, *this});
         }
     } else {
         while (m_cur_loop != 0 && m_cur_time >= m_interval) {
@@ -120,7 +163,7 @@ void Timer::Update(TimeType time) {
                 m_cur_loop--;
             }
             COMMON_CONTEXT.m_event_system->EnqueueEvent<TimerEvent>(
-                TimerEvent{m_event_type, m_id});
+                TimerEvent{m_event_type, *this});
         }
     }
 }

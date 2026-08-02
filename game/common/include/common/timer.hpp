@@ -1,8 +1,10 @@
 #pragma once
+
 #include <chrono>
 #include <memory>
 #include <unordered_map>
 
+#include "common/event.hpp"
 #include "spdlog/fmt/ostr.h"
 #include "spdlog/spdlog.h"
 
@@ -20,12 +22,15 @@ public:
     Time();
 
     void Update();
-    TimeType GetCurrentTime() const;
+    [[nodiscard]] TimeType GetCurrentTime() const;
 
     [[nodiscard]] TimeType GetElapseTime() const;
+    [[nodiscard]] uint32_t GetFPS() const;
+
+    [[nodiscard]] uint32_t GetUnlimitFPS() const { return m_unlimit_fps; }
 
     void SetFPS(float fps);
-    bool IsFPSLimited() const;
+    [[nodiscard]] bool IsFPSLimited() const;
 
     void Begin();
     void End();
@@ -41,6 +46,7 @@ private:
     std::chrono::steady_clock::time_point m_cur_frame_begin_time{};
     float m_limit_fps = kNoLimitFPS;
     float m_fps_require_time = 0.0;  // in ms
+    uint32_t m_unlimit_fps = 0;
 };
 
 enum class TimerID : uint32_t {};
@@ -75,32 +81,37 @@ constexpr bool operator!=(TimerID id, NullTimerID null) {
 
 constexpr NullTimerID null_timer_id;
 
+class Timer;
+
 class TimerEvent {
 public:
-    TimerEvent(TimerEventType type, TimerID);
+    TimerEvent(TimerEventType, Timer&);
 
     [[nodiscard]] TimerEventType GetEventType() const;
-    TimerID GetID() const;
+    [[nodiscard]] Timer& GetTimer() const;
 
 private:
     TimerEventType m_type;
-    TimerID m_timer_id = null_timer_id;
+    Timer& m_timer;
 };
 
 class TimerStopEvent {
 public:
-    TimerStopEvent(TimerEventType type, TimerID);
+    TimerStopEvent(TimerEventType, Timer&);
 
     [[nodiscard]] TimerEventType GetEventType() const;
-    TimerID GetID() const;
+    [[nodiscard]] Timer& GetTimer() const;
 
 private:
     TimerEventType m_type;
-    TimerID m_timer_id = null_timer_id;
+    Timer& m_timer;
 };
 
 class Timer {
 public:
+    using TimerListener = std::function<void(const TimerEvent&)>;
+    using TimerStopListener = std::function<void(const TimerStopEvent&)>;
+
     Timer() = default;
 
     Timer(const Timer&) = delete;
@@ -113,8 +124,22 @@ public:
 
     explicit Timer(TimerID id, TimeType time, TimerEventType event_type,
                    int loop);
+    ~Timer();
 
     void SetInterval(TimeType interval);
+
+    void SetTimerListener(const TimerListener&);
+    void SetTimerStopListener(const TimerStopListener&);
+
+    /**
+     * will take event listener ownership
+     */
+    void SetTimerListener(EventListenerID);
+
+    /**
+     * will take event listener ownership
+     */
+    void SetTimerStopListener(EventListenerID);
 
     void Update(TimeType);
 
@@ -133,11 +158,13 @@ public:
     [[nodiscard]] TimerEventType GetEventType() const;
 
     void SetEventType(TimerEventType);
-    TimerID GetID() const;
-    bool IsRunning() const;
+    [[nodiscard]] TimerID GetID() const;
+    [[nodiscard]] bool IsRunning() const;
 
 private:
     TimerID m_id = null_timer_id;
+    EventListenerID m_timer_event_listener_id = null_event_listener_id;
+    EventListenerID m_timer_stop_event_listener_id = null_event_listener_id;
     bool m_is_running{false};
     TimeType m_cur_time{};
     TimeType m_interval{};

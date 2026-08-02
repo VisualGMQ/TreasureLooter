@@ -135,9 +135,9 @@ public:
     void Move(const Vec2 &offset);
 
     void SetQueryEnable(bool enable);
-    bool IsQueryEnabled() const;
+    [[nodiscard]] bool IsQueryEnabled() const;
 
-    Entity GetOwner() const;
+    [[nodiscard]] Entity GetOwner() const;
 
 private:
     Entity m_owner = null_entity;
@@ -248,6 +248,9 @@ public:
     void ToggleDebugDraw() { m_should_debug_draw = !m_should_debug_draw; }
 
     void RenderDebug() const;
+
+    // for debug
+    void RenderShape(const PhysicsShape& shape, const Color&) const;
 
 private:
     std::vector<std::unique_ptr<TilemapCollision> > m_tilemap_collisions;

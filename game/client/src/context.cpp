@@ -9,6 +9,7 @@
 #include "client/asset_manager.hpp"
 #include "client/controller.hpp"
 #include "client/debug_drawer.hpp"
+#include "client/debug_panel.hpp"
 #include "client/draw.hpp"
 #include "client/draw_order.hpp"
 #include "client/input/finger_touch.hpp"
@@ -85,7 +86,7 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     m_script_binary_data_manager->Initialize(client_config.m_lua_paths);
     m_script_binary_data_manager->BindModule([](lua_State* L) {
-        BindTLModule(L);
+        BindCommonModule(L);
         BindClientModule(L);
     });
 
@@ -114,7 +115,11 @@ void ClientContext::Initialize(int argc, char** argv) {
         *m_input_manager, *m_event_system, *m_assets_manager,
         *m_transform_manager, *m_relationship_manager);
 
-    m_animation_player_manager = std::make_unique<MultiAnimationPlayerManager>();
+    m_animation_player_manager =
+        std::make_unique<MultiAnimationPlayerManager>();
+
+    m_debug_panel = std::make_unique<DebugPanel>();
+    registerAllDebugCommands();
 
 #ifdef TL_DEBUG
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new DebugDrawer{});
@@ -255,6 +260,10 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_mouse->Update();
     m_touches->Update();
 
+    if (m_debug_panel) {
+        m_debug_panel->Update();
+    }
+
     if (m_global_script) {
         m_global_script->Update();
     }
@@ -294,6 +303,7 @@ void ClientContext::renderUpdate(TimeType elapse) {
     }
     m_script_component_manager->Render();
     m_draw_order_manager->Update();
+    m_trigger_component_manager->RenderDebug();
 
     DrawCommandSubmitter draw_cmd_submitter;
     draw_cmd_submitter.Submit();
@@ -306,6 +316,10 @@ void ClientContext::renderUpdate(TimeType elapse) {
     m_bind_point_component_manager->RenderDebug(elapse);
     m_debug_drawer->Update(m_time->GetElapseTime());
     m_renderer->ApplyDrawcall();
+
+    if (m_debug_panel) {
+        m_debug_panel->Render();
+    }
 
     endImGui();
     m_renderer->Present();
@@ -324,6 +338,19 @@ void ClientContext::initClientConfig() {
     m_assets_manager->GetManager<ClientConfig>().Unload(handle);
 }
 
+void ClientContext::registerAllDebugCommands() {
+    m_debug_panel->RegisterCmd(
+        "physics.toggle_show_all",
+        [this](const std::vector<std::string>&) {
+            m_physics_scene->ToggleDebugDraw();
+        });
+    m_debug_panel->RegisterCmd(
+        "physics.toggle_show_trigger",
+        [this](const std::vector<std::string>&) {
+            m_trigger_component_manager->ToggleDebugDraw();
+        });
+}
+
 void ClientContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
@@ -339,6 +366,7 @@ void ClientContext::Shutdown() {
     m_ui_manager.reset();
     m_draw_order_manager.reset();
     m_debug_drawer.reset();
+    m_debug_panel.reset();
     m_input_manager.reset();
     m_gamepad_manager.reset();
 

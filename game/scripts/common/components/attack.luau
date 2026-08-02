@@ -14,8 +14,7 @@ type AttackComponentData = {
     _anim_player:AnimationPlayer,
     _transform:Transform,
     _can_attack:boolean,
-    _cooldown_timer_event_id:EventListenerID,
-    _hit_area_event_id:EventListenerID,
+    _anim_end_event_id:EventListenerID,
     _aim_dir:Vec2,
 }
 
@@ -40,19 +39,23 @@ function _M.new(gameobject, definition:AttackComponentDefinition):AttackComponen
     self._transform = definition.m_transform
     self._can_attack = true
     self._aim_dir = self.k_init_forward_dir
+    self.m_hit_area:Disable()
 
     local ctx = TL_Common.GetContext()
     local event_system = ctx:GetEventSystem()
-    self._hit_area_event_id = event_system:AddTriggerEnterEvent(
-        function(id:EventListenerID, event:TriggerEnterEvent)
-            self:onAttack(id, event)
-        end
-    )
+    self.m_hit_area:SetEnterListener(function(event:TriggerEnterEvent)
+        self:onAttack(event)
+    end)
     local timer_mgr = ctx:GetTimerManager()
     self.m_cooldown = timer_mgr:Create(self.m_cooldown, TL_Schema.TimerEventType.Cooldown, 0)
-    self._cooldown_timer_event_id = event_system:AddTimerEvent(
-        function(id:EventListenerID, event:TimerEvent)
-            self:onAttackCooldown(id, event)
+    self.m_cooldown:SetTimerListener(function(event:TimerEvent)
+        self:onAttackCooldown(event)
+    end)
+    self._anim_end_event_id = event_system:AddAnimationEndEvent(
+        function(id:EventListenerID, event:AnimationEndEvent)
+            if event:GetAnimationPlayerID() == self._anim_player:GetID() then
+                self.m_hit_area:Disable()
+            end
         end
     )
     return setmetatable(self, _M)
@@ -72,6 +75,7 @@ function _M.Attack(self:AttackComponent)
         return
     end
 
+    self.m_hit_area:Enable()
     self._anim_player:ChangeAnimation(self.m_attack_anim)
     self._anim_player:SetLoop(0)
     self._anim_player:Play()
@@ -81,10 +85,7 @@ function _M.Attack(self:AttackComponent)
     self.m_cooldown:Start()
 end
 
-function _M.onAttack(self:AttackComponent, id:EventListenerID, event:TriggerEnterEvent)
-    if event:GetSrcEntity() ~= self.m_hit_area:GetOwner() then
-        return
-    end
+function _M.onAttack(self:AttackComponent, event:TriggerEnterEvent)
     local result = event:GetOverlapResult()
     local ctx = TL_Common.GetContext()
     local script = ctx:GetScriptManager():Get(result.m_dst_entity)
@@ -98,18 +99,13 @@ function _M.onAttack(self:AttackComponent, id:EventListenerID, event:TriggerEnte
     end
 end
 
-function _M.onAttackCooldown(self:AttackComponent, id:EventListenerID, event:TimerEvent)
-    if event:GetID() ~= self.m_cooldown:GetID() then
-        return
-    end
-
+function _M.onAttackCooldown(self:AttackComponent, event:TimerEvent)
     self._can_attack = true
 end
 
 function _M.OnQuit(self:AttackComponent)
     local ctx = TL_Common.GetContext()
-    ctx:GetEventSystem():Remove(self._cooldown_timer_event_id)
-    ctx:GetEventSystem():Remove(self._hit_area_event_id)
+    ctx:GetEventSystem():Remove(self._anim_end_event_id)
 end
 
 return _M

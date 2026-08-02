@@ -12,6 +12,22 @@ CharacterController::CharacterController(Entity entity,
 
 bool CharacterController::EnableDebugOutput = false;
 
+void CCTManager::Enable(Entity entity) {
+    ComponentManager<CharacterController>::Enable(entity);
+
+    if (auto it = m_components.find(entity); it != m_components.end()) {
+        it->second.m_component->m_shape->SetQueryEnable(true);
+    }
+}
+
+void CCTManager::Disable(Entity entity) {
+    ComponentManager<CharacterController>::Disable(entity);
+
+    if (auto it = m_components.find(entity); it != m_components.end()) {
+        it->second.m_component->m_shape->SetQueryEnable(false);
+    }
+}
+
 #define CCT_DEBUG_LOG(fmt, ...)                        \
     do {                                               \
         if (CharacterController::EnableDebugOutput) {  \

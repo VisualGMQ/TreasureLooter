@@ -126,6 +126,7 @@ void registerLuaScriptEventBindigns(lua_State* L) {
             TL_BIND_LUA_EVENT_LISTENER(TriggerLeaveEvent, "TriggerLeaveEvent")
             TL_BIND_LUA_EVENT_LISTENER(TriggerTouchEvent, "TriggerTouchEvent")
             TL_BIND_LUA_EVENT_LISTENER(EventDebugger::DebugEvent, "DebugEvent")
+            TL_BIND_LUA_EVENT_LISTENER(RemoveEntityEvent, "RemoveEntityEvent")
             .addFunction("Remove", +[](EventSystem*, EventListenerID id) {
                 LuaEventListenerRegistry::Remove(id);
             })
@@ -154,6 +155,16 @@ void bindScriptBinaryDataManager(lua_State* L) {
                          return m->Find(Path(path));
                      })
         .endClass()
+        .addFunction("PathToModuleName",
+                     +[](const Path& file_path) -> std::string {
+                         auto& mgr = COMMON_CONTEXT.m_assets_manager
+                                         ->GetManager<ScriptBinaryData>();
+                         std::string out_modname;
+                         if (mgr.PathToModuleName(file_path, out_modname)) {
+                             return out_modname;
+                         }
+                         return file_path.string();
+                     })
         .beginClass<ScriptComponentManager>("ScriptComponentManager")
             .addFunction("Has", &ScriptComponentManager::Has)
             .addFunction("Get", ScriptComponentManager_GetTable)
@@ -183,7 +194,7 @@ void bindPath(lua_State* L) {
         .beginNamespace("TL_Common")
             .beginClass<Path>("Path")
                 .template addConstructor<void (const std::string&), void (void)>()
-                // .addFunction("string", &Path::string)
+                .addFunction("string", +[](const Path& p) { return p.string(); })
                 .addFunction("parent_path", &Path::parent_path)
                 .addFunction("filename", &Path::filename)
                 .addFunction("extension", &Path::extension)
@@ -601,6 +612,8 @@ void bindTimer(lua_State* L) {
             .beginClass<Time>("Time")
                 .addFunction("GetElapseTime", &Time::GetElapseTime)
                 .addFunction("GetCurrentTime", &Time::GetCurrentTime)
+                .addFunction("GetFPS", &Time::GetFPS)
+                .addFunction("GetUnlimitFPS", &Time::GetUnlimitFPS)
             .endClass()
             .addProperty("null_timer_id", +[]() -> TimerID { return null_timer_id; })
             .beginClass<Timer>("Timer")
@@ -615,6 +628,22 @@ void bindTimer(lua_State* L) {
                 .addFunction("GetEventType", &Timer::GetEventType)
                 .addFunction("GetID", &Timer::GetID)
                 .addFunction("IsRunning", &Timer::IsRunning)
+                .addFunction("SetTimerListener", +[](Timer& timer, luabridge::LuaRef fn) {
+                    TL_RETURN_IF_FALSE(fn.isCallable());
+                    auto listener_id = LuaEventListenerRegistry::Add<TimerEvent>([fn, id=timer.GetID()](EventListenerID, const TimerEvent& event) {
+                        TL_RETURN_IF_FALSE(event.GetTimer().GetID() == id);
+                        luabridge::call(fn, event);
+                    });
+                    timer.SetTimerListener(listener_id);
+                })
+                .addFunction("SetTimerStopListener", +[](Timer& timer, luabridge::LuaRef fn) {
+                    TL_RETURN_IF_FALSE(fn.isCallable());
+                    auto listener_id = LuaEventListenerRegistry::Add<TimerStopEvent>([fn, id=timer.GetID()](EventListenerID, const TimerStopEvent& event) {
+                        TL_RETURN_IF_FALSE(event.GetTimer().GetID() == id);
+                        luabridge::call(fn, event);
+                    });
+                    timer.SetTimerStopListener(listener_id);
+                })
             .endClass()
             .beginClass<TimerManager>("TimerManager")
                 .addFunction("Create", &TimerManager::Create)
@@ -649,6 +678,8 @@ void bindCCT(lua_State* L) {
                 .addFunction("Has", +[](CCTManager* m, Entity e) {
                     return m->Has(e);
                 })
+                .addFunction("Enable", &CCTManager::Enable)
+                .addFunction("Disable", &CCTManager::Disable)
             .endClass()
         .endNamespace();
 }
@@ -673,6 +704,7 @@ void bindPhysics(lua_State* L) {
             .beginClass<PhysicsScene>("PhysicsScene")
                 .addFunction("IsEnableDebugDraw", &PhysicsScene::IsEnableDebugDraw)
                 .addFunction("ToggleDebugDraw", &PhysicsScene::ToggleDebugDraw)
+                .addFunction("RenderShape", &PhysicsScene::RenderShape)
                 .addFunction("Overlap",
                              static_cast<uint32_t (PhysicsScene::*)(
                                  const PhysicsShape&, OverlapResult*, size_t)>(
@@ -735,24 +767,30 @@ void bindEvent(lua_State* L) {
                 .addFunction("GetType", &TriggerEnterEvent::GetType)
                 .addFunction("GetOverlapResult", &TriggerEnterEvent::GetOverlapResult)
                 .addFunction("GetSrcEntity", &TriggerEnterEvent::GetSrcEntity)
+                .addFunction("GetTriggerID", &TriggerEnterEvent::GetTriggerID)
             .endClass()
             .beginClass<TriggerTouchEvent>("TriggerTouchEvent")
                 .addFunction("GetType", &TriggerTouchEvent::GetType)
                 .addFunction("GetOverlapResult", &TriggerTouchEvent::GetOverlapResult)
                 .addFunction("GetSrcEntity", &TriggerTouchEvent::GetSrcEntity)
+                .addFunction("GetTriggerID", &TriggerTouchEvent::GetTriggerID)
             .endClass()
             .beginClass<TriggerLeaveEvent>("TriggerLeaveEvent")
                 .addFunction("GetType", &TriggerLeaveEvent::GetType)
                 .addFunction("GetOverlapResult", &TriggerLeaveEvent::GetOverlapResult)
                 .addFunction("GetSrcEntity", &TriggerLeaveEvent::GetSrcEntity)
+                .addFunction("GetTriggerID", &TriggerLeaveEvent::GetTriggerID)
             .endClass()
             .beginClass<TimerEvent>("TimerEvent")
-                .addFunction("GetID", &TimerEvent::GetID)
+                .addFunction("GetTimer", &TimerEvent::GetTimer)
                 .addFunction("GetEventType", &TimerEvent::GetEventType)
             .endClass()
             .beginClass<TimerStopEvent>("TimerStopEvent")
-                .addFunction("GetID", &TimerStopEvent::GetID)
+                .addFunction("GetTimer", &TimerStopEvent::GetTimer)
                 .addFunction("GetEventType", &TimerStopEvent::GetEventType)
+            .endClass()
+            .beginClass<RemoveEntityEvent>("RemoveEntityEvent")
+                .addProperty("m_entity", &RemoveEntityEvent::m_entity)
             .endClass()
     .endNamespace();
 }
@@ -933,7 +971,9 @@ void bindTilemapCollisionComponent(lua_State* L) {
 void bindTrigger(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Common")
+            .addProperty("null_trigger_id", +[]() -> TriggerID { return null_trigger_id; })
             .beginClass<Trigger>("Trigger")
+                .addConstructor<void(Entity, const TriggerDefinition&), void(const TriggerDefinition&), void(void)>()
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
                 .addFunction("SetEventType", &Trigger::SetEventType)
@@ -942,6 +982,35 @@ void bindTrigger(lua_State* L) {
                 .addFunction("GetTouchingShapes", &Trigger::GetTouchingShapes)
                 .addFunction("GetUnderlyingShapes", &Trigger::GetUnderlyingShapes)
                 .addFunction("GetOwner", &Trigger::GetOwner)
+                .addFunction("GetID", &Trigger::GetID)
+                .addFunction("MoveTo", &Trigger::MoveTo)
+                .addFunction("Enable", &Trigger::Enable)
+                .addFunction("Disable", &Trigger::Disable)
+                .addFunction("SetEnterListener", +[](Trigger& trigger, luabridge::LuaRef fn) {
+                    TL_RETURN_IF_FALSE(fn.isCallable());
+                    auto listener_id = LuaEventListenerRegistry::Add<TriggerEnterEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerEnterEvent& event) {
+                        TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
+                        luabridge::call(fn, event);
+                    });
+                    trigger.SetEnterListener(listener_id);
+                })
+                .addFunction("SetLeaveListener", +[](Trigger& trigger, luabridge::LuaRef fn) {
+                    TL_RETURN_IF_FALSE(fn.isCallable());
+                    auto listener_id = LuaEventListenerRegistry::Add<TriggerLeaveEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerLeaveEvent& event) {
+                        TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
+                        luabridge::call(fn, event);
+                    });
+                    trigger.SetLeaveListener(listener_id);
+                })
+                .addFunction("SetTouchListener", +[](Trigger& trigger, luabridge::LuaRef fn) {
+                    TL_RETURN_IF_FALSE(fn.isCallable());
+                    auto listener_id = LuaEventListenerRegistry::Add<TriggerTouchEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerTouchEvent& event) {
+                        TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
+                        luabridge::call(fn, event);
+                    });
+                    trigger.SetTouchListener(listener_id);
+                })
+                .addFunction("Update", &Trigger::Update)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
                 .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
@@ -1250,7 +1319,7 @@ void bindAllTypes(lua_State* L) {
     bindUDP(L);
 }
 
-void BindTLModule(lua_State* L) {
+void BindCommonModule(lua_State* L) {
     TL_RETURN_IF_NULL_WITH_LOG(L, LOGE, "lua_State* is null!");
 
     bindAllTypes(L);

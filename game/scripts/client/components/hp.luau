@@ -9,9 +9,7 @@ type ClientHpComponentData = {
     _hurt_anim:AnimationHandle,
     _dead_anim:AnimationHandle,
 
-    _invincible_event_id:EventListenerID,
     _defer_dead_timer:Timer,
-    _defer_dead_event_id:EventListenerID,
 }
 
 export type ClientHpComponent = typeof(_M) & ClientHpComponentData & HpComponent.HpComponent
@@ -30,16 +28,14 @@ function _M.new(gameobject, definition:ClientHpComponentDefinition):ClientHpComp
     self._hurt_anim = definition.m_hurt_anim
     self._dead_anim = definition.m_dead_anim
     local ctx = TL_Client.GetContext()
-    self._invincible_event_id = ctx:GetEventSystem():AddTimerEvent(
-        function(id, event)
-            self:onStopInvincible(id, event)
-        end)
+    self._invincible_timer:SetTimerListener(function(event)
+        self:onStopInvincible(event)
+    end)
     local defer_dead_time = self._dead_anim:GetFinishTime()
     self._defer_dead_timer = ctx:GetTimerManager():Create(defer_dead_time, TL_Schema.TimerEventType.Cooldown, 0)
-    self._defer_dead_event_id =  ctx:GetEventSystem():AddTimerEvent(
-        function(id, event)
-            self:onDeferDead(id, event)
-        end)
+    self._defer_dead_timer:SetTimerListener(function(event)
+        self:onDeferDead(event)
+    end)
 
     return setmetatable(self, _M)
 end
@@ -64,28 +60,17 @@ function _M.Hurt(self:ClientHpComponent, damage:number)
     end
 end
 
-function _M.onStopInvincible(self:ClientHpComponent, id:EventListenerID, event:TimerEvent)
-    if event:GetID() ~= self._invincible_timer:GetID() then
-        return
-    end
-
+function _M.onStopInvincible(self:ClientHpComponent, event:TimerEvent)
     self._anim_player:Stop()
 end
 
-function _M.onDeferDead(self:ClientHpComponent, id:EventListenerID, event:TimerEvent)
-    if event:GetID() ~= self._defer_dead_timer:GetID() then
-        return
-    end
-
-    TL_Client.GetContext():Log("destroy")
+function _M.onDeferDead(self:ClientHpComponent, event:TimerEvent)
     self:GetGameObject():Destroy()
 end
 
 function _M.OnQuit(self:ClientHpComponent)
     local ctx = TL_Client.GetContext()
-    ctx:GetEventSystem():Remove(self._invincible_event_id)
     ctx:GetTimerManager():Remove(self._defer_dead_timer)
-    ctx:GetEventSystem():Remove(self._defer_dead_event_id)
     HpComponent.OnQuit(self)
 end
 

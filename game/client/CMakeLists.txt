@@ -12,4 +12,4 @@ if (MSVC)
 endif()
 
 target_compile_definitions(${CLIENT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
-target_link_libraries(${CLIENT_NAME} PUBLIC ${COMMON_NAME})
+target_link_libraries(${CLIENT_NAME} PUBLIC ${COMMON_NAME} fts_fuzzy_match)

@@ -1,6 +1,9 @@
 <ItemDefinition>
 	<uuid>ff549494-5d5c-4099-9628-99386595f43a</uuid>
 	<payload>
+		<behavior>
+			<item>Diggable</item>
+		</behavior>
 		<sprite>
 			<image>assets/Backgrounds/Tilesets/TilesetNature.png</image>
 			<region>
@@ -17,14 +20,14 @@
 		<collision>
 			<uuid>3cc13e8f-129b-45a8-af5e-7201f2002fb7</uuid>
 			<payload>
-				<is_rect>true</is_rect>
+				<is_rect>false</is_rect>
 				<rect>
 					<center x="0.000000" y="0.000000"/>
-					<half_size x="8.000000" y="8.000000"/>
+					<half_size x="0.000000" y="0.000000"/>
 				</rect>
 				<circle>
 					<center x="0.000000" y="0.000000"/>
-					<radius>0.000000</radius>
+					<radius>8.000000</radius>
 				</circle>
 				<collision_layer>
 					<elem>Obstacle</elem>
@@ -32,16 +35,18 @@
 				</collision_layer>
 				<collision_mask>
 					<elem>CCT</elem>
+					<elem>WeaponAttack</elem>
 				</collision_mask>
 			</payload>
 		</collision>
-		<behavior>
-			<item>Diggable</item>
-		</behavior>
-		<type>Mine</type>
-		<client_script>scripts/client/item_behavior.luau</client_script>
-		<dig_time>3.000000</dig_time>
-		<mineral_fragment>assets/gpa/items/mineral_fragments.item.xml</mineral_fragment>
+		<spawn_object>
+			<value>
+				<object_did>ItemDID2</object_did>
+				<count>-1</count>
+				<spawn_animations>
+					<elem>assets/gpa/anim/item/spawn_bounce.animation.xml</elem>
+				</spawn_animations>
+			</value>
+		</spawn_object>
 	</payload>
 </ItemDefinition>
-

@@ -24,6 +24,7 @@
 #include "client/animation_player.hpp"
 #include "client/camera.hpp"
 #include "client/context.hpp"
+#include "client/debug_panel.hpp"
 #include "client/draw_order.hpp"
 #include "client/input/input.hpp"
 #include "client/input/mouse.hpp"
@@ -33,22 +34,19 @@
 #include "client/ui.hpp"
 #include "client/window.hpp"
 
+// clang-format off
 static void registerLuaScriptEventBindings(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginClass<EventSystem>("EventSystem")
             TL_BIND_LUA_EVENT_LISTENER(UIMouseHoverEvent, "UIMouseHoverEvent")
-                TL_BIND_LUA_EVENT_LISTENER(UIMouseDownEvent, "UIMouseDownEvent")
-                    TL_BIND_LUA_EVENT_LISTENER(UIMouseUpEvent, "UIMouseUpEvent")
-                        TL_BIND_LUA_EVENT_LISTENER(UIMouseClickedEvent,
-                                                   "UIMouseClickedEvent")
-                            TL_BIND_LUA_EVENT_LISTENER(UICheckToggledEvent,
-                                                       "UICheckToggledEvent")
-                                TL_BIND_LUA_EVENT_LISTENER(UIDragEvent,
-                                                           "UIDragEvent")
+            TL_BIND_LUA_EVENT_LISTENER(UIMouseDownEvent, "UIMouseDownEvent")
+            TL_BIND_LUA_EVENT_LISTENER(UIMouseUpEvent, "UIMouseUpEvent")
+            TL_BIND_LUA_EVENT_LISTENER(UIMouseClickedEvent, "UIMouseClickedEvent")
+            TL_BIND_LUA_EVENT_LISTENER(UICheckToggledEvent, "UICheckToggledEvent")
+            TL_BIND_LUA_EVENT_LISTENER(UIDragEvent, "UIDragEvent")
+            TL_BIND_LUA_EVENT_LISTENER( AnimationEndEvent, "AnimationEndEvent")
         .endClass();
 }
-
-// clang-format off
 
 static void bindInput(lua_State* L) {
     luabridge::getGlobalNamespace(L)
@@ -192,6 +190,10 @@ static void bindDrawOrder(lua_State* L) {
         .endNamespace();
 }
 
+template <>
+struct luabridge::Stack<AnimationPlayerID>
+    : public luabridge::Enum<AnimationPlayerID> {};
+
 static void bindAnimationPlayer(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
@@ -201,6 +203,7 @@ static void bindAnimationPlayer(lua_State* L) {
                 .addFunction("Stop", &AnimationPlayer::Stop)
                 .addFunction("Rewind", &AnimationPlayer::Rewind)
                 .addFunction("SetLoop", &AnimationPlayer::SetLoop)
+                .addFunction("SetCurTime", &AnimationPlayer::SetCurTime)
                 .addFunction("IsPlaying", &AnimationPlayer::IsPlaying)
                 .addFunction("GetLoopCount", &AnimationPlayer::GetLoopCount)
                 .addFunction("GetCurTime", &AnimationPlayer::GetCurTime)
@@ -218,6 +221,12 @@ static void bindAnimationPlayer(lua_State* L) {
                 .addFunction("GetRate", &AnimationPlayer::GetRate)
                 .addFunction("EnableAutoPlay", &AnimationPlayer::EnableAutoPlay)
                 .addFunction("IsAutoPlayEnabled", &AnimationPlayer::IsAutoPlayEnabled)
+                .addFunction("GetID", &AnimationPlayer::GetID)
+            .endClass()
+            .beginClass<AnimationEndEvent>("AnimationEndEvent")
+                .addFunction("GetAnimationPlayerID", &AnimationEndEvent::GetAnimationPlayerID)
+                .addFunction("GetEntity", &AnimationEndEvent::GetEntity)
+                .addFunction("GetAnimation", &AnimationEndEvent::GetAnimation)
             .endClass()
             .beginClass<MultiAnimationPlayer>("MultiAnimationPlayer")
                 .addFunction("GetAnimation",
@@ -396,6 +405,9 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> UIComponentManager* {
                                  return ctx->m_ui_manager.get();
                              })
+                .addFunction("GetDebugPanel", +[](ClientContext* ctx) -> DebugPanel* {
+                                return ctx->m_debug_panel.get();
+                            })
                 .addFunction("GetTilemapRenderComponentManager",
                              +[](ClientContext* ctx)
                                  -> TilemapLayerRenderComponentManager* {
@@ -417,6 +429,24 @@ static void bindClientContext(lua_State* L) {
         .endNamespace();
 }
 
+static void bindDebugPanel(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Client")
+            .beginClass<DebugPanel>("DebugPanel")
+                .addFunction("RegisterCmd",
+                             +[](DebugPanel* p, const std::string& name,
+                                 luabridge::LuaRef cmd) {
+                                 p->RegisterCmd(name, cmd);
+                             })
+                .addFunction("ExecuteCmd",
+                             +[](DebugPanel* p, const std::string& name,
+                                 const std::vector<std::string>& args) {
+                                 p->ExecuteCmd(name, args);
+                             })
+            .endClass()
+        .endNamespace();
+}
+
 // clang-format on
 
 void BindClientModule(lua_State* L) {
@@ -430,4 +460,5 @@ void BindClientModule(lua_State* L) {
     bindUI(L);
     bindClientUIEvents(L);
     bindClientContext(L);
+    bindDebugPanel(L);
 }

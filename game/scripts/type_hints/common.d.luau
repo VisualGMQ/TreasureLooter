@@ -8,6 +8,7 @@ export type Entity = number
 export type TimeType = number
 export type TimerID = number
 export type EventListenerID = number
+export type TriggerID = number
 
 -- Opaque flags wrapper produced by `TL_Common.UDPPacketFlags(...)`.
 export type UDPPacketFlags = number
@@ -16,33 +17,33 @@ export type UUID = {
 	IsValid: (self: UUID) -> boolean,
 }
 
-declare class Vec2
-	x: number
-	y: number
-	function Length(self): number
-	function LengthSquared(self): number
-	function Normalize(self): Vec2
-	function Dot(self, other: Vec2): number
-	function Cross(self, other: Vec2): number
-	function __add(self, other: Vec2): Vec2
-	function __sub(self, other: Vec2): Vec2
-	function __mul(self, other: Vec2 | number): Vec2
-	function __div(self, other: Vec2 | number): Vec2
-end
+export type Vec2 = {
+	x: number,
+	y: number,
+	Length: (self: Vec2) -> number,
+	LengthSquared: (self: Vec2) -> number,
+	Normalize: (self: Vec2) -> Vec2,
+	Dot: (self: Vec2, other: Vec2) -> number,
+	Cross: (self: Vec2, other: Vec2) -> number,
+	__add: (self: Vec2, other: Vec2) -> Vec2,
+	__sub: (self: Vec2, other: Vec2) -> Vec2,
+	__mul: (self: Vec2, other: Vec2 | number) -> Vec2,
+	__div: (self: Vec2, other: Vec2 | number) -> Vec2,
+}
 
-declare class Vec2UI
-	x: number
-	y: number
-	function Length(self): number
-	function LengthSquared(self): number
-	function Normalize(self): Vec2UI
-	function Dot(self, other: Vec2UI): number
-	function Cross(self, other: Vec2UI): number
-	function __add(self, other: Vec2UI): Vec2UI
-	function __sub(self, other: Vec2UI): Vec2UI
-	function __mul(self, other: Vec2UI | number): Vec2UI
-	function __div(self, other: Vec2UI | number): Vec2UI
-end
+export type Vec2UI = {
+	x: number,
+	y: number,
+	Length: (self: Vec2UI) -> number,
+	LengthSquared: (self: Vec2UI) -> number,
+	Normalize: (self: Vec2UI) -> Vec2UI,
+	Dot: (self: Vec2UI, other: Vec2UI) -> number,
+	Cross: (self: Vec2UI, other: Vec2UI) -> number,
+	__add: (self: Vec2UI, other: Vec2UI) -> Vec2UI,
+	__sub: (self: Vec2UI, other: Vec2UI) -> Vec2UI,
+	__mul: (self: Vec2UI, other: Vec2UI | number) -> Vec2UI,
+	__div: (self: Vec2UI, other: Vec2UI | number) -> Vec2UI,
+}
 
 export type Color = {
 	r: number,
@@ -311,6 +312,8 @@ export type Time = {
 export type Timer = {
 	SetInterval: (self: Timer, time: TimeType) -> (),
 	GetInterval: (self: Timer) -> TimeType,
+	SetTimerListener: (self: Timer, cb: (self: TimerEvent) -> ()) -> (),
+	SetTimerStopListener: (self: Timer, cb: (self: TimerStopEvent) -> ()) -> (),
 	Start: (self: Timer) -> (),
 	Pause: (self: Timer) -> (),
 	Stop: (self: Timer) -> (),
@@ -329,12 +332,12 @@ export type TimerManager = {
 }
 
 export type TimerEvent = {
-	GetID: (self: TimerEvent) -> TimerID,
+	GetTimer: (self: TimerEvent) -> Timer,
 	GetEventType: (self: TimerEvent) -> TimerEventType,
 }
 
 export type TimerStopEvent = {
-	GetID: (self: TimerStopEvent) -> TimerID,
+	GetTimer: (self: TimerStopEvent) -> Timer,
 	GetEventType: (self: TimerStopEvent) -> TimerEventType,
 }
 
@@ -366,6 +369,8 @@ export type CharacterController = {
 export type CCTManager = {
 	Get: (self: CCTManager, entity: Entity) -> CharacterController?,
 	Has: (self: CCTManager, entity: Entity) -> boolean,
+	Enable: (self: CCTManager, entity: Entity) -> (),
+	Disable: (self: CCTManager, entity: Entity) -> (),
 }
 
 export type OverlapResult = {
@@ -376,6 +381,7 @@ export type OverlapResult = {
 export type PhysicsScene = {
 	IsEnableDebugDraw: (self: PhysicsScene) -> boolean,
 	ToggleDebugDraw: (self: PhysicsScene) -> (),
+	RenderShape :(self: PhysicsScene, shape: PhysicsShape, color: Color) -> (),
 	Overlap: ((self: PhysicsScene, shape: PhysicsShape, out_result: { OverlapResult }, out_size: number) -> number)
 		& ((self: PhysicsScene, lhs: PhysicsShape, rhs: PhysicsShape) -> boolean),
 }
@@ -388,6 +394,14 @@ export type Trigger = {
 	GetTouchingShapes: (self: Trigger) -> { PhysicsShape },
 	GetUnderlyingShapes: (self: Trigger) -> { PhysicsShape },
 	GetOwner: (self: Trigger) -> Entity,
+	SetEnterListener: (self: Trigger, cb: (self: TriggerEnterEvent) -> ()) -> (),
+	SetLeaveListener: (self: Trigger, cb: (self: TriggerLeaveEvent) -> ()) -> (),
+	SetTouchListener: (self: Trigger, cb: (self: TriggerTouchEvent) -> ()) -> (),
+	GetID: (self: Trigger) -> TriggerID,
+	MoveTo: (self: Trigger, transform: Transform) -> (),
+	Enable: (self: Trigger) -> (),
+	Disable: (self: Trigger) -> (),
+	Update: (self: Trigger) -> (),
 }
 
 export type TriggerEnterEvent = {
@@ -477,6 +491,7 @@ export type EventSystem = {
 	AddUIMouseClickedEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIMouseClickedEvent) -> ()) -> EventListenerID,
 	AddUICheckToggledEvent: (self: EventSystem, cb: (id: EventListenerID, event: UICheckToggledEvent) -> ()) -> EventListenerID,
 	AddUIDragEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIDragEvent) -> ()) -> EventListenerID,
+	AddAnimationEndEvent: (self: EventSystem, cb: (id: EventListenerID, event: AnimationEndEvent) -> ()) -> EventListenerID,
 	Remove: (self: EventSystem, id: EventListenerID) -> (),
 }
 
@@ -528,6 +543,7 @@ declare TL_Common: {
 	null_entity: Entity,
 	null_timer_id: TimerID,
 	null_event_listener_id: EventListenerID,
+	null_trigger_id: TriggerID,
 
 	-- constructors and statics
 	UUID: (() -> UUID) & {

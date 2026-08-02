@@ -83,7 +83,7 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 
     m_script_binary_data_manager->BindModule([](lua_State* L) {
-        BindTLModule(L);
+        BindCommonModule(L);
         BindServerModule(L);
     });
 

@@ -26,7 +26,8 @@ public:
 
     void RegisterAliasPath(const std::string& name, const Path& path);
     void UnregisterAliasPath(const std::string& name);
-    Path FindAliasPath(const std::string& name) const;
+    [[nodiscard]] Path FindAliasPath(const std::string& name) const;
+    bool PathToModuleName(const Path& file_path, std::string& out_modname) const;
 
 private:
     std::unordered_map<std::string, Path> m_alias_paths;

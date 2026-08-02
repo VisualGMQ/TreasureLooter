@@ -1,7 +1,9 @@
 #pragma once
 #include "SDL3/SDL.h"
+#include "common/entity.hpp"
 #include "common/log.hpp"
 #include "common/type_index.hpp"
+#include "common/macros.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -13,15 +15,15 @@ struct NullEventListenerID {
     constexpr bool operator==(EventListenerID id) const {
         return static_cast<uint32_t>(id) == 0;
     }
+
     constexpr bool operator!=(EventListenerID id) const {
         return !(*this == id);
     }
-    constexpr bool operator==(NullEventListenerID) const {
-        return true;
-    }
-    constexpr bool operator!=(NullEventListenerID) const {
-        return false;
-    }
+
+    constexpr bool operator==(NullEventListenerID) const { return true; }
+
+    constexpr bool operator!=(NullEventListenerID) const { return false; }
+
     constexpr operator EventListenerID() const {
         return static_cast<EventListenerID>(0);
     }
@@ -117,6 +119,7 @@ public:
 
     template <typename T>
     void RemoveListener(EventListenerID id) {
+        TL_RETURN_IF_FALSE(id != null_event_listener_id);
         if (auto sink = ensureSink<T>()) {
             sink->RemoveListener(id);
         }
@@ -165,15 +168,19 @@ public:
     struct DebugEvent {
         int m_value = 0;
     };
-    
+
     EventDebugger();
     ~EventDebugger();
-    
+
     void SendDebugEvent(int value);
-    
+
     uint32_t GetTriggeredCount() const;
-    
+
 private:
     EventListenerID m_listener_id;
     uint32_t m_triggered_count = 0;
+};
+
+struct RemoveEntityEvent {
+    Entity m_entity;
 };

@@ -66,5 +66,5 @@ void SpriteManager::SubmitDrawCommand(Entity entity) {
     float z_order = draw_order ? draw_order->GetGlobalOrder() : 0;
 
     renderer->DrawImageEx(*sprite->m_image, src_region, pts[0], pts[1], pts[2],
-                          sprite->m_color, z_order, true, transform->m_position.y);
+                          sprite->m_color, z_order, true, m.Get(2, 1));
 }
