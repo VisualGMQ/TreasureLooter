@@ -216,9 +216,9 @@ void AnimationPlayer::Sync(Entity entity) {
         if (auto it = g_track_infos.find(bind_point);
             it != g_track_infos.end()) {
             if (track->GetType() == AnimationTrackType::Linear) {
-                it->second.m_linear_sync_function(entity, *track);
+                it->second.m_linear_sync_function(&entity, *track);
             } else {
-                it->second.m_discrete_sync_function(entity, *track);
+                it->second.m_discrete_sync_function(&entity, *track);
             }
         }
     }

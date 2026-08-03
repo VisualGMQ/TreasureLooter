@@ -13,6 +13,7 @@ public:
     virtual void Rewind() = 0;
     [[nodiscard]] virtual AnimationTrackType GetType() const = 0;
     [[nodiscard]] virtual TimeType GetFinishTime() const = 0;
+    [[nodiscard]] virtual bool IsComplete() const = 0;
 };
 
 template <typename T>
@@ -57,6 +58,11 @@ public:
     virtual T GetValue() const = 0;
 
     [[nodiscard]] bool NeedSync() const { return m_cur_frame >= 0; }
+
+    [[nodiscard]] bool IsComplete() const override {
+        return m_cur_frame + 1 >=
+               static_cast<int>(m_track.GetKeyframes().size());
+    }
 
     auto& GetTrack() const { return m_track; }
 
@@ -138,9 +144,10 @@ public:
         ComponentManager<T>& manager,
         BindingPointPropertyGetterFn<T, PropertyType> property_getter) {
         TL_ASSERT(property_getter);
-        auto sync_fn = [=, &manager](Entity entity,
+        auto sync_fn = [=, &manager](void* entity,
                                      AnimationTrackPlayerBase& track_player) {
-            T* component = manager.Get(entity);
+            TL_ASSERT(entity);
+            T* component = manager.Get(*static_cast<Entity*>(entity));
             TL_RETURN_IF_NULL(component);
 
             auto& raw_track = static_cast<const AnimationTrackPlayer<
@@ -199,6 +206,56 @@ public:
             manager, property_getter);
     }
 
+    template <typename T, AnimationBindingPoint binding_point,
+              AnimationTrackType track_type>
+    static void RegisterTrackInfo() {
+        auto sync_fn = [=](void* payload,
+                           AnimationTrackPlayerBase& track_player) {
+            TL_ASSERT(payload);
+            auto& raw_track =
+                static_cast<const AnimationTrackPlayer<T, track_type>&>(
+                    track_player);
+            if (raw_track.NeedSync()) {
+                *static_cast<T*>(payload) = raw_track.GetValue();
+            }
+        };
+
+        auto create_fn = [](AnimationPlayer& player,
+                            AnimationTrackBase& track_base) {
+            auto& raw_track =
+                static_cast<AnimationTrack<T, track_type>&>(track_base);
+            player.m_track_players[binding_point] =
+                std::make_unique<AnimationTrackPlayer<T, track_type>>(
+                    raw_track);
+        };
+
+        auto [it, success] = g_track_infos.try_emplace(binding_point);
+        if constexpr (track_type == AnimationTrackType::Linear) {
+            it->second.m_linear_sync_function = sync_fn;
+            it->second.m_linear_create_function = create_fn;
+        } else {
+            it->second.m_discrete_sync_function = sync_fn;
+            it->second.m_discrete_create_function = create_fn;
+        }
+    }
+
+    template <typename T, AnimationBindingPoint binding_point>
+    static void RegisterDiscreteTrackInfo() {
+        RegisterTrackInfo<T, binding_point, AnimationTrackType::Discrete>();
+    }
+
+    template <typename T, AnimationBindingPoint binding_point>
+    static void RegisterLinearTrackInfo() {
+        RegisterTrackInfo<T, binding_point, AnimationTrackType::Linear>();
+    }
+
+    template <typename T, AnimationBindingPoint binding_point>
+    static void RegisterLinearDiscreteTrackInfo() {
+        RegisterLinearTrackInfo<T, binding_point>();
+        RegisterDiscreteTrackInfo<T, binding_point>();
+    }
+
+
     AnimationPlayer();
     explicit AnimationPlayer(const AnimationPlayerDefinition&);
 
@@ -242,7 +299,7 @@ private:
 
     struct TrackInfo {
         using SyncFunction =
-            std::function<void(Entity, AnimationTrackPlayerBase&)>;
+            std::function<void(void*, AnimationTrackPlayerBase&)>;
         using TrackCreateFunction =
             std::function<void(AnimationPlayer&, AnimationTrackBase&)>;
 
