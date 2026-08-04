@@ -1,17 +1,16 @@
-local ClientLogicComponent = require("@client/components/logic")
-local Component = require("@common/components/component")
+local ClientGameObjectBehavior = require("@client/gameobject_behavior")
 local ClientAttackComponent = require("@client/components/attack")
 
 local _M = {}
 _M.__index = _M
-setmetatable(_M, ClientLogicComponent)
+setmetatable(_M, ClientGameObjectBehavior)
 
 type WeaponLogicData = {}
 
-export type WeaponLogic = typeof(_M) & WeaponLogicData & ClientLogicComponent.ClientLogicComponent
+export type WeaponLogic = typeof(_M) & WeaponLogicData & ClientGameObjectBehavior.ClientGameObjectBehavior
 
 function _M.new(gameobject):WeaponLogic
-    local self = Component.new(gameobject) :: WeaponLogic
+    local self = ClientGameObjectBehavior.new(gameobject) :: WeaponLogic
     return setmetatable(self, _M)
 end
 
@@ -40,6 +39,8 @@ function _M.OnUpdate(self:WeaponLogic, elapse_time:TimeType)
             go.m_attack_component:Attack()
         end
     end
+
+    ClientGameObjectBehavior.OnUpdate(self, elapse_time)
 end
 
 return _M

@@ -425,30 +425,37 @@ void InstanceDisplay(const char* name, AnimationTrack<T, TrackType>& m) {
 }
 
 template <typename T>
-void InstanceDisplay(const char* name, TVec2<T>& value) {
-    ImGui::PushID(static_cast<void*>(&value));
-    if constexpr (std::is_same_v<T, float>) {
-        ImGui::DragFloat2(name, (float*)&value, 0.1);
-    } else if constexpr (std::is_same_v<T, double>) {
-        ImGui::DragScalarN(name, ImGuiDataType_Double, &value, 2, 0.1);
-    } else if constexpr (std::is_same_v<T, int>) {
-        ImGui::DragScalarN(name, ImGuiDataType_S32, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, char>) {
-        ImGui::DragScalarN(name, ImGuiDataType_S8, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, short>) {
-        ImGui::DragScalarN(name, ImGuiDataType_S16, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, long long>) {
-        ImGui::DragScalarN(name, ImGuiDataType_S64, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, uint8_t>) {
-        ImGui::DragScalarN(name, ImGuiDataType_U8, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, uint16_t>) {
-        ImGui::DragScalarN(name, ImGuiDataType_U16, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, uint32_t>) {
-        ImGui::DragScalarN(name, ImGuiDataType_U32, &value, 2, 1);
-    } else if constexpr (std::is_same_v<T, uint64_t>) {
-        ImGui::DragScalarN(name, ImGuiDataType_U64, &value, 2, 1);
+void InstanceDisplay(const char* name, MatStorage<T>& m) {
+    ImGui::Text("%s", name);
+    ImGui::BeginDisabled(true);
+    for (size_t y = 0; y < m.GetHeight(); y++) {
+        for (size_t x = 0; x < m.GetWidth(); x++) {
+            ImGui::PushID(static_cast<int>(y * m.GetWidth() + x));
+            InstanceDisplay(("[" + std::to_string(x) + "," + std::to_string(y) + "]").c_str(), m.Get(x, y));
+            ImGui::PopID();
+            if (x + 1 < m.GetWidth()) {
+                ImGui::SameLine();
+            }
+        }
     }
-    ImGui::PopID();
+    ImGui::EndDisabled();
+}
+
+template <typename T>
+void InstanceDisplay(const char* name, const MatStorage<T>& m) {
+    ImGui::Text("%s", name);
+    ImGui::BeginDisabled(true);
+    for (size_t y = 0; y < m.GetHeight(); y++) {
+        for (size_t x = 0; x < m.GetWidth(); x++) {
+            ImGui::PushID(static_cast<int>(y * m.GetWidth() + x));
+            InstanceDisplay(("[" + std::to_string(x) + "," + std::to_string(y) + "]").c_str(), m.Get(x, y));
+            ImGui::PopID();
+            if (x + 1 < m.GetWidth()) {
+                ImGui::SameLine();
+            }
+        }
+    }
+    ImGui::EndDisabled();
 }
 
 template <typename T>

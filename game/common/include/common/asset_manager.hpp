@@ -4,6 +4,7 @@
 #include "common/asset_manager_interface.hpp"
 #include "common/context.hpp"
 #include "common/scene.hpp"
+#include "common/detour/detour.hpp"
 #include "common/script/script.hpp"
 #include "common/type_index.hpp"
 #include "schema/gameplay_config.hpp"
@@ -50,6 +51,11 @@ inline auto& IAssetsManager::GetManager<ScriptBinaryData>() {
 template <>
 inline auto& IAssetsManager::GetManager<Scene>() {
     return *COMMON_CONTEXT.m_scene_manager;
+}
+
+template <>
+inline auto& IAssetsManager::GetManager<TilemapDetourData>() {
+    return *COMMON_CONTEXT.m_tilemap_detour_manager;
 }
 
 template <>

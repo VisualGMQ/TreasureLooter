@@ -9,7 +9,6 @@ local ClientRaiseUpComponent = require("@client/components/raise_up")
 local ClientSpawnObjectComponent = require("@client/components/spawn_object")
 local ClientSpawnedComponent = require("@client/components/spawned")
 local ClientConstructableComponent = require("@client/components/constructable")
-local ClientLogicComponent = require("@client/components/logic")
 local ClientSkillComponent = require("@client/components/skill")
 local BuffReceiveComponent = require("@common/components/buff_receive")
 local BuffApplyComponent = require("@common/components/buff_apply")
@@ -31,7 +30,6 @@ type ClientGameObjectData = {
     m_spawn_object_component:ClientSpawnObjectComponent.ClientSpawnObjectComponent,
     m_spawned_component:ClientSpawnedComponent.ClientSpawnedComponent,
     m_constructable_component:ClientConstructableComponent.ClientConstructableComponent,
-    m_logic_component:ClientLogicComponent.ClientLogicComponent,
     m_skill_components: { ClientSkillComponent.ClientSkillComponent },
     m_buff_receive_component: BuffReceiveComponent.BuffReceiveComponent,
     m_buff_apply_component: BuffApplyComponent.BuffApplyComponent,
@@ -103,9 +101,6 @@ end
 function _M.OnUpdate(self:ClientGameObject, elapse_time:TimeType)
     if self.m_spawned_component then
         self.m_spawned_component:Update(elapse_time)
-    end
-    if self.m_logic_component then
-        self.m_logic_component:OnUpdate(elapse_time)
     end
     for _, skill_component in ipairs(self.m_skill_components) do
         skill_component:Update(elapse_time)

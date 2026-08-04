@@ -1,0 +1,96 @@
+<ItemDefinition>
+	<uuid>d62f2bae-332d-46ad-8475-a6595d760718</uuid>
+	<payload>
+		<behavior>
+			<item>Constructable</item>
+			<item>Choppable</item>
+		</behavior>
+		<sprite>
+			<image>assets/Backgrounds/Tilesets/TilesetNature.png</image>
+			<region>
+				<topleft x="64.000000" y="128.000000"/>
+				<size x="16.000000" y="16.000000"/>
+			</region>
+			<size x="16.000000" y="16.000000"/>
+			<anchor x="0.000000" y="0.000000"/>
+			<flip>
+				<item>None</item>
+			</flip>
+			<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+		</sprite>
+		<collision>
+			<uuid>282e6bfb-a16d-4d71-a8a4-a0c4e9a62242</uuid>
+			<payload>
+				<is_rect>true</is_rect>
+				<rect>
+					<center x="0.000000" y="0.000000"/>
+					<half_size x="8.000000" y="8.000000"/>
+				</rect>
+				<circle>
+					<center x="0.000000" y="0.000000"/>
+					<radius>8.000000</radius>
+				</circle>
+				<collision_layer>
+					<elem>Obstacle</elem>
+					<elem>Interactable</elem>
+				</collision_layer>
+				<collision_mask>
+					<elem>CCT</elem>
+					<elem>WeaponAttack</elem>
+				</collision_mask>
+			</payload>
+		</collision>
+		<constructable>
+			<value>
+				<phases>
+					<elem>
+						<materials/>
+						<sprite>
+							<image>assets/Backgrounds/Tilesets/TilesetNature.png</image>
+							<region>
+								<topleft x="64.000000" y="128.000000"/>
+								<size x="16.000000" y="16.000000"/>
+							</region>
+							<size x="16.000000" y="16.000000"/>
+							<anchor x="0.000000" y="0.000000"/>
+							<flip>
+								<item>None</item>
+							</flip>
+							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+						</sprite>
+						<next_phase_growth>1</next_phase_growth>
+						<auto_grow_factor>0.2</auto_grow_factor>
+					</elem>
+					<elem>
+						<materials/>
+						<sprite>
+							<image>assets/Backgrounds/Tilesets/TilesetNature.png</image>
+							<region>
+								<topleft x="96.000000" y="128.000000"/>
+								<size x="32.000000" y="32.000000"/>
+							</region>
+							<size x="32.000000" y="32.000000"/>
+							<anchor x="0.000000" y="8.000000"/>
+							<flip>
+								<item>None</item>
+							</flip>
+							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+						</sprite>
+						<next_phase_growth>999</next_phase_growth>
+						<auto_grow_factor>0</auto_grow_factor>
+					</elem>
+				</phases>
+				<fx_on_accept_material>Invalid</fx_on_accept_material>
+			</value>
+		</constructable>
+		<spawn_object>
+			<value>
+				<object_did>ItemDID9</object_did>
+				<count>3</count>
+				<spawn_animations>
+					<elem>assets/gpa/anim/item/spawn_bounce.animation.xml</elem>
+				</spawn_animations>
+			</value>
+		</spawn_object>
+	</payload>
+</ItemDefinition>

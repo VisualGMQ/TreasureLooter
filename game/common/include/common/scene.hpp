@@ -23,8 +23,6 @@ public:
 
     virtual void OnQuit();
 
-    void PoseUpdate();
-
     [[nodiscard]] bool IsInited() const;
 
     /**
@@ -33,6 +31,9 @@ public:
     Entity Instantiate(PrefabHandle, const Transform* = nullptr);
 
     void RemoveEntity(Entity);
+    void RemoveEntityFromInnerList(Entity);
+
+    [[nodiscard]] bool HasEntity(Entity) const;
 
     [[nodiscard]] Entity GetRootEntity() const;
     [[nodiscard]] virtual Entity GetUIRootEntity() const = 0;
@@ -51,13 +52,7 @@ private:
     bool m_inited = false;
     SceneDefinitionHandle m_pending_init_description;
 
-    std::vector<Entity> m_pending_delete_entities;
-
     void initByDescription(SceneDefinitionHandle);
-
-    void doRemoveEntities();
-    void doRemoveEntityWithChildren(Entity);
-    void doRemoveEntityFromParent(Entity);
 };
 
 using SceneHandle = Handle<Scene>;
@@ -70,9 +65,9 @@ public:
 
     virtual void Switch(SceneHandle);
 
-    void PoseUpdate();
+    void RemoveEntity(Entity);
 
-    SceneHandle GetCurrentScene() const;
+    [[nodiscard]] SceneHandle GetCurrentScene() const;
 
 private:
     SceneHandle m_level;

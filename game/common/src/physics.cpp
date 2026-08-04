@@ -356,24 +356,18 @@ void PhysicsScene::Chunks::getOverlapChunkRange(const Rect &bounding_box,
                                                 const Vec2 &topleft,
                                                 Range2D<int> &out_chunk_range,
                                                 Range2D<int> &out_tile_range) {
-    const float ceil_constant = 0.5;
-
     Vec2 offset_center = bounding_box.m_center - topleft;
     auto top_left = offset_center - bounding_box.m_half_size;
     auto bottom_right = offset_center + bounding_box.m_half_size;
     int min_x = std::floor(top_left.x / (float)m_tile_extent.w);
-    int max_x =
-        std::ceil(bottom_right.x / (float)m_tile_extent.w + ceil_constant);
+    int max_x = std::ceil(bottom_right.x / (float)m_tile_extent.w);
     int min_y = std::floor(top_left.y / (float)m_tile_extent.h);
-    int max_y =
-        std::ceil(bottom_right.y / (float)m_tile_extent.h + ceil_constant);
+    int max_y = std::ceil(bottom_right.y / (float)m_tile_extent.h);
 
     out_chunk_range.m_x.m_begin = std::floor(min_x / (float)m_chunk_extent.w);
-    out_chunk_range.m_x.m_end =
-        std::ceil(max_x / (float)m_chunk_extent.w + ceil_constant);
+    out_chunk_range.m_x.m_end = std::ceil(max_x / (float)m_chunk_extent.w);
     out_chunk_range.m_y.m_begin = std::floor(min_y / (float)m_chunk_extent.h);
-    out_chunk_range.m_y.m_end =
-        std::ceil(max_y / (float)m_chunk_extent.h + ceil_constant);
+    out_chunk_range.m_y.m_end = std::ceil(max_y / (float)m_chunk_extent.h);
 
     auto positive_mod = [](int a, int b) {
         int r = a % b;
@@ -381,8 +375,14 @@ void PhysicsScene::Chunks::getOverlapChunkRange(const Rect &bounding_box,
     };
     out_tile_range.m_x.m_begin = positive_mod(min_x, m_chunk_extent.w);
     out_tile_range.m_y.m_begin = positive_mod(min_y, m_chunk_extent.h);
-    out_tile_range.m_x.m_end = positive_mod(max_x, m_chunk_extent.w);
-    out_tile_range.m_y.m_end = positive_mod(max_y, m_chunk_extent.h);
+    float d = max_x / static_cast<float>(m_chunk_extent.w);
+    out_tile_range.m_x.m_end =
+        d == int(d) ? m_chunk_extent.w * (max_x / m_chunk_extent.w)
+                    : positive_mod(max_x, m_chunk_extent.w);
+    d = max_y / static_cast<float>(m_chunk_extent.h);
+    out_tile_range.m_y.m_end =
+        d == int(d) ? m_chunk_extent.h * (max_y / m_chunk_extent.h)
+                    : positive_mod(max_y, m_chunk_extent.h);
 }
 
 void PhysicsScene::Chunks::getTileRangeInCurrentChunk(
@@ -484,7 +484,8 @@ PhysicsShape *PhysicsScene::CreateShapeInChunk(
         for (int x = chunk_range.m_x.m_begin; x < chunk_range.m_x.m_end; x++) {
             auto &chunk = chunks.m_chunks.Get(x, y);
             if (chunk.GetSize() == 0) {
-                chunk.ExpandTo(chunks.m_tile_extent.w, chunks.m_tile_extent.h);
+                chunk.ExpandTo(chunks.m_chunk_extent.w,
+                               chunks.m_chunk_extent.h);
             }
             Range2D<int> cur_tile_range;
             chunks.getTileRangeInCurrentChunk(chunk_range, tile_range, x, y,

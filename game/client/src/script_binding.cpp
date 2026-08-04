@@ -422,6 +422,8 @@ static void bindClientContext(lua_State* L) {
                          +[](ClientContext* ctx) -> const ClientConfig* {
                              return &ctx->GetConfig();
                          })
+            .addFunction("WindowCoordToWorld", &ClientContext::WindowCoordToWorld)
+            .addFunction("WorldCoordToWindow", &ClientContext::WorldCoordToWindow)
             .endClass()
             .addFunction("GetContext", +[]() -> ClientContext* {
                 return &ClientContext::GetInst();

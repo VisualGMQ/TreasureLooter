@@ -43,8 +43,11 @@
 					<elem>
 						<materials>
 							<elem>
-								<material_did>ItemDID2</material_did>
-								<count>3</count>
+								<key>ItemDID2</key>
+								<value>
+									<material_did>ItemDID2</material_did>
+									<growth>1</growth>
+								</value>
 							</elem>
 						</materials>
 						<sprite>
@@ -60,12 +63,17 @@
 							</flip>
 							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 						</sprite>
+						<next_phase_growth>3</next_phase_growth>
+						<auto_grow_factor>0</auto_grow_factor>
 					</elem>
 					<elem>
 						<materials>
 							<elem>
-								<material_did>ItemDID2</material_did>
-								<count>3</count>
+								<key>ItemDID2</key>
+								<value>
+									<material_did>ItemDID2</material_did>
+									<growth>1</growth>
+								</value>
 							</elem>
 						</materials>
 						<sprite>
@@ -81,12 +89,17 @@
 							</flip>
 							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 						</sprite>
+						<next_phase_growth>3</next_phase_growth>
+						<auto_grow_factor>0</auto_grow_factor>
 					</elem>
 					<elem>
 						<materials>
 							<elem>
-								<material_did>ItemDID2</material_did>
-								<count>3</count>
+								<key>ItemDID2</key>
+								<value>
+									<material_did>ItemDID2</material_did>
+									<growth>1</growth>
+								</value>
 							</elem>
 						</materials>
 						<sprite>
@@ -102,12 +115,17 @@
 							</flip>
 							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 						</sprite>
+						<next_phase_growth>3</next_phase_growth>
+						<auto_grow_factor>0</auto_grow_factor>
 					</elem>
 					<elem>
 						<materials>
 							<elem>
-								<material_did>ItemDID2</material_did>
-								<count>3</count>
+								<key>ItemDID2</key>
+								<value>
+									<material_did>ItemDID2</material_did>
+									<growth>1</growth>
+								</value>
 							</elem>
 						</materials>
 						<sprite>
@@ -123,6 +141,8 @@
 							</flip>
 							<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
 						</sprite>
+						<next_phase_growth>3</next_phase_growth>
+						<auto_grow_factor>0</auto_grow_factor>
 					</elem>
 				</phases>
 				<fx_on_accept_material>FXDID2</fx_on_accept_material>

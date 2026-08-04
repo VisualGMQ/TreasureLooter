@@ -201,6 +201,59 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::vect
     }
 }
 
+// MatStorage
+template <typename T>
+rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
+                                const MatStorage<T>& payload,
+                                const std::string& name) {
+    if (payload.GetSize() == 0) {
+        return nullptr;
+    }
+
+    auto node = doc.allocate_node(rapidxml::node_type::node_element,
+                                  doc.allocate_string(name.c_str()));
+    auto w_node = Serialize(ctx, doc, payload.GetWidth(), "width");
+    auto h_node = Serialize(ctx, doc, payload.GetHeight(), "height");
+    node->append_node(w_node);
+    node->append_node(h_node);
+
+    for (size_t x = 0; x < payload.GetWidth(); x++) {
+        for (size_t y = 0; y < payload.GetHeight(); y++) {
+            auto elem_node = Serialize(ctx, doc, payload.Get(x, y), "elem");
+            node->append_node(elem_node);
+        }
+    }
+    return node;
+}
+
+template <typename T>
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, MatStorage<T>& payload) {
+    size_t w = 0, h = 0;
+    if (auto w_node = node.first_node("width")) {
+        Deserialize(ctx, *w_node, w);
+    }
+    if (auto h_node = node.first_node("height")) {
+        Deserialize(ctx, *h_node, h);
+    }
+    payload.Resize(w, h);
+
+    auto value_node = node.first_node("elem");
+    size_t x = 0, y = 0;
+    while (value_node && x < w) {
+        if (std::string_view{value_node->name()} != "elem") {
+            continue;
+        }
+
+        Deserialize(ctx, *value_node, payload.Get(x, y));
+        y++;
+        if (y >= h) {
+            y = 0;
+            x++;
+        }
+        value_node = value_node->next_sibling();
+    }
+}
+
 // array
 template <typename T, size_t Size>
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,

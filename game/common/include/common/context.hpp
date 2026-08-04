@@ -28,6 +28,7 @@ class EventDebugger;
 class UDPHost;
 class EntityNameManager;
 class ReplicateComponentManager;
+class TilemapDetourManager;
 
 class CommonContext {
 public:
@@ -67,11 +68,12 @@ public:
     // Create the global (autoload-style) script from a path. No-op if empty.
     void InitGlobalScript(const Path& script_path);
 
-    bool IsRunning() const;
+    [[nodiscard]] bool IsRunning() const;
 
     Entity CreateEntity();
+    void RemoveEntity(Entity);
 
-    const CommonConfig& GetCommonConfig() const;
+    [[nodiscard]] const CommonConfig& GetCommonConfig() const;
 
     [[nodiscard]] bool ShouldExit() const;
     [[nodiscard]] bool IsInited() const;
@@ -102,12 +104,14 @@ public:
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<EntityNameManager> m_entity_name_manager;
     std::unique_ptr<ReplicateComponentManager> m_replicate_component_manager;
+    std::unique_ptr<TilemapDetourManager> m_tilemap_detour_manager;
     std::unique_ptr<UDPHost> m_net_host;
 
 protected:
     class ImGuiContext* m_imgui_context{};
 
     void initCommonConfig();
+    void doRemoveEntities();
 
 private:
     static CommonContext* m_current_context;
@@ -116,8 +120,12 @@ private:
     bool m_should_exit = true;
     bool m_is_inited = false;
     std::underlying_type_t<Entity> m_last_entity = 1;
+    std::vector<Entity> m_pending_delete_entities;
 
     CommonConfig m_common_config;
+
+    void doRemoveEntityWithChildren(Entity);
+    void doRemoveEntityFromParent(Entity);
 };
 
 #define COMMON_CONTEXT ::CommonContext::GetInst()

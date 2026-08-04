@@ -7,9 +7,9 @@
 #include "common/event.hpp"
 #include "common/macros.hpp"
 #include "common/relationship.hpp"
+#include "common/static_collision.hpp"
 #include "common/tilemap_layer_collision_component.hpp"
 #include "common/trigger.hpp"
-#include "common/static_collision.hpp"
 #include "schema/scene_definition.hpp"
 
 Scene::Scene(SceneDefinitionHandle level_content) {
@@ -41,14 +41,9 @@ void Scene::OnEnter() {
 
 void Scene::OnQuit() {
     for (auto entity : m_entities) {
-        RemoveEntity(entity);
+        COMMON_CONTEXT.RemoveEntity(entity);
     }
-    doRemoveEntities();
     m_entities.clear();
-}
-
-void Scene::PoseUpdate() {
-    doRemoveEntities();
 }
 
 bool Scene::IsInited() const {
@@ -69,7 +64,15 @@ Entity Scene::Instantiate(PrefabHandle prefab, const Transform* transform) {
 }
 
 void Scene::RemoveEntity(Entity entity) {
-    m_pending_delete_entities.push_back(entity);
+    COMMON_CONTEXT.RemoveEntity(entity);
+}
+
+void Scene::RemoveEntityFromInnerList(Entity entity) {
+    m_entities.erase(entity);
+}
+
+bool Scene::HasEntity(Entity entity) const {
+    return m_entities.count(entity) > 0;
 }
 
 Entity Scene::GetRootEntity() const {
@@ -83,47 +86,6 @@ void Scene::initByDescription(SceneDefinitionHandle level_content) {
     initEntities(level_content);
 }
 
-void Scene::doRemoveEntities() {
-    std::vector<PrefabHandle> remove_prefabs;
-
-    for (auto entity : m_pending_delete_entities) {
-        doRemoveEntityFromParent(entity);
-        doRemoveEntityWithChildren(entity);
-    }
-
-    m_pending_delete_entities.clear();
-}
-
-void Scene::doRemoveEntityFromParent(Entity entity) {
-    auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
-    TL_RETURN_IF_NULL(relationship);
-
-    Entity parent_entity = relationship->GetParent();
-    TL_RETURN_IF_FALSE(parent_entity != null_entity);
-
-    auto parent_relationship =
-        COMMON_CONTEXT.m_relationship_manager->Get(parent_entity);
-    TL_RETURN_IF_NULL(parent_relationship);
-    parent_relationship->RemoveChild(entity);
-}
-
-void Scene::doRemoveEntityWithChildren(Entity entity) {
-    TL_RETURN_IF_FALSE(entity != null_entity);
-
-    auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
-    if (relationship) {
-        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            doRemoveEntityWithChildren(relationship->Get(i));
-        }
-    }
-
-    COMMON_CONTEXT.RemoveAllComponentsOnEntity(entity);
-
-    COMMON_CONTEXT.m_event_system->EnqueueEvent(RemoveEntityEvent{entity});
-
-    m_entities.erase(entity);
-}
-
 void SceneManager::Switch(SceneHandle level) {
     if (m_level) {
         m_level->OnQuit();
@@ -135,11 +97,10 @@ void SceneManager::Switch(SceneHandle level) {
     }
 }
 
-void SceneManager::PoseUpdate() {
-    if (!m_level) {
-        return;
+void SceneManager::RemoveEntity(Entity entity) {
+    for (auto& [_, scene] : getAll()) {
+        scene->RemoveEntityFromInnerList(entity);
     }
-    m_level->PoseUpdate();
 }
 
 SceneHandle SceneManager::GetCurrentScene() const {

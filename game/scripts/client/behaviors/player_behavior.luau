@@ -1,5 +1,4 @@
-local ClientLogicComponent = require("@client/components/logic")
-local Component = require("@common/components/component")
+local ClientGameObjectBehavior = require("@client/gameobject_behavior")
 local ClientGameObject = require("@client/gameobject")
 local ClientAttackComponent = require("@client/components/attack")
 local ClientWorld = require("@client/world")
@@ -10,7 +9,7 @@ local k_fireball_speed = 150
 
 local _M = {}
 _M.__index = _M
-setmetatable(_M, ClientLogicComponent)
+setmetatable(_M, ClientGameObjectBehavior)
 
 type PlayerLogicData = {
     _skill_cooldown_elapsed: number,
@@ -18,10 +17,10 @@ type PlayerLogicData = {
     _skill3_cooldown_elapsed: number,
 }
 
-export type PlayerLogic = typeof(_M) & PlayerLogicData & ClientLogicComponent.ClientLogicComponent
+export type PlayerLogic = typeof(_M) & PlayerLogicData & ClientGameObjectBehavior.ClientGameObjectBehavior
 
 function _M.new(gameobject):PlayerLogic
-    local self = Component.new(gameobject) :: PlayerLogic
+    local self = ClientGameObjectBehavior.new(gameobject) :: PlayerLogic
     self._skill_cooldown_elapsed = 0
     self._skill2_cooldown_elapsed = 0
     self._skill3_cooldown_elapsed = 0
@@ -197,11 +196,22 @@ function _M.OnUpdate(self:PlayerLogic, elapse_time:TimeType)
                         obj_go.m_spawn_object_component:Spawn(mine_pos)
                     end
                 end
+                if obj_go.m_item_component and obj_go.m_item_component:GetBehavior():Has(TL_Schema.ItemBehavior.Choppable) then
+                    if obj_go.m_constructable_component and obj_go.m_constructable_component:IsAtLastPhase() then
+                        if obj_go.m_spawn_object_component then
+                            local tree_pos = obj_go.m_transform:GetGlobalPosition()
+                            obj_go.m_spawn_object_component:Spawn(tree_pos)
+                            obj_go.m_constructable_component:ResetToPhase(1)
+                        end
+                    end
+                end
             end
         end
     end
 
     ctx:GetCamera():MoveTo(go.m_transform.m_position)
+
+    ClientGameObjectBehavior.OnUpdate(self, elapse_time)
 end
 
 return _M

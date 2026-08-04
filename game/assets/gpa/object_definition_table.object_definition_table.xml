@@ -27,6 +27,46 @@
 				<value>assets/gpa/items/arrow_tower.item.xml</value>
 			</elem>
 			<elem>
+				<key>ItemDID5</key>
+				<value>assets/gpa/items/workbench.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID6</key>
+				<value>assets/gpa/items/stone.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID7</key>
+				<value>assets/gpa/items/rock.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID8</key>
+				<value>assets/gpa/items/choppable_tree.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID9</key>
+				<value>assets/gpa/items/wood.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID10</key>
+				<value>assets/gpa/items/herb1.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID11</key>
+				<value>assets/gpa/items/herb2.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID12</key>
+				<value>assets/gpa/items/herb3.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID13</key>
+				<value>assets/gpa/items/herb4.item.xml</value>
+			</elem>
+			<elem>
+				<key>ItemDID14</key>
+				<value>assets/gpa/items/herb5.item.xml</value>
+			</elem>
+			<elem>
 				<key>FXDID1</key>
 				<value>assets/gpa/anim/fx/hint_arrow.fx.xml</value>
 			</elem>

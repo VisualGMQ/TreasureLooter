@@ -189,6 +189,8 @@ export type ClientContext = CommonContext & {
 	GetConfig: (self: ClientContext) -> ClientConfig,
 	GetDebugPanel: (self: ClientContext) -> DebugPanel,
 	ConnectToServer: (self: ClientContext, address: NetAddress) -> (),
+	WindowCoordToWorld: (self: ClientContext, window_pos: Vec2) -> Vec2,
+	WorldCoordToWindow: (self: ClientContext, world_pos: Vec2) -> Vec2,
 }
 
 export type ActionStateNamespace = {

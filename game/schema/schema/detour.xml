@@ -1,0 +1,7 @@
+﻿<schema>
+    <include>common/math.hpp</include>
+
+    <asset name="TilemapDetourData" extension=".tilemap_detour_data">
+        <mat name="data" type="float"/>
+    </asset>
+</schema>

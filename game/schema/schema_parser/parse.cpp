@@ -318,6 +318,30 @@ std::optional<PropertyInfo> ParseUnorderedMap(SchemaInfo& schema,
     return property;
 }
 
+std::optional<PropertyInfo> ParseMat(SchemaInfo& schema,
+                                     rapidxml::xml_node<>* node) {
+    auto type = node->first_attribute("type");
+    if (!type) {
+        std::cerr << "Error parsing mat, no type" << std::endl;
+        return std::nullopt;
+    }
+
+    auto name = node->first_attribute("name");
+    if (!name) {
+        std::cerr << "Error parsing mat, no name" << std::endl;
+        return std::nullopt;
+    }
+
+    PropertyInfo property;
+    property.m_name = name->value();
+    property.m_type = "MatStorage<" + std::string{type->value()} + ">";
+    property.m_template_type1 = type->value();
+    property.m_is_mat = true;
+
+    schema.m_include_hints = schema.m_include_hints | IncludeHint::MatStorage;
+    return property;
+}
+
 std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
                                     rapidxml::xml_node<>* node, bool is_asset) {
     ClassInfo class_info;
@@ -365,6 +389,8 @@ std::optional<ClassInfo> ParseClass(SchemaInfo& schema,
             property = ParseFlags(schema, element);
         } else if (name == "handle") {
             property = ParseHandle(schema, element);
+        } else if (name == "mat") {
+            property = ParseMat(schema, element);
         } else {
             std::cerr << "Error parsing class, unknown node " << element->name()
                       << std::endl;

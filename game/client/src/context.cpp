@@ -10,6 +10,7 @@
 #include "client/controller.hpp"
 #include "client/debug_drawer.hpp"
 #include "client/debug_panel.hpp"
+#include "client/detour.hpp"
 #include "client/draw.hpp"
 #include "client/draw_order.hpp"
 #include "client/input/finger_touch.hpp"
@@ -19,6 +20,7 @@
 #include "client/renderer.hpp"
 #include "client/scene.hpp"
 #include "client/sprite.hpp"
+#include "client/tilemap_layer_collision_component.hpp"
 #include "client/tilemap_render_component.hpp"
 #include "client/ui.hpp"
 #include "client/window.hpp"
@@ -26,6 +28,7 @@
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
 #include "common/context.hpp"
+#include "common/detour/detour.hpp"
 #include "common/event.hpp"
 #include "common/log.hpp"
 #include "common/profile.hpp"
@@ -47,6 +50,8 @@
 #include "schema/config.hpp"
 #include "schema/serialize/input.hpp"
 #include "schema/serialize/prefab.hpp"
+
+#include <charconv>
 #include <memory>
 
 std::unique_ptr<ClientContext> ClientContext::instance;
@@ -76,6 +81,14 @@ void ClientContext::Initialize(int argc, char** argv) {
     m_assets_manager = std::make_unique<ClientAssetsManager>();
     m_scene_manager = std::make_unique<ClientSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
+    m_tilemap_detour_manager = std::make_unique<ClientTilemapDetourManager>();
+    m_client_tilemap_detour_manager = static_cast<ClientTilemapDetourManager*>(
+        m_tilemap_detour_manager.get());
+    m_tilemap_layer_collision_component_manager =
+        std::make_unique<ClientTilemapLayerCollisionComponentManager>();
+    m_client_tilemap_layer_collision_component_manager =
+        static_cast<ClientTilemapLayerCollisionComponentManager*>(
+            m_tilemap_layer_collision_component_manager.get());
 
     // must call here, due to it rely on assets manager
     CommonContext::initCommonConfig();
@@ -184,8 +197,6 @@ void ClientContext::Update() {
     renderUpdate(elapse_time);
     logicPostUpdate(elapse_time);
 
-    m_scene_manager->PoseUpdate();
-
     m_time->End();
 }
 
@@ -247,6 +258,30 @@ const ClientConfig& ClientContext::GetConfig() const {
     return m_config;
 }
 
+Vec2 ClientContext::WindowCoordToWorld(const Vec2& window_pos) const {
+    auto window_size = m_window->GetWindowSize();
+    Vec2 screen_center = {static_cast<float>(window_size.w) / 2.0f,
+                          static_cast<float>(window_size.h) / 2.0f};
+    auto& scale = m_camera.GetScale();
+    auto& camera_pos = m_camera.GetPosition();
+    Vec2 world_pos;
+    world_pos.x = (window_pos.x - screen_center.x) / scale.x + camera_pos.x;
+    world_pos.y = (window_pos.y - screen_center.y) / scale.y + camera_pos.y;
+    return world_pos;
+}
+
+Vec2 ClientContext::WorldCoordToWindow(const Vec2& world_pos) const {
+    auto window_size = m_window->GetWindowSize();
+    Vec2 screen_center = {static_cast<float>(window_size.w) / 2.0f,
+                          static_cast<float>(window_size.h) / 2.0f};
+    auto& scale = m_camera.GetScale();
+    auto& camera_pos = m_camera.GetPosition();
+    Vec2 window_pos;
+    window_pos.x = (world_pos.x - camera_pos.x) * scale.x + screen_center.x;
+    window_pos.y = (world_pos.y - camera_pos.y) * scale.y + screen_center.y;
+    return window_pos;
+}
+
 void ClientContext::logicUpdate(TimeType elapse) {
     PROFILE_SECTION();
 
@@ -276,6 +311,7 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
+    m_tilemap_detour_manager->Update();
 
     if (m_net_host) {
         m_net_host->Flush();
@@ -290,6 +326,8 @@ void ClientContext::logicPostUpdate(TimeType elapse) {
 
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
+
+    doRemoveEntities();
 }
 
 void ClientContext::renderUpdate(TimeType elapse) {
@@ -304,6 +342,8 @@ void ClientContext::renderUpdate(TimeType elapse) {
     m_script_component_manager->Render();
     m_draw_order_manager->Update();
     m_trigger_component_manager->RenderDebug();
+    m_client_tilemap_detour_manager->RenderDebug();
+    m_client_tilemap_layer_collision_component_manager->RenderDebug();
 
     DrawCommandSubmitter draw_cmd_submitter;
     draw_cmd_submitter.Submit();
@@ -339,15 +379,71 @@ void ClientContext::initClientConfig() {
 }
 
 void ClientContext::registerAllDebugCommands() {
+    m_debug_panel->RegisterCmd("physics.toggle_show_all",
+                               [this](const std::vector<std::string>&) {
+                                   m_physics_scene->ToggleDebugDraw();
+                               });
     m_debug_panel->RegisterCmd(
-        "physics.toggle_show_all",
-        [this](const std::vector<std::string>&) {
-            m_physics_scene->ToggleDebugDraw();
+        "physics.toggle_show_trigger", [this](const std::vector<std::string>&) {
+            m_trigger_component_manager->ToggleDebugDraw();
         });
     m_debug_panel->RegisterCmd(
-        "physics.toggle_show_trigger",
+        "detour.toggle_debug_draw", [this](const std::vector<std::string>&) {
+            m_client_tilemap_detour_manager->ToggleDebugDraw();
+        });
+    m_debug_panel->RegisterCmd(
+        "detour.enable_debug_draw", [this](const std::vector<std::string>&) {
+            m_client_tilemap_detour_manager->EnableDebugDraw(true);
+        });
+    m_debug_panel->RegisterCmd(
+        "detour.disable_debug_draw", [this](const std::vector<std::string>&) {
+            m_client_tilemap_detour_manager->EnableDebugDraw(false);
+        });
+    m_debug_panel->RegisterCmd(
+        "detour.enable_bfs_interact_debug",
         [this](const std::vector<std::string>&) {
-            m_trigger_component_manager->ToggleDebugDraw();
+            m_client_tilemap_detour_manager->EnableBFSInteractDebug();
+        });
+    m_debug_panel->RegisterCmd(
+        "detour.enable_dijkstra_interact_debug",
+        [this](const std::vector<std::string>&) {
+            m_client_tilemap_detour_manager->EnableDijkstraInteractDebug();
+        });
+    m_debug_panel->RegisterCmd(
+        "detour.enable_astar_interact_debug",
+        [this](const std::vector<std::string>&) {
+            m_client_tilemap_detour_manager->EnableAStarInteractDebug();
+        });
+    m_debug_panel->RegisterCmd(
+        "detour.disable_interact_debug",
+        [this](const std::vector<std::string>&) {
+            m_client_tilemap_detour_manager->DisableInteractDebug();
+        });
+    m_debug_panel->RegisterCmd(
+        "physics.enable_tilemap_collision_draw_on_entity",
+        [this](const std::vector<std::string>& args) {
+            TL_RETURN_IF_FALSE(args.size() >= 1);
+            std::underlying_type_t<Entity> numeric_entity;
+            auto result = std::from_chars(args[0].c_str(),
+                                          args[0].c_str() + args[0].length(),
+                                          numeric_entity);
+            TL_RETURN_IF_FALSE(result.ec == std::errc{});
+
+            m_client_tilemap_layer_collision_component_manager
+                ->EnableDebugEntity(static_cast<Entity>(numeric_entity), true);
+        });
+    m_debug_panel->RegisterCmd(
+        "physics.disable_tilemap_collision_draw_on_entity",
+        [this](const std::vector<std::string>& args) {
+            TL_RETURN_IF_FALSE(args.size() >= 1);
+            std::underlying_type_t<Entity> numeric_entity;
+            auto result = std::from_chars(args[0].c_str(),
+                                          args[0].c_str() + args[0].length(),
+                                          numeric_entity);
+            TL_RETURN_IF_FALSE(result.ec == std::errc{});
+
+            m_client_tilemap_layer_collision_component_manager
+                ->EnableDebugEntity(static_cast<Entity>(numeric_entity), false);
         });
 }
 
@@ -363,6 +459,10 @@ void ClientContext::Shutdown() {
     m_net_peer.Reset();
 
     m_tilemap_layer_render_component_manager.reset();
+    m_tilemap_detour_manager.reset();
+    m_client_tilemap_detour_manager = nullptr;
+    m_tilemap_layer_collision_component_manager.reset();
+    m_client_tilemap_layer_collision_component_manager = nullptr;
     m_ui_manager.reset();
     m_draw_order_manager.reset();
     m_debug_drawer.reset();
