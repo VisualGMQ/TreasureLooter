@@ -20,7 +20,7 @@ public:
     void Shutdown() override;
     void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
 
-    const ServerConfig& GetConfig() const;
+    [[nodiscard]] const ServerConfig& GetConfig() const;
 
     void NetListen(const NetAddress&, int peer_count);
 

@@ -267,13 +267,15 @@ struct Color {
 
     float r{}, g{}, b{}, a = 1;
 
-    friend Color operator+(const Color& lhs, const Color& rhs) {
+    friend Color operator+(const Color &lhs, const Color &rhs) {
         return {lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a + rhs.a};
     }
-    friend Color operator-(const Color& lhs, const Color& rhs) {
+
+    friend Color operator-(const Color &lhs, const Color &rhs) {
         return {lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a - rhs.a};
     }
-    friend Color operator*(const Color& c, float s) {
+
+    friend Color operator*(const Color &c, float s) {
         return {c.r * s, c.g * s, c.b * s, c.a * s};
     }
 };
@@ -391,18 +393,31 @@ public:
 
     MatStorage(size_t w, size_t h) { Resize(w, h); }
 
-    bool InRange(int x, int y) const { return x < m_w && y < m_h; }
+    [[nodiscard]] bool InRange(int x, int y) const {
+        return x < m_w && y < m_h;
+    }
+
+    [[nodiscard]] bool InRange(Vec2UI position) const {
+        return position.x < m_w && position.y < m_h;
+    }
+
+    void Resize(size_t w, size_t h, const T &default_value) {
+        m_w = w;
+        m_h = h;
+
+        m_data.resize(w);
+        for (size_t i = 0; i < m_data.size(); i++) {
+            m_data[i].resize(h, default_value);
+        }
+    }
 
     void Resize(size_t w, size_t h) {
         m_w = w;
         m_h = h;
 
-        size_t old_size = m_data.size();
         m_data.resize(w);
-        if (old_size < m_data.size()) {
-            for (size_t i = old_size; i < m_data.size(); i++) {
-                m_data[i].resize(h);
-            }
+        for (size_t i = 0; i < m_data.size(); i++) {
+            m_data[i].resize(h);
         }
     }
 
@@ -423,6 +438,10 @@ public:
     }
 
     const T &Get(size_t x, size_t y) const { return m_data[x][y]; }
+
+    const T &Get(Vec2UI position) const {
+        return m_data[position.x][position.y];
+    }
 
     T &Get(size_t x, size_t y) { return m_data[x][y]; }
 

@@ -19,6 +19,10 @@ function _M.initGameObject(self:ClientGameObjectBehavior, definition:ClientGameO
     self.m_gameobject = ClientGameObject.new(self:GetEntity(), definition)
 end
 
+function _M.GetGameObject(self:ClientGameObjectBehavior)
+    return self.m_gameobject
+end
+
 function _M.setLogicComponent(self:ClientGameObjectBehavior, logic_script: Path)
     local module_name = TL_Common.PathToModuleName(logic_script)
     local logic_module = require(module_name)

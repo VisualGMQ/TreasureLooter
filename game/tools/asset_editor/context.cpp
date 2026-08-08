@@ -2,6 +2,7 @@
 #include "client/animation_player.hpp"
 #include "client/controller.hpp"
 #include "client/debug_panel.hpp"
+#include "client/detour.hpp"
 #include "client/draw_order.hpp"
 #include "client/input/finger_touch.hpp"
 #include "client/input/gamepad.hpp"

@@ -73,14 +73,17 @@ function _M.returnController(self: SpawnObjectComponent, controller_entity: Enti
 	table.insert(self._idle_controllers, controller_entity)
 end
 
-function _M.Spawn(self: SpawnObjectComponent, mine_position: Vec2)
-	if self._count == 0 then
-		return
+function _M.Spawn(self: SpawnObjectComponent, mine_position: Vec2, count: number?)
+	local to_spawn = count or self._count
+	if to_spawn < 0 then
+		to_spawn = 1
 	end
-	if self._count > 0 then
-		self._count -= 1
+	for i = 1, to_spawn do
+		self:_spawnOne(mine_position)
 	end
+end
 
+function _M._spawnOne(self: SpawnObjectComponent, mine_position: Vec2)
 	local ClientCreation = require("@client/creation")
 	local ClientSpawnedComponent = require("@client/components/spawned")
 

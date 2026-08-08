@@ -6,6 +6,7 @@
 #include "common/collision_group.hpp"
 #include "common/context.hpp"
 #include "common/debug_drawer.hpp"
+#include "common/detour/detour.hpp"
 #include "common/entity.hpp"
 #include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
@@ -546,6 +547,10 @@ void bindContext(lua_State* L) {
                 .addFunction("GetNetHost", +[](CommonContext* ctx) -> UDPHost* {
                     return ctx->m_net_host.get();
                 })
+                .addFunction("GetTilemapDetourManager",
+                             +[](CommonContext* ctx) -> TilemapDetourManager* {
+                                 return ctx->m_tilemap_detour_manager.get();
+                             })
                 .addFunction("GetEntityNameManager",
                              +[](CommonContext* ctx) -> EntityNameManager* {
                                  return ctx->m_entity_name_manager.get();
@@ -1026,6 +1031,19 @@ void bindTrigger(lua_State* L) {
         .endNamespace();
 }
 
+void bindTilemapDetourManager(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
+            .beginClass<TilemapDetourManager>("TilemapDetourManager")
+                .addFunction("Load", +[](TilemapDetourManager* m, const Path& path) {
+                    return m->Load(path);
+                })
+                .addFunction("SetCurDetourData", &TilemapDetourManager::SetCurDetourData)
+                .addFunction("GetCurDetourData", &TilemapDetourManager::GetCurDetourData)
+            .endClass()
+        .endNamespace();
+}
+
 void bindRelationship(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Common")
@@ -1312,6 +1330,7 @@ void bindAllTypes(lua_State* L) {
     bindAnimationManager(L);
     bindTilemapManager(L);
     bindTilemap(L);
+    bindTilemapDetourManager(L);
     bindHandleTypes(L);
     bindCollisionGroup(L);
     bindBindPoint(L);

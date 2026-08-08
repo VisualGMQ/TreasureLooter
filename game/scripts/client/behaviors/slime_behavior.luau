@@ -3,7 +3,7 @@ local Component = require("@common/components/component")
 
 local _M = {}
 _M.__index = _M
-setmetatable(_M, ClientLogicComponent)
+setmetatable(_M, ClientGameObjectBehavior)
 
 type SlimeLogicData = {
     m_change_move_dir_timer:Timer,
@@ -11,10 +11,10 @@ type SlimeLogicData = {
     m_move_cooldown:number,
 }
 
-export type SlimeLogic = typeof(_M) & SlimeLogicData & ClientLogicComponent.ClientLogicComponent
+export type SlimeLogic = typeof(_M) & SlimeLogicData & ClientGameObjectBehavior.ClientGameObjectBehavior
 
 function _M.new(gameobject):SlimeLogic
-    local self = Component.new(gameobject) :: SlimeLogic
+    local self = ClientGameObjectBehavior.new(gameobject) :: SlimeLogic
     return setmetatable(self, _M)
 end
 
@@ -80,6 +80,8 @@ function _M.OnUpdate(self:SlimeLogic, elapse_time:TimeType)
         self.m_move_dir = TL_Common.Vec2(x, y):Normalize()
         self.m_change_move_dir_timer:Start()
     end
+
+    ClientGameObjectBehavior.OnUpdate(self, elapse_time)
 end
 
 return _M

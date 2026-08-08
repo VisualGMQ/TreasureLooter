@@ -6,6 +6,7 @@
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
 #include "common/debug_drawer.hpp"
+#include "common/detour/detour.hpp"
 #include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
 #include "common/net/udp.hpp"
@@ -77,7 +78,7 @@ void CommonContext::ShutdownSystem() {
 
 void CommonContext::Initialize(int argc, char** argv) {
     for (int i = 0; i < argc; i++) {
-        m_args.push_back(argv[i]);
+        m_args.emplace_back(argv[i]);
     }
 
     m_should_exit = false;
@@ -103,8 +104,6 @@ void CommonContext::Initialize(int argc, char** argv) {
     m_timer_manager = std::make_unique<TimerManager>();
     m_bind_point_component_manager =
         std::make_unique<BindPointsComponentManager>();
-    m_tilemap_layer_collision_component_manager =
-        std::make_unique<TilemapLayerCollisionComponentManager>();
     m_script_component_manager = std::make_unique<ScriptComponentManager>();
     m_replicate_component_manager =
         std::make_unique<ReplicateComponentManager>();
@@ -130,6 +129,7 @@ void CommonContext::Shutdown() {
     m_bind_point_component_manager.reset();
     m_timer_manager.reset();
     m_cct_manager.reset();
+    m_tilemap_layer_collision_component_manager.reset();
     m_static_collision_manager.reset();
     m_physics_scene.reset();
     m_time.reset();
@@ -137,7 +137,6 @@ void CommonContext::Shutdown() {
     m_event_debugger_system.reset();
     m_event_system.reset();
 
-    m_tilemap_layer_collision_component_manager.reset();
     m_transform_manager.reset();
     m_assets_manager.reset();
 
@@ -222,6 +221,48 @@ bool CommonContext::IsRunning() const {
 
 Entity CommonContext::CreateEntity() {
     return static_cast<Entity>(m_last_entity++);
+}
+
+void CommonContext::RemoveEntity(Entity entity) {
+    m_pending_delete_entities.push_back(entity);
+}
+
+void CommonContext::doRemoveEntities() {
+    for (auto entity : m_pending_delete_entities) {
+        doRemoveEntityFromParent(entity);
+        doRemoveEntityWithChildren(entity);
+        if (m_scene_manager) {
+            m_scene_manager->RemoveEntity(entity);
+        }
+    }
+    m_pending_delete_entities.clear();
+}
+
+void CommonContext::doRemoveEntityFromParent(Entity entity) {
+    auto relationship = m_relationship_manager->Get(entity);
+    TL_RETURN_IF_NULL(relationship);
+
+    Entity parent_entity = relationship->GetParent();
+    TL_RETURN_IF_FALSE(parent_entity != null_entity);
+
+    auto parent_relationship = m_relationship_manager->Get(parent_entity);
+    TL_RETURN_IF_NULL(parent_relationship);
+    parent_relationship->RemoveChild(entity);
+}
+
+void CommonContext::doRemoveEntityWithChildren(Entity entity) {
+    TL_RETURN_IF_FALSE(entity != null_entity);
+
+    auto relationship = m_relationship_manager->Get(entity);
+    if (relationship) {
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            doRemoveEntityWithChildren(relationship->Get(i));
+        }
+    }
+
+    RemoveAllComponentsOnEntity(entity);
+
+    m_event_system->EnqueueEvent(RemoveEntityEvent{entity});
 }
 
 const CommonConfig& CommonContext::GetCommonConfig() const {

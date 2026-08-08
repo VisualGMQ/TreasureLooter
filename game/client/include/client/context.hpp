@@ -2,7 +2,9 @@
 #include "client/camera.hpp"
 #include "common/context.hpp"
 #include "common/net/udp.hpp"
+#include "tilemap_layer_collision_component.hpp"
 
+class ClientTilemapDetourManager;
 class IDebugDrawer;
 class GamepadManager;
 class Touches;
@@ -45,7 +47,10 @@ public:
     void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
     void RemoveAllComponentsOnEntity(Entity) override;
 
-    const ClientConfig& GetConfig() const;
+    [[nodiscard]] const ClientConfig& GetConfig() const;
+
+    [[nodiscard]] Vec2 WindowCoordToWorld(const Vec2& window_pos) const;
+    [[nodiscard]] Vec2 WorldCoordToWindow(const Vec2& world_pos) const;
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<PlayerController> m_player_controller;
@@ -72,6 +77,10 @@ protected:
     ClientContext() = default;
 
     static std::unique_ptr<ClientContext> instance;
+
+    ClientTilemapDetourManager* m_client_tilemap_detour_manager{};
+    ClientTilemapLayerCollisionComponentManager*
+        m_client_tilemap_layer_collision_component_manager{};
 
 private:
     void initImGui();

@@ -4,6 +4,7 @@
 #include "common/cct.hpp"
 #include "common/context.hpp"
 #include "common/debug_drawer.hpp"
+#include "common/detour/detour.hpp"
 #include "common/event.hpp"
 #include "common/log.hpp"
 #include "common/net/udp.hpp"
@@ -17,6 +18,7 @@
 #include "common/static_collision.hpp"
 #include "common/storage.hpp"
 #include "common/tilemap.hpp"
+#include "common/tilemap_layer_collision_component.hpp"
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
 #include "common/uuid.hpp"
@@ -72,6 +74,8 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_assets_manager = std::make_unique<ServerAssetsManager>();
     m_scene_manager = std::make_unique<ServerSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
+    m_tilemap_detour_manager = std::make_unique<TilemapDetourManager>();
+    m_tilemap_layer_collision_component_manager = std::make_unique<TilemapLayerCollisionComponentManager>();
 
     // must call here, due to it rely on assets manager
     CommonContext::initCommonConfig();
@@ -130,6 +134,7 @@ void ServerContext::Update() {
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
     m_trigger_component_manager->Update();
+    m_tilemap_detour_manager->Update();
 
     if (m_net_host) {
         m_net_host->Flush();
@@ -138,7 +143,7 @@ void ServerContext::Update() {
     m_event_system->Update();
     m_timer_manager->Update(elapse_time);
 
-    m_scene_manager->PoseUpdate();
+    doRemoveEntities();
 
     m_time->End();
 }
@@ -147,6 +152,8 @@ void ServerContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
     m_scene_manager->Switch({});
+    m_tilemap_detour_manager.reset();
+    m_tilemap_layer_collision_component_manager.reset();
 
     CommonContext::Shutdown();
 }
