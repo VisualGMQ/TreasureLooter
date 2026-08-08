@@ -1,4 +1,5 @@
-local ClientGameObjectBehavior = require("@client/gameobject_behavior")
+local ClientLogicComponent = require("@client/components/logic")
+local Component = require("@common/components/component")
 local ClientAttackComponent = require("@client/components/attack")
 
 local _M = {}
