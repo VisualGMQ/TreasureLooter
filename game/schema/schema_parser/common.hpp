@@ -19,6 +19,7 @@ enum IncludeHint {
     Handle = 0x10,
     Asset = 0x20,
     Flags = 0x40,
+    MatStorage = 0x80,
 };
 
 struct PropertyInfo {
@@ -33,6 +34,7 @@ struct PropertyInfo {
     bool m_is_handle = false;
     bool m_is_array = false;
     bool m_is_flags = false;
+    bool m_is_mat = false;
     std::string m_default;
     std::optional<uint32_t> m_proto_id;
 };

@@ -3,6 +3,7 @@
 	<payload>
 		<map_definition>
 			<map>assets/tilemap/test.tmx</map>
+			<detour>assets/tilemap/test.tilemap_detour_data.xml</detour>
 			<layers>
 				<elem>
 					<name>land</name>
@@ -65,10 +66,40 @@
 				</team_id>
 			</elem>
 			<elem>
+				<did>ItemDID5</did>
+				<client_script>scripts/client/behaviors/workbench.luau</client_script>
+				<server_script/>
+				<spawn_point_name>workbench_spawn_point</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
 				<did>ItemDID2</did>
 				<client_script/>
 				<server_script/>
 				<spawn_point_name>mineral_fragment_spawn_point</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID8</did>
+				<client_script>scripts/client/behaviors/choppable_tree.luau</client_script>
+				<server_script/>
+				<spawn_point_name>choppable_tree_spawn_point</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID6</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>stone_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
 				<team_id>
 					<value>invalid</value>
@@ -89,6 +120,56 @@
 				<client_script/>
 				<server_script/>
 				<spawn_point_name>mineral_fragment_spawn_point</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID10</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>herb_spawn_point1</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID11</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>herb_spawn_point2</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID12</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>herb_spawn_point3</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID13</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>herb_spawn_point4</spawn_point_name>
+				<spawn_on_layer>arch</spawn_on_layer>
+				<team_id>
+					<value>invalid</value>
+				</team_id>
+			</elem>
+			<elem>
+				<did>ItemDID14</did>
+				<client_script/>
+				<server_script/>
+				<spawn_point_name>herb_spawn_point5</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
 				<team_id>
 					<value>invalid</value>

@@ -81,6 +81,30 @@ void InstanceDisplay(const char* name, const long long& value) {
     ImGui::PopID();
 }
 
+void InstanceDisplay(const char* name, long& value) {
+    ImGui::PushID(&value);
+    if constexpr (sizeof(long) == sizeof(int)) {
+        ImGui::DragScalar(name, ImGuiDataType_S32, &value);
+    } else {
+        ImGui::DragScalar(name, ImGuiDataType_S64, &value);
+    }
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, const long& value) {
+    ImGui::PushID(&value);
+
+    ImGui::BeginDisabled(true);
+    if constexpr (sizeof(long) == sizeof(int)) {
+        ImGui::DragScalar(name, ImGuiDataType_S32, (void*)&value);
+    } else {
+        ImGui::DragScalar(name, ImGuiDataType_S64, (void*)&value);
+    }
+    ImGui::EndDisabled();
+
+    ImGui::PopID();
+}
+
 void InstanceDisplay(const char* name, unsigned int& value) {
     ImGui::PushID(&value);
     ImGui::DragScalar(name, ImGuiDataType_U32, &value);
@@ -140,6 +164,30 @@ void InstanceDisplay(const char* name, unsigned const long long& value) {
 
     ImGui::BeginDisabled(true);
     ImGui::DragScalar(name, ImGuiDataType_U64, (void*)&value);
+    ImGui::EndDisabled();
+
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, unsigned long& value) {
+    ImGui::PushID(&value);
+    if constexpr (sizeof(unsigned long) == sizeof(unsigned int)) {
+        ImGui::DragScalar(name, ImGuiDataType_U32, &value);
+    } else {
+        ImGui::DragScalar(name, ImGuiDataType_U64, &value);
+    }
+    ImGui::PopID();
+}
+
+void InstanceDisplay(const char* name, unsigned const long& value) {
+    ImGui::PushID(&value);
+
+    ImGui::BeginDisabled(true);
+    if constexpr (sizeof(unsigned long) == sizeof(unsigned int)) {
+        ImGui::DragScalar(name, ImGuiDataType_U32, (void*)&value);
+    } else {
+        ImGui::DragScalar(name, ImGuiDataType_U64, (void*)&value);
+    }
     ImGui::EndDisabled();
 
     ImGui::PopID();

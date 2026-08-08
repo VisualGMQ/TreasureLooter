@@ -3,6 +3,7 @@
     <include>common/animation.hpp</include>
     <include>common/collision_group.hpp</include>
     <import>common</import>
+    <import>detour</import>
     <import>physics_schema</import>
     <import>scene_definition</import>
     <import>tilemap_schema</import>
@@ -29,6 +30,16 @@
         <item name="ItemDID2"/>
         <item name="ItemDID3"/>
         <item name="ItemDID4"/>
+        <item name="ItemDID5"/>
+        <item name="ItemDID6"/>
+        <item name="ItemDID7"/>
+        <item name="ItemDID8"/>
+        <item name="ItemDID9"/>
+        <item name="ItemDID10"/>
+        <item name="ItemDID11"/>
+        <item name="ItemDID12"/>
+        <item name="ItemDID13"/>
+        <item name="ItemDID14"/>
 
         <item name="FXDID1" value="0x40000"/>
         <item name="FXDID2"/>
@@ -77,18 +88,26 @@
 
     <class name="ConstructMaterial">
         <element name="material_did" type="DID" />
-        <element name="count" type="uint32_t" default="1" />
+        <element name="growth" type="float" default="1" />
     </class>
 
     <class name="ConstructPhase">
-        <array name="materials" type="ConstructMaterial" />
+        <unordered_map name="materials" key="DID" value="ConstructMaterial"/>
         <element name="sprite" type="SpriteDefinition" />
+        <!--how many growth will step to next phase-->
+        <element name="next_phase_growth" type="float" default="30" />
+        <!--growth per second-->
+        <element name="auto_grow_factor" type="float" default="0"/>
     </class>
 
     <class name="ConstructableComponentDefinition">
         <array name="phases" type="ConstructPhase" />
         <element name="material_accept_range" type="float" default="30" />
         <element name="fx_on_accept_material" type="DID" default="DID::Invalid" />
+    </class>
+
+    <class name="GrowCatalyzer">
+        <element name="shorten_time" type="TimeType" default="1"/>
     </class>
 
     <class name="SkillPhaseCollision">
@@ -182,8 +201,8 @@
         <array name="skills" type="DID"/>
 
         <!--key: skill in skills list, value: action name-->
-        <unorderd_map name="skill_action_binding" key="size_t" value="std::string"/>
-        <unorderd_map name="skill_cooldowns" key="size_t" value="TimeType"/>
+        <unordered_map name="skill_action_binding" key="size_t" value="std::string"/>
+        <unordered_map name="skill_cooldowns" key="size_t" value="TimeType"/>
     </asset>
 
     <class name="PlayerRelatedDefinition">
@@ -197,6 +216,7 @@
 
     <class name="MapDefinition">
         <handle name="map" type="Tilemap" />
+        <handle name="detour" type="TilemapDetourData" />
         <array name="layers" type="MapLayerDefinition" />
     </class>
 
@@ -219,6 +239,14 @@
 
     <asset name="ObjectDefinitionTable" extension=".object_definition_table">
         <unordered_map name="objects" key="DID" value="Path"/>
+    </asset>
+
+    <class name="SyntheticMaterials">
+        <array name="materials" type="DID"/>
+    </class>
+
+    <asset name="SyntheticFormular" extension=".synthetic_formular">
+        <unordered_map name="formular" key="DID" value="SyntheticMaterials"/>
     </asset>
 
     <asset name="BuffAppliersTable" extension=".buff_appliers">

@@ -495,6 +495,12 @@ export type EventSystem = {
 	Remove: (self: EventSystem, id: EventListenerID) -> (),
 }
 
+export type TilemapDetourManager = {
+	Load: (self: TilemapDetourManager, path: Path) -> TilemapDetourDataHandle,
+	SetCurDetourData: (self: TilemapDetourManager, handle: TilemapDetourDataHandle) -> (),
+	GetCurDetourData: (self: TilemapDetourManager) -> TilemapDetourDataHandle,
+}
+
 export type CommonContext = {
 	GetScriptManager: (self: CommonContext) -> ScriptComponentManager,
 	GetAssetsManager: (self: CommonContext) -> AssetsManager,
@@ -512,6 +518,7 @@ export type CommonContext = {
 	GetDebugDraw: (self: CommonContext) -> DebugDraw,
 	GetTilemapCollisionComponentManager: (self: CommonContext) -> TilemapCollisionComponentManager,
 	GetEntityNameManager: (self: CommonContext) -> EntityNameManager,
+	GetTilemapDetourManager: (self: CommonContext) -> TilemapDetourManager,
 	GetNetHost: (self: CommonContext) -> UDPHost?,
 	GetCommonConfig: (self: CommonContext) -> CommonConfig,
 	GetEventSystem: (self: CommonContext) -> EventSystem,

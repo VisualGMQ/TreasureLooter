@@ -10,6 +10,7 @@
     <import>tilemap_schema</import>
     <import>ui_config</import>
     <import>bind_point_schema</import>
+    <import>detour</import>
 
     <class name="ReplicateInfo">
         <element name="raw_entity" type="Entity"/>

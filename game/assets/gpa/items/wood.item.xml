@@ -1,0 +1,45 @@
+<ItemDefinition>
+	<uuid>a1b2c3d4-e5f6-7890-abcd-ef012345678a</uuid>
+	<payload>
+		<behavior>
+			<item>Pickupable</item>
+			<item>Stackable</item>
+		</behavior>
+		<sprite>
+			<image>assets/Backgrounds/Tilesets/TilesetHouse.png</image>
+			<region>
+				<topleft x="496.000000" y="288.000000"/>
+				<size x="16.000000" y="16.000000"/>
+			</region>
+			<size x="16.000000" y="16.000000"/>
+			<anchor x="0.000000" y="0.000000"/>
+			<flip>
+				<item>None</item>
+			</flip>
+			<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+		</sprite>
+		<collision>
+			<uuid>b2c3d4e5-f678-9012-bcde-f0123456789b</uuid>
+			<payload>
+				<is_rect>true</is_rect>
+				<rect>
+					<center x="0.000000" y="0.000000"/>
+					<half_size x="8.000000" y="8.000000"/>
+				</rect>
+				<circle>
+					<center x="0.000000" y="0.000000"/>
+					<radius>0.000000</radius>
+				</circle>
+				<collision_layer>
+					<elem>Pickupable</elem>
+					<elem>Interactable</elem>
+					<elem>Material</elem>
+				</collision_layer>
+				<collision_mask>
+					<elem>Pickupable</elem>
+					<elem>Interactable</elem>
+				</collision_mask>
+			</payload>
+		</collision>
+	</payload>
+</ItemDefinition>

@@ -178,6 +178,14 @@ protected:
         return HandleType{uuid, Find(uuid).Get(), this};
     }
 
+    const std::unordered_map<UUIDv4, std::unique_ptr<T>>& getAll() const {
+        return m_payloads;
+    }
+
+    std::unordered_map<UUIDv4, std::unique_ptr<T>>& getAll() {
+        return m_payloads;
+    }
+
 private:
     std::unordered_map<UUIDv4, std::unique_ptr<T>> m_payloads;
     std::unordered_map<Path, UUIDv4> m_paths_uuid_map;

@@ -9,9 +9,9 @@ public:
 
     void Move(const Vec2& offset) { m_position += offset; }
 
-    const Vec2& GetScale() const { return m_scale; }
+    [[nodiscard]] const Vec2& GetScale() const { return m_scale; }
 
-    const Vec2& GetPosition() const { return m_position; }
+    [[nodiscard]] const Vec2& GetPosition() const { return m_position; }
 
     void transform(Vec2* center, Vec2* size) const;
 

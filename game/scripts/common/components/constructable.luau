@@ -5,8 +5,8 @@ _M.__index = _M
 setmetatable(_M, Component)
 
 type ConstructableComponentData = {
-	_materials: { [DID]: number },
-	_phases: { any },
+	_growth_amount: number,
+	_phases: { [DID]:ConstructPhase },
 	_index: number,
 	_material_accept_range: number,
 	_material_trigger: Trigger,
@@ -16,14 +16,14 @@ type ConstructableComponentData = {
 export type ConstructableComponent = typeof(_M) & ConstructableComponentData & Component.Component
 
 export type ConstructableComponentDefinition = {
-	m_phases: { any },
+	m_phases: { [DID]:ConstructPhase },
 	m_material_accept_range: number,
 	m_fx_on_accept_material: DID,
 }
 
 function _M.new(gameobject, definition: ConstructableComponentDefinition): ConstructableComponent
 	local self = Component.new(gameobject) :: ConstructableComponent
-	self._materials = {}
+	self._growth_amount = 0
 	self._phases = definition.m_phases or {}
 	self._index = 0
 	self._material_accept_range = definition.m_material_accept_range or 50
@@ -32,7 +32,6 @@ function _M.new(gameobject, definition: ConstructableComponentDefinition): Const
 	local ctx = TL_Common.GetContext()
 	local entity = gameobject:GetEntity()
 
-	-- create material detector
 	local shape = ctx:GetAssetsManager():GetPhysicsShapeDefinitionManager():Create()
 	shape.m_is_rect = false
 	shape.m_circle.m_center = TL_Common.Vec2(0, 0)
@@ -73,7 +72,6 @@ function _M.onMaterialEnter(self: ConstructableComponent, event: TriggerEnterEve
 		return
 	end
 
-	-- 检查当前阶段是否需要这个材料
 	if self._index == 0 or self._index >= #self._phases then
 		return
 	end
@@ -83,19 +81,13 @@ function _M.onMaterialEnter(self: ConstructableComponent, event: TriggerEnterEve
 		return
 	end
 
-	local needed = false
-	for _, mat in ipairs(phase.m_materials) do
-		if mat.m_material_did == material_did then
-			needed = true
-			break
-		end
-	end
+	local mat_config = phase.m_materials[material_did]
 
-	if not needed then
+	if not mat_config then
 		return
 	end
 
-	self:AddMaterial(go)
+	self._growth_amount += mat_config.m_growth
 	go:Destroy()
 
 	if self._fx_on_accept_material ~= TL_Schema.DID.Invalid then
@@ -104,13 +96,16 @@ function _M.onMaterialEnter(self: ConstructableComponent, event: TriggerEnterEve
 		pos.y += 10
 		ClientWorld.GetInst():AddFX(self._fx_on_accept_material, pos)
 	end
+
+	self:tryStepToNextPhase()
 end
 
-function _M.AddMaterial(self: ConstructableComponent, material_gameobject: any)
-	local did = material_gameobject:GetDID()
-	self._materials[did] = (self._materials[did] or 0) + 1
+function _M.AddGrowth(self: ConstructableComponent, growth: number)
+	self._growth_amount += growth
+	self:tryStepToNextPhase()
+end
 
-	-- 检查当前阶段是否完成
+function _M.tryStepToNextPhase(self: ConstructableComponent)
 	if self._index == 0 or self._index >= #self._phases then
 		return
 	end
@@ -120,70 +115,14 @@ function _M.AddMaterial(self: ConstructableComponent, material_gameobject: any)
 		return
 	end
 
-	local complete = true
-	for _, m in ipairs(phase.m_materials) do
-		if (self._materials[m.m_material_did] or 0) < m.m_count then
-			complete = false
-			break
-		end
-	end
-
-	if complete then
+	if self._growth_amount >= phase.m_next_phase_growth then
 		self:StepToNextPhase()
 	end
 end
 
-function _M.AcceptMaterial(self: ConstructableComponent, material_gameobject: any): boolean
-	if self._index == 0 or self._index >= #self._phases then
-		return false
-	end
-
-	local phase = self._phases[self._index]
-	if not phase then
-		return false
-	end
-
-	local item_component = material_gameobject.m_item_component
-	if not item_component then
-		return false
-	end
-
-	local material_did = material_gameobject:GetDID()
-	local needed = false
-
-	for _, mat in ipairs(phase.m_materials) do
-		if mat.m_material_did == material_did then
-			needed = true
-			self._materials[material_did] = (self._materials[material_did] or 0) + 1
-
-			material_gameobject:Destroy()
-
-			local complete = true
-			for _, m in ipairs(phase.m_materials) do
-				if (self._materials[m.m_material_did] or 0) < m.m_count then
-					complete = false
-					break
-				end
-			end
-
-			if complete then
-				self:StepToNextPhase()
-			end
-
-			return true
-		end
-	end
-
-	if not needed then
-		return false
-	end
-
-	return false
-end
-
 function _M.StepToNextPhase(self: ConstructableComponent)
 	self._index += 1
-	self._materials = {}
+	self._growth_amount = 0
 
 	if self._index > #self._phases then
 		return
@@ -209,7 +148,32 @@ function _M.GetCurrentPhaseIndex(self: ConstructableComponent): number
 	return self._index
 end
 
-function _M.OnQuit(self: ConstructableComponent)
+function _M.IsAtLastPhase(self: ConstructableComponent): boolean
+	return self._index >= #self._phases
+end
+
+function _M.ResetToPhase(self: ConstructableComponent, target_index: number)
+	if target_index < 1 or target_index > #self._phases then
+		return
+	end
+
+	self._index = target_index
+	self._growth_amount = 0
+
+	local phase = self._phases[self._index]
+	if phase then
+		local client_ctx = TL_Client.GetContext()
+		local entity = self._gameobject:GetEntity()
+		local sprite = client_ctx:GetSpriteManager():Get(entity)
+		if sprite then
+			sprite.m_image = phase.m_sprite.m_image
+			sprite.m_region = phase.m_sprite.m_region
+			sprite.m_size = phase.m_sprite.m_size
+			sprite.m_anchor = phase.m_sprite.m_anchor
+			sprite.m_color = phase.m_sprite.m_color
+			sprite.m_flip = phase.m_sprite.m_flip
+		end
+	end
 end
 
 return _M

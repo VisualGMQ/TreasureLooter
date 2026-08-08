@@ -186,13 +186,14 @@ function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, positi
     local ctx = TL_Client.GetContext()
 
     local fx_definition = object_definitions:GetFX(spawn_info.m_did)
-    local client_script = spawn_info.m_client_script
-    if client_script:empty() then
-        client_script = k_default_script
-    end
 
     local prefab = Creation.ConvertFXDefinitionToPrefab(fx_definition)
-    prefab.m_client_script = client_script
+
+    if spawn_info.m_client_script:empty() then
+        prefab.m_client_script = k_default_script
+    else
+        prefab.m_client_script = spawn_info.m_client_script
+    end
 
     local transform = TL_Common.Transform()
     transform.m_position = position
@@ -302,7 +303,11 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
     local definition = object_definitions:GetCharacter(spawn_info.m_did)
     local prefab = Creation.ConvertCharacterDefinitionToPrefab(definition)
 
-    prefab.m_client_script = k_default_script
+    if spawn_info.m_client_script:empty() then
+        prefab.m_client_script = k_default_script
+    else
+        prefab.m_client_script = spawn_info.m_client_script
+    end
 
     local entity = _M.CreatePrefab(self, scene, prefab, transform)
 
@@ -339,20 +344,14 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
     if script then
         local go_definition = _M.ConvertCharacterDefinitionToGODefinition(entity, spawn_info.m_did, definition, controller_entity)
         script:initGameObject(go_definition)
-
-        if not spawn_info.m_client_script:empty() then
-            script:setLogicComponent(spawn_info.m_client_script)
-        end
     end
 
-    -- 为角色创建技能子实体
     for i, skill_did in ipairs(definition.m_skills) do
         if skill_did ~= TL_Schema.DID.Invalid then
             local skill_spawn_info = TL_Schema.ObjectSpawnDefinition()
             skill_spawn_info.m_did = skill_did
             local skill_entity = _M.CreateSkill(self, scene, skill_spawn_info, TL_Common.Vec2(0, 0), object_definitions)
 
-            -- 技能实体挂到角色下
             local character_relationship = ctx:GetRelationshipManager():Get(entity)
             if character_relationship then
                 local skill_relationship = ctx:GetRelationshipManager():Get(skill_entity)
@@ -362,7 +361,6 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
                 character_relationship:AddChild(skill_entity)
             end
 
-            -- 设置 action 绑定
             local skill_script = ctx:GetScriptManager():Get(skill_entity)
             if skill_script and skill_script.m_gameobject then
                 local skill_go = skill_script.m_gameobject

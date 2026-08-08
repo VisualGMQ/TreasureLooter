@@ -150,6 +150,10 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
     self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
 
+    if level_definition.m_map_definition.m_detour:IsValid() then
+        ctx:GetTilemapDetourManager():SetCurDetourData(level_definition.m_map_definition.m_detour)
+    end
+
     self.m_creation_strategy:CreatePlayerHint(scene, level_definition.m_player_related_definition, self.m_object_definitions)
 
     -- create objects

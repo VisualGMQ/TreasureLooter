@@ -185,12 +185,17 @@ std::string GenerateSchemaCode(const SchemaInfo& schema_info) {
                              "include",
                              include_mustache.render({"filename", "<vector>"})};
     }
-    if (schema_info.m_include_hints & IncludeHint::UnorderedMap) {
-        include_datas << kainjow::mustache::data{
-            "include",
-            include_mustache.render({"filename", "<unordered_map>"})};
-    }
-    if (schema_info.m_include_hints & IncludeHint::Stdint) {
+	if (schema_info.m_include_hints & IncludeHint::UnorderedMap) {
+		include_datas << kainjow::mustache::data{
+			"include",
+			include_mustache.render({"filename", "<unordered_map>"})};
+	}
+	if (schema_info.m_include_hints & IncludeHint::MatStorage) {
+		include_datas << kainjow::mustache::data{
+			"include",
+			include_mustache.render({"filename", "\"common/math.hpp\""})};
+	}
+	if (schema_info.m_include_hints & IncludeHint::Stdint) {
         include_datas << kainjow::mustache::data{
             "include", include_mustache.render({"filename", "<cstdint>"})};
     }
@@ -389,6 +394,7 @@ std::string GenerateClassSerializeImplCode(const ClassInfo& info) {
         property_data.set("is_optional", prop.m_is_optional ? "true" : "false");
         property_data.set("is_handle", prop.m_is_handle ? "true" : "false");
         property_data.set("is_array", prop.m_is_array ? "true" : "false");
+        property_data.set("is_mat", prop.m_is_mat ? "true" : "false");
         properties_data << property_data;
     }
 
