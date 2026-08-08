@@ -10,16 +10,6 @@ TilemapDetourDataHandle TilemapDetourManager::GetCurDetourData() const {
     return m_data;
 }
 
-TilemapDetourDataHandle TilemapDetourManager::Load(const Path& filename,
-                                                   bool force) {
-    if (auto handle = Find(filename); handle && !force) {
-        return handle;
-    }
-    auto result = LoadAsset<TilemapDetourData>(filename);
-    TL_RETURN_DEFAULT_IF_FALSE(result);
-    return this->store(&filename, result.m_uuid, std::move(result.m_payload));
-}
-
 void TilemapDetourManager::Update() {}
 
 bool BFSGridPathFinding::Build(const TilemapDetourData& detour_data,

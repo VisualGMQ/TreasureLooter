@@ -35,11 +35,8 @@ constexpr bool operator!=(DetourCostType value, DetourInfCost cost) {
 
 static constexpr DetourInfCost detour_inf_cost;
 
-class TilemapDetourManager : public AssetManagerBase<TilemapDetourData> {
+class TilemapDetourManager : public GenericAssetManager<TilemapDetourData> {
 public:
-    TilemapDetourDataHandle Load(const Path& filename,
-                                 bool force = false) override;
-
     void SetCurDetourData(TilemapDetourDataHandle);
     [[nodiscard]] TilemapDetourDataHandle GetCurDetourData() const;
 
