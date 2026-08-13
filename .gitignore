@@ -20,3 +20,5 @@ android/app/release
 project_path.xml
 *.tiled-project
 *.tiled-session
+
+AGENTS.md
