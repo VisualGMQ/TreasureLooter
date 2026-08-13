@@ -120,7 +120,7 @@ void HFSMComponent::doChangeState(HFSMNodeID id) {
     m_current = next;
 }
 
-HFSMComponent* HFSMComponentManager::Create(
+LuauHFSMComponent* HFSMComponentManager::Create(
     Entity entity, ScriptHFSMDefinitionHandle definition) {
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(definition.Get(), nullptr, LOGE,
                                      "[HFSM]: definition is null");
@@ -134,8 +134,9 @@ HFSMComponent* HFSMComponentManager::Create(
     lua_State* L = script_manager.GetUnderlyingVM();
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(L, nullptr, LOGE, "[HFSM]: VM is null");
 
-    RegisterEntity(entity, std::make_unique<LuauHFSMBlackBoard>(L));
-    HFSMComponent* component = Get(entity);
+    RegisterEntityByDerive<LuauHFSMComponent>(
+        entity, std::make_unique<LuauHFSMBlackBoard>(L));
+    LuauHFSMComponent* component = Get(entity);
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(component, nullptr, LOGE,
                                      "[HFSM]: register entity {} failed",
                                      entity);

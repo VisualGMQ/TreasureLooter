@@ -61,6 +61,8 @@ class LuauHFSMBlackBoard : public IHFSMBlackBoard {
 public:
     LuauHFSMBlackBoard(lua_State* L);
 
+    const luabridge::LuaRef& GetTable() const { return m_table; }
+
 private:
     luabridge::LuaRef m_table;
 };
@@ -102,10 +104,29 @@ private:
     std::vector<HFSMNodeID> m_pending_remove_nodes;
 };
 
+class LuauHFSMComponent : public HFSMComponent {
+public:
+    explicit LuauHFSMComponent(
+        std::unique_ptr<LuauHFSMBlackBoard>&& blackboard)
+        : HFSMComponent(std::move(blackboard)) {}
+
+    luabridge::LuaRef GetBlackBoard() {
+        return static_cast<LuauHFSMBlackBoard*>(
+                   const_cast<IHFSMBlackBoard*>(
+                       &HFSMComponent::GetBlackBoard()))
+            ->GetTable();
+    }
+};
+
 class HFSMComponentManager : public ComponentManager<HFSMComponent> {
 public:
-    HFSMComponent* Create(Entity entity,
-                          ScriptHFSMDefinitionHandle definition);
+    LuauHFSMComponent* Create(Entity entity,
+                              ScriptHFSMDefinitionHandle definition);
+
+    LuauHFSMComponent* Get(Entity entity) {
+        return static_cast<LuauHFSMComponent*>(
+            ComponentManager<HFSMComponent>::Get(entity));
+    }
 
     void Update();
 };

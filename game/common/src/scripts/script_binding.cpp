@@ -11,6 +11,7 @@
 #include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
 #include "common/handle.hpp"
+#include "common/hfsm.hpp"
 #include "common/image.hpp"
 #include "common/log.hpp"
 #include "common/macros.hpp"
@@ -1307,6 +1308,31 @@ void bindUDP(lua_State* L) {
 
 // clang-format on
 
+void bindHFSM(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
+            .beginClass<HFSMNode>("HFSMNode")
+                .addFunction("GetID", &HFSMNode::GetID)
+                .addFunction("GetParent", &HFSMNode::GetParent)
+            .endClass()
+            .beginClass<LuauHFSMComponent>("HFSMComponent")
+                .addFunction("ChangeState",
+                             +[](LuauHFSMComponent* component,
+                                 HFSMNodeID id) {
+                                 component->ChangeState(id);
+                             })
+                .addFunction("GetBlackBoard",
+                             +[](LuauHFSMComponent* component) {
+                                 return component->GetBlackBoard();
+                             })
+            .endClass()
+            .beginClass<HFSMComponentManager>("HFSMComponentManager")
+                .addFunction("Create", &HFSMComponentManager::Create)
+                .addFunction("Get", &HFSMComponentManager::Get)
+            .endClass()
+        .endNamespace();
+}
+
 void bindAllTypes(lua_State* L) {
     bindEntity(L);
     bindUUID(L);
@@ -1336,6 +1362,7 @@ void bindAllTypes(lua_State* L) {
     bindBindPoint(L);
     bindEvent(L);
     bindUDP(L);
+    bindHFSM(L);
 }
 
 void BindCommonModule(lua_State* L) {
