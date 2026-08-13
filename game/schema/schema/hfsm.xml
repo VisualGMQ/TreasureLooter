@@ -1,0 +1,13 @@
+<schema>
+    <include>common/math.hpp</include>
+
+    <class name="ScriptHFSMNodeDefinition">
+        <element name="name" type="std::string"/>
+        <element name="script" type="Path"/>
+        <array name="children" type="uint32_t"/>
+    </class>
+
+    <asset name="ScriptHFSMDefinition" extension=".hfsm_definition">
+        <array name="nodes" type="ScriptHFSMNodeDefinition"/>
+    </asset>
+</schema>

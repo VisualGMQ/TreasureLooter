@@ -30,6 +30,7 @@
 #include "common/context.hpp"
 #include "common/detour/detour.hpp"
 #include "common/event.hpp"
+#include "common/hfsm.hpp"
 #include "common/log.hpp"
 #include "common/profile.hpp"
 #include "common/relationship.hpp"
@@ -300,9 +301,15 @@ void ClientContext::logicUpdate(TimeType elapse) {
     }
 
     if (m_global_script) {
-        m_global_script->Update();
+        if (!m_global_script->IsInited()) {
+            m_global_script->callMethodWithEntity("OnInit");
+            m_global_script->MarkInited();
+        }
+        m_global_script->callMethodWithTime("OnUpdate",
+                                            m_time->GetElapseTime());
     }
     m_script_component_manager->Update();
+    m_hfsm_manager->Update();
 
     m_animation_player_manager->Update(elapse);
     m_ui_manager->HandleEvent();
@@ -337,7 +344,7 @@ void ClientContext::renderUpdate(TimeType elapse) {
     beginImGui();
 
     if (m_global_script) {
-        m_global_script->Render();
+        m_global_script->callMethodNoArg("OnRender");
     }
     m_script_component_manager->Render();
     m_draw_order_manager->Update();

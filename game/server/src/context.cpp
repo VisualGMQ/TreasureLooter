@@ -6,6 +6,7 @@
 #include "common/debug_drawer.hpp"
 #include "common/detour/detour.hpp"
 #include "common/event.hpp"
+#include "common/hfsm.hpp"
 #include "common/log.hpp"
 #include "common/net/udp.hpp"
 #include "common/profile.hpp"
@@ -126,9 +127,15 @@ void ServerContext::Update() {
     m_time->Update();
 
     if (m_global_script) {
-        m_global_script->Update();
+        if (!m_global_script->IsInited()) {
+            m_global_script->callMethodWithEntity("OnInit");
+            m_global_script->MarkInited();
+        }
+        m_global_script->callMethodWithTime("OnUpdate",
+                                            m_time->GetElapseTime());
     }
     m_script_component_manager->Update();
+    m_hfsm_manager->Update();
 
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
