@@ -12,7 +12,8 @@
 #include <string>
 #include <string_view>
 
-HFSMNode::HFSMNode(HFSMNodeID id) : m_id{id} {}
+HFSMNode::HFSMNode(HFSMNodeID id, std::string name)
+    : m_id{id}, m_name{std::move(name)} {}
 
 void HFSMNode::AttachTo(HFSMNode& parent) {
     m_parent = &parent;
@@ -31,9 +32,13 @@ HFSMNodeID HFSMNode::GetID() const {
     return m_id;
 }
 
-LuauHFSMNode::LuauHFSMNode(HFSMNodeID id, Entity entity,
+const std::string& HFSMNode::GetName() const {
+    return m_name;
+}
+
+LuauHFSMNode::LuauHFSMNode(HFSMNodeID id, std::string name, Entity entity,
                            ScriptBinaryDataHandle handle)
-    : HFSMNode(id), m_script(entity, handle) {}
+    : HFSMNode(id, std::move(name)), m_script(entity, handle) {}
 
 void LuauHFSMNode::OnEnter() {
     m_script.callMethodNoArg("OnInit");
@@ -49,6 +54,23 @@ void LuauHFSMNode::OnExit() {
 
 LuauHFSMBlackBoard::LuauHFSMBlackBoard(lua_State* L)
     : m_table(luabridge::newTable(L)) {}
+
+HFSMComponent::HFSMComponent(std::unique_ptr<IHFSMBlackBoard>&& blackboard) {
+    m_blackboard = std::move(blackboard);
+}
+
+void HFSMComponent::RemoveNode(HFSMNodeID id) {
+    m_pending_remove_nodes.push_back(id);
+}
+
+void HFSMComponent::ChangeState(HFSMNodeID id) {
+    m_pending_change_node = id;
+}
+
+HFSMNode* HFSMComponent::GetNode(HFSMNodeID id) {
+    auto it = m_nodes.find(id);
+    return it != m_nodes.end() ? it->second.get() : nullptr;
+}
 
 void HFSMComponent::Update() {
     if (m_pending_change_node) {
@@ -78,6 +100,10 @@ void HFSMComponent::Update() {
     for (HFSMNode* node : m_update_chain) {
         node->OnUpdate();
     }
+}
+
+IHFSMBlackBoard& HFSMComponent::GetBlackBoard() const {
+    return *m_blackboard;
 }
 
 void HFSMComponent::doChangeState(HFSMNodeID id) {
@@ -139,6 +165,16 @@ void HFSMComponent::rebuildUpdateChain() {
     std::reverse(m_update_chain.begin(), m_update_chain.end());
 }
 
+LuauHFSMComponent::LuauHFSMComponent(
+    std::unique_ptr<LuauHFSMBlackBoard>&& blackboard)
+    : HFSMComponent(std::move(blackboard)) {}
+
+luabridge::LuaRef LuauHFSMComponent::GetBlackBoard() const {
+    return static_cast<LuauHFSMBlackBoard*>(
+               const_cast<IHFSMBlackBoard*>(&HFSMComponent::GetBlackBoard()))
+        ->GetTable();
+}
+
 LuauHFSMComponent* HFSMComponentManager::Create(
     Entity entity, ScriptHFSMDefinitionHandle definition) {
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(definition.Get(), nullptr, LOGE,
@@ -160,6 +196,10 @@ LuauHFSMComponent* HFSMComponentManager::Create(
                                      "[HFSM]: register entity {} failed",
                                      entity);
 
+    if (const Path* filename = definition.GetFilename()) {
+        component->SetAssetName(filename->stem().string());
+    }
+
     for (uint32_t i = 0; i < nodes.size(); i++) {
         auto script_handle = script_manager.Load(nodes[i].m_script);
         if (!script_handle) {
@@ -167,7 +207,8 @@ LuauHFSMComponent* HFSMComponentManager::Create(
                  nodes[i].m_script);
             continue;
         }
-        component->AddNode<LuauHFSMNode>(i, entity, script_handle);
+        component->AddNode<LuauHFSMNode>(i, nodes[i].m_name, entity,
+                                         script_handle);
     }
 
     for (uint32_t i = 0; i < nodes.size(); i++) {
@@ -198,6 +239,11 @@ LuauHFSMComponent* HFSMComponentManager::Create(
     component->ChangeState(root_id);
 
     return component;
+}
+
+LuauHFSMComponent* HFSMComponentManager::Get(Entity entity) {
+    return static_cast<LuauHFSMComponent*>(
+        ComponentManager<HFSMComponent>::Get(entity));
 }
 
 void HFSMComponentManager::Update() {

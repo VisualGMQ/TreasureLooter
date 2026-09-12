@@ -23,8 +23,6 @@
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
 #include "common/uuid.hpp"
-#include "imgui.h"
-#include "imgui_internal.h"
 #include "schema/asset_info.hpp"
 #include "schema/config.hpp"
 #include "schema/proto/proto_binding.hpp"

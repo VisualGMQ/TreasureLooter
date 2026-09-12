@@ -10,8 +10,10 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 using HFSMNodeID = uint32_t;
@@ -20,7 +22,7 @@ class IHFSMBlackBoard;
 
 class HFSMNode {
 public:
-    explicit HFSMNode(HFSMNodeID);
+    HFSMNode(HFSMNodeID id, std::string name);
     virtual ~HFSMNode() = default;
 
     void AttachTo(HFSMNode& parent);
@@ -31,18 +33,24 @@ public:
     virtual void OnUpdate() = 0;
 
     [[nodiscard]] HFSMNodeID GetID() const;
+    [[nodiscard]] const std::string& GetName() const;
 
     [[nodiscard]] HFSMNode* GetParent() const { return m_parent; }
 
+    [[nodiscard]] const std::vector<HFSMNode*>& GetChildren() const {
+        return m_children;
+    }
+
 private:
     HFSMNodeID m_id{};
+    std::string m_name;
     HFSMNode* m_parent{};
     std::vector<HFSMNode*> m_children;
 };
 
 class LuauHFSMNode : public HFSMNode {
 public:
-    LuauHFSMNode(HFSMNodeID id, Entity entity,
+    LuauHFSMNode(HFSMNodeID id, std::string name, Entity entity,
                  ScriptBinaryDataHandle handle);
 
     void OnEnter() override;
@@ -70,9 +78,7 @@ private:
 
 class HFSMComponent {
 public:
-    explicit HFSMComponent(std::unique_ptr<IHFSMBlackBoard>&& blackboard) {
-        m_blackboard = std::move(blackboard);
-    }
+    explicit HFSMComponent(std::unique_ptr<IHFSMBlackBoard>&& blackboard);
 
     template <typename T, typename... Args>
     T* AddNode(HFSMNodeID id, Args&&... args) {
@@ -81,23 +87,35 @@ public:
         return static_cast<T*>(result.first->second.get());
     }
 
-    void RemoveNode(HFSMNodeID id) { m_pending_remove_nodes.push_back(id); }
+    void RemoveNode(HFSMNodeID id);
 
-    void ChangeState(HFSMNodeID id) { m_pending_change_node = id; }
+    void ChangeState(HFSMNodeID id);
 
-    HFSMNode* GetNode(HFSMNodeID id) {
-        auto it = m_nodes.find(id);
-        return it != m_nodes.end() ? it->second.get() : nullptr;
-    }
+    [[nodiscard]] HFSMNode* GetNode(HFSMNodeID id);
 
     void Update();
 
-    IHFSMBlackBoard& GetBlackBoard() const { return *m_blackboard; }
+    [[nodiscard]] IHFSMBlackBoard& GetBlackBoard() const;
+
+    void SetAssetName(std::string name) { m_asset_name = std::move(name); }
+
+    [[nodiscard]] const std::string& GetAssetName() const {
+        return m_asset_name;
+    }
+
+    [[nodiscard]] const std::unordered_map<HFSMNodeID,
+                                           std::unique_ptr<HFSMNode>>&
+    GetNodes() const {
+        return m_nodes;
+    }
+
+    [[nodiscard]] HFSMNode* GetCurrentNode() const { return m_current; }
 
 private:
     void doChangeState(HFSMNodeID id);
     void rebuildUpdateChain();
 
+    std::string m_asset_name;
     std::unique_ptr<IHFSMBlackBoard> m_blackboard;
     std::unordered_map<HFSMNodeID, std::unique_ptr<HFSMNode>> m_nodes;
 
@@ -110,15 +128,9 @@ private:
 class LuauHFSMComponent : public HFSMComponent {
 public:
     explicit LuauHFSMComponent(
-        std::unique_ptr<LuauHFSMBlackBoard>&& blackboard)
-        : HFSMComponent(std::move(blackboard)) {}
+        std::unique_ptr<LuauHFSMBlackBoard>&& blackboard);
 
-    luabridge::LuaRef GetBlackBoard() {
-        return static_cast<LuauHFSMBlackBoard*>(
-                   const_cast<IHFSMBlackBoard*>(
-                       &HFSMComponent::GetBlackBoard()))
-            ->GetTable();
-    }
+    [[nodiscard]] luabridge::LuaRef GetBlackBoard() const;
 };
 
 class HFSMComponentManager : public ComponentManager<HFSMComponent> {
@@ -126,10 +138,7 @@ public:
     LuauHFSMComponent* Create(Entity entity,
                               ScriptHFSMDefinitionHandle definition);
 
-    LuauHFSMComponent* Get(Entity entity) {
-        return static_cast<LuauHFSMComponent*>(
-            ComponentManager<HFSMComponent>::Get(entity));
-    }
+    [[nodiscard]] LuauHFSMComponent* Get(Entity entity) override;
 
     void Update();
 };

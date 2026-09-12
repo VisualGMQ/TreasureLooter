@@ -1,5 +1,6 @@
 ﻿#include "client/debug_panel.hpp"
 #include "client/context.hpp"
+#include "client/hfsm.hpp"
 #include "client/input/input.hpp"
 #include "common/context.hpp"
 #include "common/entity_name_manager.hpp"
@@ -646,4 +647,10 @@ void DebugPanel::Render() {
     }
 
     ImGui::End();
+}
+
+void RegisterHFSMDebugCommands(DebugPanel& panel,
+                               ClientHFSMDebugger& debugger) {
+    panel.RegisterCmd("hfsm.toggle_visible", &debugger,
+                      &ClientHFSMDebugger::ToggleVisible);
 }

@@ -24,14 +24,12 @@
 #include "common/script/script.hpp"
 #include "common/script/script_flags_binding.hpp"
 #include "common/script/script_handle_binding.hpp"
-#include "common/script/script_imgui_binding.hpp"
 #include "common/static_collision.hpp"
 #include "common/tilemap.hpp"
 #include "common/tilemap_layer_collision_component.hpp"
 #include "common/timer.hpp"
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
-#include "imgui.h"
 #include "proto/all_proto.pb.h"
 #include "schema/binding/binding.hpp"
 #include "schema/prefab.hpp"
@@ -1377,5 +1375,4 @@ void BindCommonModule(lua_State* L) {
     BindProtoModule(L);
     BindProtoEvent(L);
     registerLuaScriptEventBindigns(L);
-    bindImGui(L);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "client/camera.hpp"
+#include "client/hfsm.hpp"
 #include "common/context.hpp"
 #include "common/net/udp.hpp"
 #include "tilemap_layer_collision_component.hpp"
@@ -69,6 +70,7 @@ public:
     UDPPeer m_net_peer;
     Camera m_camera;
     std::unique_ptr<DebugPanel> m_debug_panel;
+    std::unique_ptr<ClientHFSMDebugger> m_hfsm_debugger;
 
 protected:
     void beginImGui();

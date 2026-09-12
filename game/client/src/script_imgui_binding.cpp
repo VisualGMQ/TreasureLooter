@@ -1,8 +1,8 @@
-#include "common/script/script_imgui_binding.hpp"
+#include "client/script/script_imgui_binding.hpp"
 #include "common/log.hpp"
 #include "common/macros.hpp"
-#include "imgui.h"
 #include "common/script/luabridge_include.hpp"
+#include "imgui.h"
 
 static constexpr size_t kImGuiInputTextBufSize = 4096;
 

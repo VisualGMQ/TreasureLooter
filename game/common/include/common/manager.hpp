@@ -79,7 +79,7 @@ public:
         return nullptr;
     }
 
-    [[nodiscard]] expose_type Get(Entity entity) {
+    [[nodiscard]] virtual expose_type Get(Entity entity) {
         return const_cast<expose_type>(std::as_const(*this).Get(entity));
     }
 

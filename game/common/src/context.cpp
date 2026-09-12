@@ -1,7 +1,5 @@
 #include "common/context.hpp"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"

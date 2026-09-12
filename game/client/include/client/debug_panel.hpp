@@ -13,6 +13,7 @@
 #include "spdlog/fmt/bundled/format.h"
 
 struct ImGuiInputTextCallbackData;
+class ClientHFSMDebugger;
 
 template <typename... Args>
 using debug_command_type = void(Args...);
@@ -220,3 +221,6 @@ private:
     std::string m_pending_fill_text;
     bool m_visible = false;
 };
+
+void RegisterHFSMDebugCommands(DebugPanel& panel,
+                               ClientHFSMDebugger& debugger);

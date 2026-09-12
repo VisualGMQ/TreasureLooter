@@ -1,0 +1,6 @@
+﻿file(GLOB_RECURSE IMNODEFLOW_FILES src/*.cpp include/*.hpp)
+add_library(ImNodeFlow STATIC)
+target_sources(ImNodeFlow PRIVATE ${IMNODEFLOW_FILES})
+target_include_directories(ImNodeFlow PUBLIC include)
+target_compile_definitions(ImNodeFlow PUBLIC IMGUI_DEFINE_MATH_OPERATORS)
+target_link_libraries(ImNodeFlow PUBLIC imgui)

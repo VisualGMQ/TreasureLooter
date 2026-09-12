@@ -13,6 +13,7 @@
 #include "client/detour.hpp"
 #include "client/draw.hpp"
 #include "client/draw_order.hpp"
+#include "client/hfsm.hpp"
 #include "client/input/finger_touch.hpp"
 #include "client/input/gamepad.hpp"
 #include "client/input/keyboard.hpp"
@@ -133,6 +134,7 @@ void ClientContext::Initialize(int argc, char** argv) {
         std::make_unique<AnimationPlayerManager>();
 
     m_debug_panel = std::make_unique<DebugPanel>();
+    m_hfsm_debugger = std::make_unique<ClientHFSMDebugger>();
     registerAllDebugCommands();
 
 #ifdef TL_DEBUG
@@ -372,6 +374,10 @@ void ClientContext::renderUpdate(TimeType elapse) {
         m_debug_panel->Render();
     }
 
+    if (m_hfsm_debugger) {
+        m_hfsm_debugger->Render();
+    }
+
     endImGui();
     m_renderer->Present();
 }
@@ -425,6 +431,7 @@ void ClientContext::registerAllDebugCommands() {
         "physics.enable_tilemap_collision_draw_on_entity",
         CLIENT_CONTEXT.m_client_tilemap_layer_collision_component_manager,
         &ClientTilemapLayerCollisionComponentManager::EnableDebugEntity);
+    RegisterHFSMDebugCommands(*m_debug_panel, *m_hfsm_debugger);
 }
 
 void ClientContext::Shutdown() {
@@ -447,6 +454,7 @@ void ClientContext::Shutdown() {
     m_draw_order_manager.reset();
     m_debug_drawer.reset();
     m_debug_panel.reset();
+    m_hfsm_debugger.reset();
     m_input_manager.reset();
     m_gamepad_manager.reset();
 

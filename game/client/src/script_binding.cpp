@@ -29,6 +29,7 @@
 #include "client/input/input.hpp"
 #include "client/input/mouse.hpp"
 #include "client/renderer.hpp"
+#include "client/script/script_imgui_binding.hpp"
 #include "client/sprite.hpp"
 #include "client/tilemap_render_component.hpp"
 #include "client/ui.hpp"
@@ -482,4 +483,5 @@ void BindClientModule(lua_State* L) {
     bindClientUIEvents(L);
     bindClientContext(L);
     bindDebugPanel(L);
+    bindImGui(L);
 }
