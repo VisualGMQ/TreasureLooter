@@ -42,7 +42,8 @@ private:
 
 class LuauHFSMNode : public HFSMNode {
 public:
-    LuauHFSMNode(HFSMNodeID id, ScriptBinaryDataHandle handle);
+    LuauHFSMNode(HFSMNodeID id, Entity entity,
+                 ScriptBinaryDataHandle handle);
 
     void OnEnter() override;
     void OnUpdate() override;
@@ -95,11 +96,13 @@ public:
 
 private:
     void doChangeState(HFSMNodeID id);
+    void rebuildUpdateChain();
 
     std::unique_ptr<IHFSMBlackBoard> m_blackboard;
     std::unordered_map<HFSMNodeID, std::unique_ptr<HFSMNode>> m_nodes;
 
     HFSMNode* m_current{};
+    std::vector<HFSMNode*> m_update_chain;
     std::optional<uint32_t> m_pending_change_node;
     std::vector<HFSMNodeID> m_pending_remove_nodes;
 };

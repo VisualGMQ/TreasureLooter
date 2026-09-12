@@ -1,45 +1,14 @@
 local ClientCreation = require("@client/creation")
 local ClientWorld = require("@client/world")
 local World = require("@common/world")
+local DebugCmdRegister = require("@client/debug_cmd_register")
 
 local _M = {}
 
--- Parse [did_num, x, y] string args. Returns the resolved DID and a world-space
--- Vec2 position, or (nil, nil) on any error (after logging).
-local function parse_spawn_args(name: string, did_prefix: string, args: {string}): (DID?, Vec2?)
-    local ctx = TL_Client.GetContext()
-
-    if #args < 3 then
-        ctx:Log("[debug] " .. name .. " usage: " .. name .. " <did> <x> <y>")
-        return nil, nil
-    end
-
-    local num = tonumber(args[1])
-    local x = tonumber(args[2])
-    local y = tonumber(args[3])
-    if not num or not x or not y then
-        ctx:Log("[debug] " .. name .. ": arguments must be numbers")
-        return nil, nil
-    end
-
-    local did = (TL_Schema.DID :: any)[did_prefix .. tostring(math.floor(num))]
-    if not did then
-        ctx:Log("[debug] " .. name .. ": invalid " .. did_prefix .. " number ", num)
-        return nil, nil
-    end
-
-    return did, TL_Common.Vec2(x, y)
-end
-
 -- Spawn an object through a Creation.CreateXXX function, then parent it under
 -- the land layer (fall back to scene root) so it lives in the render hierarchy.
-local function spawn_via_creation(name: string, did_prefix: string, create_fn, args: {string})
+local function spawn_via_creation(name: string, did: DID, x: number, y: number, create_fn)
     local ctx = TL_Client.GetContext()
-
-    local did, position = parse_spawn_args(name, did_prefix, args)
-    if not did or not position then
-        return
-    end
 
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
@@ -62,6 +31,7 @@ local function spawn_via_creation(name: string, did_prefix: string, create_fn, a
 
     -- Treat the given x/y as a world position: convert to the parent's local
     -- space before spawning.
+    local position = TL_Common.Vec2(x, y)
     local local_pos = position
     local parent_transform = ctx:GetTransformManager():Get(parent)
     if parent_transform then
@@ -83,27 +53,21 @@ local function spawn_via_creation(name: string, did_prefix: string, create_fn, a
     ctx:Log("[debug] " .. name .. ": spawned entity ", entity, " at ", position)
 end
 
-local function spawn_fx(args: {string})
-    local did, position = parse_spawn_args("spawn.fx", "FXDID", args)
-    if not did or not position then
-        return
-    end
-
-    local world = ClientWorld.GetInst() :: ClientWorld.ClientWorld
-    world:AddFX(did, position)
-
-    TL_Client.GetContext():Log("[debug] spawn.fx: spawned fx at ", position)
-end
-
 function _M.RegisterAllDebugCommand()
-    local panel = TL_Client.GetContext():GetDebugPanel()
-    panel:RegisterCmd("spawn.item", function(args: {string})
-        spawn_via_creation("spawn.item", "ItemDID", ClientCreation.CreateItem, args)
-    end)
-    panel:RegisterCmd("spawn.skill", function(args: {string})
-        spawn_via_creation("spawn.skill", "SkillDID", ClientCreation.CreateSkill, args)
-    end)
-    panel:RegisterCmd("spawn.fx", spawn_fx)
+    DebugCmdRegister.RegisterDebugCmd("spawn.item", function(did: DID, x: number, y: number)
+        spawn_via_creation("spawn.item", did, x, y, ClientCreation.CreateItem)
+    end, { "DID", "number", "number" })
+
+    DebugCmdRegister.RegisterDebugCmd("spawn.skill", function(did: DID, x: number, y: number)
+        spawn_via_creation("spawn.skill", did, x, y, ClientCreation.CreateSkill)
+    end, { "DID", "number", "number" })
+
+    DebugCmdRegister.RegisterDebugCmd("spawn.fx", function(did: DID, x: number, y: number)
+        local world = ClientWorld.GetInst() :: ClientWorld.ClientWorld
+        world:AddFX(did, TL_Common.Vec2(x, y))
+
+        TL_Client.GetContext():Log("[debug] spawn.fx: spawned fx at ", TL_Common.Vec2(x, y))
+    end, { "DID", "number", "number" })
 end
 
 return _M

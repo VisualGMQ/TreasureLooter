@@ -11,6 +11,7 @@
     <import>ui_config</import>
     <import>bind_point_schema</import>
     <import>detour</import>
+    <import>hfsm</import>
 
     <class name="ReplicateInfo">
         <element name="raw_entity" type="Entity"/>
@@ -32,5 +33,6 @@
         <element type="Path" name="server_script" />
         <handle type="UIWidgetDefinition" name="ui"/>
         <option type="ReplicateInfo" name="net_replicat_info"/>
+        <handle type="ScriptHFSMDefinition" name="hfsm"/>
     </asset>
 </schema>

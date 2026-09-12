@@ -417,99 +417,16 @@ bool AnimationPlayer::IsAutoPlayEnabled() const {
     return m_auto_play;
 }
 
-MultiAnimationPlayer::MultiAnimationPlayer(
-    const MultiAnimationPlayerDefinition& definition) {
-    for (auto& def : definition.m_animations) {
-        AddAnimation(AnimationPlayer{def});
-    }
-}
-
-const AnimationPlayer& MultiAnimationPlayer::GetAnimation(size_t index) const {
-    return m_players[index];
-}
-
-AnimationPlayer& MultiAnimationPlayer::GetAnimation(size_t index) {
-    return const_cast<AnimationPlayer&>(
-        std::as_const(*this).GetAnimation(index));
-}
-
-void MultiAnimationPlayer::AddAnimation(AnimationPlayer&& o) {
-    m_players.emplace_back(std::move(o));
-}
-
-AnimationPlayer& MultiAnimationPlayer::AddAnimation(
-    const AnimationPlayerDefinition& def) {
-    AnimationPlayer& player = m_players.emplace_back(def);
-    return player;
-}
-
-AnimationPlayer& MultiAnimationPlayer::AddAnimation(AnimationHandle handle) {
-    AnimationPlayer& player = m_players.emplace_back();
-    player.ChangeAnimation(handle);
-    return player;
-}
-
-void MultiAnimationPlayer::RemoveAnimation(const AnimationPlayer& player) {
-    m_players.erase(
-        std::remove_if(m_players.begin(), m_players.end(),
-                       [&](AnimationPlayer& o) { return &o == &player; }),
-        m_players.end());
-}
-
-std::vector<AnimationPlayer>& MultiAnimationPlayer::GetAnimations() {
-    return const_cast<std::vector<AnimationPlayer>&>(
-        std::as_const(*this).GetAnimations());
-}
-
-const std::vector<AnimationPlayer>& MultiAnimationPlayer::GetAnimations()
-    const {
-    return m_players;
-}
-
-void MultiAnimationPlayer::Update(TimeType elapse_time) {
-    for (auto& player : m_players) {
-        player.Update(elapse_time);
-    }
-}
-
-void MultiAnimationPlayer::Sync(Entity entity) {
-    for (auto& player : m_players) {
-        player.Sync(entity);
-    }
-}
-
-void MultiAnimationPlayer::PlayAll() {
-    for (auto& player : m_players) {
-        player.Play();
-    }
-}
-
-void MultiAnimationPlayer::PauseAll() {
-    for (auto& player : m_players) {
-        player.Pause();
-    }
-}
-
-void MultiAnimationPlayer::StopAll() {
-    for (auto& player : m_players) {
-        player.Stop();
-    }
-}
-
-void MultiAnimationPlayer::RewindAll() {
-    for (auto& player : m_players) {
-        player.Rewind();
-    }
-}
-
-void MultiAnimationPlayerManager::Update(TimeType delta_time) {
+void AnimationPlayerManager::Update(TimeType delta_time) {
     PROFILE_SECTION();
 
-    for (auto& [entity, anim] : m_components) {
-        if (!anim.m_enable) {
-            continue;
+    for (auto& [entity, components] : m_components) {
+        for (auto& component : components) {
+            if (!component.m_enable) {
+                continue;
+            }
+            component.m_component->Update(delta_time);
+            component.m_component->Sync(entity);
         }
-        anim.m_component->Update(delta_time);
-        anim.m_component->Sync(entity);
     }
 }

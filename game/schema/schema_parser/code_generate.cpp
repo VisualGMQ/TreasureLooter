@@ -240,7 +240,10 @@ std::string GenerateEnumCode(const EnumInfo& enum_info) {
             item_declare += " = " + item.m_value;
         }
 
-        item_datas << kainjow::mustache::data{"item", item_declare};
+        kainjow::mustache::data item_data;
+        item_data.set("item", item_declare);
+        item_data.set("item_name", item.m_name);
+        item_datas << item_data;
     }
 
     kainjow::mustache::data enum_data;
@@ -1621,6 +1624,8 @@ std::string GenerateSchemaTypesLuauDefinitionCode(
                                           : item.m_name;
                     ns += "\t\t" + key + ": number,\n";
                 }
+                ns += "\t\tGetEnumName: (value: number) -> string,\n";
+                ns += "\t\tGetEnumFromName: (name: string) -> number?,\n";
                 ns += "\t},\n";
             }
             const std::string flags = ename + "Flags";

@@ -130,7 +130,7 @@ void ClientContext::Initialize(int argc, char** argv) {
         *m_transform_manager, *m_relationship_manager);
 
     m_animation_player_manager =
-        std::make_unique<MultiAnimationPlayerManager>();
+        std::make_unique<AnimationPlayerManager>();
 
     m_debug_panel = std::make_unique<DebugPanel>();
     registerAllDebugCommands();
@@ -243,6 +243,9 @@ void ClientContext::AttachComponentsOnEntity(Entity entity,
         ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
         m_script_component_manager->RegisterEntity(entity, entity, handle);
     }
+    if (prefab.m_hfsm) {
+        m_hfsm_manager->Create(entity, prefab.m_hfsm);
+    }
 }
 
 void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
@@ -251,6 +254,7 @@ void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
     m_tilemap_layer_render_component_manager->RemoveEntity(entity);
     m_animation_player_manager->RemoveEntity(entity);
     m_draw_order_manager->RemoveEntity(entity);
+    m_hfsm_manager->RemoveEntity(entity);
 
     CommonContext::RemoveAllComponentsOnEntity(entity);
 }
@@ -387,71 +391,40 @@ void ClientContext::initClientConfig() {
 
 void ClientContext::registerAllDebugCommands() {
     m_debug_panel->RegisterCmd("physics.toggle_show_all",
-                               [this](const std::vector<std::string>&) {
-                                   m_physics_scene->ToggleDebugDraw();
-                               });
-    m_debug_panel->RegisterCmd(
-        "physics.toggle_show_trigger", [this](const std::vector<std::string>&) {
-            m_trigger_component_manager->ToggleDebugDraw();
-        });
-    m_debug_panel->RegisterCmd(
-        "detour.toggle_debug_draw", [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->ToggleDebugDraw();
-        });
-    m_debug_panel->RegisterCmd(
-        "detour.enable_debug_draw", [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->EnableDebugDraw(true);
-        });
-    m_debug_panel->RegisterCmd(
-        "detour.disable_debug_draw", [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->EnableDebugDraw(false);
-        });
+                               CLIENT_CONTEXT.m_physics_scene.get(),
+                               &PhysicsScene::ToggleDebugDraw);
+    m_debug_panel->RegisterCmd("physics.toggle_show_trigger",
+                               CLIENT_CONTEXT.m_trigger_component_manager.get(),
+                               &TriggerComponentManager::ToggleDebugDraw);
+    m_debug_panel->RegisterCmd("detour.toggle_debug_draw",
+                               CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+                               &ClientTilemapDetourManager::ToggleDebugDraw);
+    m_debug_panel->RegisterCmd("detour.enable_debug_draw",
+                               CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+                               &ClientTilemapDetourManager::EnableDebugDraw);
+    m_debug_panel->RegisterCmd("detour.disable_debug_draw",
+                               CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+                               &ClientTilemapDetourManager::EnableDebugDraw);
     m_debug_panel->RegisterCmd(
         "detour.enable_bfs_interact_debug",
-        [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->EnableBFSInteractDebug();
-        });
+        CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+        &ClientTilemapDetourManager::EnableBFSInteractDebug);
     m_debug_panel->RegisterCmd(
         "detour.enable_dijkstra_interact_debug",
-        [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->EnableDijkstraInteractDebug();
-        });
+        CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+        &ClientTilemapDetourManager::EnableDijkstraInteractDebug);
     m_debug_panel->RegisterCmd(
         "detour.enable_astar_interact_debug",
-        [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->EnableAStarInteractDebug();
-        });
+        CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+        &ClientTilemapDetourManager::EnableAStarInteractDebug);
     m_debug_panel->RegisterCmd(
         "detour.disable_interact_debug",
-        [this](const std::vector<std::string>&) {
-            m_client_tilemap_detour_manager->DisableInteractDebug();
-        });
+        CLIENT_CONTEXT.m_client_tilemap_detour_manager,
+        &ClientTilemapDetourManager::DisableInteractDebug);
     m_debug_panel->RegisterCmd(
         "physics.enable_tilemap_collision_draw_on_entity",
-        [this](const std::vector<std::string>& args) {
-            TL_RETURN_IF_FALSE(args.size() >= 1);
-            std::underlying_type_t<Entity> numeric_entity;
-            auto result = std::from_chars(args[0].c_str(),
-                                          args[0].c_str() + args[0].length(),
-                                          numeric_entity);
-            TL_RETURN_IF_FALSE(result.ec == std::errc{});
-
-            m_client_tilemap_layer_collision_component_manager
-                ->EnableDebugEntity(static_cast<Entity>(numeric_entity), true);
-        });
-    m_debug_panel->RegisterCmd(
-        "physics.disable_tilemap_collision_draw_on_entity",
-        [this](const std::vector<std::string>& args) {
-            TL_RETURN_IF_FALSE(args.size() >= 1);
-            std::underlying_type_t<Entity> numeric_entity;
-            auto result = std::from_chars(args[0].c_str(),
-                                          args[0].c_str() + args[0].length(),
-                                          numeric_entity);
-            TL_RETURN_IF_FALSE(result.ec == std::errc{});
-
-            m_client_tilemap_layer_collision_component_manager
-                ->EnableDebugEntity(static_cast<Entity>(numeric_entity), false);
-        });
+        CLIENT_CONTEXT.m_client_tilemap_layer_collision_component_manager,
+        &ClientTilemapLayerCollisionComponentManager::EnableDebugEntity);
 }
 
 void ClientContext::Shutdown() {

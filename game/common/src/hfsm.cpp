@@ -31,8 +31,9 @@ HFSMNodeID HFSMNode::GetID() const {
     return m_id;
 }
 
-LuauHFSMNode::LuauHFSMNode(HFSMNodeID id, ScriptBinaryDataHandle handle)
-    : HFSMNode(id), m_script(null_entity, handle) {}
+LuauHFSMNode::LuauHFSMNode(HFSMNodeID id, Entity entity,
+                           ScriptBinaryDataHandle handle)
+    : HFSMNode(id), m_script(entity, handle) {}
 
 void LuauHFSMNode::OnEnter() {
     m_script.callMethodNoArg("OnInit");
@@ -55,18 +56,27 @@ void HFSMComponent::Update() {
         m_pending_change_node.reset();
     }
 
+    bool any_removed = false;
     for (HFSMNodeID id : m_pending_remove_nodes) {
         auto it = m_nodes.find(id);
         TL_CONTINUE_IF_FALSE(it != m_nodes.end());
         auto& node = it->second;
         node->OnExit();
         node->DetachFromParent();
+        if (node.get() == m_current) {
+            m_current = nullptr;
+        }
         m_nodes.erase(it);
+        any_removed = true;
     }
     m_pending_remove_nodes.clear();
 
-    if (m_current) {
-        m_current->OnUpdate();
+    if (any_removed) {
+        m_update_chain.clear();
+    }
+
+    for (HFSMNode* node : m_update_chain) {
+        node->OnUpdate();
     }
 }
 
@@ -118,6 +128,15 @@ void HFSMComponent::doChangeState(HFSMNodeID id) {
     }
 
     m_current = next;
+    rebuildUpdateChain();
+}
+
+void HFSMComponent::rebuildUpdateChain() {
+    m_update_chain.clear();
+    for (HFSMNode* node = m_current; node; node = node->GetParent()) {
+        m_update_chain.push_back(node);
+    }
+    std::reverse(m_update_chain.begin(), m_update_chain.end());
 }
 
 LuauHFSMComponent* HFSMComponentManager::Create(
@@ -148,7 +167,7 @@ LuauHFSMComponent* HFSMComponentManager::Create(
                  nodes[i].m_script);
             continue;
         }
-        component->AddNode<LuauHFSMNode>(i, script_handle);
+        component->AddNode<LuauHFSMNode>(i, entity, script_handle);
     }
 
     for (uint32_t i = 0; i < nodes.size(); i++) {

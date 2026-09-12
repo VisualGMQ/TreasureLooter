@@ -23,7 +23,7 @@ export type ClientCreation = typeof(_M)
 function _M.ConvertCharacterDefinitionToGODefinition(entity:Entity, did:DID, config:CharacterDefinitionHandle, weapon_entity:Entity):ClientGameObject.ClientGameObjectDefinition
     local definition = {}::ClientGameObject.ClientGameObjectDefinition
     local ctx = TL_Client.GetContext()
-    local multi_anim_players = ctx:GetMultiAnimationPlayerManager():Get(entity)
+    local anim_mgr = ctx:GetAnimationPlayerManager()
 
     definition.m_did = did
 
@@ -34,11 +34,11 @@ function _M.ConvertCharacterDefinitionToGODefinition(entity:Entity, did:DID, con
     move_definition.m_move_up_anim = config.m_move.m_move_up_animation
     move_definition.m_move_left_anim = config.m_move.m_move_left_animation
     move_definition.m_move_right_anim = config.m_move.m_move_right_animation
-    move_definition.m_anim = multi_anim_players:GetAnimation(0)
+    move_definition.m_anim = anim_mgr:Get(entity, 0)
     definition.m_move_component_definition = move_definition
 
     local hp_definition = {}::ClientHpComponent.ClientHpComponentDefinition
-    hp_definition.m_anim_player = multi_anim_players:GetAnimation(1)
+    hp_definition.m_anim_player = anim_mgr:Get(entity, 1)
     hp_definition.m_hp = config.m_hp.m_hp
     hp_definition.m_hurt_anim = config.m_hp.m_hurt_animation
     hp_definition.m_dead_anim = config.m_hp.m_dead_animation
@@ -98,9 +98,9 @@ function _M.ConvertSkillDefinitionToGODefinition(entity:Entity, skill_definition
 
     local skill_def = {}::ClientSkillComponent.ClientSkillComponentDefinition
     skill_def.m_skill_definition = skill_definition
-    local multi_anim = ctx:GetMultiAnimationPlayerManager():Get(entity)
-    if multi_anim then
-        skill_def.m_anim_player = multi_anim:GetAnimation(0)
+    local anim_player = ctx:GetAnimationPlayerManager():Get(entity, 0)
+    if anim_player then
+        skill_def.m_anim_player = anim_player
     end
     definition.m_skill_component_definitions = { skill_def }
 
@@ -150,7 +150,7 @@ function _M.ConvertWeaponControllerToGODefinition(controller_entity:Entity, weap
 
     if config.m_attackable then
         local attack_definition = {}::ClientAttackComponent.ClientAttackComponentDefinition
-        attack_definition.m_anim_player = ctx:GetMultiAnimationPlayerManager():Get(weapon_item_entity):GetAnimation(0)
+        attack_definition.m_anim_player = ctx:GetAnimationPlayerManager():Get(weapon_item_entity, 0)
         attack_definition.m_attack_anim = config.m_attackable.m_attack_animation
         attack_definition.m_cooldown = config.m_attackable.m_cooldown
         attack_definition.m_damage = config.m_attackable.m_damage
@@ -173,9 +173,9 @@ function _M.ConvertFXDefinitionToGODefinition(entity:Entity, did:DID, config:FXD
     definition.m_did = did
 
     local fx_definition = {}::ClientFXComponent.FXComponentDefinition
-    local multi_anim_players = ctx:GetMultiAnimationPlayerManager():Get(entity)
-    if multi_anim_players then
-        fx_definition.m_anim_player = multi_anim_players:GetAnimation(0)
+    local anim_player = ctx:GetAnimationPlayerManager():Get(entity, 0)
+    if anim_player then
+        fx_definition.m_anim_player = anim_player
     end
     definition.m_fx_component_definition = fx_definition
 
@@ -294,7 +294,7 @@ function _M.createWeaponController(self, scene:Scene, character_entity:Entity):E
     return controller_entity
 end
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition:ScriptHFSMDefinitionHandle?): Entity
     local ctx = TL_Client.GetContext()
 
     local transform = TL_Common.Transform()
@@ -302,6 +302,10 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
 
     local definition = object_definitions:GetCharacter(spawn_info.m_did)
     local prefab = Creation.ConvertCharacterDefinitionToPrefab(definition)
+
+    if hfsm_definition then
+        prefab.m_hfsm = hfsm_definition
+    end
 
     if spawn_info.m_client_script:empty() then
         prefab.m_client_script = k_default_script

@@ -54,7 +54,7 @@ target_compile_definitions(${COMMON_NAME}
     PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 if (ANDROID)
-    target_compile_definitions(${COMMON_NAME} PUBLIC TL_ANDROID)
+    target_compile_definitions(${COMMON_NAME} PUBLIC TL_PLATFORM_ANDROID)
 endif()
 
 

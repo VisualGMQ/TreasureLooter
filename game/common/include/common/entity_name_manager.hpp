@@ -13,6 +13,7 @@ class EntityNameManager: public ComponentManager<EntityName> {
 public:
     Entity FindChildByName(Entity entity, const std::string& name);
     std::vector<Entity> FindChildrenByName(Entity entity, const std::string& name);
+    Entity Find(const std::string_view name);
 
 private:
     void findChildByName(Entity entity, const std::string& name, Entity& result);

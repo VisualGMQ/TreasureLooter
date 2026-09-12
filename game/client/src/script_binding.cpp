@@ -228,29 +228,46 @@ static void bindAnimationPlayer(lua_State* L) {
                 .addFunction("GetEntity", &AnimationEndEvent::GetEntity)
                 .addFunction("GetAnimation", &AnimationEndEvent::GetAnimation)
             .endClass()
-            .beginClass<MultiAnimationPlayer>("MultiAnimationPlayer")
-                .addFunction("GetAnimation",
-                             +[](MultiAnimationPlayer* p, size_t index) -> AnimationPlayer* {
-                                 return &p->GetAnimation(index);
+            .beginClass<AnimationPlayerManager>("AnimationPlayerManager")
+                .addFunction("AddComponent",
+                             +[](AnimationPlayerManager* m, Entity e, const AnimationPlayerDefinition& def) -> AnimationPlayer* {
+                                 return m->AddComponent(e, def);
                              })
-                .addFunction("GetAnimationCount", &MultiAnimationPlayer::GetAnimationCount)
-                .addFunction("PlayAll", &MultiAnimationPlayer::PlayAll)
-                .addFunction("PauseAll", &MultiAnimationPlayer::PauseAll)
-                .addFunction("StopAll", &MultiAnimationPlayer::StopAll)
-                .addFunction("RewindAll", &MultiAnimationPlayer::RewindAll)
-            .endClass()
-            .beginClass<MultiAnimationPlayerManager>("MultiAnimationPlayerManager")
-                .addFunction("Get", +[](MultiAnimationPlayerManager* m, Entity e) {
-                    return m->Get(e);
+                .addFunction("Get", +[](AnimationPlayerManager* m, Entity e, uint32_t index) -> AnimationPlayer* {
+                    return m->Get(e, index);
                 })
-                .addFunction("Has", +[](MultiAnimationPlayerManager* m, Entity e) {
+                .addFunction("GetComponentSize", +[](AnimationPlayerManager* m, Entity e) -> uint32_t {
+                    return static_cast<uint32_t>(m->GetComponentSize(e));
+                })
+                .addFunction("RemoveComponent", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
+                    m->RemoveComponent(e, p);
+                })
+                .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
                     return m->Has(e);
                 })
-                .addFunction("IsEnable", &MultiAnimationPlayerManager::IsEnable)
-                .addFunction("Enable", &MultiAnimationPlayerManager::Enable)
-                .addFunction("Disable", &MultiAnimationPlayerManager::Disable)
+                .addFunction("IsEnable", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
+                    return m->IsEnable(e, p);
+                })
+                .addFunction("Enable", +[](AnimationPlayerManager* m, Entity e, uint32_t index) {
+                    m->Enable(e, index);
+                })
+                .addFunction("EnablePlayer", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
+                    m->Enable(e, p);
+                })
+                .addFunction("EnableAll", +[](AnimationPlayerManager* m, Entity e) {
+                    m->EnableAll(e);
+                })
+                .addFunction("Disable", +[](AnimationPlayerManager* m, Entity e, uint32_t index) {
+                    m->Disable(e, index);
+                })
+                .addFunction("DisablePlayer", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
+                    m->Disable(e, p);
+                })
+                .addFunction("DisableAll", +[](AnimationPlayerManager* m, Entity e) {
+                    m->DisableAll(e);
+                })
                 .addFunction("RegisterEntity",
-                             +[](MultiAnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
+                             +[](AnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
                                  m->RegisterEntity(e, def);
                              })
             .endClass()
@@ -397,8 +414,8 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> InputManager* {
                                  return ctx->m_input_manager.get();
                              })
-                .addFunction("GetMultiAnimationPlayerManager",
-                             +[](ClientContext* ctx) -> MultiAnimationPlayerManager* {
+                .addFunction("GetAnimationPlayerManager",
+                             +[](ClientContext* ctx) -> AnimationPlayerManager* {
                                  return ctx->m_animation_player_manager.get();
                              })
                 .addFunction("GetUIManager",
@@ -437,8 +454,10 @@ static void bindDebugPanel(lua_State* L) {
             .beginClass<DebugPanel>("DebugPanel")
                 .addFunction("RegisterCmd",
                              +[](DebugPanel* p, const std::string& name,
-                                 luabridge::LuaRef cmd) {
-                                 p->RegisterCmd(name, cmd);
+                                 luabridge::LuaRef cmd,
+                                 const std::vector<luabridge::LuaRef>&
+                                     param_hints) {
+                                 p->RegisterCmd(name, cmd, param_hints);
                              })
                 .addFunction("ExecuteCmd",
                              +[](DebugPanel* p, const std::string& name,

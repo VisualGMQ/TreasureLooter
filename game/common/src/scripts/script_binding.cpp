@@ -503,6 +503,10 @@ void bindContext(lua_State* L) {
                              +[](CommonContext* ctx) -> ScriptComponentManager* {
                                  return ctx->m_script_component_manager.get();
                              })
+                .addFunction("GetHFSMComponentManager",
+                             +[](CommonContext* ctx) -> HFSMComponentManager* {
+                                 return ctx->m_hfsm_manager.get();
+                             })
                 .addFunction("GetTransformManager",
                              +[](CommonContext* ctx) -> TransformManager* {
                                  return ctx->m_transform_manager.get();

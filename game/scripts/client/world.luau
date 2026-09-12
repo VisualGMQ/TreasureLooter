@@ -37,13 +37,13 @@ function _M.reuseFX(self: ClientWorld, ctx, did: DID, local_pos: Vec2, object_de
 
 	local fx_definition = object_definitions:GetFX(did)
 	if fx_definition then
-		local anim_player = ctx:GetMultiAnimationPlayerManager():Get(entry.entity):GetAnimation(0)
+		local anim_player = ctx:GetAnimationPlayerManager():Get(entry.entity, 0)
 		if anim_player then
 			anim_player:ChangeAnimation(fx_definition.m_animation.m_animation)
 		end
 	end
 
-	local anim_player = ctx:GetMultiAnimationPlayerManager():Get(entry.entity):GetAnimation(0)
+	local anim_player = ctx:GetAnimationPlayerManager():Get(entry.entity, 0)
 	if anim_player then
 		entry.anim_end_event_id = ctx:GetEventSystem():AddAnimationEndEvent(
 			function(id, event: AnimationEndEvent)
@@ -75,7 +75,7 @@ function _M.createFX(self: ClientWorld, ctx, did: DID, local_pos: Vec2, object_d
 	local gameobject = ctx:GetScriptManager():Get(entity).m_gameobject :: any
 	local new_entry: FXEntry = { entity = entity, gameobject = gameobject, anim_end_event_id = TL_Common.null_event_listener_id }
 
-	local anim_player = ctx:GetMultiAnimationPlayerManager():Get(entity):GetAnimation(0)
+	local anim_player = ctx:GetAnimationPlayerManager():Get(entity, 0)
 	if anim_player then
 		new_entry.anim_end_event_id = ctx:GetEventSystem():AddAnimationEndEvent(
 			function(id, event: AnimationEndEvent)

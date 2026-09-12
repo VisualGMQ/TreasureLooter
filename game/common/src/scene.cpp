@@ -79,6 +79,10 @@ Entity Scene::GetRootEntity() const {
     return m_root_entity;
 }
 
+const std::unordered_set<Entity>& Scene::GetAllEntities() const {
+    return m_entities;
+}
+
 void Scene::initEntities(SceneDefinitionHandle) {}
 
 void Scene::initByDescription(SceneDefinitionHandle level_content) {

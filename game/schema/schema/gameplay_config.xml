@@ -207,6 +207,7 @@
 
     <class name="PlayerRelatedDefinition">
         <element name="hint_fx_did" type="DID" default="DID::Invalid" />
+        <element name="hfsm" type="Path" />
     </class>
 
     <class name="MapLayerDefinition">

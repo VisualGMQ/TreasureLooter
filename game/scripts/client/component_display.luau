@@ -233,9 +233,9 @@ function _M.DisplayAnimationPlayer(ap: AnimationPlayer)
 	ImGui.PopID()
 end
 
-function _M.DisplayMultiAnimationPlayer(multi: MultiAnimationPlayer)
-	ImGui.PushID("MultiAnimationPlayer")
-	local count = multi:GetAnimationCount()
+function _M.DisplayAnimationPlayerManager(anim_mgr: AnimationPlayerManager, e: Entity)
+	ImGui.PushID("AnimationPlayerManager")
+	local count = anim_mgr:GetComponentSize(e)
 	if count == 0 then
 		ImGui.Text("(empty)")
 		ImGui.PopID()
@@ -243,7 +243,7 @@ function _M.DisplayMultiAnimationPlayer(multi: MultiAnimationPlayer)
 	end
 	for i = 0, count - 1 do
 		ImGui.PushID(tostring(i))
-		_M.DisplayAnimationPlayer(multi:GetAnimation(i) :: AnimationPlayer)
+		_M.DisplayAnimationPlayer(anim_mgr:Get(e, i) :: AnimationPlayer)
 		ImGui.PopID()
 	end
 	ImGui.PopID()
@@ -484,10 +484,10 @@ function _M.DisplayInspector(ctx: ClientContext, e: Entity)
 		_M.DisplayDrawOrder(draw_order_mgr:Get(e) :: DrawOrder)
 	end
 
-	local anim_mgr = ctx:GetMultiAnimationPlayerManager()
+	local anim_mgr = ctx:GetAnimationPlayerManager()
 	if anim_mgr:Has(e) then
-        ImGui.SeparatorText("MultiAnimationPlayer")
-		_M.DisplayMultiAnimationPlayer(anim_mgr:Get(e) :: MultiAnimationPlayer)
+        ImGui.SeparatorText("AnimationPlayer")
+		_M.DisplayAnimationPlayerManager(anim_mgr, e)
 	end
 
 	local script_mgr = ctx:GetScriptManager()
