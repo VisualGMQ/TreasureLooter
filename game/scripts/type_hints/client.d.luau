@@ -93,22 +93,20 @@ export type AnimationPlayer = {
 	IsAutoPlayEnabled: (self: AnimationPlayer) -> boolean,
 }
 
-export type MultiAnimationPlayer = {
-	GetAnimation: (self: MultiAnimationPlayer, index: number) -> AnimationPlayer?,
-	GetAnimationCount: (self: MultiAnimationPlayer) -> number,
-	PlayAll: (self: MultiAnimationPlayer) -> (),
-	PauseAll: (self: MultiAnimationPlayer) -> (),
-	StopAll: (self: MultiAnimationPlayer) -> (),
-	RewindAll: (self: MultiAnimationPlayer) -> (),
-}
-
-export type MultiAnimationPlayerManager = {
-	Get: (self: MultiAnimationPlayerManager, entity: Entity) -> MultiAnimationPlayer?,
-	Has: (self: MultiAnimationPlayerManager, entity: Entity) -> boolean,
-	IsEnable: (self: MultiAnimationPlayerManager, entity: Entity) -> boolean,
-	Enable: (self: MultiAnimationPlayerManager, entity: Entity) -> (),
-	Disable: (self: MultiAnimationPlayerManager, entity: Entity) -> (),
-	RegisterEntity: (self: MultiAnimationPlayerManager, entity: Entity, def: MultiAnimationPlayerDefinition) -> (),
+export type AnimationPlayerManager = {
+	AddComponent: (self: AnimationPlayerManager, entity: Entity, def: AnimationPlayerDefinition) -> AnimationPlayer?,
+	Get: (self: AnimationPlayerManager, entity: Entity, index: number) -> AnimationPlayer?,
+	GetComponentSize: (self: AnimationPlayerManager, entity: Entity) -> number,
+	RemoveComponent: (self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer) -> (),
+	Has: (self: AnimationPlayerManager, entity: Entity) -> boolean,
+	IsEnable: (self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer) -> boolean,
+	Enable: (self: AnimationPlayerManager, entity: Entity, index: number) -> (),
+	EnablePlayer: (self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer) -> (),
+	EnableAll: (self: AnimationPlayerManager, entity: Entity) -> (),
+	Disable: (self: AnimationPlayerManager, entity: Entity, index: number) -> (),
+	DisablePlayer: (self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer) -> (),
+	DisableAll: (self: AnimationPlayerManager, entity: Entity) -> (),
+	RegisterEntity: (self: AnimationPlayerManager, entity: Entity, def: MultiAnimationPlayerDefinition) -> (),
 }
 
 export type TilemapRenderComponent = {
@@ -182,7 +180,7 @@ export type ClientContext = CommonContext & {
 	GetRenderer: (self: ClientContext) -> Renderer,
 	GetWindow: (self: ClientContext) -> Window,
 	GetInputManager: (self: ClientContext) -> InputManager,
-	GetMultiAnimationPlayerManager: (self: ClientContext) -> MultiAnimationPlayerManager,
+	GetAnimationPlayerManager: (self: ClientContext) -> AnimationPlayerManager,
 	GetUIManager: (self: ClientContext) -> UIComponentManager,
 	GetTilemapRenderComponentManager: (self: ClientContext) -> TilemapRenderComponentManager,
 	GetNetPeer: (self: ClientContext) -> UDPPeer,
@@ -201,7 +199,7 @@ export type ActionStateNamespace = {
 }
 
 export type DebugPanel = {
-	RegisterCmd: (self: DebugPanel, name: string, cmd: (args: {string}) -> ()) -> (),
+	RegisterCmd: (self: DebugPanel, name: string, cmd: (args: {string}) -> (), hint_list: {any}) -> (),
 	ExecuteCmd: (self: DebugPanel, name: string, args: {string}) -> (),
 }
 

@@ -23,6 +23,7 @@
 		</map_definition>
 		<player_related_definition>
 			<hint_fx_did>FXDID1</hint_fx_did>
+			<hfsm>assets/gpa/hfsm/player.hfsm_definition.xml</hfsm>
 		</player_related_definition>
 		<spawn_objects>
 			<elem>

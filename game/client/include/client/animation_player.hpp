@@ -180,38 +180,16 @@ private:
     float m_rate = 1.0;
 };
 
-class MultiAnimationPlayer {
-public:
-    MultiAnimationPlayer() = default;
-
-    explicit MultiAnimationPlayer(const MultiAnimationPlayerDefinition& definition);
-
-    [[nodiscard]] const AnimationPlayer& GetAnimation(size_t) const;
-    [[nodiscard]] AnimationPlayer& GetAnimation(size_t);
-    [[nodiscard]] size_t GetAnimationCount() const { return m_players.size(); }
-    void AddAnimation(AnimationPlayer&&);
-    [[nodiscard]] AnimationPlayer& AddAnimation(const AnimationPlayerDefinition&);
-    [[nodiscard]] AnimationPlayer& AddAnimation(AnimationHandle);
-    void RemoveAnimation(const AnimationPlayer&);
-
-    std::vector<AnimationPlayer>& GetAnimations();
-    const std::vector<AnimationPlayer>& GetAnimations() const;
-
-    void Update(TimeType elapse_time);
-    void Sync(Entity);
-
-    void PlayAll();
-    void PauseAll();
-    void StopAll();
-    void RewindAll();
-
-private:
-    std::vector<AnimationPlayer> m_players;
-};
-
-class MultiAnimationPlayerManager : public ComponentManager<MultiAnimationPlayer> {
+class AnimationPlayerManager : public MultiComponentManager<AnimationPlayer> {
 public:
     void Update(TimeType delta_time);
+
+    void RegisterEntity(Entity entity,
+                        const MultiAnimationPlayerDefinition& definition) {
+        for (const auto& def : definition.m_animations) {
+            AddComponent(entity, def);
+        }
+    }
 };
 
 class AnimationEndEvent {

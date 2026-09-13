@@ -5,6 +5,8 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <string_view>
+#include <optional>
 {{#includes}}
 {{{include}}}
 {{/includes}}
@@ -12,6 +14,9 @@
 {{#import_filenames}}
 #include "{{{import_filename}}}"
 {{/import_filenames}}
+
+template <typename T>
+std::optional<T> GetEnumFromName(std::string_view name);
 
 {{#enums}}
 {{{enum}}}

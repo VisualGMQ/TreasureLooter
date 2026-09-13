@@ -18,10 +18,11 @@ end
 
 function _M.Stop(self: ClientSpawnedComponent)
 	local client_ctx = TL_Client.GetContext()
-	local multi_anim = client_ctx:GetMultiAnimationPlayerManager():Get(self._gameobject:GetEntity())
-	if multi_anim then
+	local entity = self._gameobject:GetEntity()
+	local anim_mgr = client_ctx:GetAnimationPlayerManager()
+	if anim_mgr:Has(entity) then
 		for _, idx in ipairs(self._spawn_anim_indices) do
-			local anim = multi_anim:GetAnimation(idx)
+			local anim = anim_mgr:Get(entity, idx)
 			if anim then
 				anim:Stop()
 			end

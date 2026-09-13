@@ -513,7 +513,7 @@ void UIComponentManager::HandleEvent() {
     auto& mouse = CLIENT_CONTEXT.m_mouse;
     const Button& left_button = mouse->Get(MouseButtonType::Left);
 
-#ifndef TL_ANDROID
+#ifndef TL_PLATFORM_ANDROID
     for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
         handleEvent(relationship->Get(i), -1, left_button, mouse->Position(),
                     mouse->Offset());

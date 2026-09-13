@@ -74,7 +74,7 @@ function _M.GetSkill(self:ObjectDefinitionTable, did:DID):SkillDefinitionHandle
     return TL_Schema.SkillDefinitionHandle()
 end
 
-function _M.Get(self:ObjectDefinitionTable, did:DID): CharacterDefinitionHandle|ItemDefinitionHandle|FXDefinitionHandle|nil
+function _M.Get(self:ObjectDefinitionTable, did:DID): CharacterDefinitionHandle|ItemDefinitionHandle|FXDefinitionHandle|SkillDefinitionHandle|nil
     if DID.IsCharacterDID(did) then
         return self:GetCharacter(did)
     elseif DID.IsItemDID(did) then

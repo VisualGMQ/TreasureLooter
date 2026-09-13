@@ -211,7 +211,7 @@ end
 
 -- create entity functions, overridden by client/server Creation
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition): Entity
     assert(false, "shouldn't step into here")
 end
 

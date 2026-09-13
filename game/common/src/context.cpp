@@ -1,7 +1,5 @@
 #include "common/context.hpp"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
@@ -9,6 +7,7 @@
 #include "common/detour/detour.hpp"
 #include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
+#include "common/hfsm.hpp"
 #include "common/net/udp.hpp"
 #include "common/profile.hpp"
 #include "common/relationship.hpp"
@@ -107,12 +106,14 @@ void CommonContext::Initialize(int argc, char** argv) {
     m_script_component_manager = std::make_unique<ScriptComponentManager>();
     m_replicate_component_manager =
         std::make_unique<ReplicateComponentManager>();
+    m_hfsm_manager = std::make_unique<HFSMComponentManager>();
 }
 
 void CommonContext::Shutdown() {
     m_should_exit = true;
     m_is_inited = false;
 
+    m_hfsm_manager.reset();
     m_scene_manager.reset();
 
     m_script_component_manager.reset();

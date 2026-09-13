@@ -139,7 +139,13 @@ void ScriptComponentManager::doUpdate(Entity entity) {
 
     if (auto it = m_components.find(entity);
         it != m_components.end() && it->second.m_enable) {
-        it->second.m_component->Update();
+        auto script = it->second.m_component.get();
+        if (!script->IsInited()) {
+            script->callMethodWithEntity("OnInit");
+            script->MarkInited();
+        }
+        script->callMethodWithTime("OnUpdate",
+                                   COMMON_CONTEXT.m_time->GetElapseTime());
     }
 
     auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
@@ -154,7 +160,7 @@ void ScriptComponentManager::doRender(Entity entity) {
 
     if (auto it = m_components.find(entity);
         it != m_components.end() && it->second.m_enable) {
-        it->second.m_component->Render();
+        it->second.m_component->callMethodNoArg("OnRender");
     }
 
     auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
@@ -227,7 +233,8 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
         static_cast<std::underlying_type_t<Entity>>(m_entity));
 
     if (new_fn.isFunction()) {
-        auto new_result = new_fn(entity_val);
+        auto new_result =
+            m_entity != null_entity ? new_fn(entity_val) : new_fn();
         if (new_result && new_result.size() > 0) {
             luabridge::LuaRef instance = new_result[0];
             if (instance.isTable()) {
@@ -247,22 +254,6 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
         LOGE("[Script]: module {} must has new(Entity) function",
              handle->GetClassName());
     }
-}
-
-void Script::Update() {
-    TL_RETURN_IF_FALSE(m_L && m_table_ref != LUA_NOREF);
-
-    if (!m_inited) {
-        callMethodWithEntity("OnInit");
-        m_inited = true;
-    }
-
-    callMethodWithTime("OnUpdate", COMMON_CONTEXT.m_time->GetElapseTime());
-}
-
-void Script::Render() {
-    TL_RETURN_IF_FALSE(m_L && m_inited && m_table_ref != LUA_NOREF);
-    callMethodNoArg("OnRender");
 }
 
 void Script::callMethodNoArg(const char* method) {

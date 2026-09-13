@@ -150,9 +150,9 @@ function _M._spawnOne(self: SpawnObjectComponent, mine_position: Vec2)
 	end
 
 	local spawn_anim_indices = {}
-	local multi_anim_player = ctx:GetMultiAnimationPlayerManager():Get(entity)
-	if multi_anim_player and #self._spawn_animations > 0 then
-		local total = multi_anim_player:GetAnimationCount()
+	local anim_mgr = ctx:GetAnimationPlayerManager()
+	if anim_mgr:Has(entity) and #self._spawn_animations > 0 then
+		local total = anim_mgr:GetComponentSize(entity)
 		local start_idx = total - #self._spawn_animations
 		for j = 0, #self._spawn_animations - 1 do
 			table.insert(spawn_anim_indices, start_idx + j)
@@ -163,9 +163,9 @@ function _M._spawnOne(self: SpawnObjectComponent, mine_position: Vec2)
 	local spawner = ClientSpawnedComponent.new(mineral_gameobject, self._gameobject, controller_entity, target_x, spawn_anim_indices)
 	mineral_gameobject.m_spawned_component = spawner
 
-	if multi_anim_player then
+	if anim_mgr:Has(entity) then
 		for _, idx in ipairs(spawn_anim_indices) do
-			local anim = multi_anim_player:GetAnimation(idx)
+			local anim = anim_mgr:Get(entity, idx)
 			if anim then
 				anim:Play()
 			end

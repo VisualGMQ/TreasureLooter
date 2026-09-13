@@ -25,10 +25,9 @@ target_include_directories(${COMMON_NAME} PUBLIC include ../schema_generate)
 target_compile_features(${COMMON_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${COMMON_NAME}
     PUBLIC
-    SDL3::SDL3 SDL3_ttf::SDL3_ttf
+    SDL3::SDL3
+    SDL3_ttf::SDL3_ttf
     spdlog::spdlog
-    stb_image
-    imgui
     RapidXML
     stduuid
     tmxlite
@@ -39,9 +38,8 @@ target_link_libraries(${COMMON_NAME}
     Luau.VM
     LuaBridge)
 
-# TODO: compatible with clang++
 if (MSVC)
-    target_compile_options(${COMMON_NAME} PRIVATE /bigobj)
+    target_compile_options(${COMMON_NAME} PUBLIC /bigobj)
 endif()
 
 if (TL_ENABLE_PROFILE)
@@ -54,7 +52,7 @@ target_compile_definitions(${COMMON_NAME}
     PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 if (ANDROID)
-    target_compile_definitions(${COMMON_NAME} PUBLIC TL_ANDROID)
+    target_compile_definitions(${COMMON_NAME} PUBLIC TL_PLATFORM_ANDROID)
 endif()
 
 

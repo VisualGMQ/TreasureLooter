@@ -27,7 +27,7 @@ type GameEntryData = {
 export type GameEntry = typeof(GameEntry) & GameEntryData & ScriptBehavior.ScriptBehavior
 
 function GameEntry.new(entity: Entity, creation_strategy: typeof(Creation)) : GameEntry
-    local self = ScriptBehavior.new(entity) :: GameEntryData
+    local self = ScriptBehavior.new(entity) :: GameEntry
     self.m_creation_strategy = creation_strategy
     return setmetatable(self, GameEntry)
 end
@@ -156,6 +156,12 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
 
     self.m_creation_strategy:CreatePlayerHint(scene, level_definition.m_player_related_definition, self.m_object_definitions)
 
+    local player_hfsm_handle = nil
+    local hfsm_path = level_definition.m_player_related_definition.m_hfsm
+    if not hfsm_path:empty() then
+        player_hfsm_handle = ctx:GetAssetsManager():GetScriptHFSMDefinitionManager():Load(hfsm_path)
+    end
+
     -- create objects
     for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
         local did = spawn_info.m_did
@@ -176,7 +182,11 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
         local definition = self.m_object_definitions:Get(spawn_info.m_did)
 
         if DID.IsCharacterDID(spawn_info.m_did) then
-            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
+            local hfsm_definition = nil
+            if spawn_info.m_team_id == TL_Schema.TeamID.team1 then
+                hfsm_definition = player_hfsm_handle
+            end
+            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, self.m_object_definitions, hfsm_definition)
             relationship:AddChild(entity)
         elseif DID.IsItemDID(did) then
             local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)

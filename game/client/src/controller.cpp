@@ -95,7 +95,7 @@ ControllerAxises PlayerController::MakeAxises(const std::string& x_name,
 
 void PlayerController::RegisterVirtualController(
     SceneHandle level, const ClientConfig& game_config) {
-#ifdef TL_ANDROID
+#ifdef TL_PLATFORM_ANDROID
     if (level) {
         initVirualJoystick(level, game_config);
         initVirualAttackButton(level, game_config);
@@ -135,7 +135,7 @@ void PlayerController::RegisterVirtualController(
 }
 
 void PlayerController::DestroyVirtualController(SceneHandle level) {
-#ifdef TL_ANDROID
+#ifdef TL_PLATFORM_ANDROID
     if (level) {
         m_event_system.RemoveListener<UIDragEvent>(
             m_virtual_joystick.m_drag_event);

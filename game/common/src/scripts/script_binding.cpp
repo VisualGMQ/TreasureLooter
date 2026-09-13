@@ -11,6 +11,7 @@
 #include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
 #include "common/handle.hpp"
+#include "common/hfsm.hpp"
 #include "common/image.hpp"
 #include "common/log.hpp"
 #include "common/macros.hpp"
@@ -23,14 +24,12 @@
 #include "common/script/script.hpp"
 #include "common/script/script_flags_binding.hpp"
 #include "common/script/script_handle_binding.hpp"
-#include "common/script/script_imgui_binding.hpp"
 #include "common/static_collision.hpp"
 #include "common/tilemap.hpp"
 #include "common/tilemap_layer_collision_component.hpp"
 #include "common/timer.hpp"
 #include "common/transform.hpp"
 #include "common/trigger.hpp"
-#include "imgui.h"
 #include "proto/all_proto.pb.h"
 #include "schema/binding/binding.hpp"
 #include "schema/prefab.hpp"
@@ -501,6 +500,10 @@ void bindContext(lua_State* L) {
                 .addFunction("GetScriptManager",
                              +[](CommonContext* ctx) -> ScriptComponentManager* {
                                  return ctx->m_script_component_manager.get();
+                             })
+                .addFunction("GetHFSMComponentManager",
+                             +[](CommonContext* ctx) -> HFSMComponentManager* {
+                                 return ctx->m_hfsm_manager.get();
                              })
                 .addFunction("GetTransformManager",
                              +[](CommonContext* ctx) -> TransformManager* {
@@ -1307,6 +1310,31 @@ void bindUDP(lua_State* L) {
 
 // clang-format on
 
+void bindHFSM(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
+            .beginClass<HFSMNode>("HFSMNode")
+                .addFunction("GetID", &HFSMNode::GetID)
+                .addFunction("GetParent", &HFSMNode::GetParent)
+            .endClass()
+            .beginClass<LuauHFSMComponent>("HFSMComponent")
+                .addFunction("ChangeState",
+                             +[](LuauHFSMComponent* component,
+                                 HFSMNodeID id) {
+                                 component->ChangeState(id);
+                             })
+                .addFunction("GetBlackBoard",
+                             +[](LuauHFSMComponent* component) {
+                                 return component->GetBlackBoard();
+                             })
+            .endClass()
+            .beginClass<HFSMComponentManager>("HFSMComponentManager")
+                .addFunction("Create", &HFSMComponentManager::Create)
+                .addFunction("Get", &HFSMComponentManager::Get)
+            .endClass()
+        .endNamespace();
+}
+
 void bindAllTypes(lua_State* L) {
     bindEntity(L);
     bindUUID(L);
@@ -1336,6 +1364,7 @@ void bindAllTypes(lua_State* L) {
     bindBindPoint(L);
     bindEvent(L);
     bindUDP(L);
+    bindHFSM(L);
 }
 
 void BindCommonModule(lua_State* L) {
@@ -1346,5 +1375,4 @@ void BindCommonModule(lua_State* L) {
     BindProtoModule(L);
     BindProtoEvent(L);
     registerLuaScriptEventBindigns(L);
-    bindImGui(L);
 }

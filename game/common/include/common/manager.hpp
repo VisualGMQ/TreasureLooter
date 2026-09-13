@@ -2,13 +2,15 @@
 #include "common/entity.hpp"
 #include "common/handle.hpp"
 #include "common/log.hpp"
+#include "common/macros.hpp"
+
+#include <algorithm>
 
 template <typename T>
 class ComponentManager {
 public:
-    using component_type =
-        std::conditional_t<is_handle_v<T>, T, std::unique_ptr<T>>;
-    using expose_type = std::conditional_t<is_handle_v<T>, T, T*>;
+    using component_type = std::unique_ptr<T>;
+    using expose_type = T*;
 
     ComponentManager() = default;
     ComponentManager(const ComponentManager&) = delete;
@@ -25,16 +27,9 @@ public:
             return;
         }
 
-        if constexpr (is_handle) {
-            m_components.emplace(
-                entity,
-                Component{component_type{std::forward<Args>(args)...}, true});
-        } else {
-            m_components.emplace(
-                entity,
-                Component{std::make_unique<T>(std::forward<Args>(args)...),
-                          true});
-        }
+        m_components.emplace(
+            entity,
+            Component{std::make_unique<T>(std::forward<Args>(args)...), true});
     }
 
     /**
@@ -47,33 +42,18 @@ public:
             return;
         }
 
-        if constexpr (is_handle) {
-            m_components.emplace(
-                entity,
-                Component{component_type{std::forward<Args>(args)...}, true});
-        } else {
-            m_components.emplace(
-                entity,
-                Component{std::make_unique<U>(std::forward<Args>(args)...),
-                          true});
-        }
+        m_components.emplace(
+            entity,
+            Component{std::make_unique<U>(std::forward<Args>(args)...), true});
     }
 
     void RemoveEntity(Entity entity) { m_components.erase(entity); }
 
-    void ReplaceComponent(Entity entity, T&& component) {
-        this->doReplaceComponent(entity, std::move(component));
-    }
-
-    void ReplaceComponent(Entity entity, const T& component) {
-        this->doReplaceComponent(entity, component);
-    }
-
-    bool Has(Entity entity) const {
+    [[nodiscard]] bool Has(Entity entity) const {
         return m_components.find(entity) != m_components.end();
     }
 
-    bool IsEnable(Entity entity) const {
+    [[nodiscard]] bool IsEnable(Entity entity) const {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             return it->second.m_enable;
         }
@@ -92,34 +72,20 @@ public:
         }
     }
 
-    const expose_type Get(Entity entity) const {
+    [[nodiscard]] expose_type Get(Entity entity) const {
         if (auto it = m_components.find(entity); it != m_components.end()) {
-            if constexpr (is_handle) {
-                return it->second.m_component;
-            } else {
-                return it->second.m_component.get();
-            }
+            return it->second.m_component.get();
         }
         return nullptr;
     }
 
-    expose_type Get(Entity entity) {
-        if constexpr (is_handle) {
-            return std::as_const(*this).Get(entity);
-        } else {
-            return const_cast<expose_type>(std::as_const(*this).Get(entity));
-        }
+    [[nodiscard]] virtual expose_type Get(Entity entity) {
+        return const_cast<expose_type>(std::as_const(*this).Get(entity));
     }
-    
-    void Clear() {
-        while (!m_components.empty()) {
-            RemoveEntity(m_components.begin()->first);
-        }
-    }
+
+    void Clear() { m_components.clear(); }
 
 protected:
-    static constexpr bool is_handle = is_handle_v<T>;
-
     struct Component {
         component_type m_component;
         bool m_enable = true;
@@ -130,21 +96,177 @@ protected:
     template <typename U>
     void doReplaceComponent(Entity entity, U&& component) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
-            if constexpr (is_handle) {
-                it->second.m_component = std::forward<U>(component);
-                it->second.m_enable = true;
-            } else {
-                *it->second.m_component = std::forward<U>(component);
-                it->second.m_enable = true;
-            }
+            *it->second.m_component = std::forward<U>(component);
+            it->second.m_enable = true;
             return;
         }
 
-        if constexpr (is_handle) {
-            m_components.emplace(entity, Component{std::forward<U>(component), true});
-        } else {
-            m_components.emplace(
-                entity, Component{std::make_unique<T>(std::forward<U>(component)), true});
+        m_components.emplace(
+            entity,
+            Component{std::make_unique<T>(std::forward<U>(component)), true});
+    }
+};
+
+template <typename T>
+class MultiComponentManager {
+public:
+    using component_type = std::unique_ptr<T>;
+    using expose_type = T*;
+
+    MultiComponentManager() = default;
+    MultiComponentManager(const MultiComponentManager&) = delete;
+    MultiComponentManager& operator=(const MultiComponentManager&) = delete;
+    virtual ~MultiComponentManager() = default;
+
+    template <typename... Args>
+    expose_type AddComponent(Entity entity, Args&&... args) {
+        auto [it, _] =
+            m_components.try_emplace(entity, std::vector<Component>{});
+        it->second.push_back(
+            Component{std::make_unique<T>(std::forward<Args>(args)...), true});
+        return it->second.back().m_component.get();
+    }
+
+    void RemoveEntity(Entity entity) { m_components.erase(entity); }
+
+    void RemoveComponent(Entity entity, T* component) {
+        TL_RETURN_IF_NULL(component);
+
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return;
+        }
+
+        auto& components = it->second;
+        components.erase(std::remove_if(components.begin(), components.end(),
+                                        [component](const Component& c) {
+                                            return c.m_component.get() ==
+                                                   component;
+                                        }),
+                         components.end());
+
+        if (components.empty()) {
+            m_components.erase(it);
         }
     }
+
+    [[nodiscard]] bool IsEnable(Entity entity, T* component) const {
+        TL_RETURN_FALSE_IF_NULL(component);
+
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return false;
+        }
+
+        for (const auto& c : it->second) {
+            if (c.m_component.get() == component) {
+                return c.m_enable;
+            }
+        }
+        return false;
+    }
+
+    void Enable(Entity entity, uint32_t index) {
+        auto it = m_components.find(entity);
+        if (it == m_components.end() || index >= it->second.size()) {
+            return;
+        }
+        it->second[index].m_enable = true;
+    }
+
+    void Enable(Entity entity, T* component) {
+        TL_RETURN_IF_NULL(component);
+
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return;
+        }
+
+        for (auto& c : it->second) {
+            if (c.m_component.get() == component) {
+                c.m_enable = true;
+                return;
+            }
+        }
+    }
+
+    void EnableAll(Entity entity) {
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return;
+        }
+
+        for (auto& c : it->second) {
+            c.m_enable = true;
+        }
+    }
+
+    void Disable(Entity entity, uint32_t index) {
+        auto it = m_components.find(entity);
+        if (it == m_components.end() || index >= it->second.size()) {
+            return;
+        }
+        it->second[index].m_enable = false;
+    }
+
+    void Disable(Entity entity, T* component) {
+        TL_RETURN_IF_NULL(component);
+
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return;
+        }
+
+        for (auto& c : it->second) {
+            if (c.m_component.get() == component) {
+                c.m_enable = false;
+                return;
+            }
+        }
+    }
+
+    void DisableAll(Entity entity) {
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return;
+        }
+
+        for (auto& c : it->second) {
+            c.m_enable = false;
+        }
+    }
+
+    [[nodiscard]] size_t GetComponentSize(Entity entity) const {
+        auto it = m_components.find(entity);
+        if (it == m_components.end()) {
+            return 0;
+        }
+        return it->second.size();
+    }
+
+    [[nodiscard]] bool Has(Entity entity) const {
+        return m_components.find(entity) != m_components.end();
+    }
+
+    [[nodiscard]] expose_type Get(Entity entity, uint32_t index) const {
+        auto it = m_components.find(entity);
+        if (it == m_components.end() || index >= it->second.size()) {
+            return nullptr;
+        }
+        return it->second[index].m_component.get();
+    }
+
+    [[nodiscard]] expose_type Get(Entity entity, uint32_t index) {
+        return const_cast<expose_type>(std::as_const(*this).Get(entity, index));
+    }
+
+    void Clear() { m_components.clear(); }
+
+protected:
+    struct Component {
+        component_type m_component;
+        bool m_enable = true;
+    };
+
+    std::unordered_map<Entity, std::vector<Component>> m_components;
 };

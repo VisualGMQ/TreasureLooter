@@ -62,8 +62,12 @@ public:
     Script(Entity entity, ScriptBinaryDataHandle handle);
     ~Script();
 
-    void Update();
-    void Render();
+    void callMethodNoArg(const char* method);
+    void callMethodWithTime(const char* method, TimeType delta_time);
+    void callMethodWithEntity(const char* method);
+
+    bool IsInited() const { return m_inited; }
+    void MarkInited() { m_inited = true; }
 
     int GetScriptTableRef() const { return m_table_ref; }
 
@@ -76,10 +80,6 @@ private:
     Path m_filename;
 
     bool m_inited = false;
-
-    void callMethodNoArg(const char* method);
-    void callMethodWithTime(const char* method, TimeType delta_time);
-    void callMethodWithEntity(const char* method);
 
     void checkAndPrintErrorResult(const luabridge::LuaResult&,
                                   std::string_view method);

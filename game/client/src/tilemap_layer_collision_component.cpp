@@ -6,6 +6,7 @@
 void ClientTilemapLayerCollisionComponentManager::RenderDebug() {
     for (Entity entity : m_debug_entities) {
         auto collision = Get(entity);
+        TL_CONTINUE_IF_NULL(collision);
         renderCollision(*collision, *CLIENT_CONTEXT.m_debug_drawer);
     }
 }

@@ -38,6 +38,8 @@ public:
     [[nodiscard]] Entity GetRootEntity() const;
     [[nodiscard]] virtual Entity GetUIRootEntity() const = 0;
 
+    const std::unordered_set<Entity>& GetAllEntities() const;
+
 protected:
     virtual void registerEntity(Entity, const EntityInstance&) = 0;
     virtual void initRootEntity(const Path& script_path) = 0;
