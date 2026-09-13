@@ -52,7 +52,7 @@ function GameEntry.OnInit(self: GameEntry)
     self.m_object_definitions = ObjectDefinitionTable.new(object_definition_table_handle)
     World.GetInst().m_object_definitions = self.m_object_definitions
     World.GetInst().m_buff_appliers = BuffApplierTable.new()
-    self:ChangeLevel(TL_Common.Path("assets/gpa/levels/main.level.xml"))
+    self:ChangeLevel(TL_Common.Path("assets/gpa/levels/net_test.level.xml"))
 end
 
 function GameEntry.ChangeLevel(self: GameEntry, level: Path)
@@ -142,6 +142,35 @@ function GameEntry.createMapLayers(scene: Scene, root_relationship: Relationship
     return map_layer_entities
 end
 
+function GameEntry.setCameraBoundary(self: GameEntry, map_definition: MapDefinition)
+    local ctx = TL_Client.GetContext()
+    local tilemap = map_definition.m_map
+    if not tilemap then
+        return
+    end
+
+    local map_size_in_tiles: Vec2? = nil
+    for i = 0, tilemap:GetLayerCount() - 1 do
+        local layer = tilemap:GetLayer(i)
+        local tiled_layer = layer and layer:AsTiledLayer()
+        if tiled_layer then
+            map_size_in_tiles = tiled_layer:GetSize()
+            break
+        end
+    end
+
+    if not map_size_in_tiles then
+        return
+    end
+
+    local world_size = tilemap:GetTileSize() * map_size_in_tiles
+    local boundary = TL_Schema.Rect()
+    boundary.m_center = world_size * 0.5
+    boundary.m_half_size = world_size * 0.5
+    ctx:Log("set camera boundary, center: ", boundary.m_center, ", half_size: ", boundary.m_half_size)
+    ctx:GetCamera():SetBoundary(boundary)
+end
+
 function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, level_definition: LevelDefinitionHandle)
     local ctx = TL_Client.GetContext()
     local root_entity = scene:GetRootEntity()
@@ -149,6 +178,7 @@ function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, l
 
     self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
+    self:setCameraBoundary(level_definition.m_map_definition)
 
     if level_definition.m_map_definition.m_detour:IsValid() then
         ctx:GetTilemapDetourManager():SetCurDetourData(level_definition.m_map_definition.m_detour)

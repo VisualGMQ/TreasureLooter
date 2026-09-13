@@ -132,6 +132,7 @@ static void bindCamera(lua_State* L) {
                 .addFunction("MoveTo", &Camera::MoveTo)
                 .addFunction("Move", &Camera::Move)
                 .addFunction("ChangeScale", &Camera::ChangeScale)
+                .addFunction("SetBoundary", &Camera::SetBoundary)
             .endClass()
         .endNamespace();
 }

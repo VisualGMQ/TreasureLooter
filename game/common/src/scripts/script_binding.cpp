@@ -231,12 +231,16 @@ void bindTVec2(lua_State* L, const char* className) {
                 .addProperty("y", &TVec2<T>::y, true)
                 .addFunction("__add", &TVec2<T>::operator+)
                 .addFunction("__sub", &TVec2<T>::operator-)
-                .addFunction("__mul",
-                             (TVec2<T>(TVec2<T>::*)(const TVec2<T>&) const)&TVec2<T>::operator*)
-                .addFunction("__mul", (TVec2<T>(TVec2<T>::*)(float) const)&TVec2<T>::operator*)
-                .addFunction("__div",
-                             (TVec2<T>(TVec2<T>::*)(const TVec2<T>&) const)&TVec2<T>::operator/)
-                .addFunction("__div", (TVec2<T>(TVec2<T>::*)(float) const)&TVec2<T>::operator/)
+                .addFunction(
+                    "__mul",
+                    (TVec2<T>(TVec2<T>::*)(const TVec2<T>&) const) &
+                        TVec2<T>::operator*,
+                    (TVec2<T>(TVec2<T>::*)(float) const) & TVec2<T>::operator*)
+                .addFunction(
+                    "__div",
+                    (TVec2<T>(TVec2<T>::*)(const TVec2<T>&) const) &
+                        TVec2<T>::operator/,
+                    (TVec2<T>(TVec2<T>::*)(float) const) & TVec2<T>::operator/)
                 .addFunction("__eq", &TVec2<T>::operator==)
                 .addFunction("__tostring", +[](const TVec2<T>* v) {
                     std::stringstream ss;

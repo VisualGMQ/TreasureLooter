@@ -50,6 +50,7 @@ export type Camera = {
 	MoveTo: (self: Camera, pos: Vec2) -> (),
 	Move: (self: Camera, delta: Vec2) -> (),
 	ChangeScale: (self: Camera, scale: number) -> (),
+	SetBoundary: (self: Camera, boundary: Rect) -> (),
 }
 
 export type SpriteManager = {
