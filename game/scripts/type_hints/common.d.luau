@@ -17,33 +17,37 @@ export type UUID = {
 	IsValid: (self: UUID) -> boolean,
 }
 
-export type Vec2 = {
-	x: number,
-	y: number,
-	Length: (self: Vec2) -> number,
-	LengthSquared: (self: Vec2) -> number,
-	Normalize: (self: Vec2) -> Vec2,
-	Dot: (self: Vec2, other: Vec2) -> number,
-	Cross: (self: Vec2, other: Vec2) -> number,
-	__add: (self: Vec2, other: Vec2) -> Vec2,
-	__sub: (self: Vec2, other: Vec2) -> Vec2,
-	__mul: (self: Vec2, other: Vec2 | number) -> Vec2,
-	__div: (self: Vec2, other: Vec2 | number) -> Vec2,
-}
+declare extern type Vec2 with
+	x: number
+	y: number
 
-export type Vec2UI = {
-	x: number,
-	y: number,
-	Length: (self: Vec2UI) -> number,
-	LengthSquared: (self: Vec2UI) -> number,
-	Normalize: (self: Vec2UI) -> Vec2UI,
-	Dot: (self: Vec2UI, other: Vec2UI) -> number,
-	Cross: (self: Vec2UI, other: Vec2UI) -> number,
-	__add: (self: Vec2UI, other: Vec2UI) -> Vec2UI,
-	__sub: (self: Vec2UI, other: Vec2UI) -> Vec2UI,
-	__mul: (self: Vec2UI, other: Vec2UI | number) -> Vec2UI,
-	__div: (self: Vec2UI, other: Vec2UI | number) -> Vec2UI,
-}
+	function Length(self): number
+	function LengthSquared(self): number
+	function Normalize(self): Vec2
+	function Dot(self, other: Vec2): number
+	function Cross(self, other: Vec2): number
+
+	__add: (Vec2, Vec2) -> Vec2
+	__sub: (Vec2, Vec2) -> Vec2
+	__mul: (Vec2, Vec2 | number) -> Vec2
+	__div: (Vec2, Vec2 | number) -> Vec2
+end
+
+declare extern type Vec2UI with
+	x: number
+	y: number
+
+	function Length(self): number
+	function LengthSquared(self): number
+	function Normalize(self): Vec2UI
+	function Dot(self, other: Vec2UI): number
+	function Cross(self, other: Vec2UI): number
+
+	__add: (Vec2UI, Vec2UI) -> Vec2UI
+	__sub: (Vec2UI, Vec2UI) -> Vec2UI
+	__mul: (Vec2UI, Vec2UI | number) -> Vec2UI
+	__div: (Vec2UI, Vec2UI | number) -> Vec2UI
+end
 
 export type Color = {
 	r: number,
@@ -57,13 +61,23 @@ export type DecompositionResult = {
 	m_normal: Vec2,
 }
 
-export type Degrees = {
-	Value: (self: Degrees) -> number,
-}
+declare extern type Degrees with
+	function Value(self): number
 
-export type Radians = {
-	Value: (self: Radians) -> number,
-}
+	__add: (Degrees, Degrees) -> Degrees
+	__sub: (Degrees, Degrees) -> Degrees
+	__mul: (Degrees, number) -> Degrees
+	__div: (Degrees, number) -> Degrees
+end
+
+declare extern type Radians with
+	function Value(self): number
+
+	__add: (Radians, Radians) -> Radians
+	__sub: (Radians, Radians) -> Radians
+	__mul: (Radians, number) -> Radians
+	__div: (Radians, number) -> Radians
+end
 
 export type Transform = {
 	m_position: Vec2,

@@ -21,16 +21,6 @@ function _M.OnInit(self: PlayerDeadNode)
 end
 
 function _M.OnUpdate(self: PlayerDeadNode)
-    local elapse_time = HFSMUtil.GetElapseTime()
-    local go = HFSMUtil.GetGameObject(self._entity)
-
-    if not go then
-        return
-    end
-
-    if go.m_buff_receive_component then
-        go.m_buff_receive_component:Update(elapse_time)
-    end
 end
 
 function _M.OnQuit(self: PlayerDeadNode)

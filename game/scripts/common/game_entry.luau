@@ -27,7 +27,7 @@ type GameEntryData = {
 export type GameEntry = typeof(GameEntry) & GameEntryData & ScriptBehavior.ScriptBehavior
 
 function GameEntry.new(entity: Entity, creation_strategy: typeof(Creation)) : GameEntry
-    local self = ScriptBehavior.new(entity) :: GameEntryData
+    local self = ScriptBehavior.new(entity) :: GameEntry
     self.m_creation_strategy = creation_strategy
     return setmetatable(self, GameEntry)
 end

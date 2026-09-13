@@ -199,7 +199,7 @@ export type ActionStateNamespace = {
 }
 
 export type DebugPanel = {
-	RegisterCmd: (self: DebugPanel, name: string, cmd: (args: {string}) -> ()) -> (),
+	RegisterCmd: (self: DebugPanel, name: string, cmd: (args: {string}) -> (), hint_list: {any}) -> (),
 	ExecuteCmd: (self: DebugPanel, name: string, args: {string}) -> (),
 }
 

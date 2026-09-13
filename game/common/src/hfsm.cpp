@@ -74,8 +74,12 @@ HFSMNode* HFSMComponent::GetNode(HFSMNodeID id) {
 
 void HFSMComponent::Update() {
     if (m_pending_change_node) {
-        doChangeState(*m_pending_change_node);
+        // Consume the pending request before applying it, so a ChangeState
+        // issued from within OnInit/OnEnter (e.g. selecting the initial child
+        // state) is not immediately discarded.
+        HFSMNodeID next = *m_pending_change_node;
         m_pending_change_node.reset();
+        doChangeState(next);
     }
 
     bool any_removed = false;

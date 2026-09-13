@@ -1,7 +1,5 @@
 local HFSMUtil = require("@client/hfsm/hfsm_util")
-
-local k_alive_state_id = 0
-local k_dead_state_id = 2
+local States = require("@client/hfsm/player_states")
 
 local _M = {}
 _M.__index = _M
@@ -24,23 +22,17 @@ function _M.OnInit(self: PlayerFrozenNode)
 end
 
 function _M.OnUpdate(self: PlayerFrozenNode)
-    local elapse_time = HFSMUtil.GetElapseTime()
     local go = HFSMUtil.GetGameObject(self._entity)
-
     if not go then
         return
     end
 
-    if go.m_buff_receive_component then
-        go.m_buff_receive_component:Update(elapse_time)
-    end
-
     if not (go.m_buff_receive_component and go.m_buff_receive_component:IsFrozen()) then
-        if go.m_hp_component:IsDead() then
-            HFSMUtil.ChangeState(self._entity, k_dead_state_id)
-            return
+        if go.m_raise_up_component and go.m_raise_up_component:IsHolding() then
+            HFSMUtil.ChangeState(self._entity, States.Carrying)
+        else
+            HFSMUtil.ChangeState(self._entity, States.FreeHand)
         end
-        HFSMUtil.ChangeState(self._entity, k_alive_state_id)
     end
 end
 

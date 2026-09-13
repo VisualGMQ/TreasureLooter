@@ -124,6 +124,14 @@ std::string extractArrayInnerType(const std::string& cpp_type) {
     return cpp_type.substr(prefix.size(), comma - prefix.size());
 }
 
+std::string extractMatStorageInnerType(const std::string& cpp_type) {
+    const std::string prefix = "MatStorage<";
+    if (cpp_type.size() <= prefix.size() + 1 ||
+        cpp_type.substr(0, prefix.size()) != prefix || cpp_type.back() != '>')
+        return {};
+    return cpp_type.substr(prefix.size(), cpp_type.size() - prefix.size() - 1);
+}
+
 std::string GenerateClassCode(const ClassInfo& info) {
     kainjow::mustache::data prop_datas{kainjow::mustache::data::type::list};
 
@@ -1512,6 +1520,8 @@ std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     std::string arr_inner = extractArrayInnerType(cpp_type);
     if (!arr_inner.empty())
         return "{ " + ConvertCppTypeToLuauType(arr_inner) + " }";
+    std::string mat_inner = extractMatStorageInnerType(cpp_type);
+    if (!mat_inner.empty()) return "{}";
     if (!extractUnorderedMapInnerType(cpp_type).empty()) return "{}";
     return cpp_type;
 }

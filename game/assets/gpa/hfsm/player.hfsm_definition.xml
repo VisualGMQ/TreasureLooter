@@ -3,12 +3,43 @@
 	<payload>
 		<nodes>
 			<elem>
-				<name>player_alive</name>
-				<script>scripts/client/hfsm/player_alive.luau</script>
+				<name>player_root</name>
+				<script>scripts/client/hfsm/player_root.luau</script>
 				<children>
 					<elem>1</elem>
-					<elem>2</elem>
+					<elem>6</elem>
+					<elem>7</elem>
 				</children>
+			</elem>
+			<elem>
+				<name>player_ordinary</name>
+				<script>scripts/client/hfsm/player_ordinary.luau</script>
+				<children>
+					<elem>2</elem>
+					<elem>3</elem>
+					<elem>4</elem>
+					<elem>5</elem>
+				</children>
+			</elem>
+			<elem>
+				<name>player_free_hand</name>
+				<script>scripts/client/hfsm/player_free_hand.luau</script>
+				<children/>
+			</elem>
+			<elem>
+				<name>player_carrying</name>
+				<script>scripts/client/hfsm/player_carrying.luau</script>
+				<children/>
+			</elem>
+			<elem>
+				<name>player_picking_up</name>
+				<script>scripts/client/hfsm/player_picking_up.luau</script>
+				<children/>
+			</elem>
+			<elem>
+				<name>player_putting_down</name>
+				<script>scripts/client/hfsm/player_putting_down.luau</script>
+				<children/>
 			</elem>
 			<elem>
 				<name>player_frozen</name>
