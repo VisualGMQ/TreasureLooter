@@ -28,12 +28,12 @@ function ServerGameEntry.OnInit(self: ServerGameEntry)
     ctx:NetListen(TL_Common.NetAddress(Net.ip, Net.port), k_max_peers)
     ctx:Log("server listening on ", Net.ip, ":", Net.port)
 
-    ctx:GetEventSystem():AddNetMsg_SpawnPlayerEvent(function(id, payload)
-        self:onSpawnPlayer(payload)
+    ctx:GetEventSystem():AddNetMsg_SpawnPlayerEvent(function(id, peer, payload)
+        self:onSpawnPlayer(peer, payload)
     end)
 end
 
-function ServerGameEntry.onSpawnPlayer(self: ServerGameEntry, payload: any)
+function ServerGameEntry.onSpawnPlayer(self: ServerGameEntry, peer: UDPPeer, payload)
     local ctx = TL_Server.GetContext()
     local spawn = payload:to_schema()
     local did = spawn.m_did

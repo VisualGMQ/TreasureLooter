@@ -32,11 +32,13 @@
         <element name="virtual_attack_button" type="VirtualButtonConfig"/>
         <handle  name="default_font" type="Font"/>
         <unordered_map name="lua_paths" key="std::string" value="std::string"/>
+        <element name="luau_debugger_port" type="int" default="5000"/>
     </asset>
 
     <asset name="ServerConfig" extension=".server_config">
         <!-- don't use handle, due to asset rely on ClientConfig itself! -->
         <element name="global_script" type="Path"/>
         <unordered_map name="lua_paths" key="std::string" value="std::string"/>
+        <element name="luau_debugger_port" type="int" default="5001"/>
     </asset>
 </schema>

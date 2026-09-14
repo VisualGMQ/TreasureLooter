@@ -7,6 +7,8 @@ schema_generate/
 game/scripts/type_hints/schema.d.luau
 game/scripts/type_hints/tl.d.luau
 
+.vscode
+.opencode
 .gradle
 .cxx
 .idea

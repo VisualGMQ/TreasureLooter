@@ -22,11 +22,11 @@ export type Proto{{class_name}} = {
 
 {{/classes}}
 -- The runtime `EventSystem` is completed with the per-message listeners
--- registered by proto_event_binding.cpp. Their callback receives the payload
--- message directly (NOT a `NetMsg` wrapper).
+-- registered by proto_event_binding.cpp. Their callback receives the source
+-- peer and the payload message directly (NOT a `NetMsg` wrapper).
 export type EventSystem = EventSystemBase & {
 {{#events}}
-	AddNetMsg_{{event_name}}Event: (self: EventSystem, cb: (id: EventListenerID, payload: {{payload_type}}) -> ()) -> EventListenerID,
+	AddNetMsg_{{event_name}}Event: (self: EventSystem, cb: (id: EventListenerID, peer: UDPPeer, payload: {{payload_type}}) -> ()) -> EventListenerID,
 {{/events}}
 }
 

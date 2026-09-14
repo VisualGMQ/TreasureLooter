@@ -2,6 +2,7 @@
 #include "common/macros.hpp"
 #include "common/path.hpp"
 #include "common/script/script.hpp"
+#include "common/script/script_compile_options.hpp"
 #include "lua.h"
 #include "luacode.h"
 #include "lualib.h"
@@ -121,8 +122,9 @@ bool LuauRequireContext::loadAndRunModule(lua_State* L,
         return false;
     }
     size_t bytecode_size = 0;
-    char* bytecode =
-        luau_compile(source.data(), source.size(), nullptr, &bytecode_size);
+    lua_CompileOptions compile_options = MakeLuauCompileOptions();
+    char* bytecode = luau_compile(source.data(), source.size(),
+                                  &compile_options, &bytecode_size);
     if (!bytecode) {
         lua_pushfstring(L, "compile failed: '%s'", loadPath.c_str());
         return false;
@@ -132,15 +134,21 @@ bool LuauRequireContext::loadAndRunModule(lua_State* L,
     free(bytecode);
     if (load_result != 0) {
         const char* err = lua_tostring(L, -1);
+        mgr.OnLuaError(err ? err : "unknown", L);
         lua_pushfstring(L, "load failed: '%s': %s", loadPath.c_str(),
                         err ? err : "unknown");
         return false;
     }
 
+    // Register the chunk with the debugger before running it so breakpoints
+    // inside required modules can be resolved.
+    mgr.OnLuaFileLoaded(L, loadPath, /*is_entry=*/false);
+
     // FIXME: maybe not need, luau_load executed code
     int pcall_result = lua_pcall(L, 0, 1, 0);
     if (pcall_result != LUA_OK) {
         const char* err = lua_tostring(L, -1);
+        mgr.OnLuaError(err ? err : "unknown", L);
         lua_pushfstring(L, "error running '%s': %s", loadPath.c_str(),
                         err ? err : "unknown");
         return false;

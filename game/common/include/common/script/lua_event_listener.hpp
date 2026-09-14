@@ -53,7 +53,8 @@ public:
         }
 
         auto listener = [cb](EventListenerID id, const Event& event) {
-            auto result = cb(static_cast<int>(id), event.Payload());
+            auto result =
+                cb(static_cast<int>(id), event.m_peer, event.Payload());
             if (result.errorCode()) {
                 LOGE("[Lua] event callback error: {}", result.errorMessage());
             }

@@ -5,8 +5,13 @@
 #include "common/path.hpp"
 #include "common/profile.hpp"
 #include "common/script/script_binding.hpp"
+#include "common/script/script_compile_options.hpp"
 #include "common/script/script_require.hpp"
 #include "common/storage.hpp"
+
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+#include <debugger.h>
+#endif
 
 #include <algorithm>
 #include <cctype>
@@ -17,6 +22,14 @@
 #include <type_traits>
 
 #include "common/script/luabridge_include.hpp"
+
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+struct ScriptDebuggerHolder {
+    std::unique_ptr<luau::debugger::Debugger> debugger;
+};
+#else
+struct ScriptDebuggerHolder {};
+#endif
 
 static std::string pathToClassName(const std::string& filename_str) {
     if (filename_str.empty()) return "Script";
@@ -71,6 +84,13 @@ const std::string& ScriptBinaryData::GetClassName() const {
 ScriptBinaryDataManager::ScriptBinaryDataManager() {}
 
 ScriptBinaryDataManager::~ScriptBinaryDataManager() {
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    if (m_debugger && m_debugger->debugger) {
+        if (m_L) m_debugger->debugger->release(m_L);
+        m_debugger->debugger->stop();
+        m_debugger->debugger.reset();
+    }
+#endif
     if (m_L) lua_close(m_L);
 }
 
@@ -104,6 +124,61 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
 
 lua_State* ScriptBinaryDataManager::GetUnderlyingVM() {
     return m_L;
+}
+
+void ScriptBinaryDataManager::EnableDebugger(int port) {
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    if (port <= 0 || !m_L) return;
+
+    luau::debugger::log::install(
+        [](std::string_view msg) { LOGI("[Luau.Debugger] {}", msg); },
+        [](std::string_view msg) { LOGE("[Luau.Debugger] {}", msg); });
+
+    auto holder = std::make_unique<ScriptDebuggerHolder>();
+    holder->debugger = std::make_unique<luau::debugger::Debugger>(
+        /*stop_on_entry=*/false);
+    auto* debugger = holder->debugger.get();
+    debugger->setRoot(std::filesystem::current_path().string());
+    debugger->setFileExtension(".luau");
+
+    if (!debugger->listen(port)) {
+        LOGW("[Luau]: debugger failed to listen on port {}", port);
+        return;
+    }
+
+    debugger->initialize(m_L);
+    LOGI("[Luau]: debugger listening on port {} (attach with the "
+         "luau-debugger VSCode extension)",
+         port);
+    m_debugger = std::move(holder);
+#else
+    (void)port;
+#endif
+}
+
+void ScriptBinaryDataManager::OnLuaFileLoaded(lua_State* L,
+                                              const std::string& path,
+                                              bool is_entry) {
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    if (m_debugger && m_debugger->debugger) {
+        m_debugger->debugger->onLuaFileLoaded(L, path, is_entry);
+    }
+#else
+    (void)L;
+    (void)path;
+    (void)is_entry;
+#endif
+}
+
+void ScriptBinaryDataManager::OnLuaError(const std::string& msg, lua_State* L) {
+#ifdef TL_ENABLE_LUAU_DEBUGGER
+    if (m_debugger && m_debugger->debugger) {
+        m_debugger->debugger->onError(msg, L);
+    }
+#else
+    (void)msg;
+    (void)L;
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -182,6 +257,9 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
               .GetUnderlyingVM();
     TL_RETURN_IF_NULL_WITH_LOG(m_L, LOGE, "[Luau]: VM is null");
 
+    auto& script_manager =
+        COMMON_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+
     std::string script_path = handle->GetPath().string();
     m_filename = script_path;
 
@@ -192,25 +270,32 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
                                     "[Luau]: script {} content empty", m_filename);
 
         size_t bytecode_size = 0;
-        char* bytecode =
-            luau_compile(source.data(), source.size(), nullptr, &bytecode_size);
+        lua_CompileOptions compile_options = MakeLuauCompileOptions();
+        char* bytecode = luau_compile(source.data(), source.size(),
+                                      &compile_options, &bytecode_size);
         TL_RETURN_IF_NULL_WITH_LOG(bytecode, LOGE, "[Luau]: compile {} failed", m_filename);
 
-        int load_result = luau_load(m_L, handle->GetClassName().c_str(),
-                                    bytecode, bytecode_size, 0);
+        int load_result =
+            luau_load(m_L, script_path.c_str(), bytecode, bytecode_size, 0);
         free(bytecode);
 
         if (load_result != 0) {
             const char* err = lua_tostring(m_L, -1);
             LOGE("[Luau]: load {} failed: {}", m_filename, err ? err : "unknown");
+            script_manager.OnLuaError(err ? err : "unknown", m_L);
             lua_pop(m_L, 1);
             return;
         }
+
+        // Register the chunk with the debugger before running it so that
+        // breakpoints inside this file can be resolved.
+        script_manager.OnLuaFileLoaded(m_L, script_path, /*is_entry=*/true);
 
         int pcall_result = lua_pcall(m_L, 0, 1, 0);
         if (pcall_result != LUA_OK) {
             const char* err = lua_tostring(m_L, -1);
             LOGE("[Luau]: script {} run failed: {}", m_filename, err ? err : "unknown");
+            script_manager.OnLuaError(err ? err : "unknown", m_L);
             lua_pop(m_L, 1);
             return;
         }
@@ -293,7 +378,10 @@ void Script::checkAndPrintErrorResult(const luabridge::LuaResult& result,
     bool success = std::any_of(msg.begin(), msg.end(), [](unsigned char ch) {
         return !std::isspace(ch);
     });
-    LOGE("[Luau] {} {}: {}", m_filename, method, success ? msg : fallback);
+    std::string text = success ? msg : std::string{fallback};
+    LOGE("[Luau] {} {}: {}", m_filename, method, text);
+    COMMON_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>().OnLuaError(
+        text, m_L);
 }
 
 Script::PrepareInfo Script::prepareFn(std::string_view method) {

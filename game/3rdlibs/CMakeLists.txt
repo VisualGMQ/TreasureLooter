@@ -47,3 +47,18 @@ add_3rdlib(protobuf)
 
 add_3rdlib(enet)
 add_3rdlib(fts_fuzzy_match)
+
+# luau-debugger (DAP server) + its cppdap dependency. Desktop only: the
+# debugger embeds a TCP server/threads and is not needed on Android.
+if (NOT ANDROID)
+    set(CPPDAP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(CPPDAP_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CPPDAP_BUILD_FUZZER OFF CACHE BOOL "" FORCE)
+    set(CPPDAP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+    set(CPPDAP_INSTALL_VSCODE_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(LUAU_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/luau)
+    set(CPP_DAP_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/cppdap)
+    add_3rdlib(cppdap)
+    add_subdirectory(luau-debugger/debugger)
+    set_target_properties(Luau.Debugger PROPERTIES FOLDER 3rdlibs/luau-debugger)
+endif()

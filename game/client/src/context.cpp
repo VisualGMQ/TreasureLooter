@@ -100,6 +100,8 @@ void ClientContext::Initialize(int argc, char** argv) {
     auto& client_config = GetConfig();
 
     m_script_binary_data_manager->Initialize(client_config.m_lua_paths);
+    m_script_binary_data_manager->EnableDebugger(
+        client_config.m_luau_debugger_port);
     m_script_binary_data_manager->BindModule([](lua_State* L) {
         BindCommonModule(L);
         BindClientModule(L);

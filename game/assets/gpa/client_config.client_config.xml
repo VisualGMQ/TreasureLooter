@@ -29,6 +29,7 @@
 				<value>scripts/type_hints</value>
 			</elem>
 		</lua_paths>
+		<luau_debugger_port>58000</luau_debugger_port>
 	</payload>
 </ClientConfig>
 

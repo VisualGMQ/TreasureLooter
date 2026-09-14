@@ -27,7 +27,7 @@ function ClientGameEntry.initNet(self:ClientGameEntry)
     local ctx = TL_Client.GetContext()
     local Common = require("@common/net")
 
-    ctx:GetEventSystem():AddNetMsg_ConnectEvent(function(id, net_msg)
+    ctx:GetEventSystem():AddNetMsg_ConnectEvent(function(id, peer, net_msg)
         local spawn = TL_Proto.SpawnPlayer()
         spawn:set_m_entity(0)
         spawn:set_m_did(TL_Schema.DID.CharacterDID1)

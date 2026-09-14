@@ -14,7 +14,7 @@ end
 
 function _M.OnInit(self: ClientNetPlayerBehavior)
     local ctx = TL_Client.GetContext()
-    ctx:GetEventSystem():AddNetMsg_MoveEvent(function(id, payload)
+    ctx:GetEventSystem():AddNetMsg_MoveEvent(function(id, peer, payload)
         local go = self:GetGameObject() :: ClientGameObject.ClientGameObject
         if not go or not go.m_move_component then
             return

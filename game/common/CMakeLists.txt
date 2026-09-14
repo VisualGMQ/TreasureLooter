@@ -53,6 +53,10 @@ target_compile_definitions(${COMMON_NAME}
 
 if (ANDROID)
     target_compile_definitions(${COMMON_NAME} PUBLIC TL_PLATFORM_ANDROID)
+else()
+    # Luau DAP debugger (breakpoints, stepping, variables) for the in-game VM.
+    target_link_libraries(${COMMON_NAME} PRIVATE Luau.Debugger)
+    target_compile_definitions(${COMMON_NAME} PRIVATE TL_ENABLE_LUAU_DEBUGGER)
 endif()
 
 

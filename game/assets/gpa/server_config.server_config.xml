@@ -16,6 +16,7 @@
 				<value>scripts/type_hints</value>
 			</elem>
 		</lua_paths>
+		<luau_debugger_port>58001</luau_debugger_port>
 	</payload>
 </ServerConfig>
 
