@@ -16,7 +16,7 @@ function _M.new(gameobject, hp:number, invincible_time:TimeType):HpComponent
     local self = Component.new(gameobject) :: HpComponent
     self.m_hp = hp
 
-    local ctx = TL_Client.GetContext()
+    local ctx = TL_Common.GetContext()
     self._invincible_timer = ctx:GetTimerManager():Create(invincible_time, TL_Schema.TimerEventType.Cooldown, 0)
     return setmetatable(self, _M)
 end

@@ -11,7 +11,7 @@ type ClientRaiseUpComponentData = {
     _origin_anchors:{[Entity]:Vec2},
 }
 
-export type ClientRaiseUpComponent = typeof(_M) & ClientRaiseUpComponentData & RaiseUpComponent.RaiseUpComponent
+export type ClientRaiseUpComponent = typeof(setmetatable({}::ClientRaiseUpComponentData, _M)) & RaiseUpComponent.RaiseUpComponent
 
 function _M.new(gameobject):ClientRaiseUpComponent
     local self = RaiseUpComponent.new(gameobject) :: ClientRaiseUpComponent

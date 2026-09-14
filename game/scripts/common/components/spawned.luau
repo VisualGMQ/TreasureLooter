@@ -14,7 +14,7 @@ type SpawnedComponentData = {
 	_duration: number,
 }
 
-export type SpawnedComponent = typeof(_M) & SpawnedComponentData & Component.Component
+export type SpawnedComponent = typeof(setmetatable({}::SpawnedComponentData, _M)) & Component.Component
 
 function _M.new(gameobject, mine_gameobject, controller_entity: Entity, target_x: number): SpawnedComponent
 	local self = Component.new(gameobject) :: SpawnedComponent

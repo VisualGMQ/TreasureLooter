@@ -39,7 +39,7 @@ type SkillComponentData = {
 	_caster: Entity,
 }
 
-export type SkillComponent = typeof(_M) & SkillComponentData & Component.Component
+export type SkillComponent = typeof(setmetatable({}::SkillComponentData, _M)) & Component.Component
 
 function _M.new(gameobject, skill_definition: SkillDefinitionHandle): SkillComponent
 	local self = Component.new(gameobject) :: SkillComponent
@@ -267,7 +267,7 @@ function _M.disableAllShapes(self: SkillComponent)
 	end
 end
 
-function _M.GetCurPhase(self: SkillComponent): SkillPhase?
+function _M.GetCurPhase(self: SkillComponent): SkillPhaseData?
 	return self._phases[self._current_phase + 1]
 end
 

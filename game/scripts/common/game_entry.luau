@@ -26,25 +26,11 @@ type GameEntryData = {
 
 export type GameEntry = typeof(GameEntry) & GameEntryData & ScriptBehavior.ScriptBehavior
 
-function GameEntry.new(entity: Entity, creation_strategy: typeof(Creation)) : GameEntry
+function GameEntry.new(entity: Entity, creation_strategy: Creation.Creation) : GameEntry
     local self = ScriptBehavior.new(entity) :: GameEntry
     self.m_creation_strategy = creation_strategy
     return setmetatable(self, GameEntry)
 end
-
--- function GameEntry.initNet()
---     local Common = require("@common/net")
---     local ctx: ClientContext = TL_Client.GetContext()
---     local net_address = TL_Common.NetAddress(Common.ip, Common.port)
---     ctx:ConnectToServer(net_address)
---
---     local net_msg: TL_Proto.NetMsg = TL_Proto.NetMsg()
---     local echo_msg: TL_Proto.Echo = TL_Proto.Echo()
---     echo_msg:set_m_msg("Hello, I'm Client")
---     net_msg:set_m_echo(echo_msg)
---     local host = ctx:GetNetHost()
---     host:Send(ctx:GetNetPeer(), net_msg, 0, TL_Common.UDPPacketFlags(TL_Common.UDPPacketFlag.Reliable))
--- end
 
 function GameEntry.OnInit(self: GameEntry)
     local ctx = TL_Common.GetContext()
@@ -56,7 +42,7 @@ function GameEntry.OnInit(self: GameEntry)
 end
 
 function GameEntry.ChangeLevel(self: GameEntry, level: Path)
-    local ctx = TL_Client.GetContext()
+    local ctx = TL_Common.GetContext()
 
     self.m_level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
     local new_scene_definition = ctx:GetAssetsManager():GetSceneDefinitionManager():Create()
@@ -142,43 +128,13 @@ function GameEntry.createMapLayers(scene: Scene, root_relationship: Relationship
     return map_layer_entities
 end
 
-function GameEntry.setCameraBoundary(self: GameEntry, map_definition: MapDefinition)
-    local ctx = TL_Client.GetContext()
-    local tilemap = map_definition.m_map
-    if not tilemap then
-        return
-    end
-
-    local map_size_in_tiles: Vec2? = nil
-    for i = 0, tilemap:GetLayerCount() - 1 do
-        local layer = tilemap:GetLayer(i)
-        local tiled_layer = layer and layer:AsTiledLayer()
-        if tiled_layer then
-            map_size_in_tiles = tiled_layer:GetSize()
-            break
-        end
-    end
-
-    if not map_size_in_tiles then
-        return
-    end
-
-    local world_size = tilemap:GetTileSize() * map_size_in_tiles
-    local boundary = TL_Schema.Rect()
-    boundary.m_center = world_size * 0.5
-    boundary.m_half_size = world_size * 0.5
-    ctx:Log("set camera boundary, center: ", boundary.m_center, ", half_size: ", boundary.m_half_size)
-    ctx:GetCamera():SetBoundary(boundary)
-end
-
 function GameEntry.InitSceneFromLevelDefinition(self: GameEntry, scene: Scene, level_definition: LevelDefinitionHandle)
-    local ctx = TL_Client.GetContext()
+    local ctx = TL_Common.GetContext()
     local root_entity = scene:GetRootEntity()
     local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
 
     self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
-    self:setCameraBoundary(level_definition.m_map_definition)
 
     if level_definition.m_map_definition.m_detour:IsValid() then
         ctx:GetTilemapDetourManager():SetCurDetourData(level_definition.m_map_definition.m_detour)

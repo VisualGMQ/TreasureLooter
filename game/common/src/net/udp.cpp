@@ -135,6 +135,22 @@ void UDPHost::Send(const UDPPeer* peer, const proto::NetMsg& net_msg,
     }
 }
 
+void UDPHost::Broadcast(const proto::NetMsg& net_msg, int channel_id,
+                        Flags<UDPPacketFlag> flags) {
+    m_data_cache.clear();
+    m_data_cache.resize(net_msg.ByteSizeLong());
+
+    if (!net_msg.SerializeToArray(m_data_cache.data(), m_data_cache.size())) {
+        LOGE("serialize broadcast net msg failed");
+        return;
+    }
+
+    for (auto& [id, peer] : m_peers) {
+        TL_CONTINUE_IF_FALSE(peer.IsValid());
+        Send(&peer, m_data_cache.data(), m_data_cache.size(), channel_id, flags);
+    }
+}
+
 UDPPeer UDPHost::Connect(const NetAddress& address) {
     TL_RETURN_DEFAULT_IF_NULL_WITH_LOG(m_host, LOGW, "host not create");
 

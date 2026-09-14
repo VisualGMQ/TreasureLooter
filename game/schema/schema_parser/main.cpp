@@ -303,6 +303,16 @@ int main(int argc, char** argv) {
                   << schema_output_dir / "schema.d.luau" << std::endl;
     }
 
+    // generate proto.d.luau (luau-lsp definition file for `TL_Proto` and the
+    // proto event methods on `EventSystem`).
+    {
+        std::string code = GenerateProtoTypesLuauDefinitionCode(manager);
+        std::ofstream file(schema_output_dir / "proto.d.luau");
+        file.write(code.c_str(), code.length());
+        std::cout << "generate proto.d.luau to : "
+                  << schema_output_dir / "proto.d.luau" << std::endl;
+    }
+
     // generate cpp_asset_extension.hpp
     {
         std::string code = GenerateCppAssetExtensionHeaderCode(manager);

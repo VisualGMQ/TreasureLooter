@@ -10,7 +10,7 @@ type RaiseUpComponentData = {
     _items:{any},
 }
 
-export type RaiseUpComponent = typeof(_M) & RaiseUpComponentData & Copmonent.Component
+export type RaiseUpComponent = typeof(setmetatable({}::RaiseUpComponentData, _M)) & Copmonent.Component
 
 function _M.new(gameobject:any):RaiseUpComponent
     local self = Copmonent.new(gameobject) :: RaiseUpComponent

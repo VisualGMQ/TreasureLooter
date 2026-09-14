@@ -487,26 +487,32 @@ export type UDPPeer = {
 export type UDPHost = {
 	Connect: (self: UDPHost, addr: NetAddress) -> UDPPeer,
 	Send: (self: UDPHost, peer: UDPPeer, net_msg: any, channel_id: number, flags: UDPPacketFlags?) -> (),
+	Broadcast: (self: UDPHost, net_msg: any, channel_id: number, flags: UDPPacketFlags?) -> (),
 	Flush: (self: UDPHost) -> (),
 	HandleIncomingNetPacket: (self: UDPHost) -> (),
 	GetPeer: (self: UDPHost, id: number) -> UDPPeer,
 }
 
-export type EventSystem = {
-	AddTimerEvent: (self: EventSystem, cb: (id: EventListenerID, event: TimerEvent) -> ()) -> EventListenerID,
-	AddTimerStopEvent: (self: EventSystem, cb: (id: EventListenerID, event: TimerStopEvent) -> ()) -> EventListenerID,
-	AddTriggerEnterEvent: (self: EventSystem, cb: (id: EventListenerID, event: TriggerEnterEvent) -> ()) -> EventListenerID,
-	AddTriggerLeaveEvent: (self: EventSystem, cb: (id: EventListenerID, event: TriggerLeaveEvent) -> ()) -> EventListenerID,
-	AddTriggerTouchEvent: (self: EventSystem, cb: (id: EventListenerID, event: TriggerTouchEvent) -> ()) -> EventListenerID,
-	AddDebugEvent: (self: EventSystem, cb: (id: EventListenerID, event: DebugEvent) -> ()) -> EventListenerID,
-	AddUIMouseHoverEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIMouseHoverEvent) -> ()) -> EventListenerID,
-	AddUIMouseDownEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIMouseDownEvent) -> ()) -> EventListenerID,
-	AddUIMouseUpEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIMouseUpEvent) -> ()) -> EventListenerID,
-	AddUIMouseClickedEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIMouseClickedEvent) -> ()) -> EventListenerID,
-	AddUICheckToggledEvent: (self: EventSystem, cb: (id: EventListenerID, event: UICheckToggledEvent) -> ()) -> EventListenerID,
-	AddUIDragEvent: (self: EventSystem, cb: (id: EventListenerID, event: UIDragEvent) -> ()) -> EventListenerID,
-	AddAnimationEndEvent: (self: EventSystem, cb: (id: EventListenerID, event: AnimationEndEvent) -> ()) -> EventListenerID,
-	Remove: (self: EventSystem, id: EventListenerID) -> (),
+-- Base `EventSystem` methods, equivalent to the C++ bindings in
+-- common/src/scripts/script_binding.cpp. The `EventSystem` type itself is
+-- completed in the generated proto.d.luau fragment (it adds the
+-- `AddNetMsg_<X>Event` methods registered by proto_event_binding.cpp), see
+-- `CommonContext.GetEventSystem`.
+export type EventSystemBase = {
+	AddTimerEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: TimerEvent) -> ()) -> EventListenerID,
+	AddTimerStopEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: TimerStopEvent) -> ()) -> EventListenerID,
+	AddTriggerEnterEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: TriggerEnterEvent) -> ()) -> EventListenerID,
+	AddTriggerLeaveEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: TriggerLeaveEvent) -> ()) -> EventListenerID,
+	AddTriggerTouchEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: TriggerTouchEvent) -> ()) -> EventListenerID,
+	AddDebugEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: DebugEvent) -> ()) -> EventListenerID,
+	AddUIMouseHoverEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: UIMouseHoverEvent) -> ()) -> EventListenerID,
+	AddUIMouseDownEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: UIMouseDownEvent) -> ()) -> EventListenerID,
+	AddUIMouseUpEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: UIMouseUpEvent) -> ()) -> EventListenerID,
+	AddUIMouseClickedEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: UIMouseClickedEvent) -> ()) -> EventListenerID,
+	AddUICheckToggledEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: UICheckToggledEvent) -> ()) -> EventListenerID,
+	AddUIDragEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: UIDragEvent) -> ()) -> EventListenerID,
+	AddAnimationEndEvent: (self: EventSystemBase, cb: (id: EventListenerID, event: AnimationEndEvent) -> ()) -> EventListenerID,
+	Remove: (self: EventSystemBase, id: EventListenerID) -> (),
 }
 
 export type TilemapDetourManager = {
@@ -625,6 +631,9 @@ declare TL_Common: {
 
 	-- free functions
 	GetContext: () -> CommonContext,
+	-- Maps a script file path to its require() module name; returns the
+	-- original path string when the mapping is unknown.
+	PathToModuleName: (file_path: Path) -> string,
 	GetAngle: (from: Vec2, to: Vec2) -> Radians,
 	DecomposeVector: (velocity: Vec2, tangent: Vec2) -> DecompositionResult,
 	Rotate: (v: Vec2, degrees: Degrees) -> Vec2,

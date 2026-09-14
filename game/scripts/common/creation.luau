@@ -1,6 +1,7 @@
 local _M = {}
 _M.__index = _M
 
+export type Creation = typeof(_M)
 
 -- convert to prefab without client/server script
 function _M.ConvertCharacterDefinitionToPrefab(config:CharacterDefinitionHandle):PrefabHandle

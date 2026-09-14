@@ -38,7 +38,7 @@ function _M.GetDID(self:GameObject):DID
 end
 
 function _M.Destroy(self:GameObject)
-    local ctx = TL_Client.GetContext()
+    local ctx = TL_Common.GetContext()
     local scene = ctx:GetSceneManager():GetCurrentScene()
     scene:RemoveEntity(self:GetEntity())
 end

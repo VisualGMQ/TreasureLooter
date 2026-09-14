@@ -34,7 +34,7 @@ type ClientGameObjectData = {
     m_buff_receive_component: BuffReceiveComponent.BuffReceiveComponent,
     m_buff_apply_component: BuffApplyComponent.BuffApplyComponent,
 }
-export type ClientGameObject = typeof(_M) & ClientGameObjectData & GameObject.GameObject
+export type ClientGameObject = typeof(setmetatable({}::ClientGameObjectData, _M)) & GameObject.GameObject
 
 export type ClientGameObjectDefinition = {
     m_did:DID,

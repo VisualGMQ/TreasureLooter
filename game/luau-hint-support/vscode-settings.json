@@ -2,5 +2,6 @@
 	"luau-lsp.types.definitionFiles": [
 		"scripts/type_hints/tl.d.luau",
 		"scripts/type_hints/imgui.d.luau"
-	]
+	],
+	"luau-lsp.fflags.enableNewSolver": true
 }

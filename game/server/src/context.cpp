@@ -97,7 +97,7 @@ void ServerContext::Initialize(int argc, char** argv) {
         m_assets_manager->GetManager<Scene>().Load(GetCommonConfig().m_entry_scene);
     m_scene_manager->Switch(level);
 
-    m_time->SetFPS(24);
+    m_time->SetFPS(30);
 }
 
 void ServerContext::HandleEvents(const SDL_Event& event) {

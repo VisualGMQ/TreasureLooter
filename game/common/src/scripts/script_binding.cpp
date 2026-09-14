@@ -1300,6 +1300,12 @@ void bindUDP(lua_State* L) {
                                  Flags<UDPPacketFlag> flags = UDPPacketFlag::Reliable) {
                                  h->Send(peer, net_msg, channel_id, flags);
                              })
+                .addFunction("Broadcast",
+                             +[](UDPHost* h, const proto::NetMsg& net_msg,
+                                 int channel_id,
+                                 Flags<UDPPacketFlag> flags = UDPPacketFlag::Reliable) {
+                                 h->Broadcast(net_msg, channel_id, flags);
+                             })
                 .addFunction("Flush", &UDPHost::Flush)
                 .addFunction("HandleIncomingNetPacket",
                              &UDPHost::HandleIncomingNetPacket)

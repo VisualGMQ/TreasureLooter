@@ -10,8 +10,8 @@ type MoveComponentData = {
     -- private fields
     _move_velocity:Vec2,
     _speed:number,
+    _move_dir:Vec2,
     _move_disp:number, -- this frame moved displacement
-    _last_move_dir:Vec2,
 }
 
 export type MoveComponent = typeof(_M) & MoveComponentData & Component.Component
@@ -22,16 +22,17 @@ function _M.new(gameobject, cct:CharacterController?, speed:number):MoveComponen
     self._move_velocity = TL_Common.Vec2.ZERO
     self.m_cct = cct
     self._speed = speed
-    self._last_move_dir = TL_Common.Vec2.ZERO
+    self._move_dir = TL_Common.Vec2.ZERO
     return setmetatable(self, _M)
 end
 
-function _M.GetLastMoveDirection(self:MoveComponent): Vec2
-    return self._last_move_dir
+function _M.GetMoveDirection(self:MoveComponent): Vec2
+    return self._move_dir
 end
 
 function _M.ChangeSpeed(self:MoveComponent, speed: number)
     self._speed = speed
+    self._move_velocity = self._move_dir * speed
 end
 
 function _M.GetSpeed(self:MoveComponent):number
@@ -39,6 +40,7 @@ function _M.GetSpeed(self:MoveComponent):number
 end
 
 function _M.SetDir(self:MoveComponent, dir:Vec2)
+    self._move_dir = dir
     self._move_velocity = dir * self._speed
 end
 
@@ -75,7 +77,6 @@ function _M.Update(self:MoveComponent, elapse_time:TimeType)
         return
     end
 
-    self._last_move_dir = self._move_velocity:Normalize()
     local transform = self:GetGameObject().m_transform
     if self.m_cct then
         self.m_cct:MoveAndSlide(disp)

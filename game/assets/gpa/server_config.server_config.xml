@@ -1,7 +1,7 @@
 <ServerConfig>
 	<uuid>a0d42962-c2e3-4f51-b88f-4c8113eb3307</uuid>
 	<payload>
-		<global_script>scripts/server/server_entry.luau</global_script>
+		<global_script>scripts/server/game_entry.luau</global_script>
 		<lua_paths>
 			<elem>
 				<key>server</key>

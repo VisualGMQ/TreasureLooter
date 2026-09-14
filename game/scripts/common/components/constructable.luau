@@ -13,7 +13,7 @@ type ConstructableComponentData = {
 	_fx_on_accept_material: DID,
 }
 
-export type ConstructableComponent = typeof(_M) & ConstructableComponentData & Component.Component
+export type ConstructableComponent = typeof(setmetatable({}::ConstructableComponentData, _M)) & Component.Component
 
 export type ConstructableComponentDefinition = {
 	m_phases: { [DID]:ConstructPhase },
@@ -90,13 +90,6 @@ function _M.onMaterialEnter(self: ConstructableComponent, event: TriggerEnterEve
 	self._growth_amount += mat_config.m_growth
 	go:Destroy()
 
-	if self._fx_on_accept_material ~= TL_Schema.DID.Invalid then
-		local ClientWorld = require("@client/world")
-		local pos = self._gameobject.m_transform:GetGlobalPosition()
-		pos.y += 10
-		ClientWorld.GetInst():AddFX(self._fx_on_accept_material, pos)
-	end
-
 	self:tryStepToNextPhase()
 end
 
@@ -127,21 +120,6 @@ function _M.StepToNextPhase(self: ConstructableComponent)
 	if self._index > #self._phases then
 		return
 	end
-
-	local next_phase = self._phases[self._index]
-	if next_phase then
-		local client_ctx = TL_Client.GetContext()
-		local entity = self._gameobject:GetEntity()
-		local sprite = client_ctx:GetSpriteManager():Get(entity)
-		if sprite then
-			sprite.m_image = next_phase.m_sprite.m_image
-			sprite.m_region = next_phase.m_sprite.m_region
-			sprite.m_size = next_phase.m_sprite.m_size
-			sprite.m_anchor = next_phase.m_sprite.m_anchor
-			sprite.m_color = next_phase.m_sprite.m_color
-			sprite.m_flip = next_phase.m_sprite.m_flip
-		end
-	end
 end
 
 function _M.GetCurrentPhaseIndex(self: ConstructableComponent): number
@@ -159,21 +137,6 @@ function _M.ResetToPhase(self: ConstructableComponent, target_index: number)
 
 	self._index = target_index
 	self._growth_amount = 0
-
-	local phase = self._phases[self._index]
-	if phase then
-		local client_ctx = TL_Client.GetContext()
-		local entity = self._gameobject:GetEntity()
-		local sprite = client_ctx:GetSpriteManager():Get(entity)
-		if sprite then
-			sprite.m_image = phase.m_sprite.m_image
-			sprite.m_region = phase.m_sprite.m_region
-			sprite.m_size = phase.m_sprite.m_size
-			sprite.m_anchor = phase.m_sprite.m_anchor
-			sprite.m_color = phase.m_sprite.m_color
-			sprite.m_flip = phase.m_sprite.m_flip
-		end
-	end
 end
 
 return _M

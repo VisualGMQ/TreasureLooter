@@ -20,7 +20,7 @@ end
 function _M.OnUpdate(self: PlayerPuttingDownNode)
     local go = HFSMUtil.GetGameObject(self._entity)
     if go and go.m_raise_up_component then
-        local facing = go.m_move_component:GetLastMoveDirection()
+        local facing = go.m_move_component:GetMoveDirection()
         if facing:LengthSquared() == 0 then
             facing = ClientAttackComponent.k_init_forward_dir
         end

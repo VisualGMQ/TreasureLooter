@@ -15,7 +15,6 @@ function _M.new(entity: Entity): PlayerCarryingNode
 end
 
 function _M.OnUpdate(self: PlayerCarryingNode)
-    local ctx = TL_Client.GetContext()
     local go = HFSMUtil.GetGameObject(self._entity)
     if not go then
         return
@@ -25,17 +24,6 @@ function _M.OnUpdate(self: PlayerCarryingNode)
     if not raise_up or not raise_up:IsHolding() then
         HFSMUtil.ChangeState(self._entity, States.FreeHand)
         return
-    end
-
-    local input_manager = ctx:GetInputManager()
-    local interact_action = input_manager:GetAction("Interact")
-    if interact_action:IsPressed(0) then
-        local obj = go.m_interact_component and go.m_interact_component:GetInteractObject()
-        if obj then
-            HFSMUtil.ChangeState(self._entity, States.PickingUp)
-        else
-            HFSMUtil.ChangeState(self._entity, States.PuttingDown)
-        end
     end
 end
 

@@ -626,6 +626,17 @@ std::string typeConvertToProto(const std::string& type) {
     return type;
 }
 
+bool IsSchemaEnumType(const SchemaInfoManager& mgr, const std::string& type) {
+    for (auto& schema_info : mgr.m_infos) {
+        for (auto& enum_info : schema_info.m_enums) {
+            if (enum_info.m_name == type) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 std::string GenerateProtoClassDeclareCode(const ClassInfo& info) {
     assert(info.ShouldGenProto());
 
@@ -675,7 +686,7 @@ std::string GenerateProtoEnumDeclareCode(const EnumInfo& info) {
 
     auto& mustache = MustacheManager::GetInst().m_proto_enum_declare_mustache;
     kainjow::mustache::data data;
-    data.set("type", info.m_type);
+    data.set("name", info.m_name);
 
     kainjow::mustache::data items{kainjow::mustache::data::type::list};
     for (auto& item : info.m_items) {
@@ -873,23 +884,44 @@ std::string GenerateProtoBindingImplCode(const SchemaInfoManager& mgr) {
                 kainjow::mustache::data field_data;
                 field_data.set("field_name", "m_" + property.m_name);
 
-                bool is_builtin =
-                    CppTypeToProtoType.find(property.m_type) !=
-                    CppTypeToProtoType.end();
-                bool is_string = property.m_type == "std::string" ||
-                                 property.m_type == "std::string_view";
+                std::string element_type = property.m_type;
+                if (property.m_is_optional || property.m_is_array) {
+                    element_type = property.m_template_type1;
+                }
 
-                if (!is_builtin) {
-                    field_data.set("is_message", true);
-                    field_data.set("field_type",
-                                   "::proto::" + property.m_type);
+                bool is_enum = IsSchemaEnumType(mgr, element_type);
+                bool is_builtin =
+                    CppTypeToProtoType.find(element_type) !=
+                    CppTypeToProtoType.end();
+                bool is_string = element_type == "std::string" ||
+                                 element_type == "std::string_view";
+
+                std::string proto_type =
+                    "::proto::" + typeConvertToProto(element_type);
+
+                if (is_enum) {
+                    if (property.m_is_optional) {
+                        field_data.set("is_optional_enum", true);
+                        field_data.set("has_has", true);
+                    } else {
+                        field_data.set("is_enum", true);
+                    }
+                    field_data.set("proto_type", proto_type);
+                    field_data.set("schema_type", element_type);
+                } else if (!is_builtin) {
+                    if (property.m_is_optional) {
+                        field_data.set("is_optional_message", true);
+                    } else {
+                        field_data.set("is_message", true);
+                    }
+                    field_data.set("proto_type", proto_type);
                     field_data.set("has_has", true);
                 } else if (is_string) {
                     field_data.set("is_string", true);
                 } else {
                     field_data.set("is_scalar", true);
-                    auto it = CppTypeToProtoType.find(property.m_type);
-                    field_data.set("field_type",
+                    auto it = CppTypeToProtoType.find(element_type);
+                    field_data.set("proto_type",
                                    protoScalarToCppType(it->second));
                 }
                 fields_data << field_data;
@@ -918,7 +950,7 @@ std::string GenerateProtoBindingImplCode(const SchemaInfoManager& mgr) {
                 field_data.set("field_name",
                                "m_" + toSnakeCase(class_info.m_name));
                 field_data.set("is_message", true);
-                field_data.set("field_type",
+                field_data.set("proto_type",
                                "::proto::" + class_info.m_name);
                 field_data.set("has_has", true);
                 net_msg_fields << field_data;
@@ -931,7 +963,7 @@ std::string GenerateProtoBindingImplCode(const SchemaInfoManager& mgr) {
                 field_data.set("field_name",
                                "m_" + toSnakeCase(enum_info.m_name));
                 field_data.set("is_message", true);
-                field_data.set("field_type",
+                field_data.set("proto_type",
                                "::proto::" + enum_info.m_name);
                 field_data.set("has_has", true);
                 net_msg_fields << field_data;
@@ -1051,10 +1083,36 @@ std::string GenerateProtoConvertImplCode(const SchemaInfoManager& mgr) {
 
                 kainjow::mustache::data field_data;
                 field_data.set("field_name", "m_" + property.m_name);
-                field_data.set(
-                    "is_message",
-                    CppTypeToProtoType.find(property.m_type) ==
-                        CppTypeToProtoType.end());
+
+                std::string element_type = property.m_type;
+                if (property.m_is_optional || property.m_is_array) {
+                    element_type = property.m_template_type1;
+                }
+
+                bool is_enum = IsSchemaEnumType(mgr, element_type);
+                bool is_builtin =
+                    CppTypeToProtoType.find(element_type) !=
+                    CppTypeToProtoType.end();
+
+                if (is_enum) {
+                    if (property.m_is_optional) {
+                        field_data.set("is_optional_enum", true);
+                    } else {
+                        field_data.set("is_enum", true);
+                    }
+                    field_data.set(
+                        "proto_type",
+                        "::proto::" + typeConvertToProto(element_type));
+                    field_data.set("schema_type", element_type);
+                } else if (!is_builtin) {
+                    if (property.m_is_optional) {
+                        field_data.set("is_optional_message", true);
+                    } else {
+                        field_data.set("is_message", true);
+                    }
+                } else {
+                    field_data.set("is_scalar", true);
+                }
                 fields_data << field_data;
             }
             conv_data.set("fields", fields_data);
@@ -1677,6 +1735,150 @@ std::string GenerateSchemaTypesLuauDefinitionCode(
     out += ns;
     out += "}\n";
     return out;
+}
+
+std::string GenerateProtoTypesLuauDefinitionCode(
+    const SchemaInfoManager& mgr) {
+    // Emits proto.d.luau: global `ProtoX` message types for the `TL_Proto`
+    // namespace (mirrors schema_generate/schema/proto/proto_binding.cpp) plus
+    // the `EventSystem` extension for the proto events
+    // (proto_event_binding.cpp).
+    //
+    // Proto messages use a `Proto` prefix on purpose: every proto class is
+    // *also* a schema class with the same name (see schema.d.luau), so bare
+    // names (Move, NetVec2, ...) would be duplicate type declarations.
+    auto& mustache = MustacheManager::GetInst().m_proto_luau_mustache;
+    kainjow::mustache::data datas;
+    kainjow::mustache::data classes_data{kainjow::mustache::data::type::list};
+    kainjow::mustache::data events_data{kainjow::mustache::data::type::list};
+
+    for (const auto& schema_info : mgr.m_infos) {
+        for (const auto& class_info : schema_info.m_classes) {
+            if (!class_info.ShouldGenProto()) {
+                continue;
+            }
+
+            kainjow::mustache::data class_data;
+            class_data.set("class_name", class_info.m_name);
+            class_data.set("has_schema", true);
+
+            kainjow::mustache::data fields_data{
+                kainjow::mustache::data::type::list};
+            for (const auto& property : class_info.m_properties) {
+                if (!property.m_proto_id) {
+                    continue;
+                }
+
+                kainjow::mustache::data field_data;
+                field_data.set("field_name", "m_" + property.m_name);
+
+                std::string element_type = property.m_type;
+                if (property.m_is_optional || property.m_is_array) {
+                    element_type = property.m_template_type1;
+                }
+
+                bool is_enum = IsSchemaEnumType(mgr, element_type);
+                bool is_builtin =
+                    CppTypeToProtoType.find(element_type) !=
+                    CppTypeToProtoType.end();
+
+                std::string getter_type;
+                std::string setter_type;
+                bool has_has = false;
+                if (is_enum) {
+                    // enums cross the luau boundary as plain integers
+                    getter_type = "number";
+                    setter_type = "number";
+                    has_has = property.m_is_optional;
+                } else if (!is_builtin) {
+                    // nested proto message
+                    getter_type = "Proto" + element_type;
+                    setter_type = "Proto" + element_type;
+                    has_has = true;
+                } else {
+                    // scalar / string
+                    bool is_string = element_type == "std::string" ||
+                                     element_type == "std::string_view";
+                    getter_type = is_string ? "string" : "number";
+                    setter_type = getter_type;
+                }
+
+                field_data.set("getter_type", getter_type);
+                field_data.set("setter_type", setter_type);
+                if (has_has) {
+                    field_data.set("has_has", true);
+                }
+                fields_data << field_data;
+            }
+            class_data.set("fields", fields_data);
+
+            classes_data << class_data;
+        }
+
+        // events are registered for every enum/class carrying a proto_id
+        for (const auto& enum_info : schema_info.m_enums) {
+            if (!enum_info.m_proto_id) {
+                continue;
+            }
+            kainjow::mustache::data event_data;
+            event_data.set("event_name", enum_info.m_name);
+            // enums are plain integer aliases, not proto message types
+            event_data.set("payload_type", enum_info.m_name);
+            events_data << event_data;
+        }
+        for (const auto& class_info : schema_info.m_classes) {
+            if (!class_info.m_proto_id) {
+                continue;
+            }
+            kainjow::mustache::data event_data;
+            event_data.set("event_name", class_info.m_name);
+            event_data.set("payload_type", "Proto" + class_info.m_name);
+            events_data << event_data;
+        }
+    }
+
+    // NetMsg oneof wrapper (not backed by a schema class, no to_schema).
+    {
+        kainjow::mustache::data net_msg_data;
+        net_msg_data.set("class_name", std::string{"NetMsg"});
+
+        kainjow::mustache::data net_msg_fields{
+            kainjow::mustache::data::type::list};
+        for (const auto& schema_info : mgr.m_infos) {
+            for (const auto& class_info : schema_info.m_classes) {
+                if (!class_info.m_proto_id) {
+                    continue;
+                }
+                kainjow::mustache::data field_data;
+                field_data.set("field_name",
+                               "m_" + toSnakeCase(class_info.m_name));
+                field_data.set("getter_type", "Proto" + class_info.m_name);
+                field_data.set("setter_type", "Proto" + class_info.m_name);
+                field_data.set("has_has", true);
+                net_msg_fields << field_data;
+            }
+            for (const auto& enum_info : schema_info.m_enums) {
+                if (!enum_info.m_proto_id) {
+                    continue;
+                }
+                kainjow::mustache::data field_data;
+                field_data.set("field_name",
+                               "m_" + toSnakeCase(enum_info.m_name));
+                field_data.set("getter_type", "Proto" + enum_info.m_name);
+                field_data.set("setter_type", "Proto" + enum_info.m_name);
+                field_data.set("has_has", true);
+                net_msg_fields << field_data;
+            }
+        }
+        net_msg_data.set("fields", net_msg_fields);
+
+        classes_data << net_msg_data;
+    }
+
+    datas.set("classes", classes_data);
+    datas.set("events", events_data);
+
+    return mustache.render(datas);
 }
 
 std::string GenerateCppAssetExtensionHeaderCode(

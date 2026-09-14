@@ -81,6 +81,9 @@ MustacheManager::MustacheManager()
       m_proto_convert_impl_mustache{
           readMustache("schema/schema_parser/mustaches/proto/"
                        "proto_convert_impl.mustache")},
+      m_proto_luau_mustache{
+          readMustache("schema/schema_parser/mustaches/proto/"
+                       "proto_luau.mustache")},
       m_asset_info_header_mustache{readMustache(
           "schema/schema_parser/mustaches/asset/asset_info_header.mustache")},
       m_asset_info_impl_mustache{readMustache(

@@ -18,7 +18,7 @@ setmetatable(_M, {__index = Creation})
 
 local k_default_script = TL_Common.Path("scripts/client/gameobject_behavior.luau")
 
-export type ClientCreation = typeof(_M)
+export type ClientCreation = typeof(_M) & Creation.Creation
 
 function _M.ConvertCharacterDefinitionToGODefinition(entity:Entity, did:DID, config:CharacterDefinitionHandle, weapon_entity:Entity):ClientGameObject.ClientGameObjectDefinition
     local definition = {}::ClientGameObject.ClientGameObjectDefinition
