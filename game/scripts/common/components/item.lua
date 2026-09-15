@@ -1,10 +1,10 @@
 local Component = require("common.components.component")
 
 ---@class ItemComponentDefinition
----@field m_behavior integer
+---@field m_behavior ItemBehaviorFlags
 
 ---@class ItemComponent : Component
----@field _behavior integer
+---@field _behavior ItemBehaviorFlags
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = Component })
@@ -19,7 +19,7 @@ function _M.new(gameobject, definition)
     return setmetatable(self, _M)
 end
 
----@return integer
+---@return ItemBehaviorFlags
 function _M:GetBehavior()
     return self._behavior
 end

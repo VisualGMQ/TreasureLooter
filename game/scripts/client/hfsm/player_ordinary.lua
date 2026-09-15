@@ -44,7 +44,7 @@ function _M:OnUpdate()
         if weapon_script and weapon_script.m_gameobject then
             local weapon_go = weapon_script.m_gameobject
             if weapon_go.m_attack_component then
-                local dir = go.m_move_component:GetMoveDirection()
+                local dir = go.m_move_component:GetLastMoveDirection()
                 if dir:LengthSquared() == 0 then
                     dir = ClientAttackComponent.k_init_forward_dir
                 end

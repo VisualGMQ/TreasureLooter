@@ -5,6 +5,7 @@ local Component = require("common.components.component")
 ---@field _move_velocity Vec2
 ---@field _speed number
 ---@field _move_dir Vec2
+---@field _last_move_dir Vec2
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = Component })
@@ -20,12 +21,21 @@ function _M.new(gameobject, cct, speed)
     self.m_cct = cct
     self._speed = speed
     self._move_dir = TL_Common.Vec2.ZERO
+    self._last_move_dir = TL_Common.Vec2.ZERO
     return setmetatable(self, _M)
 end
 
 ---@return Vec2
 function _M:GetMoveDirection()
     return self._move_dir
+end
+
+--- Last direction the object actually moved towards. Keeps the previous
+--- facing when the object stops, unlike GetMoveDirection which is the raw
+--- current input direction.
+---@return Vec2
+function _M:GetLastMoveDirection()
+    return self._last_move_dir
 end
 
 ---@param speed number
@@ -76,6 +86,8 @@ function _M:Update(elapse_time)
     if disp:LengthSquared() == 0 then
         return
     end
+
+    self._last_move_dir = self._move_velocity:Normalize()
 
     local transform = self:GetGameObject().m_transform
     if self.m_cct then

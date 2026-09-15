@@ -26,7 +26,7 @@ cmake -S game/ -B cmake-build
 cmake --build cmake-build --target schema_preprocess
 ```
 
-It will generate `game/schema_generate` and `game/scripts/type_hints/tl.d.luau`.
+It will generate `game/schema_generate` and the LuaCATS type hints in `game/scripts/type_hints/`.
 
 Then copy [game](game) folder to [android/app/jni](android/app/jni)
 
@@ -65,7 +65,12 @@ cmake --build .\cmake-build\ --target package --config Release
 
 It will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
 
-## AI Coding Note
+## For Developer
+
+For best lua code experience, you can use vscode to open `game/scripts` folder. It will read [.luarc.json](game/scripts/.luarc.json) and support you some C++ binding hints.
+
+
+## AI Code
 
 Some projects are entirely written by AI, I didn't review code, so you can ignore them when you read code:
 

@@ -93,6 +93,9 @@ set(LUA_TYPES_HINT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts/type_hints")
 # common_meta.lua / client_meta.lua / server_meta.lua type hints for LuaLS.
 set(LUA_SCHEMA_META_HINT "${LUA_TYPES_HINT_DIR}/schema_meta.lua")
 set(LUA_PROTO_META_HINT "${LUA_TYPES_HINT_DIR}/proto_meta.lua")
+# Hand-written + generated LuaCATS hints, attached to the entry targets so IDEs
+# can index them alongside the game scripts.
+file(GLOB LUA_TYPES_HINT_FILES "${LUA_TYPES_HINT_DIR}/*.lua")
 
 if (NEED_SCHEMA_PARSER)
     add_custom_command(OUTPUT

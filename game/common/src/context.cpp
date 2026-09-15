@@ -119,7 +119,7 @@ void CommonContext::Shutdown() {
     m_scene_manager.reset();
 
     m_script_component_manager.reset();
-    // remove luau event binding firstly, to clear LuaRef & lua_State* depends
+    // remove lua event binding firstly, to clear LuaRef & lua_State* depends
     // 1. remove all lua event listener(EventSystem will pending the remove
     // operations)
     // 2. call EventSystem::Update to actually remove them

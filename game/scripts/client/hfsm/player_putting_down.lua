@@ -20,7 +20,7 @@ end
 function _M:OnUpdate()
     local go = HFSMUtil.GetGameObject(self._entity)
     if go and go.m_raise_up_component then
-        local facing = go.m_move_component:GetMoveDirection()
+        local facing = go.m_move_component:GetLastMoveDirection()
         if facing:LengthSquared() == 0 then
             facing = ClientAttackComponent.k_init_forward_dir
         end

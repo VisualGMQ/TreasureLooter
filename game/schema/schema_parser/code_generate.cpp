@@ -1537,7 +1537,7 @@ std::string GenerateBindingImplCode(const SchemaInfoManager& manager) {
     return impl_mustache.render(data);
 }
 
-bool IsLuauPrimitiveType(const std::string& name) {
+bool IsLuaPrimitiveType(const std::string& name) {
     return name == "number" || name == "string" || name == "boolean";
 }
 
@@ -1550,8 +1550,8 @@ bool IsLuaKeyword(const std::string& name) {
     return keywords.count(name) != 0;
 }
 
-std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
-    static const std::unordered_map<std::string, std::string> Cpp2Luau = {
+std::string ConvertCppTypeToLuaType(const std::string& cpp_type) {
+    static const std::unordered_map<std::string, std::string> Cpp2Lua = {
         {      "float",  "number"},
         {     "double",  "number"},
         {        "int",  "number"},
@@ -1566,25 +1566,25 @@ std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
         {"std::string",  "string"},
         {       "bool", "boolean"},
     };
-    auto it = Cpp2Luau.find(cpp_type);
-    if (it != Cpp2Luau.end()) return it->second;
+    auto it = Cpp2Lua.find(cpp_type);
+    if (it != Cpp2Lua.end()) return it->second;
     std::string inner = extractOptionalInnerType(cpp_type);
-    if (!inner.empty()) return ConvertCppTypeToLuauType(inner) + "?";
+    if (!inner.empty()) return ConvertCppTypeToLuaType(inner) + "?";
     std::string flags_inner = extractFlagsInnerType(cpp_type);
     if (!flags_inner.empty()) return flags_inner + "Flags";
     std::string vec_inner = extractVectorInnerType(cpp_type);
     if (!vec_inner.empty())
-        return ConvertCppTypeToLuauType(vec_inner) + "[]";
+        return ConvertCppTypeToLuaType(vec_inner) + "[]";
     std::string arr_inner = extractArrayInnerType(cpp_type);
     if (!arr_inner.empty())
-        return ConvertCppTypeToLuauType(arr_inner) + "[]";
+        return ConvertCppTypeToLuaType(arr_inner) + "[]";
     std::string mat_inner = extractMatStorageInnerType(cpp_type);
     if (!mat_inner.empty()) return "{}";
     if (!extractUnorderedMapInnerType(cpp_type).empty()) return "{}";
     return cpp_type;
 }
 
-std::string CppToLuauForProto(const std::string& cpp_type) {
+std::string CppToLuaForProto(const std::string& cpp_type) {
     if (cpp_type == "std::string" || cpp_type == "std::string_view")
         return "string";
     if (cpp_type == "bool") return "boolean";
@@ -1624,7 +1624,7 @@ std::string GenerateSchemaMetaDefinitionCode(const SchemaInfoManager& manager) {
             if (emitted_classes.insert(name).second) {
                 types += "---@class " + name + "\n";
                 for (const auto& p : clazz.m_properties) {
-                    std::string lua_type = ConvertCppTypeToLuauType(p.m_type);
+                    std::string lua_type = ConvertCppTypeToLuaType(p.m_type);
                     if (p.m_is_optional && lua_type.back() != '?')
                         lua_type += "?";
                     types += "---@field " +
@@ -1790,7 +1790,7 @@ std::string GenerateProtoMetaDefinitionCode(const SchemaInfoManager& mgr) {
                 std::string setter_type;
                 bool has_has = false;
                 if (is_enum) {
-                    // enums cross the luau boundary as plain integers
+                    // enums cross the lua boundary as plain integers
                     getter_type = "number";
                     setter_type = "number";
                     has_has = property.m_is_optional;

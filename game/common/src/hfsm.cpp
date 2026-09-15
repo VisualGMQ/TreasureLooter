@@ -36,23 +36,23 @@ const std::string& HFSMNode::GetName() const {
     return m_name;
 }
 
-LuauHFSMNode::LuauHFSMNode(HFSMNodeID id, std::string name, Entity entity,
+LuaHFSMNode::LuaHFSMNode(HFSMNodeID id, std::string name, Entity entity,
                            ScriptBinaryDataHandle handle)
     : HFSMNode(id, std::move(name)), m_script(entity, handle) {}
 
-void LuauHFSMNode::OnEnter() {
+void LuaHFSMNode::OnEnter() {
     m_script.callMethodNoArg("OnInit");
 }
 
-void LuauHFSMNode::OnUpdate() {
+void LuaHFSMNode::OnUpdate() {
     m_script.callMethodNoArg("OnUpdate");
 }
 
-void LuauHFSMNode::OnExit() {
+void LuaHFSMNode::OnExit() {
     m_script.callMethodNoArg("OnQuit");
 }
 
-LuauHFSMBlackBoard::LuauHFSMBlackBoard(lua_State* L)
+LuaHFSMBlackBoard::LuaHFSMBlackBoard(lua_State* L)
     : m_table(luabridge::newTable(L)) {}
 
 HFSMComponent::HFSMComponent(std::unique_ptr<IHFSMBlackBoard>&& blackboard) {
@@ -169,17 +169,17 @@ void HFSMComponent::rebuildUpdateChain() {
     std::reverse(m_update_chain.begin(), m_update_chain.end());
 }
 
-LuauHFSMComponent::LuauHFSMComponent(
-    std::unique_ptr<LuauHFSMBlackBoard>&& blackboard)
+LuaHFSMComponent::LuaHFSMComponent(
+    std::unique_ptr<LuaHFSMBlackBoard>&& blackboard)
     : HFSMComponent(std::move(blackboard)) {}
 
-luabridge::LuaRef LuauHFSMComponent::GetBlackBoard() const {
-    return static_cast<LuauHFSMBlackBoard*>(
+luabridge::LuaRef LuaHFSMComponent::GetBlackBoard() const {
+    return static_cast<LuaHFSMBlackBoard*>(
                const_cast<IHFSMBlackBoard*>(&HFSMComponent::GetBlackBoard()))
         ->GetTable();
 }
 
-LuauHFSMComponent* HFSMComponentManager::Create(
+LuaHFSMComponent* HFSMComponentManager::Create(
     Entity entity, ScriptHFSMDefinitionHandle definition) {
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(definition.Get(), nullptr, LOGE,
                                      "[HFSM]: definition is null");
@@ -193,9 +193,9 @@ LuauHFSMComponent* HFSMComponentManager::Create(
     lua_State* L = script_manager.GetUnderlyingVM();
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(L, nullptr, LOGE, "[HFSM]: VM is null");
 
-    RegisterEntityByDerive<LuauHFSMComponent>(
-        entity, std::make_unique<LuauHFSMBlackBoard>(L));
-    LuauHFSMComponent* component = Get(entity);
+    RegisterEntityByDerive<LuaHFSMComponent>(
+        entity, std::make_unique<LuaHFSMBlackBoard>(L));
+    LuaHFSMComponent* component = Get(entity);
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(component, nullptr, LOGE,
                                      "[HFSM]: register entity {} failed",
                                      entity);
@@ -211,7 +211,7 @@ LuauHFSMComponent* HFSMComponentManager::Create(
                  nodes[i].m_script);
             continue;
         }
-        component->AddNode<LuauHFSMNode>(i, nodes[i].m_name, entity,
+        component->AddNode<LuaHFSMNode>(i, nodes[i].m_name, entity,
                                          script_handle);
     }
 
@@ -245,8 +245,8 @@ LuauHFSMComponent* HFSMComponentManager::Create(
     return component;
 }
 
-LuauHFSMComponent* HFSMComponentManager::Get(Entity entity) {
-    return static_cast<LuauHFSMComponent*>(
+LuaHFSMComponent* HFSMComponentManager::Get(Entity entity) {
+    return static_cast<LuaHFSMComponent*>(
         ComponentManager<HFSMComponent>::Get(entity));
 }
 

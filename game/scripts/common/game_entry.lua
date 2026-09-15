@@ -37,7 +37,7 @@ function GameEntry:OnInit()
     self.m_object_definitions = ObjectDefinitionTable.new(object_definition_table_handle)
     World.GetInst().m_object_definitions = self.m_object_definitions
     World.GetInst().m_buff_appliers = BuffApplierTable.new()
-    self:ChangeLevel(TL_Common.Path("assets/gpa/levels/net_test.level.xml"))
+    self:ChangeLevel(TL_Common.Path("assets/gpa/levels/main.level.xml"))
 end
 
 ---@param level Path

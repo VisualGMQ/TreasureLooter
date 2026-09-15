@@ -12,6 +12,42 @@
 				</gamepad>
 			</elem>
 			<elem>
+				<name>Attack2</name>
+				<keyboard>
+					<elem>U</elem>
+				</keyboard>
+				<gamepad>
+					<elem>North</elem>
+				</gamepad>
+			</elem>
+			<elem>
+				<name>Attack3</name>
+				<keyboard>
+					<elem>I</elem>
+				</keyboard>
+				<gamepad>
+					<elem>LeftShoulder</elem>
+				</gamepad>
+			</elem>
+			<elem>
+				<name>Interact</name>
+				<keyboard>
+					<elem>K</elem>
+				</keyboard>
+				<gamepad>
+					<elem>East</elem>
+				</gamepad>
+			</elem>
+			<elem>
+				<name>Dig</name>
+				<keyboard>
+					<elem>L</elem>
+				</keyboard>
+				<gamepad>
+					<elem>West</elem>
+				</gamepad>
+			</elem>
+			<elem>
 				<name>ShowDebugPanel</name>
 				<keyboard>
 					<elem>Grave</elem>
@@ -85,4 +121,3 @@
 		</axis>
 	</payload>
 </InputConfig>
-

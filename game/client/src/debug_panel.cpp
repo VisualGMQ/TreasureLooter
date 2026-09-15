@@ -123,7 +123,7 @@ void DebugPanel::RegisterCmd(
     const std::string& name, luabridge::LuaRef cmd,
     const std::vector<luabridge::LuaRef>& param_hints) {
     if (!cmd.isCallable()) {
-        LOGE("[DebugPanel] RegisterCmd from luau '{}' is not callable", name);
+        LOGE("[DebugPanel] RegisterCmd from lua '{}' is not callable", name);
         return;
     }
 

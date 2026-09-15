@@ -90,7 +90,7 @@ int TL_Log(lua_State* L) {
         line = ar.currentline > 0 ? ar.currentline : 0;
     }
 
-    LOGI("[Luau][{}:{}: {}]: {}", file, func, line, msg);
+    LOGI("[Lua][{}:{}: {}]: {}", file, func, line, msg);
     return 0;
 }
 
@@ -1319,14 +1319,14 @@ void bindHFSM(lua_State* L) {
                 .addFunction("GetID", &HFSMNode::GetID)
                 .addFunction("GetParent", &HFSMNode::GetParent)
             .endClass()
-            .beginClass<LuauHFSMComponent>("HFSMComponent")
+            .beginClass<LuaHFSMComponent>("HFSMComponent")
                 .addFunction("ChangeState",
-                             +[](LuauHFSMComponent* component,
+                             +[](LuaHFSMComponent* component,
                                  HFSMNodeID id) {
                                  component->ChangeState(id);
                              })
                 .addFunction("GetBlackBoard",
-                             +[](LuauHFSMComponent* component) {
+                             +[](LuaHFSMComponent* component) {
                                  return component->GetBlackBoard();
                              })
             .endClass()
