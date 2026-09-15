@@ -1,0 +1,5 @@
+<schema>
+    <enum name="NetSyncField">
+        <item name="Transform" defualt="0"/>
+    </enum>
+</schema>

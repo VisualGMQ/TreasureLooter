@@ -48,7 +48,7 @@
 			</elem>
 			<elem>
 				<did>CharacterDID1</did>
-				<client_script>scripts/client/behaviors/player_behavior.luau</client_script>
+				<client_script>scripts/client/behaviors/player_behavior.lua</client_script>
 				<server_script/>
 				<spawn_point_name>player_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
@@ -58,7 +58,7 @@
 			</elem>
 			<elem>
 				<did>CharacterDID2</did>
-				<client_script>scripts/client/behaviors/slime_behavior.luau</client_script>
+				<client_script>scripts/client/behaviors/slime_behavior.lua</client_script>
 				<server_script/>
 				<spawn_point_name>slime_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
@@ -68,7 +68,7 @@
 			</elem>
 			<elem>
 				<did>ItemDID5</did>
-				<client_script>scripts/client/behaviors/workbench.luau</client_script>
+				<client_script>scripts/client/behaviors/workbench.lua</client_script>
 				<server_script/>
 				<spawn_point_name>workbench_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
@@ -88,7 +88,7 @@
 			</elem>
 			<elem>
 				<did>ItemDID8</did>
-				<client_script>scripts/client/behaviors/choppable_tree.luau</client_script>
+				<client_script>scripts/client/behaviors/choppable_tree.lua</client_script>
 				<server_script/>
 				<spawn_point_name>choppable_tree_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>

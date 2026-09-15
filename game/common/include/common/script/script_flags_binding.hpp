@@ -6,7 +6,7 @@
 #include <type_traits>
 
 // Intentionally no Stack<Flags<T>> specialization: use LuaBridge's default userdata-by-value
-// so properties and returns are TL.*Flags objects (Has/Value/...) in Luau, not raw integers.
+// so properties and returns are TL.*Flags objects (Has/Value/...) in Lua, not raw integers.
 
 template <typename T>
 void bindFlags(const char* name, lua_State* L) {

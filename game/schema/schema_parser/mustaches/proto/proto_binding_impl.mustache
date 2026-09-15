@@ -17,10 +17,28 @@ void BindProtoModule(lua_State* L) {
                     .addFunction("{{field_name}}", &{{class_full_name}}::{{field_name}})
 {{#is_message}}
                     .addFunction("set_{{field_name}}",
-                                 +[]({{class_full_name}}* self, const {{field_type}}& v) {
+                                 +[]({{class_full_name}}* self, const {{proto_type}}& v) {
                                      *self->mutable_{{field_name}}() = v;
                                  })
 {{/is_message}}
+{{#is_optional_message}}
+                    .addFunction("set_{{field_name}}",
+                                 +[]({{class_full_name}}* self, const {{proto_type}}& v) {
+                                     *self->mutable_{{field_name}}() = v;
+                                 })
+{{/is_optional_message}}
+{{#is_enum}}
+                    .addFunction("set_{{field_name}}",
+                                 +[]({{class_full_name}}* self, int v) {
+                                     self->set_{{field_name}}(static_cast<{{proto_type}}>(v));
+                                 })
+{{/is_enum}}
+{{#is_optional_enum}}
+                    .addFunction("set_{{field_name}}",
+                                 +[]({{class_full_name}}* self, int v) {
+                                     self->set_{{field_name}}(static_cast<{{proto_type}}>(v));
+                                 })
+{{/is_optional_enum}}
 {{#is_string}}
                     .addFunction("set_{{field_name}}",
                                  +[]({{class_full_name}}* self, const std::string& v) {
@@ -29,7 +47,7 @@ void BindProtoModule(lua_State* L) {
 {{/is_string}}
 {{#is_scalar}}
                     .addFunction("set_{{field_name}}",
-                                 +[]({{class_full_name}}* self, {{field_type}} v) {
+                                 +[]({{class_full_name}}* self, {{proto_type}} v) {
                                      self->set_{{field_name}}(v);
                                  })
 {{/is_scalar}}

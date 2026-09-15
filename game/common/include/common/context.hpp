@@ -72,6 +72,7 @@ public:
     [[nodiscard]] bool IsRunning() const;
 
     Entity CreateEntity();
+    Entity CreateReplicateEntity(Entity raw_entity);
     void RemoveEntity(Entity);
 
     [[nodiscard]] const CommonConfig& GetCommonConfig() const;
@@ -81,6 +82,8 @@ public:
     void Exit();
     [[nodiscard]] const std::vector<std::string_view>& GetOSArgs() const;
     [[nodiscard]] std::string_view GetAppPath() const;
+
+    [[nodiscard]] bool IsReplicateEntity(Entity) const;
 
     std::unique_ptr<EventSystem> m_event_system;
     std::unique_ptr<EventDebugger> m_event_debugger_system;

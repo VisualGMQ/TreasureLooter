@@ -81,7 +81,7 @@ void ServerContext::Initialize(int argc, char** argv) {
 
     initServerConfig();
 
-    m_assets_manager->GetManager<ScriptBinaryData>().Initialize(m_config.m_lua_paths);
+    m_assets_manager->GetManager<ScriptBinaryData>().Initialize();
 
     m_debug_drawer = std::unique_ptr<IDebugDrawer>(new TrivialDebugDrawer{});
 
@@ -97,7 +97,7 @@ void ServerContext::Initialize(int argc, char** argv) {
         m_assets_manager->GetManager<Scene>().Load(GetCommonConfig().m_entry_scene);
     m_scene_manager->Switch(level);
 
-    m_time->SetFPS(24);
+    m_time->SetFPS(30);
 }
 
 void ServerContext::HandleEvents(const SDL_Event& event) {

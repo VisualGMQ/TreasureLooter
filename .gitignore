@@ -4,9 +4,13 @@ logs
 imgui.ini
 install
 schema_generate/
-game/scripts/type_hints/schema.d.luau
-game/scripts/type_hints/tl.d.luau
+# Generated LuaLS (LuaCATS) definition files; the hand-written
+# common/client/server/imgui_meta.lua fragments are tracked.
+game/scripts/type_hints/schema_meta.lua
+game/scripts/type_hints/proto_meta.lua
 
+.vscode
+.opencode
 .gradle
 .cxx
 .idea

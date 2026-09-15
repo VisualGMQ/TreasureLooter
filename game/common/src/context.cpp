@@ -32,6 +32,8 @@
 
 CommonContext* CommonContext::m_current_context{};
 
+constexpr std::underlying_type_t<Entity> gReplicateEntityStart = 1000000;
+
 void CommonContext::initCommonConfig() {
     auto handle = m_assets_manager->GetManager<CommonConfig>().Load(
         std::string{"assets/gpa/common_config"} +
@@ -117,7 +119,7 @@ void CommonContext::Shutdown() {
     m_scene_manager.reset();
 
     m_script_component_manager.reset();
-    // remove luau event binding firstly, to clear LuaRef & lua_State* depends
+    // remove lua event binding firstly, to clear LuaRef & lua_State* depends
     // 1. remove all lua event listener(EventSystem will pending the remove
     // operations)
     // 2. call EventSystem::Update to actually remove them
@@ -224,6 +226,14 @@ Entity CommonContext::CreateEntity() {
     return static_cast<Entity>(m_last_entity++);
 }
 
+Entity CommonContext::CreateReplicateEntity(Entity raw_entity) {
+    auto entity = static_cast<Entity>(
+        static_cast<std::underlying_type_t<Entity>>(raw_entity) +
+        gReplicateEntityStart);
+    m_replicate_component_manager->RegisterEntity(entity, raw_entity);
+    return entity;
+}
+
 void CommonContext::RemoveEntity(Entity entity) {
     m_pending_delete_entities.push_back(entity);
 }
@@ -288,4 +298,9 @@ const std::vector<std::string_view>& CommonContext::GetOSArgs() const {
 
 std::string_view CommonContext::GetAppPath() const {
     return m_args[0];
+}
+
+bool CommonContext::IsReplicateEntity(Entity entity) const {
+    return static_cast<std::underlying_type_t<Entity>>(entity) >=
+           gReplicateEntityStart;
 }

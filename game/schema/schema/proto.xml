@@ -18,17 +18,33 @@
     <class name="Disconnect" proto_id="4">
     </class>
 
-    <class name="Spawn" proto_id="5">
-        <element name="id" type="uint32_t" proto_id="1"/>
-        <element name="position" type="NetVec2" proto_id="2"/>
+    <!--spawn a entity-->
+    <class name="SpawnPlayer" proto_id="10">
+        <element name="entity" type="uint32_t" proto_id="1"/>
+        <element name="did" type="uint32_t" proto_id="2"/>
     </class>
 
-    <class name="Leave" proto_id="6">
-        <element name="id" type="uint32_t" proto_id="1"/>
+    <class name="Replicate" proto_id="5">
+        <element name="entity" type="uint32_t" proto_id="1"/>
+    </class>
+
+    <class name="Kill" proto_id="6">
+        <element name="entity" type="uint32_t" proto_id="1"/>
     </class>
 
     <class name="Move" proto_id="7">
-        <element name="id" type="uint32_t" proto_id="1"/>
-        <element name="position" type="NetVec2" proto_id="2"/>
+        <element name="entity" type="uint32_t" proto_id="1"/>
+        <element name="seq" type="uint32_t" proto_id="2"/>
+        <element name="position" type="NetVec2" proto_id="3"/>
+    </class>
+
+    <enum name="ClientActionType" proto="true">
+        <item name="ClientActionType_Move" value="0"/>
+        <item name="ClientActionType_Attack" value="1"/>
+    </enum>
+
+    <class name="ClientAction" proto_id="9">
+        <element name="action" type="ClientActionType" proto_id="1"/>
+        <option name="move_dir" type="NetVec2" proto_id="2"/>
     </class>
 </schema>

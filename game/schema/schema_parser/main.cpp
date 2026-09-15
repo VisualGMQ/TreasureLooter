@@ -293,14 +293,24 @@ int main(int argc, char** argv) {
                   << binding_output_dir / "binding.cpp" << std::endl;
     }
 
-    // generate schema.d.luau (complete luau-lsp definition file);
-    // CMake copies it into scripts/type_hints/schema.d.luau.
+    // generate schema_meta.lua (LuaLS `---@meta` definition file);
+    // CMake copies it into scripts/type_hints/schema_meta.lua.
     {
-        std::string code = GenerateSchemaTypesLuauDefinitionCode(manager);
-        std::ofstream file(schema_output_dir / "schema.d.luau");
+        std::string code = GenerateSchemaMetaDefinitionCode(manager);
+        std::ofstream file(schema_output_dir / "schema_meta.lua");
         file.write(code.c_str(), code.length());
-        std::cout << "generate schema.d.luau to : "
-                  << schema_output_dir / "schema.d.luau" << std::endl;
+        std::cout << "generate schema_meta.lua to : "
+                  << schema_output_dir / "schema_meta.lua" << std::endl;
+    }
+
+    // generate proto_meta.lua (LuaLS `---@meta` definition file for `TL_Proto`
+    // and the proto event methods on `EventSystem`).
+    {
+        std::string code = GenerateProtoMetaDefinitionCode(manager);
+        std::ofstream file(schema_output_dir / "proto_meta.lua");
+        file.write(code.c_str(), code.length());
+        std::cout << "generate proto_meta.lua to : "
+                  << schema_output_dir / "proto_meta.lua" << std::endl;
     }
 
     // generate cpp_asset_extension.hpp

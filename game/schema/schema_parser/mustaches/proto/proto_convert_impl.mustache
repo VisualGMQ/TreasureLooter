@@ -14,9 +14,22 @@ proto::{{class_name}} ConvertSchemaToProto(const {{class_name}}& from) {
 {{#is_message}}
     *to.mutable_{{field_name}}() = ConvertSchemaToProto(from.{{field_name}});
 {{/is_message}}
-{{^is_message}}
+{{#is_optional_message}}
+    if (from.{{field_name}}.has_value()) {
+        *to.mutable_{{field_name}}() = ConvertSchemaToProto(*from.{{field_name}});
+    }
+{{/is_optional_message}}
+{{#is_enum}}
+    to.set_{{field_name}}(static_cast<{{proto_type}}>(from.{{field_name}}));
+{{/is_enum}}
+{{#is_optional_enum}}
+    if (from.{{field_name}}.has_value()) {
+        to.set_{{field_name}}(static_cast<{{proto_type}}>(*from.{{field_name}}));
+    }
+{{/is_optional_enum}}
+{{#is_scalar}}
     to.set_{{field_name}}(from.{{field_name}});
-{{/is_message}}
+{{/is_scalar}}
 {{/fields}}
     return to;
 }
@@ -27,9 +40,22 @@ proto::{{class_name}} ConvertSchemaToProto(const {{class_name}}& from) {
 {{#is_message}}
     to.{{field_name}} = ConvertProtoToSchema(from.{{field_name}}());
 {{/is_message}}
-{{^is_message}}
+{{#is_optional_message}}
+    if (from.has_{{field_name}}()) {
+        to.{{field_name}} = ConvertProtoToSchema(from.{{field_name}}());
+    }
+{{/is_optional_message}}
+{{#is_enum}}
+    to.{{field_name}} = static_cast<{{schema_type}}>(from.{{field_name}}());
+{{/is_enum}}
+{{#is_optional_enum}}
+    if (from.has_{{field_name}}()) {
+        to.{{field_name}} = static_cast<{{schema_type}}>(from.{{field_name}}());
+    }
+{{/is_optional_enum}}
+{{#is_scalar}}
     to.{{field_name}} = from.{{field_name}}();
-{{/is_message}}
+{{/is_scalar}}
 {{/fields}}
     return to;
 }

@@ -43,7 +43,7 @@ void bind{{{type}}}TypeFromSchema(lua_State* L) {
                      })
         {{/is_flags}}
         {{^is_flags}}
-        .addProperty("{{{property_name}}}", &{{{type}}}::{{{property_name}}}, true)
+        .addPropertyReadWrite("{{{property_name}}}", &{{{type}}}::{{{property_name}}})
         {{/is_flags}}
         {{/is_optional}}
         {{/property_entries}}

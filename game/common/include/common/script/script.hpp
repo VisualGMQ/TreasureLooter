@@ -7,11 +7,12 @@
 #include "common/manager.hpp"
 #include "common/relationship.hpp"
 #include "common/scene.hpp"
-#include "common/script/script_require.hpp"
 #include "common/timer.hpp"
 
 #include "common/script/luabridge_include.hpp"
 
+#include <memory>
+#include <optional>
 #include <string_view>
 
 class ScriptBinaryData {
@@ -37,24 +38,16 @@ public:
     ScriptBinaryDataManager();
     ~ScriptBinaryDataManager();
 
-    void Initialize(const std::unordered_map<std::string, std::string>& lua_paths);
+    void Initialize();
 
     ScriptBinaryDataHandle Load(const Path& filename,
                                 bool force = false) override;
     lua_State* GetUnderlyingVM();
 
-    auto& GetRequireContext() { return m_require_context; }
-
-    bool PathToModuleName(const Path& file_path, std::string& out_modname) const {
-        return m_require_context.PathToModuleName(file_path, out_modname);
-    }
-
     void BindModule(std::function<void(lua_State*)> bind_func);
 
 private:
     lua_State* m_L{};
-
-    LuauRequireContext m_require_context;
 };
 
 class Script {
@@ -81,24 +74,15 @@ private:
 
     bool m_inited = false;
 
-    void checkAndPrintErrorResult(const luabridge::LuaResult&,
-                                  std::string_view method);
-
     struct PrepareInfo {
         luabridge::LuaRef m_instance;
         luabridge::LuaRef m_fn;
 
-        PrepareInfo() : m_instance{nullptr}, m_fn{nullptr} {}
-
         PrepareInfo(luabridge::LuaRef instance, luabridge::LuaRef fn)
             : m_instance{instance}, m_fn{fn} {}
-
-        operator bool() const noexcept {
-            return m_instance.isValid() && m_fn.isValid();
-        }
     };
 
-    PrepareInfo prepareFn(std::string_view method);
+    std::optional<PrepareInfo> prepareFn(std::string_view method);
 };
 
 class ScriptComponentManager : public ComponentManager<Script> {

@@ -1,6 +1,15 @@
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.10)
 
 project (LuaBridge)
+
+if (NOT CMAKE_CXX_STANDARD)
+    set (CMAKE_CXX_STANDARD 20)
+endif()
+
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_EXTENSIONS OFF)
+
+set(LUABRIDGE_SANITIZE "" CACHE STRING "Sanitizer to enable (address, undefined, thread)")
 
 set (LUABRIDGE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/Array.h
@@ -17,6 +26,7 @@ set (LUABRIDGE_DETAIL_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/CFunctions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/ClassInfo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/Config.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/Coroutine.h
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/Enum.h
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/Errors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/LuaBridge/detail/Expected.h
@@ -43,7 +53,10 @@ target_sources (LuaBridge INTERFACE
   ${LUABRIDGE_HEADERS}
   ${LUABRIDGE_DETAIL_HEADERS})
 target_include_directories (LuaBridge INTERFACE .)
-target_compile_features(LuaBridge INTERFACE cxx_std_17)
+
+if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  install(DIRECTORY LuaBridge DESTINATION "LuaBridge3")
+endif ()
 
 if (MSVC AND CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   add_custom_target (LuaBridgeSources SOURCES

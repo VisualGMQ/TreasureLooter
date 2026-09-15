@@ -38,7 +38,7 @@
 				<loop>-1</loop>
 			</elem>
 		</phases>
-		<script>scripts/client/behaviors/skills/fireball.luau</script>
+		<script>scripts/client/behaviors/skills/fireball.lua</script>
 		<hit_fx_did>Invalid</hit_fx_did>
 	</payload>
 </SkillDefinition>

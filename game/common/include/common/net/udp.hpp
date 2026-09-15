@@ -74,6 +74,9 @@ public:
     void Send(const UDPPeer* peer, const proto::NetMsg& net_msg, int channel_id,
               Flags<UDPPacketFlag> = UDPPacketFlag::Reliable);
 
+    void Broadcast(const proto::NetMsg& net_msg, int channel_id,
+                   Flags<UDPPacketFlag> = UDPPacketFlag::Reliable);
+
     UDPPeer Connect(const NetAddress&);
 
     // flush udp packet to network

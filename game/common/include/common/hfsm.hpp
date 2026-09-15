@@ -48,9 +48,9 @@ private:
     std::vector<HFSMNode*> m_children;
 };
 
-class LuauHFSMNode : public HFSMNode {
+class LuaHFSMNode : public HFSMNode {
 public:
-    LuauHFSMNode(HFSMNodeID id, std::string name, Entity entity,
+    LuaHFSMNode(HFSMNodeID id, std::string name, Entity entity,
                  ScriptBinaryDataHandle handle);
 
     void OnEnter() override;
@@ -66,9 +66,9 @@ public:
     virtual ~IHFSMBlackBoard() = default;
 };
 
-class LuauHFSMBlackBoard : public IHFSMBlackBoard {
+class LuaHFSMBlackBoard : public IHFSMBlackBoard {
 public:
-    LuauHFSMBlackBoard(lua_State* L);
+    LuaHFSMBlackBoard(lua_State* L);
 
     const luabridge::LuaRef& GetTable() const { return m_table; }
 
@@ -125,20 +125,20 @@ private:
     std::vector<HFSMNodeID> m_pending_remove_nodes;
 };
 
-class LuauHFSMComponent : public HFSMComponent {
+class LuaHFSMComponent : public HFSMComponent {
 public:
-    explicit LuauHFSMComponent(
-        std::unique_ptr<LuauHFSMBlackBoard>&& blackboard);
+    explicit LuaHFSMComponent(
+        std::unique_ptr<LuaHFSMBlackBoard>&& blackboard);
 
     [[nodiscard]] luabridge::LuaRef GetBlackBoard() const;
 };
 
 class HFSMComponentManager : public ComponentManager<HFSMComponent> {
 public:
-    LuauHFSMComponent* Create(Entity entity,
+    LuaHFSMComponent* Create(Entity entity,
                               ScriptHFSMDefinitionHandle definition);
 
-    [[nodiscard]] LuauHFSMComponent* Get(Entity entity) override;
+    [[nodiscard]] LuaHFSMComponent* Get(Entity entity) override;
 
     void Update();
 };
