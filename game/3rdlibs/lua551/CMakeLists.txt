@@ -7,7 +7,8 @@ project(lua)
 #   Linux   : LUA_USE_LINUX    (POSIX + dlopen, needs -ldl)
 #   macOS   : LUA_USE_MACOSX   (POSIX + dlopen)
 #   iOS     : LUA_USE_IOS      (POSIX + dlopen)
-#   Android : LUA_USE_LINUX    (POSIX + dlopen)
+#   Android : (none)           ISO C stdio; bionic has no fseeko/ftello before
+#                              API 24, and we don't use dlopen on Android.
 
 set(LUA551_SRC_DIR "src")
 
@@ -63,7 +64,11 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "iOS")
     target_compile_definitions(lua551 PRIVATE LUA_USE_IOS)
 elseif (APPLE)
     target_compile_definitions(lua551 PRIVATE LUA_USE_MACOSX)
-elseif (ANDROID OR UNIX)
+# NOTE: Android is also UNIX, but bionic only declares fseeko/ftello from API 24,
+# while LUA_USE_LINUX implies LUA_USE_POSIX (which liolib.c maps onto
+# fseeko/ftello). Leave Android with Lua's ISO C stdio definitions so it builds
+# against APP_PLATFORM=android-21.
+elseif (UNIX AND NOT ANDROID)
     target_compile_definitions(lua551 PRIVATE LUA_USE_LINUX)
 endif()
 
