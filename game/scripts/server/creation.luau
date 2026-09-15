@@ -15,7 +15,7 @@ function _M.CreatePrefab(self, scene:Scene, prefab:PrefabHandle, transform:Trans
     return scene:Instantiate(prefab, transform)
 end
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition:ScriptHFSMDefinitionHandle?):Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition:ScriptHFSMDefinitionHandle?): (Entity, ServerGameObject.ServerGameObject)
     local ctx = TL_Common.GetContext()
 
     local transform = TL_Common.Transform()
@@ -50,25 +50,25 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
         script:initGameObject(go_definition)
     end
 
-    return entity
+    return entity, script and script.m_gameobject
 end
 
 function _M.CreatePlayerHint(self, scene:Scene, player_related_definition:PlayerRelatedDefinition, object_definitions)
 end
 
-function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions):Entity
+function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject?)
     TL_Common.GetContext():Log("server doesn't support spawning item ", spawn_info.m_did, " yet")
-    return TL_Common.null_entity
+    return TL_Common.null_entity, nil
 end
 
-function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions):Entity
+function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject?)
     TL_Common.GetContext():Log("server doesn't support spawning fx ", spawn_info.m_did, " yet")
-    return TL_Common.null_entity
+    return TL_Common.null_entity, nil
 end
 
-function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions):Entity
+function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject?)
     TL_Common.GetContext():Log("server doesn't support spawning skill ", spawn_info.m_did, " yet")
-    return TL_Common.null_entity
+    return TL_Common.null_entity, nil
 end
 
 return _M

@@ -1,3 +1,5 @@
+local GameObject = require("@common/gameobject")
+
 local _M = {}
 _M.__index = _M
 
@@ -212,19 +214,19 @@ end
 
 -- create entity functions, overridden by client/server Creation
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition): Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition): (Entity, GameObject.GameObject)
     assert(false, "shouldn't step into here")
 end
 
-function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject)
     assert(false, "shouldn't step into here")
 end
 
-function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject)
     assert(false, "shouldn't step into here")
 end
 
-function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject)
     assert(false, "shouldn't step into here")
 end
 

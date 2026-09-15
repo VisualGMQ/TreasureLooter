@@ -1,6 +1,6 @@
 local GameEntry = require("@common/game_entry")
 local ServerCreation = require("@server/creation")
-local World = require("@common/world")
+local ServerWorld = require("@server/world")
 local Net = require("@common/net")
 
 local k_max_peers = 32
@@ -20,7 +20,7 @@ function ServerGameEntry.new(entity: Entity) : ServerGameEntry
 end
 
 function ServerGameEntry.OnInit(self: ServerGameEntry)
-    World.SetInst(World.new())
+    ServerWorld.SetInst(ServerWorld.new())
 
     GameEntry.OnInit(self)
 
@@ -28,8 +28,13 @@ function ServerGameEntry.OnInit(self: ServerGameEntry)
     ctx:NetListen(TL_Common.NetAddress(Net.ip, Net.port), k_max_peers)
     ctx:Log("server listening on ", Net.ip, ":", Net.port)
 
-    ctx:GetEventSystem():AddNetMsg_SpawnPlayerEvent(function(id, peer, payload)
+    local event_system = ctx:GetEventSystem()
+    event_system:AddNetMsg_SpawnPlayerEvent(function(id, peer, payload)
         self:onSpawnPlayer(peer, payload)
+    end)
+
+    event_system:AddNetMsg_DisconnectEvent(function(id, peer, payload)
+        self:onNetDisconnect(peer, payload)
     end)
 end
 
@@ -54,13 +59,24 @@ function ServerGameEntry.onSpawnPlayer(self: ServerGameEntry, peer: UDPPeer, pay
     spawn_info.m_server_script = k_player_script
     spawn_info.m_spawn_point_name = k_player_spawn_point
 
-    local entity = ServerCreation.CreateCharacter(ServerCreation, scene, spawn_info,
+    local entity, go = ServerCreation.CreateCharacter(ServerCreation, scene, spawn_info,
                             spawn_point.m_position, self.m_object_definitions)
 
     local root_entity = scene:GetRootEntity()
     local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
     root_relationship:AddChild(entity)
     ctx:Log("server spawned player by did ", did)
+
+    local world = ServerWorld.GetInst() :: ServerWorld.ServerWorld
+    world:AddPeer(peer, go)
+    ctx:Log("peer ", peer:GetID(), " spawned")
+end
+
+function ServerGameEntry.onNetDisconnect(self: ServerGameEntry, peer: UDPPeer, payload: ProtoDisconnect)
+    local world = ServerWorld.GetInst()
+    world:RemovePeer(peer)
+
+    TL_Server.GetContext():Log("peer ", peer:GetID(), " disconnected")
 end
 
 return ServerGameEntry

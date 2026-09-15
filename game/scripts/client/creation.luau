@@ -12,6 +12,7 @@ local ClientSkillComponent = require("@client/components/skill")
 local ClientWorld = require("@client/world")
 local ClientGameObjectBehavior = require("@client/gameobject_behavior")
 local Creation = require("@common/creation")
+local GameObject = require("@common/gameobject")
 local _M = {}
 _M.__index = _M
 setmetatable(_M, {__index = Creation})
@@ -111,7 +112,7 @@ function _M.ConvertSkillDefinitionToGODefinition(entity:Entity, skill_definition
     return definition
 end
 
-function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject)
     local ctx = TL_Client.GetContext()
 
     local skill_definition = object_definitions:GetSkill(spawn_info.m_did)
@@ -138,7 +139,7 @@ function _M.CreateSkill(self, scene:Scene, spawn_info:ObjectSpawnDefinition, pos
         script:initGameObject(go_definition)
     end
 
-    return entity
+    return entity, script and script.m_gameobject
 end
 
 -- the weapon controller hosts the attack & weapon components, driving the weapon item under it
@@ -182,7 +183,7 @@ function _M.ConvertFXDefinitionToGODefinition(entity:Entity, did:DID, config:FXD
     return definition
 end
 
-function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject)
     local ctx = TL_Client.GetContext()
 
     local fx_definition = object_definitions:GetFX(spawn_info.m_did)
@@ -206,7 +207,7 @@ function _M.CreateFX(self, scene:Scene, spawn_info:ObjectSpawnDefinition, positi
         local go_definition = _M.ConvertFXDefinitionToGODefinition(entity, TL_Schema.DID.Invalid, fx_definition)
         script:initGameObject(go_definition)
     end
-    return entity
+    return entity, script and script.m_gameobject
 end
 
 -- create the player interactable hint fx entity and store it in ClientWorld.m_player_hint
@@ -243,7 +244,7 @@ function _M.CreatePrefab(self, scene:Scene, prefab:PrefabHandle, transform:Trans
     return scene:Instantiate(prefab, transform)
 end
 
-function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): Entity
+function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions): (Entity, GameObject.GameObject)
     local ctx = TL_Client.GetContext()
 
     local transform = TL_Common.Transform()
@@ -273,7 +274,7 @@ function _M.CreateItem(self, scene:Scene, spawn_info:ObjectSpawnDefinition, posi
             " on SpawnPoint(", spawn_info.m_spawn_point_name, ")",
             ", on Layer(", spawn_info.m_spawn_on_layer, ")")
 
-    return entity
+    return entity, script and script.m_gameobject
 end
 
 function _M.createWeaponController(self, scene:Scene, character_entity:Entity):Entity
@@ -294,7 +295,7 @@ function _M.createWeaponController(self, scene:Scene, character_entity:Entity):E
     return controller_entity
 end
 
-function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition:ScriptHFSMDefinitionHandle?): Entity
+function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition, position:Vec2, object_definitions, hfsm_definition:ScriptHFSMDefinitionHandle?): (Entity, GameObject.GameObject)
     local ctx = TL_Client.GetContext()
 
     local transform = TL_Common.Transform()
@@ -376,7 +377,7 @@ function _M.CreateCharacter(self, scene:Scene, spawn_info:ObjectSpawnDefinition,
         end
     end
 
-    return entity
+    return entity, script and script.m_gameobject
 end
 
 function _M.CreatePlayerHint(self, scene:Scene, player_related_definition:PlayerRelatedDefinition, object_definitions)
