@@ -4,7 +4,7 @@
 		<nodes>
 			<elem>
 				<name>player_root</name>
-				<script>scripts/client/hfsm/player_root.luau</script>
+				<script>scripts/client/hfsm/player_root.lua</script>
 				<children>
 					<elem>1</elem>
 					<elem>6</elem>
@@ -13,7 +13,7 @@
 			</elem>
 			<elem>
 				<name>player_ordinary</name>
-				<script>scripts/client/hfsm/player_ordinary.luau</script>
+				<script>scripts/client/hfsm/player_ordinary.lua</script>
 				<children>
 					<elem>2</elem>
 					<elem>3</elem>
@@ -23,32 +23,32 @@
 			</elem>
 			<elem>
 				<name>player_free_hand</name>
-				<script>scripts/client/hfsm/player_free_hand.luau</script>
+				<script>scripts/client/hfsm/player_free_hand.lua</script>
 				<children/>
 			</elem>
 			<elem>
 				<name>player_carrying</name>
-				<script>scripts/client/hfsm/player_carrying.luau</script>
+				<script>scripts/client/hfsm/player_carrying.lua</script>
 				<children/>
 			</elem>
 			<elem>
 				<name>player_picking_up</name>
-				<script>scripts/client/hfsm/player_picking_up.luau</script>
+				<script>scripts/client/hfsm/player_picking_up.lua</script>
 				<children/>
 			</elem>
 			<elem>
 				<name>player_putting_down</name>
-				<script>scripts/client/hfsm/player_putting_down.luau</script>
+				<script>scripts/client/hfsm/player_putting_down.lua</script>
 				<children/>
 			</elem>
 			<elem>
 				<name>player_frozen</name>
-				<script>scripts/client/hfsm/player_frozen.luau</script>
+				<script>scripts/client/hfsm/player_frozen.lua</script>
 				<children/>
 			</elem>
 			<elem>
 				<name>player_dead</name>
-				<script>scripts/client/hfsm/player_dead.luau</script>
+				<script>scripts/client/hfsm/player_dead.lua</script>
 				<children/>
 			</elem>
 		</nodes>

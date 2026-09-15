@@ -130,7 +130,7 @@ struct MustacheManager {
     kainjow::mustache::mustache m_proto_event_binding_impl_mustache;
     kainjow::mustache::mustache m_proto_convert_header_mustache;
     kainjow::mustache::mustache m_proto_convert_impl_mustache;
-    kainjow::mustache::mustache m_proto_luau_mustache;
+    kainjow::mustache::mustache m_proto_meta_mustache;
 
     kainjow::mustache::mustache m_asset_serialize_header_mustache;
     kainjow::mustache::mustache m_asset_display_header_mustache;

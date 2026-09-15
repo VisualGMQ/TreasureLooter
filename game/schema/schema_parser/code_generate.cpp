@@ -1574,10 +1574,10 @@ std::string ConvertCppTypeToLuauType(const std::string& cpp_type) {
     if (!flags_inner.empty()) return flags_inner + "Flags";
     std::string vec_inner = extractVectorInnerType(cpp_type);
     if (!vec_inner.empty())
-        return "{ " + ConvertCppTypeToLuauType(vec_inner) + " }";
+        return ConvertCppTypeToLuauType(vec_inner) + "[]";
     std::string arr_inner = extractArrayInnerType(cpp_type);
     if (!arr_inner.empty())
-        return "{ " + ConvertCppTypeToLuauType(arr_inner) + " }";
+        return ConvertCppTypeToLuauType(arr_inner) + "[]";
     std::string mat_inner = extractMatStorageInnerType(cpp_type);
     if (!mat_inner.empty()) return "{}";
     if (!extractUnorderedMapInnerType(cpp_type).empty()) return "{}";
@@ -1593,14 +1593,23 @@ std::string CppToLuauForProto(const std::string& cpp_type) {
     return cpp_type;
 }
 
-std::string GenerateSchemaTypesLuauDefinitionCode(
-    const SchemaInfoManager& manager) {
-    // Emits a luau-lsp definition file (schema.d.luau): every schema type is a
-    // global `export type`, and the runtime `TL_Schema` namespace is declared
-    // as a global value via `declare`. Mirrors the namespace produced by
+static std::string FormatMetaFieldName(const std::string& name) {
+    // LuaCATS has no dedicated syntax for arbitrary quoted field names, but the
+    // runtime schema properties are always `m_` prefixed (see
+    // class_script_bind_impl.mustache), so plain identifiers are emitted unless
+    // the name itself is a Lua keyword (in which case bracket-quoting is used).
+    if (IsLuaKeyword(name)) return "[\"" + name + "\"]";
+    return name;
+}
+
+std::string GenerateSchemaMetaDefinitionCode(const SchemaInfoManager& manager) {
+    // Emits a LuaLS `---@meta` definition file (schema_meta.lua): every schema
+    // type becomes a global `---@class` / `---@alias` and the runtime
+    // `TL_Schema` namespace is declared as a global value (via
+    // `TL_Schema = {}`). Mirrors the namespace produced by
     // schema/binding/binding.cpp (`beginNamespace("TL_Schema")`).
     std::string types;
-    std::string ns;  // body of `declare TL_Schema: { ... }`
+    std::string ns;  // fields of `---@class TL_Schema`
 
     std::unordered_set<std::string> emitted_classes;
     std::unordered_set<std::string> emitted_enums;
@@ -1613,68 +1622,70 @@ std::string GenerateSchemaTypesLuauDefinitionCode(
         for (const auto& clazz : schema.m_classes) {
             const std::string& name = clazz.m_name;
             if (emitted_classes.insert(name).second) {
-                types += "export type " + name + " = {\n";
+                types += "---@class " + name + "\n";
                 for (const auto& p : clazz.m_properties) {
-                    std::string luau_type = ConvertCppTypeToLuauType(p.m_type);
-                    if (p.m_is_optional && luau_type.back() != '?')
-                        luau_type += "?";
-                    std::string key = IsLuaKeyword(p.m_name)
-                                          ? ("[\"" + p.m_name + "\"]")
-                                          : "m_" + p.m_name;
-                    types += "\t" + key + ": " + luau_type + ",\n";
+                    std::string lua_type = ConvertCppTypeToLuauType(p.m_type);
+                    if (p.m_is_optional && lua_type.back() != '?')
+                        lua_type += "?";
+                    types += "---@field " +
+                             FormatMetaFieldName("m_" + p.m_name) + " " +
+                             lua_type + "\n";
                 }
-                types += "}\n\n";
+                types += "\n";
 
                 // every schema class has addConstructor<void()>
-                ns += "\t" + name + ": () -> " + name + ",\n";
+                ns += "---@field " + name + " fun(): " + name + "\n";
             }
 
             if (clazz.is_asset) {
                 const std::string handle = name + "Handle";
                 if (emitted_handles.insert(handle).second) {
-                    types += "export type " + handle +
-                             " = { IsValid: (self: " + handle +
-                             ") -> boolean, GetFilename: (self: " + handle +
-                             ") -> Path?, GetUUID: (self: " + handle +
-                             ") -> UUID } & " + name + "\n\n";
+                    types += "---@class " + handle + ": " + name + "\n";
+                    types += "---@field IsValid fun(self: " + handle +
+                             "): boolean\n";
+                    types += "---@field GetFilename fun(self: " + handle +
+                             "): Path?\n";
+                    types += "---@field GetUUID fun(self: " + handle +
+                             "): UUID\n\n";
 
                     // handle has addConstructor<void()> (see BindHandle)
-                    ns += "\t" + handle + ": () -> " + handle + ",\n";
+                    ns += "---@field " + handle + " fun(): " + handle + "\n";
                 }
                 const std::string mgr = name + "AssetManager";
                 if (emitted_asset_managers.insert(mgr).second) {
-                    types += "export type " + mgr + " = {\n";
-                    types += "\tCreate: (self: " + mgr + ") -> " + handle +
-                             ",\n";
-                    types += "\tLoad: (self: " + mgr +
-                             ", path: Path, force: boolean?) -> " + handle +
-                             ",\n";
-                    types += "\tFind: (self: " + mgr + ", path: Path) -> " +
-                             handle + ",\n";
-                    types += "\tUnload: (self: " + mgr + ", handle: " + handle +
-                             ") -> (),\n";
-                    types += "\tReload: (self: " + mgr + ", handle: " + handle +
-                             ") -> (),\n";
-                    types += "\tClear: (self: " + mgr + ") -> (),\n";
-                    types += "}\n\n";
+                    types += "---@class " + mgr + "\n";
+                    types += "---@field Create fun(self: " + mgr + "): " +
+                             handle + "\n";
+                    types += "---@field Load fun(self: " + mgr +
+                             ", path: Path, force: boolean?): " + handle +
+                             "\n";
+                    types += "---@field Find fun(self: " + mgr +
+                             ", path: Path): " + handle + "\n";
+                    types += "---@field Unload fun(self: " + mgr +
+                             ", handle: " + handle + ")\n";
+                    types += "---@field Reload fun(self: " + mgr +
+                             ", handle: " + handle + ")\n";
+                    types += "---@field Clear fun(self: " + mgr + ")\n\n";
                 }
                 if (emitted_filename_is_types.insert(name).second) {
-                    types += "export type FilenameIs" + name +
-                             " = (filename: Path) -> boolean\n\n";
+                    types += "---@alias FilenameIs" + name +
+                             " fun(filename: Path): boolean\n\n";
                 }
-                ns += "\tLoadAsset" + name + ": (path: Path) -> " + name + ",\n";
-                ns += "\tSaveAsset" + name + ": (handle: " + handle +
-                      ", path: Path) -> (),\n";
-                ns += "\tFilenameIs" + name + ": (filename: Path) -> boolean,\n";
+                ns += "---@field LoadAsset" + name + " fun(path: Path): " +
+                      name + "\n";
+                ns += "---@field SaveAsset" + name + " fun(handle: " + handle +
+                      ", path: Path)\n";
+                ns += "---@field FilenameIs" + name +
+                      " fun(filename: Path): boolean\n";
             }
         }
 
         for (const auto& cpp_def : schema.m_cpp_asset_defs) {
             if (emitted_filename_is_types.insert(cpp_def.m_asset_name).second) {
-                types += "export type FilenameIs" + cpp_def.m_asset_name +
-                         " = (filename: Path) -> boolean\n\n";
-                ns += "\tFilenameIs" + cpp_def.m_asset_name +
-                      ": (filename: Path) -> boolean,\n";
+                types += "---@alias FilenameIs" + cpp_def.m_asset_name +
+                         " fun(filename: Path): boolean\n\n";
+                ns += "---@field FilenameIs" + cpp_def.m_asset_name +
+                      " fun(filename: Path): boolean\n";
             }
         }
 
@@ -1682,72 +1693,62 @@ std::string GenerateSchemaTypesLuauDefinitionCode(
             const std::string& ename = enum_info.m_name;
             if (emitted_enums.insert(ename).second) {
                 // enum values are plain integers at runtime
-                types += "export type " + ename + " = number\n\n";
+                types += "---@alias " + ename + " number\n\n";
 
                 // value table under TL_Schema (e.g. TL_Schema.Foo.Bar)
-                ns += "\t" + ename + ": {\n";
+                ns += "---@field " + ename + " { ";
                 for (const auto& item : enum_info.m_items) {
-                    std::string key = IsLuaKeyword(item.m_name)
-                                          ? ("[\"" + item.m_name + "\"]")
-                                          : item.m_name;
-                    ns += "\t\t" + key + ": number,\n";
+                    ns += FormatMetaFieldName(item.m_name) + ": number, ";
                 }
-                ns += "\t\tGetEnumName: (value: number) -> string,\n";
-                ns += "\t\tGetEnumFromName: (name: string) -> number?,\n";
-                ns += "\t},\n";
+                ns += "GetEnumName: fun(value: number): string, ";
+                ns += "GetEnumFromName: fun(name: string): number? }\n";
             }
             const std::string flags = ename + "Flags";
             if (emitted_flags.insert(flags).second) {
-                types += "export type " + flags + " = {\n";
-                types += "\tValue: (self: " + flags + ") -> number,\n";
-                types += "\tHas: (self: " + flags + ", value: " + ename +
-                         ") -> boolean,\n";
-                types += "\tRemove: (self: " + flags + ", value: " + ename +
-                         ") -> (),\n";
-                types += "\t__bor: (self: " + flags + ", value: " + ename +
-                         ") -> " + flags + ",\n";
-                types += "\t__band: (self: " + flags + ", value: " + ename +
-                         ") -> " + flags + ",\n";
-                types += "\t__bnot: (self: " + flags + ") -> " + flags + ",\n";
-                types += "\t__tostring: (self: " + flags + ") -> string,\n";
-                types += "}\n\n";
+                types += "---@class " + flags + "\n";
+                types += "---@field Value fun(self: " + flags + "): number\n";
+                types += "---@field Has fun(self: " + flags + ", value: " +
+                         ename + "): boolean\n";
+                types += "---@field Remove fun(self: " + flags + ", value: " +
+                         ename + ")\n";
+                types += "---@operator bor(" + ename + "): " + flags + "\n";
+                types += "---@operator band(" + ename + "): " + flags + "\n";
+                types += "---@operator bnot: " + flags + "\n\n";
 
-                ns += "\t" + flags + ": (() -> " + flags + ") & ((" + ename +
-                      ") -> " + flags + ") & ((number) -> " + flags + "),\n";
+                ns += "---@field " + flags + " fun(value?: " + ename +
+                      "): " + flags + "\n";
             }
         }
     }
 
     std::string out;
-    out += "--!strict\n";
+    out += "---@meta\n";
     out += "----------------- GENERATED BY schema_parser, DON'T MODIFY! "
            "-----------------\n";
-    out += "-- luau-lsp definition file for the `TL_Schema` C++ binding "
+    out += "-- LuaLS (LuaCATS) definition file for the `TL_Schema` C++ binding "
            "namespace.\n";
-    out += "-- Loaded through luau-lsp's `types.definitionFiles`; all types "
-           "below are global\n";
-    out += "-- and `TL_Schema` is a global value (no `require` needed). "
-           "Depends on common.d.luau.\n\n";
+    out += "-- All types below are global and `TL_Schema` is a global value "
+           "(no `require` needed).\n";
+    out += "-- Depends on common_meta.lua (Path, UUID, Vec2, ...).\n\n";
     out += types;
     out += "-- The runtime global table created by "
            "`beginNamespace(\"TL_Schema\")`.\n";
-    out += "declare TL_Schema: {\n";
+    out += "---@class TL_Schema\n";
     out += ns;
-    out += "}\n";
+    out += "TL_Schema = {}\n";
     return out;
 }
 
-std::string GenerateProtoTypesLuauDefinitionCode(
-    const SchemaInfoManager& mgr) {
-    // Emits proto.d.luau: global `ProtoX` message types for the `TL_Proto`
+std::string GenerateProtoMetaDefinitionCode(const SchemaInfoManager& mgr) {
+    // Emits proto_meta.lua: global `ProtoX` message types for the `TL_Proto`
     // namespace (mirrors schema_generate/schema/proto/proto_binding.cpp) plus
     // the `EventSystem` extension for the proto events
     // (proto_event_binding.cpp).
     //
     // Proto messages use a `Proto` prefix on purpose: every proto class is
-    // *also* a schema class with the same name (see schema.d.luau), so bare
+    // *also* a schema class with the same name (see schema_meta.lua), so bare
     // names (Move, NetVec2, ...) would be duplicate type declarations.
-    auto& mustache = MustacheManager::GetInst().m_proto_luau_mustache;
+    auto& mustache = MustacheManager::GetInst().m_proto_meta_mustache;
     kainjow::mustache::data datas;
     kainjow::mustache::data classes_data{kainjow::mustache::data::type::list};
     kainjow::mustache::data events_data{kainjow::mustache::data::type::list};
@@ -1761,6 +1762,9 @@ std::string GenerateProtoTypesLuauDefinitionCode(
             kainjow::mustache::data class_data;
             class_data.set("class_name", class_info.m_name);
             class_data.set("has_schema", true);
+            // Type of the `TL_Proto.<Name>` entry: the static constructor class.
+            class_data.set("ns_type",
+                           "Proto" + class_info.m_name + "Ctor");
 
             kainjow::mustache::data fields_data{
                 kainjow::mustache::data::type::list};
@@ -1841,6 +1845,8 @@ std::string GenerateProtoTypesLuauDefinitionCode(
     {
         kainjow::mustache::data net_msg_data;
         net_msg_data.set("class_name", std::string{"NetMsg"});
+        // NetMsg has no schema counterpart, so no `FromSchema` / ctor class.
+        net_msg_data.set("ns_type", std::string{"fun(): ProtoNetMsg"});
 
         kainjow::mustache::data net_msg_fields{
             kainjow::mustache::data::type::list};

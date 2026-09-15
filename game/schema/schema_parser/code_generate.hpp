@@ -53,10 +53,12 @@ std::string GenerateSchemaScriptBindImplCode(const SchemaInfo&);
 std::string GenerateBindingHeaderCode(const SchemaInfoManager&);
 std::string GenerateBindingImplCode(const SchemaInfoManager&);
 
-// Luau definition file (declare-style, consumed by luau-lsp's types.definitionFiles):
-// full content of scripts/type_hints/schema.d.luau (includes proto message types).
-std::string GenerateSchemaTypesLuauDefinitionCode(const SchemaInfoManager&);
+// LuaLS `---@meta` definition file (LuaCATS) for the `TL_Schema` namespace.
+// Generated into schema_generate/schema/schema_meta.lua and copied by CMake
+// into scripts/type_hints/schema_meta.lua.
+std::string GenerateSchemaMetaDefinitionCode(const SchemaInfoManager&);
 
-// Luau definition file for the `TL_Proto` namespace and the proto event
-// methods added to `EventSystem`. Generated into schema_generate/schema/proto.d.luau.
-std::string GenerateProtoTypesLuauDefinitionCode(const SchemaInfoManager&);
+// LuaLS `---@meta` definition file for the `TL_Proto` namespace and the proto
+// event methods added to `EventSystem`. Generated into
+// schema_generate/schema/proto_meta.lua.
+std::string GenerateProtoMetaDefinitionCode(const SchemaInfoManager&);

@@ -1,0 +1,7 @@
+{
+  "runtime.version": "Lua 5.5",
+  "runtime.pathStrict": false,
+  "runtime.path": ["?.lua", "?/init.lua"],
+  "workspace.library": ["type_hints"],
+  "diagnostics.disable": ["missing-fields"]
+}

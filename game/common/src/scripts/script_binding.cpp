@@ -63,7 +63,9 @@ int TL_Log(lua_State* L) {
     }
 
     lua_Debug ar{};
-    const bool hasInfo = lua_getinfo(L, 1, "sln", &ar) != 0;
+    // Lua 5.4: select the activation record first, then fill it.
+    const bool hasInfo =
+        lua_getstack(L, 1, &ar) != 0 && lua_getinfo(L, "sln", &ar) != 0;
 
     std::string file = "unknown";
     std::string func = "anonymous";
@@ -113,7 +115,7 @@ static int ScriptComponentManager_GetTable(lua_State* L) {
         return 1;
     }
 
-    lua_getref(L, script->GetScriptTableRef());
+    lua_rawgeti(L, LUA_REGISTRYINDEX, script->GetScriptTableRef());
     return 1;
 }
 
@@ -155,16 +157,6 @@ void bindScriptBinaryDataManager(lua_State* L) {
                          return m->Find(Path(path));
                      })
         .endClass()
-        .addFunction("PathToModuleName",
-                     +[](const Path& file_path) -> std::string {
-                         auto& mgr = COMMON_CONTEXT.m_assets_manager
-                                         ->GetManager<ScriptBinaryData>();
-                         std::string out_modname;
-                         if (mgr.PathToModuleName(file_path, out_modname)) {
-                             return out_modname;
-                         }
-                         return file_path.string();
-                     })
         .beginClass<ScriptComponentManager>("ScriptComponentManager")
             .addFunction("Has", &ScriptComponentManager::Has)
             .addFunction("Get", ScriptComponentManager_GetTable)
@@ -227,8 +219,8 @@ void bindTVec2(lua_State* L, const char* className) {
         .beginNamespace("TL_Common")
             .beginClass<TVec2<T>>(className)
                 .template addConstructor<void (void), void (T, T)>()
-                .addProperty("x", &TVec2<T>::x, true)
-                .addProperty("y", &TVec2<T>::y, true)
+                .addPropertyReadWrite("x", &TVec2<T>::x)
+                .addPropertyReadWrite("y", &TVec2<T>::y)
                 .addFunction("__add", &TVec2<T>::operator+)
                 .addFunction("__sub", &TVec2<T>::operator-)
                 .addFunction(
@@ -266,10 +258,10 @@ void bindMath(lua_State* L) {
         .beginNamespace("TL_Common")
             .beginClass<Color>("Color")
                 .template addConstructor<void (void), void (float, float, float, float)>()
-                .addProperty("r", &Color::r, true)
-                .addProperty("g", &Color::g, true)
-                .addProperty("b", &Color::b, true)
-                .addProperty("a", &Color::a, true)
+                .addPropertyReadWrite("r", &Color::r)
+                .addPropertyReadWrite("g", &Color::g)
+                .addPropertyReadWrite("b", &Color::b)
+                .addPropertyReadWrite("a", &Color::a)
                 .addStaticProperty("Red", &Color::Red)
                 .addStaticProperty("Green", &Color::Green)
                 .addStaticProperty("Blue", &Color::Blue)
@@ -282,8 +274,8 @@ void bindMath(lua_State* L) {
             .addFunction("DecomposeVector", &DecomposeVector)
             .addFunction("Rotate", &Rotate)
             .beginClass<DecompositionResult>("DecompositionResult")
-                .addProperty("m_tangent", &DecompositionResult::m_tangent, true)
-                .addProperty("m_normal", &DecompositionResult::m_normal, true)
+                .addPropertyReadWrite("m_tangent", &DecompositionResult::m_tangent)
+                .addPropertyReadWrite("m_normal", &DecompositionResult::m_normal)
             .endClass()
             .beginClass<Degrees>("Degrees")
                 .template addConstructor<void (void), void (float), void(Radians)>()
@@ -317,10 +309,10 @@ void bindMath(lua_State* L) {
             .endClass()
             .beginClass<Transform>("Transform")
                 .addConstructor<void(void)>()
-                .addProperty("m_position", &Transform::m_position, true)
-                .addProperty("m_rotation", &Transform::m_rotation, true)
-                .addProperty("m_size", &Transform::m_size, true)
-                .addProperty("m_scale", &Transform::m_scale, true)
+                .addPropertyReadWrite("m_position", &Transform::m_position)
+                .addPropertyReadWrite("m_rotation", &Transform::m_rotation)
+                .addPropertyReadWrite("m_size", &Transform::m_size)
+                .addPropertyReadWrite("m_scale", &Transform::m_scale)
                 .addFunction("GetGlobalPosition",
                              +[](Transform* t) {
                                  return GetPosition(t->GetGlobalMat());
@@ -328,8 +320,8 @@ void bindMath(lua_State* L) {
             .endClass()
             .beginClass<Region>("Region")
                 .template addConstructor<void ()>()
-                .addProperty("m_topleft", &Region::m_topleft, true)
-                .addProperty("m_size", &Region::m_size, true)
+                .addPropertyReadWrite("m_topleft", &Region::m_topleft)
+                .addPropertyReadWrite("m_size", &Region::m_size)
             .endClass()
             .beginClass<TransformManager>("TransformManager")
                 .addFunction("Get", +[](TransformManager* m, Entity e) {
@@ -847,13 +839,13 @@ void bindTilemap(lua_State* L) {
                              })
             .endNamespace()
             .beginClass<Tile>("Tile")
-                .addProperty("m_image", &Tile::m_image, true)
-                .addProperty("m_region", &Tile::m_region, true)
-                .addProperty("m_id", &Tile::m_id, true)
-                .addProperty("m_tile_size", &Tile::m_tile_size, true)
+                .addPropertyReadWrite("m_image", &Tile::m_image)
+                .addPropertyReadWrite("m_region", &Tile::m_region)
+                .addPropertyReadWrite("m_id", &Tile::m_id)
+                .addPropertyReadWrite("m_tile_size", &Tile::m_tile_size)
             .endClass()
             .beginClass<TilemapTileLayer::Tile>("TilemapLayerTile")
-                .addProperty("m_gid", &TilemapTileLayer::Tile::m_gid, true)
+                .addPropertyReadWrite("m_gid", &TilemapTileLayer::Tile::m_gid)
                 .addFunction(
                     "GetFlipValue",
                     +[](const TilemapTileLayer::Tile* t) { return t->m_flip.Value(); })
@@ -1081,7 +1073,7 @@ void bindEntityName(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Common")
             .beginClass<EntityName>("EntityName")
-                .addProperty("m_name", &EntityName::m_name, true)
+                .addPropertyReadWrite("m_name", &EntityName::m_name)
             .endClass()
             .beginClass<EntityNameManager>("EntityNameManager")
                 .addFunction("Get", +[](EntityNameManager* m, Entity e) {
@@ -1270,8 +1262,8 @@ void bindUDP(lua_State* L) {
                 .addConstructor<void(void), void(uint64_t, uint32_t),
                                  void(const std::string&, uint32_t)>()
                 .addFunction("GetIP", &NetAddress::GetIP)
-                .addProperty("m_host", &NetAddress::m_host, true)
-                .addProperty("m_port", &NetAddress::m_port, true)
+                .addPropertyReadWrite("m_host", &NetAddress::m_host)
+                .addPropertyReadWrite("m_port", &NetAddress::m_port)
             .endClass()
             .beginClass<UDPPeer>("UDPPeer")
                 .addConstructor<void(void)>()

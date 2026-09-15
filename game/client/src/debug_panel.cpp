@@ -134,31 +134,28 @@ void DebugPanel::RegisterCmd(
     DebugCmd debug_cmd;
     debug_cmd.m_fn = [=](const std::vector<std::string>& args) {
         auto result = cmd(args);
-        if (result.errorCode()) {
+        if (!result) {
             LOGE("[DebugPanel] lua command '{}' error: {}", name,
-                 result.errorMessage());
+                 result.message());
         }
     };
     for (auto& hint : param_hints) {
         debug_cmd.m_param_hints.emplace_back([=]() -> std::vector<std::string> {
-            auto lua_call_result = call(hint);
+            auto lua_call_result = tl::CallLuaRef(hint);
             std::vector<std::string> result;
 
-            TL_RETURN_VALUE_IF_FALSE_WITH_LOG(
-                !lua_call_result.errorCode(), result, LOGE,
-                "[DebugPanel] lua command '{}' hint error: {}", name,
-                lua_call_result.errorMessage());
+            if (!lua_call_result) {
+                LOGE("[DebugPanel] lua command '{}' hint error: {}", name,
+                     lua_call_result.message());
+                return result;
+            }
 
-            TL_RETURN_VALUE_IF_FALSE_WITH_LOG(
-                lua_call_result.size() > 0, result, LOGE,
-                "[DebugPanel] lua command '{}' param hint function "
-                "must return a table of strings", name);
-
-            const luabridge::LuaRef table = lua_call_result[0];
-            TL_RETURN_VALUE_IF_FALSE_WITH_LOG(
-                table.isTable(), result, LOGE,
-                "[DebugPanel] lua command '{}' param hint function "
-                "must return a table of strings", name);
+            const luabridge::LuaRef table = lua_call_result.value();
+            if (!table.isTable()) {
+                LOGE("[DebugPanel] lua command '{}' param hint function "
+                     "must return a table of strings", name);
+                return result;
+            }
 
             for (int i = 1; i <= table.length(); ++i) {
                 const auto elem = table[i];

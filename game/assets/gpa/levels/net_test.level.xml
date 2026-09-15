@@ -28,7 +28,7 @@
 		<spawn_objects>
 			<elem>
 				<did>CharacterDID1</did>
-				<client_script>scripts/client/behaviors/net_player_behavior.luau</client_script>
+				<client_script>scripts/client/behaviors/net_player_behavior.lua</client_script>
 				<server_script/>
 				<spawn_point_name>player_spawn_point</spawn_point_name>
 				<spawn_on_layer>walls</spawn_on_layer>

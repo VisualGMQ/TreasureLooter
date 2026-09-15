@@ -65,19 +65,9 @@ cmake --build .\cmake-build\ --target package --config Release
 
 It will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
 
-## For Developer
-
-### AI Coding Note
+## AI Coding Note
 
 Some projects are entirely written by AI, I didn't review code, so you can ignore them when you read code:
 
 * CollisionEditor: [game/tools/collision_editor/](game/tools/collision_editor/)
 * AnimationEditor: [game/tools/animation_editor/](game/tools/animation_editor/)
-
-### Luau developer
-
-For best development experience, you need:
-
-1. open vscode under [game/](game/)
-2. add [vscode-setting.json](game/luau-hint-support/vscode-settings.json) to your vscode configuration
-3. enjoy your luau programming

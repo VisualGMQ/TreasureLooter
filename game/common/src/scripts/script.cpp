@@ -5,13 +5,7 @@
 #include "common/path.hpp"
 #include "common/profile.hpp"
 #include "common/script/script_binding.hpp"
-#include "common/script/script_compile_options.hpp"
-#include "common/script/script_require.hpp"
 #include "common/storage.hpp"
-
-#ifdef TL_ENABLE_LUAU_DEBUGGER
-#include <debugger.h>
-#endif
 
 #include <algorithm>
 #include <cctype>
@@ -22,14 +16,6 @@
 #include <type_traits>
 
 #include "common/script/luabridge_include.hpp"
-
-#ifdef TL_ENABLE_LUAU_DEBUGGER
-struct ScriptDebuggerHolder {
-    std::unique_ptr<luau::debugger::Debugger> debugger;
-};
-#else
-struct ScriptDebuggerHolder {};
-#endif
 
 static std::string pathToClassName(const std::string& filename_str) {
     if (filename_str.empty()) return "Script";
@@ -84,29 +70,34 @@ const std::string& ScriptBinaryData::GetClassName() const {
 ScriptBinaryDataManager::ScriptBinaryDataManager() {}
 
 ScriptBinaryDataManager::~ScriptBinaryDataManager() {
-#ifdef TL_ENABLE_LUAU_DEBUGGER
-    if (m_debugger && m_debugger->debugger) {
-        if (m_L) m_debugger->debugger->release(m_L);
-        m_debugger->debugger->stop();
-        m_debugger->debugger.reset();
-    }
-#endif
     if (m_L) lua_close(m_L);
 }
 
-void ScriptBinaryDataManager::Initialize(const std::unordered_map<std::string, std::string>& lua_paths) {
-    for (auto& [name, path] : lua_paths) {
-        m_require_context.RegisterAliasPath(name, path);
-    }
-
+void ScriptBinaryDataManager::Initialize() {
     m_L = luaL_newstate();
     if (!m_L) {
-        LOGE("Luau VM init failed!");
+        LOGE("Lua VM init failed!");
         return;
     }
     luaL_openlibs(m_L);
-    m_require_context.InitModuleRegisterTable(m_L);
-    m_require_context.BindRequire(m_L);
+
+    // Game scripts are resolved through the standard Lua `require`, relative to
+    // the working directory (the `game/` folder): `require("client.foo")` ->
+    // `scripts/client/foo.lua`.
+    lua_getglobal(m_L, "package");  // package
+    if (lua_istable(m_L, -1)) {
+        lua_getfield(m_L, -1, "path");  // package, path
+        const char* existing = lua_tostring(m_L, -1);
+        std::string path = "./scripts/?.lua;./scripts/?/init.lua";
+        if (existing && existing[0] != '\0') {
+            path += ";";
+            path += existing;
+        }
+        lua_pop(m_L, 1);  // package
+        lua_pushlstring(m_L, path.data(), path.size());
+        lua_setfield(m_L, -2, "path");  // package.path = path
+    }
+    lua_pop(m_L, 1);  // package
 }
 
 void ScriptBinaryDataManager::BindModule(std::function<void(lua_State*)> bind_func) {
@@ -124,61 +115,6 @@ ScriptBinaryDataHandle ScriptBinaryDataManager::Load(const Path& filename,
 
 lua_State* ScriptBinaryDataManager::GetUnderlyingVM() {
     return m_L;
-}
-
-void ScriptBinaryDataManager::EnableDebugger(int port) {
-#ifdef TL_ENABLE_LUAU_DEBUGGER
-    if (port <= 0 || !m_L) return;
-
-    luau::debugger::log::install(
-        [](std::string_view msg) { LOGI("[Luau.Debugger] {}", msg); },
-        [](std::string_view msg) { LOGE("[Luau.Debugger] {}", msg); });
-
-    auto holder = std::make_unique<ScriptDebuggerHolder>();
-    holder->debugger = std::make_unique<luau::debugger::Debugger>(
-        /*stop_on_entry=*/false);
-    auto* debugger = holder->debugger.get();
-    debugger->setRoot(std::filesystem::current_path().string());
-    debugger->setFileExtension(".luau");
-
-    if (!debugger->listen(port)) {
-        LOGW("[Luau]: debugger failed to listen on port {}", port);
-        return;
-    }
-
-    debugger->initialize(m_L);
-    LOGI("[Luau]: debugger listening on port {} (attach with the "
-         "luau-debugger VSCode extension)",
-         port);
-    m_debugger = std::move(holder);
-#else
-    (void)port;
-#endif
-}
-
-void ScriptBinaryDataManager::OnLuaFileLoaded(lua_State* L,
-                                              const std::string& path,
-                                              bool is_entry) {
-#ifdef TL_ENABLE_LUAU_DEBUGGER
-    if (m_debugger && m_debugger->debugger) {
-        m_debugger->debugger->onLuaFileLoaded(L, path, is_entry);
-    }
-#else
-    (void)L;
-    (void)path;
-    (void)is_entry;
-#endif
-}
-
-void ScriptBinaryDataManager::OnLuaError(const std::string& msg, lua_State* L) {
-#ifdef TL_ENABLE_LUAU_DEBUGGER
-    if (m_debugger && m_debugger->debugger) {
-        m_debugger->debugger->onError(msg, L);
-    }
-#else
-    (void)msg;
-    (void)L;
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -255,56 +191,35 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
 
     m_L = COMMON_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>()
               .GetUnderlyingVM();
-    TL_RETURN_IF_NULL_WITH_LOG(m_L, LOGE, "[Luau]: VM is null");
-
-    auto& script_manager =
-        COMMON_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>();
+    TL_RETURN_IF_NULL_WITH_LOG(m_L, LOGE, "[Lua]: VM is null");
 
     std::string script_path = handle->GetPath().string();
     m_filename = script_path;
 
-    bool from_cache = LuauRequireContext::GetCached(m_L, script_path);
-    if (!from_cache) {
-        const std::vector<char>& source = handle->GetContent();
-        TL_RETURN_IF_FALSE_WITH_LOG(!source.empty(), LOGE,
-                                    "[Luau]: script {} content empty", m_filename);
+    const std::vector<char>& source = handle->GetContent();
+    TL_RETURN_IF_FALSE_WITH_LOG(!source.empty(), LOGE,
+                                "[Lua]: script {} content empty", m_filename);
 
-        size_t bytecode_size = 0;
-        lua_CompileOptions compile_options = MakeLuauCompileOptions();
-        char* bytecode = luau_compile(source.data(), source.size(),
-                                      &compile_options, &bytecode_size);
-        TL_RETURN_IF_NULL_WITH_LOG(bytecode, LOGE, "[Luau]: compile {} failed", m_filename);
+    int load_result =
+        luaL_loadbuffer(m_L, source.data(), source.size(), script_path.c_str());
+    if (load_result != LUA_OK) {
+        const char* err = lua_tostring(m_L, -1);
+        LOGE("[Lua]: load {} failed: {}", m_filename, err ? err : "unknown");
+        lua_pop(m_L, 1);
+        return;
+    }
 
-        int load_result =
-            luau_load(m_L, script_path.c_str(), bytecode, bytecode_size, 0);
-        free(bytecode);
-
-        if (load_result != 0) {
-            const char* err = lua_tostring(m_L, -1);
-            LOGE("[Luau]: load {} failed: {}", m_filename, err ? err : "unknown");
-            script_manager.OnLuaError(err ? err : "unknown", m_L);
-            lua_pop(m_L, 1);
-            return;
-        }
-
-        // Register the chunk with the debugger before running it so that
-        // breakpoints inside this file can be resolved.
-        script_manager.OnLuaFileLoaded(m_L, script_path, /*is_entry=*/true);
-
-        int pcall_result = lua_pcall(m_L, 0, 1, 0);
-        if (pcall_result != LUA_OK) {
-            const char* err = lua_tostring(m_L, -1);
-            LOGE("[Luau]: script {} run failed: {}", m_filename, err ? err : "unknown");
-            script_manager.OnLuaError(err ? err : "unknown", m_L);
-            lua_pop(m_L, 1);
-            return;
-        }
-
-        LuauRequireContext::SetCached(m_L, script_path);
+    int pcall_result = lua_pcall(m_L, 0, 1, 0);
+    if (pcall_result != LUA_OK) {
+        const char* err = lua_tostring(m_L, -1);
+        LOGE("[Lua]: script {} run failed: {}", m_filename,
+             err ? err : "unknown");
+        lua_pop(m_L, 1);
+        return;
     }
 
     if (!lua_istable(m_L, -1)) {
-        LOGE("[Luau]: script {} must return a table: name {}, with OnInit & "
+        LOGE("[Lua]: script {} must return a table: name {}, with OnInit & "
              "OnUpdate & OnRender & OnQuit",
              m_filename,
              handle->GetClassName());
@@ -318,85 +233,93 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
         static_cast<std::underlying_type_t<Entity>>(m_entity));
 
     if (new_fn.isFunction()) {
-        auto new_result =
-            m_entity != null_entity ? new_fn(entity_val) : new_fn();
-        if (new_result && new_result.size() > 0) {
-            luabridge::LuaRef instance = new_result[0];
-            if (instance.isTable()) {
-                instance.push(m_L);
-                m_table_ref = lua_ref(m_L, -1);
-                lua_pop(m_L, 2);  // instance + class_table
-                TL_RETURN_IF_FALSE_WITH_LOG(
-                    m_table_ref != LUA_NOREF, LOGE,
-                    "[Luau]: failed to ref script instance");
-                return;
-            }
+        new_fn.push(m_L);  // class_table, new_fn
+        const bool has_entity = m_entity != null_entity;
+        if (has_entity) {
+            lua_pushinteger(m_L, entity_val);  // class_table, new_fn, entity
         }
-        if (!new_result)
-            LOGE("[Script]: script new() failed: {}",
-                 new_result.errorMessage());
-    } else {
-        LOGE("[Script]: module {} must has new(Entity) function",
-             handle->GetClassName());
+        const int call_result = lua_pcall(m_L, has_entity ? 1 : 0, 1, 0);
+        if (call_result == LUA_OK && lua_istable(m_L, -1)) {
+            m_table_ref = luaL_ref(m_L, LUA_REGISTRYINDEX);  // pops instance
+            lua_pop(m_L, 1);                                 // class_table
+            TL_RETURN_IF_FALSE_WITH_LOG(
+                m_table_ref != LUA_NOREF, LOGE,
+                "[Lua]: failed to ref script instance");
+            return;
+        }
+        const char* err =
+            call_result == LUA_OK ? "new() must return a table"
+                                  : lua_tostring(m_L, -1);
+        LOGE("[Script]: script {} new() failed: {}", m_filename,
+             err ? err : "unknown");
+        lua_pop(m_L, 1);  // result or error
+        lua_pop(m_L, 1);  // class_table
+        return;
     }
+
+    LOGE("[Script]: module {} must has new(Entity) function",
+         handle->GetClassName());
+    lua_pop(m_L, 1);  // class_table
 }
 
+// Runs `fn(self, ...)` through lua_pcall so the full Lua error message is
+// available (LuaBridge's call helpers only report a generic failure).
 void Script::callMethodNoArg(const char* method) {
     auto prepare = prepareFn(method);
-    TL_RETURN_IF_FALSE(prepare);
+    if (!prepare) return;
 
-    auto result = prepare.m_fn(prepare.m_instance);
-    checkAndPrintErrorResult(result, method);
+    prepare->m_fn.push(m_L);
+    prepare->m_instance.push(m_L);
+    if (lua_pcall(m_L, 1, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(m_L, -1);
+        LOGE("[Lua] {} {}: {}", m_filename, method, err ? err : "unknown");
+        lua_pop(m_L, 1);
+    }
 }
 
 void Script::callMethodWithTime(const char* method, TimeType delta_time) {
     auto prepare = prepareFn(method);
-    TL_RETURN_IF_FALSE(prepare);
+    if (!prepare) return;
 
-    auto result =
-        prepare.m_fn(prepare.m_instance, static_cast<lua_Number>(delta_time));
-    checkAndPrintErrorResult(result, method);
+    prepare->m_fn.push(m_L);
+    prepare->m_instance.push(m_L);
+    lua_pushnumber(m_L, static_cast<lua_Number>(delta_time));
+    if (lua_pcall(m_L, 2, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(m_L, -1);
+        LOGE("[Lua] {} {}: {}", m_filename, method, err ? err : "unknown");
+        lua_pop(m_L, 1);
+    }
 }
 
 void Script::callMethodWithEntity(const char* method) {
     auto prepare = prepareFn(method);
-    TL_RETURN_IF_FALSE(prepare);
+    if (!prepare) return;
 
     lua_Integer entity_val = static_cast<lua_Integer>(
         static_cast<std::underlying_type_t<Entity>>(m_entity));
-    auto result = prepare.m_fn(prepare.m_instance, entity_val);
-    checkAndPrintErrorResult(result, method);
+    prepare->m_fn.push(m_L);
+    prepare->m_instance.push(m_L);
+    lua_pushinteger(m_L, entity_val);
+    if (lua_pcall(m_L, 2, 0, 0) != LUA_OK) {
+        const char* err = lua_tostring(m_L, -1);
+        LOGE("[Lua] {} {}: {}", m_filename, method, err ? err : "unknown");
+        lua_pop(m_L, 1);
+    }
 }
 
-void Script::checkAndPrintErrorResult(const luabridge::LuaResult& result,
-                                      std::string_view method) {
-    TL_RETURN_IF_TRUE(result);
-
-    std::string msg = result.errorMessage();
-    const char* fallback = "(no detailed Lua error text; likely wrong "
-                           "call signature or non-string error object)";
-    bool success = std::any_of(msg.begin(), msg.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    });
-    std::string text = success ? msg : std::string{fallback};
-    LOGE("[Luau] {} {}: {}", m_filename, method, text);
-    COMMON_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>().OnLuaError(
-        text, m_L);
-}
-
-Script::PrepareInfo Script::prepareFn(std::string_view method) {
-    lua_getref(m_L, m_table_ref);
+std::optional<Script::PrepareInfo> Script::prepareFn(std::string_view method) {
+    lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_table_ref);
     if (!lua_istable(m_L, -1)) {
         lua_pop(m_L, 1);
-        return {};
+        return std::nullopt;
     }
-    lua_pushstring(m_L, method.data());
+    lua_pushlstring(m_L, method.data(), method.size());
     lua_gettable(m_L, -2);
     luabridge::LuaRef fn = luabridge::LuaRef::fromStack(m_L, -1);
     luabridge::LuaRef instance = luabridge::LuaRef::fromStack(m_L, -2);
     lua_pop(m_L, 2);
 
-    if (!fn.isCallable()) return {};
+    if (!fn.isCallable()) return std::nullopt;
 
     return PrepareInfo{instance, fn};
 }
@@ -405,7 +328,7 @@ Script::~Script() {
     if (m_inited) callMethodNoArg("OnQuit");
 
     if (m_L && m_table_ref != LUA_NOREF) {
-        lua_unref(m_L, m_table_ref);
+        luaL_unref(m_L, LUA_REGISTRYINDEX, m_table_ref);
         m_table_ref = LUA_NOREF;
     }
 }

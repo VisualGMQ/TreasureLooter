@@ -68,7 +68,7 @@ void setHandleToString(lua_State* L, const std::string& name) {
         return;
     }
     lua_pushstring(L, name.c_str());
-    luabridge::lua_pushcclosure_x(L, &handleToStringImpl<T>, 1);
+    luabridge::lua_pushcclosure_x(L, &handleToStringImpl<T>, "__tostring", 1);
     lua_setfield(L, -2, "__tostring");
     lua_pop(L, 1);
 }
@@ -107,7 +107,7 @@ void BindHandle(const std::string& name,
 					luabridge::LuaRef method = cls[key];
 					if (!method.isNil() && method.isCallable()) {
 						method.push(L);
-						luabridge::lua_pushcclosure_x(L, &detail::HandleForwardCall<T>, 1);
+						luabridge::lua_pushcclosure_x(L, &detail::HandleForwardCall<T>, "HandleForwardCall", 1);
 						return luabridge::LuaRef::fromStack(L);
 					}
 

@@ -1,8 +1,0 @@
-{
-    "cmake.sourceDirectory": "C:/Users/visualgmq/codes/myself/TreasureLooter/game",
-	"luau-lsp.types.definitionFiles": [
-		"game/scripts/type_hints/tl.d.luau",
-		"game/scripts/type_hints/imgui.d.luau"
-	],
-	"luau-lsp.fflags.enableNewSolver": true
-}

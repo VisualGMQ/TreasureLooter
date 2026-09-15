@@ -47,7 +47,7 @@
 				<duration>3.000000</duration>
 			</elem>
 		</buffs>
-		<script>scripts/client/behaviors/skills/rock_fell.luau</script>
+		<script>scripts/client/behaviors/skills/rock_fell.lua</script>
 		<hit_fx_did>Invalid</hit_fx_did>
 	</payload>
 </SkillDefinition>

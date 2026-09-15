@@ -21,8 +21,8 @@ public:
 
         auto listener = [cb](EventListenerID id, const T& event) {
             auto result = cb(static_cast<int>(id), event);
-            if (result.errorCode()) {
-                LOGE("[Lua] event callback error: {}", result.errorMessage());
+            if (!result) {
+                LOGE("[Lua] event callback error: {}", result.message());
             }
         };
 
@@ -55,8 +55,8 @@ public:
         auto listener = [cb](EventListenerID id, const Event& event) {
             auto result =
                 cb(static_cast<int>(id), event.m_peer, event.Payload());
-            if (result.errorCode()) {
-                LOGE("[Lua] event callback error: {}", result.errorMessage());
+            if (!result) {
+                LOGE("[Lua] event callback error: {}", result.message());
             }
         };
 

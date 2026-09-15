@@ -4,11 +4,11 @@
 		<buffs>
 			<elem>
 				<key>SpeedDown</key>
-				<value>@common/buff/speed_down</value>
+				<value>common.buff.speed_down</value>
 			</elem>
 			<elem>
 				<key>Freeze</key>
-				<value>@common/buff/freeze</value>
+				<value>common.buff.freeze</value>
 			</elem>
 		</buffs>
 	</payload>

@@ -47,7 +47,7 @@
 				<duration>2.000000</duration>
 			</elem>
 		</buffs>
-		<script>scripts/client/behaviors/skills/ice_spike.luau</script>
+		<script>scripts/client/behaviors/skills/ice_spike.lua</script>
 		<hit_fx_did>Invalid</hit_fx_did>
 	</payload>
 </SkillDefinition>

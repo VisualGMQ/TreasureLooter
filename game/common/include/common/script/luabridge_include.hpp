@@ -8,11 +8,11 @@
 #include "common/tilemap.hpp"
 #include "common/timer.hpp"
 
+#include <tuple>
+#include <utility>
+
 // clang-format off
-#include "lua.h"
-#include "lualib.h"
-#include "luacode.h"
-#include "luaconf.h"
+#include "lua.hpp"
 
 #include "LuaBridge/LuaBridge.h"
 #include "LuaBridge/Array.h"
@@ -54,3 +54,15 @@ template <>
 struct luabridge::Stack<PhysicsShape::Type>
     : luabridge::Enum<PhysicsShape::Type, PhysicsShape::Type::Circle,
                       PhysicsShape::Type::Unknown, PhysicsShape::Type::Rect> {};
+
+namespace tl {
+// LuaBridge3 3.0-rc12: `LuaRef::call<R>` is ambiguous when `R == LuaRef`
+// because the void overload of `callWithHandler` is not constrained on R.
+// Pass the object type explicitly to select the R-returning overload.
+template <class... Args>
+luabridge::TypeResult<luabridge::LuaRef> CallLuaRef(
+    const luabridge::LuaRef& fn, Args&&... args) {
+    return luabridge::callWithHandler<luabridge::LuaRef, luabridge::LuaRef>(
+        fn, std::ignore, std::forward<Args>(args)...);
+}
+}  // namespace tl

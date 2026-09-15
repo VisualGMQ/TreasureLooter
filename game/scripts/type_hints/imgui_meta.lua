@@ -1,0 +1,132 @@
+---@meta
+-- LuaLS (LuaCATS) definition file for the `ImGui` C++ binding namespace.
+-- Hand-written equivalent of common/src/scripts/script_imgui_binding.cpp.
+
+-- The runtime global table created by `beginNamespace("ImGui")`.
+---@class ImGui
+-- Window
+---@field Begin fun(name: string): boolean
+---@field End fun()
+---@field BeginChild fun(str_id: string, w: number?, h: number?, child_flags: number?): boolean
+---@field EndChild fun()
+-- Text
+---@field Text fun(text: string)
+---@field SeparatorText fun(label: string)
+-- Main widgets
+---@field Button fun(label: string): boolean
+---@field Checkbox fun(label: string, v: boolean): boolean, boolean
+---@field InputText fun(label: string, initial: string): string, boolean
+---@field InputInt fun(label: string, v: number): number, boolean
+---@field InputFloat fun(label: string, v: number): number, boolean
+---@field DragFloat fun(label: string, v: number, speed: number?, v_min: number?, v_max: number?): number, boolean
+---@field DragInt fun(label: string, v: number, speed: number?, v_min: number?, v_max: number?): number, boolean
+---@field SliderFloat fun(label: string, v: number, v_min: number, v_max: number): number, boolean
+---@field SliderInt fun(label: string, v: number, v_min: number, v_max: number): number, boolean
+-- Tree
+---@field TreeNode fun(label: string): boolean
+---@field TreeNodeEx fun(label: string, flags: number): boolean
+---@field TreePop fun()
+---@field CollapsingHeader fun(label: string): boolean
+-- Layout
+---@field SameLine fun()
+---@field Separator fun()
+---@field NewLine fun()
+---@field Spacing fun()
+---@field Indent fun()
+---@field Unindent fun()
+-- ID
+---@field PushID fun(id: number|string)
+---@field PopID fun()
+-- Disable
+---@field BeginDisabled fun(disabled: boolean?)
+---@field EndDisabled fun()
+-- Popup
+---@field BeginPopup fun(str_id: string): boolean
+---@field EndPopup fun()
+---@field OpenPopup fun(str_id: string)
+---@field CloseCurrentPopup fun()
+-- Tooltip
+---@field BeginTooltip fun(): boolean
+---@field EndTooltip fun()
+---@field SetTooltip fun(fmt: string)
+-- Item query
+---@field IsItemHovered fun(): boolean
+---@field IsItemClicked fun(): boolean
+-- Enum / flag constants
+---@field WindowFlags_None number
+---@field WindowFlags_NoTitleBar number
+---@field WindowFlags_NoResize number
+---@field WindowFlags_NoMove number
+---@field WindowFlags_NoScrollbar number
+---@field WindowFlags_NoCollapse number
+---@field WindowFlags_AlwaysAutoResize number
+---@field WindowFlags_NoBackground number
+---@field WindowFlags_NoSavedSettings number
+---@field WindowFlags_MenuBar number
+---@field WindowFlags_NoDecoration number
+---@field WindowFlags_NoInputs number
+---@field Cond_None number
+---@field Cond_Always number
+---@field Cond_Once number
+---@field Cond_FirstUseEver number
+---@field Cond_Appearing number
+---@field TreeNodeFlags_None number
+---@field TreeNodeFlags_Selected number
+---@field TreeNodeFlags_Framed number
+---@field TreeNodeFlags_DefaultOpen number
+---@field TreeNodeFlags_OpenOnDoubleClick number
+---@field TreeNodeFlags_Leaf number
+---@field TreeNodeFlags_OpenOnArrow number
+---@field TreeNodeFlags_Bullet number
+---@field TreeNodeFlags_CollapsingHeader number
+---@field InputTextFlags_None number
+---@field InputTextFlags_CharsDecimal number
+---@field InputTextFlags_CharsHexadecimal number
+---@field InputTextFlags_ReadOnly number
+---@field InputTextFlags_Password number
+---@field InputTextFlags_AutoSelectAll number
+---@field SliderFlags_None number
+---@field SliderFlags_Logarithmic number
+---@field SliderFlags_NoRoundToFormat number
+---@field SliderFlags_NoInput number
+---@field SliderFlags_AlwaysClamp number
+---@field PopupFlags_None number
+---@field PopupFlags_MouseButtonLeft number
+---@field PopupFlags_MouseButtonRight number
+---@field PopupFlags_MouseButtonMiddle number
+---@field PopupFlags_NoReopen number
+---@field PopupFlags_NoOpenOverExistingPopup number
+---@field HoveredFlags_None number
+---@field HoveredFlags_ChildWindows number
+---@field HoveredFlags_RootWindow number
+---@field HoveredFlags_AnyWindow number
+---@field HoveredFlags_AllowWhenBlockedByPopup number
+---@field HoveredFlags_AllowWhenDisabled number
+---@field HoveredFlags_ForTooltip number
+---@field FocusedFlags_None number
+---@field FocusedFlags_ChildWindows number
+---@field FocusedFlags_RootWindow number
+---@field FocusedFlags_AnyWindow number
+---@field SelectableFlags_None number
+---@field SelectableFlags_NoAutoClosePopups number
+---@field SelectableFlags_SpanAllColumns number
+---@field SelectableFlags_AllowDoubleClick number
+---@field SelectableFlags_Disabled number
+---@field ComboFlags_None number
+---@field ComboFlags_PopupAlignLeft number
+---@field ComboFlags_HeightSmall number
+---@field ComboFlags_HeightRegular number
+---@field ComboFlags_HeightLarge number
+---@field ComboFlags_NoArrowButton number
+---@field ChildFlags_None number
+---@field ChildFlags_Borders number
+---@field ChildFlags_FrameStyle number
+---@field Dir_None number
+---@field Dir_Left number
+---@field Dir_Right number
+---@field Dir_Up number
+---@field Dir_Down number
+---@field MouseButton_Left number
+---@field MouseButton_Right number
+---@field MouseButton_Middle number
+ImGui = {}

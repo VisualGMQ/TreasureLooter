@@ -8,7 +8,7 @@ if (NEED_SCHEMA_PARSER)
     add_dependencies(${COMMON_NAME} schema_preprocess)
 endif()
 
-file(GLOB_RECURSE COMMON_SCRIPTS ../scripts/common/*.luau)
+file(GLOB_RECURSE COMMON_SCRIPTS ../scripts/common/*.lua)
 
 target_sources(${COMMON_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS}
     ${SCHEMA_PROTO_OUTPUT_FILES}
@@ -34,8 +34,7 @@ target_link_libraries(${COMMON_NAME}
     enet
     protobuf::libprotobuf
 
-    Luau.Compiler
-    Luau.VM
+    lua551
     LuaBridge)
 
 if (MSVC)
@@ -49,14 +48,13 @@ endif()
 
 target_compile_definitions(${COMMON_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
+    # `Path` is `std::filesystem::path` and is bound as a LuaBridge class; keep
+    # LuaBridge from also auto-converting it to/from a Lua string.
+    PUBLIC LUABRIDGE_DISABLE_CXX17_FILESYSTEM
     PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 if (ANDROID)
     target_compile_definitions(${COMMON_NAME} PUBLIC TL_PLATFORM_ANDROID)
-else()
-    # Luau DAP debugger (breakpoints, stepping, variables) for the in-game VM.
-    target_link_libraries(${COMMON_NAME} PRIVATE Luau.Debugger)
-    target_compile_definitions(${COMMON_NAME} PRIVATE TL_ENABLE_LUAU_DEBUGGER)
 endif()
 
 

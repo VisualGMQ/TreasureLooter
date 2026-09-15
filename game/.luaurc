@@ -1,8 +1,0 @@
-{
-	"aliases": {
-		"type_hints": "./scripts/type_hints",
-		"client": "./scripts/client",
-		"server": "./scripts/server",
-		"common": "./scripts/common"
-	}
-}
