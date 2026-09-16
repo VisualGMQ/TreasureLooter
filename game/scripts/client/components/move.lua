@@ -11,13 +11,16 @@ local Common = require("common.common")
 ---@field m_move_right_anim AnimationHandle
 
 ---@class ClientMoveComponent : MoveComponent
----@field _direction CommonDirection
----@field _anim_player AnimationPlayer
----@field _sprite Sprite
----@field _move_up_anim AnimationHandle
----@field _move_down_anim AnimationHandle
----@field _move_left_anim AnimationHandle
----@field _move_right_anim AnimationHandle
+---@field private _direction Direction
+---@field private _move_velocity Vec2
+---@field private _speed number
+---@field private _move_dir Vec2
+---@field private _anim_player AnimationPlayer
+---@field private _sprite Sprite
+---@field private _move_up_anim AnimationHandle
+---@field private _move_down_anim AnimationHandle
+---@field private _move_left_anim AnimationHandle
+---@field private _move_right_anim AnimationHandle
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = MoveComponent })
@@ -36,13 +39,55 @@ function _M.new(gameobject, definition)
     self._move_down_anim = definition.m_move_down_anim
     self._move_left_anim = definition.m_move_left_anim
     self._move_right_anim = definition.m_move_right_anim
+    self._move_velocity = TL_Common.Vec2.ZERO
+    self._speed = definition.m_speed
+    self._move_dir = TL_Common.Vec2.ZERO
     self._sprite = ctx:GetSpriteManager():Get(entity)
     return setmetatable(self, _M)
 end
 
----@param elapse_time TimeType
+---@return Vec2
+function _M:GetMoveDirection()
+    return self._move_dir
+end
+
+---@param speed number
+function _M:ChangeSpeed(speed)
+    self._speed = speed
+    self._move_velocity = self._move_dir * speed
+end
+
+---@return number
+function _M:GetSpeed()
+    return self._speed
+end
+
+---@param dir Vec2
+function _M:SetDir(dir)
+    self._move_dir = dir
+    self._move_velocity = dir * self._speed
+end
+
+---@return Vec2
+function _M:GetVelocity()
+    return self._move_velocity
+end
+
+--- The client keeps a velocity model (SetDir/ChangeSpeed) for input and
+--- animation; the base only understands a per-frame displacement, so convert
+--- the velocity into one here and let the base apply it.
+---@return boolean
+function _M:IsWantMoving()
+    return self._move_velocity:LengthSquared() > 0
+end
+
+---@param elapse_time TimeType|nil
 function _M:Update(elapse_time)
-    MoveComponent.Update(self, elapse_time)
+    if elapse_time and self._move_velocity:LengthSquared() > 0 then
+        self:SetMoveDisp(self._move_velocity * elapse_time)
+    end
+
+    MoveComponent.Update(self)
 
     if not self:IsWantMoving() then
         if self._anim_player ~= nil then

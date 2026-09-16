@@ -266,7 +266,7 @@
 ---@field RemoveFromParent fun(self: Relationship)
 
 ---@class ScriptBinaryDataManager
----@field Load fun(self: ScriptBinaryDataManager, path: string, force: boolean?): ScriptBinaryDataHandle
+---@field Load fun(self: ScriptBinaryDataManager, path: Path|string, force: boolean?): ScriptBinaryDataHandle
 ---@field Find fun(self: ScriptBinaryDataManager, path: string): ScriptBinaryDataHandle
 
 ---@class ScriptComponentManager
@@ -280,19 +280,19 @@
 ---@field Has fun(self: TransformManager, entity: Entity): boolean
 
 ---@class ImageManager
----@field Load fun(self: ImageManager, path: string, force: boolean?): ImageHandle
+---@field Load fun(self: ImageManager, path: Path|string, force: boolean?): ImageHandle
 ---@field Find fun(self: ImageManager, path: string): ImageHandle
 
 ---@class TilemapManager
----@field Load fun(self: TilemapManager, path: string, force: boolean?): TilemapHandle
+---@field Load fun(self: TilemapManager, path: Path|string, force: boolean?): TilemapHandle
 ---@field Find fun(self: TilemapManager, path: string): TilemapHandle
 
 ---@class AnimationManager
----@field Load fun(self: AnimationManager, path: string, force: boolean?): AnimationHandle
+---@field Load fun(self: AnimationManager, path: Path|string, force: boolean?): AnimationHandle
 ---@field Find fun(self: AnimationManager, path: string): AnimationHandle
 
 ---@class SceneManager
----@field Load fun(self: SceneManager, path: string, force: boolean?): SceneHandle
+---@field Load fun(self: SceneManager, path: Path|string, force: boolean?): SceneHandle
 ---@field Find fun(self: SceneManager, path: string): SceneHandle
 ---@field Create fun(self: SceneManager, definition: SceneDefinitionHandle): SceneHandle
 ---@field Unload fun(self: SceneManager, handle: SceneHandle)
@@ -300,7 +300,7 @@
 ---@field Switch fun(self: SceneManager, scene: SceneHandle)
 
 ---@class FontManager
----@field Load fun(self: FontManager, path: string, force: boolean?): FontHandle
+---@field Load fun(self: FontManager, path: Path|string, force: boolean?): FontHandle
 ---@field Find fun(self: FontManager, path: string): FontHandle
 
 ---@class AssetsManager

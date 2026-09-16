@@ -48,8 +48,7 @@ endif()
 
 target_compile_definitions(${COMMON_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
-    # `Path` is `std::filesystem::path` and is bound as a LuaBridge class; keep
-    # LuaBridge from also auto-converting it to/from a Lua string.
+    # we bind std::filesystem::path by ourselves, so disable Luabridge auto binding
     PUBLIC LUABRIDGE_DISABLE_CXX17_FILESYSTEM
     PRIVATE _CRT_SECURE_NO_WARNINGS)
 

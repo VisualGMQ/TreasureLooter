@@ -21,7 +21,7 @@ function ClientGameEntry:OnInit()
     ClientWorld.SetInst(ClientWorld.new())
     GameEntry.OnInit(self)
     DebugCommands.RegisterAllDebugCommand()
-    -- self:initNet()
+    self:initNet()
 end
 
 function ClientGameEntry:initNet()

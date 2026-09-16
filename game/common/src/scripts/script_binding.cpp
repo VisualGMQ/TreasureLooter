@@ -636,7 +636,7 @@ void bindTimer(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TimerEvent>([fn, id=timer.GetID()](EventListenerID, const TimerEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTimer().GetID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     timer.SetTimerListener(listener_id);
                 })
@@ -644,7 +644,7 @@ void bindTimer(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TimerStopEvent>([fn, id=timer.GetID()](EventListenerID, const TimerStopEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTimer().GetID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     timer.SetTimerStopListener(listener_id);
                 })
@@ -994,7 +994,7 @@ void bindTrigger(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TriggerEnterEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerEnterEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     trigger.SetEnterListener(listener_id);
                 })
@@ -1002,7 +1002,7 @@ void bindTrigger(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TriggerLeaveEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerLeaveEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     trigger.SetLeaveListener(listener_id);
                 })
@@ -1010,7 +1010,7 @@ void bindTrigger(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TriggerTouchEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerTouchEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     trigger.SetTouchListener(listener_id);
                 })

@@ -14,7 +14,23 @@ void BindProtoModule(lua_State* L) {
                 .beginClass<{{class_full_name}}>("{{class_name}}")
                     .addConstructor<void()>()
 {{#fields}}
+{{^is_enum}}
+{{^is_optional_enum}}
                     .addFunction("{{field_name}}", &{{class_full_name}}::{{field_name}})
+{{/is_optional_enum}}
+{{/is_enum}}
+{{#is_enum}}
+                    .addFunction("{{field_name}}",
+                                 +[](const {{class_full_name}}* self) {
+                                     return static_cast<int>(self->{{field_name}}());
+                                 })
+{{/is_enum}}
+{{#is_optional_enum}}
+                    .addFunction("{{field_name}}",
+                                 +[](const {{class_full_name}}* self) {
+                                     return static_cast<int>(self->{{field_name}}());
+                                 })
+{{/is_optional_enum}}
 {{#is_message}}
                     .addFunction("set_{{field_name}}",
                                  +[]({{class_full_name}}* self, const {{proto_type}}& v) {

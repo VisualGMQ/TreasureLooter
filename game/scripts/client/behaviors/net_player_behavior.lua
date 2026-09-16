@@ -1,0 +1,91 @@
+local ClientGameObjectBehavior = require("client.gameobject_behavior")
+
+---@class ClientNetPlayerBehavior : ClientGameObjectBehavior
+local _M = {}
+_M.__index = _M
+setmetatable(_M, { __index = ClientGameObjectBehavior })
+
+---@param entity Entity
+---@return ClientNetPlayerBehavior
+function _M.new(entity)
+    local self = setmetatable(ClientGameObjectBehavior.new(entity), _M)
+    ---@cast self ClientNetPlayerBehavior
+    return self
+end
+
+function _M:OnInit()
+    local ctx = TL_Client.GetContext()
+    ctx:GetEventSystem():AddNetMsg_MoveEvent(function(id, peer, payload)
+        self:onMoveNetEvent(payload)
+    end)
+end
+
+---@param move ProtoMove
+---@private
+function _M:onMoveNetEvent(move)
+    local go = self:GetGameObject()
+    if not go or not go.m_move_component then
+        return
+    end
+
+    local net_target = move:m_target()
+    local target = TL_Common.Vec2(net_target:m_x(), net_target:m_y())
+    local offset = target - go.m_transform:GetGlobalPosition()
+    local offset_squared_len = offset:LengthSquared()
+
+    if offset_squared_len > 0 then
+        go.m_move_component:SetMoveDisp(offset)
+    end
+
+    go.m_move_component:Update()
+end
+
+---@param elapse_time TimeType
+function _M:OnUpdate(elapse_time)
+    local ctx = TL_Client.GetContext()
+    local host = ctx:GetNetHost()
+    if not host then
+        return
+    end
+
+    local input_manager = ctx:GetInputManager()
+    local action = TL_Proto.ClientAction()
+
+    local action_type = nil
+    local attack = input_manager:GetAction("Attack")
+    if attack:IsPressed(0) then
+        action_type = TL_Schema.ClientActionType.ClientActionType_Attack
+    else
+        local axises = input_manager:MakeAxises("MoveX", "MoveY"):Value(0)
+        if axises:LengthSquared() ~= 0 then
+            local move_component = self.m_gameobject.m_move_component
+            move_component:SetDir(axises)
+            local disp = move_component:GetVelocity() *  elapse_time
+            action_type = TL_Schema.ClientActionType.ClientActionType_Move
+            local net_disp = TL_Proto.NetVec2()
+            net_disp:set_m_x(disp.x)
+            net_disp:set_m_y(disp.y)
+            action:set_m_move_disp(net_disp)
+            ctx:Log("send move packet: disp = ", disp)
+        end
+    end
+
+    if action_type ~= nil then
+        action:set_m_action(action_type)
+        local net_msg = TL_Proto.NetMsg()
+        net_msg:set_m_client_action(action)
+        host:Send(ctx:GetNetPeer(), net_msg, 0, TL_Common.UDPPacketFlags(TL_Common.UDPPacketFlag.Reliable))
+    end
+end
+
+-- Follow the character in the render phase so the camera and the sprite sample
+-- the exact same (global) transform value; updating in OnUpdate would read a
+-- stale global matrix from before RelationshipManager::Update and cause jitter.
+function _M:OnRender()
+    local go = self:GetGameObject()
+    if go and go.m_transform then
+        TL_Client.GetContext():GetCamera():MoveTo(go.m_transform:GetGlobalPosition())
+    end
+end
+
+return _M

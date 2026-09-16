@@ -4,6 +4,7 @@
 // unit sees identical Stack specializations and include order.
 #include "common/entity.hpp"
 #include "common/event.hpp"
+#include "common/log.hpp"
 #include "common/physics.hpp"
 #include "common/tilemap.hpp"
 #include "common/timer.hpp"
@@ -64,5 +65,43 @@ luabridge::TypeResult<luabridge::LuaRef> CallLuaRef(
     const luabridge::LuaRef& fn, Args&&... args) {
     return luabridge::callWithHandler<luabridge::LuaRef, luabridge::LuaRef>(
         fn, std::ignore, std::forward<Args>(args)...);
+}
+
+// lua_pcall message handler. LuaBridge's default error handling drops the Lua
+// error object and only reports "The lua function invocation raised an error",
+// so log the real message (which contains `file:line`) plus a traceback whenever
+// a Lua callback fails.
+inline int LuaErrorHandler(lua_State* L) {
+    const char* msg = lua_tostring(L, 1);
+    if (msg == nullptr) {
+        if (luaL_callmeta(L, 1, "__tostring") &&
+            lua_type(L, -1) == LUA_TSTRING) {
+            msg = lua_tostring(L, -1);
+        } else {
+            msg = lua_pushfstring(L, "(error object is a %s value)",
+                                  luaL_typename(L, 1));
+        }
+    }
+    luaL_traceback(L, L, msg, 1);
+    LOGE("[Lua] {}", lua_tostring(L, -1));
+    return 1;
+}
+
+// Calls a Lua function and logs the real Lua error + traceback on failure.
+// Returns the LuaBridge result so callers can react if needed.
+template <class... Args>
+luabridge::TypeResult<void> CallLuaWithLog(const luabridge::LuaRef& fn,
+                                           Args&&... args) {
+    auto result = luabridge::callWithHandler<void>(
+        fn, &LuaErrorHandler, std::forward<Args>(args)...);
+
+    const auto lua_error =
+        luabridge::makeErrorCode(luabridge::ErrorCode::LuaFunctionCallFailed);
+    if (!result && result.error() != lua_error) {
+        // Not a Lua-side raise (e.g. argument conversion failed), so
+        // `LuaErrorHandler` did not log anything.
+        LOGE("[Lua] call failed: {}", result.message());
+    }
+    return result;
 }
 }  // namespace tl

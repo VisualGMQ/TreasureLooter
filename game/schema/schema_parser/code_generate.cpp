@@ -1657,10 +1657,10 @@ std::string GenerateSchemaMetaDefinitionCode(const SchemaInfoManager& manager) {
                     types += "---@field Create fun(self: " + mgr + "): " +
                              handle + "\n";
                     types += "---@field Load fun(self: " + mgr +
-                             ", path: Path, force: boolean?): " + handle +
-                             "\n";
+                             ", path: Path|string, force: boolean?): " +
+                             handle + "\n";
                     types += "---@field Find fun(self: " + mgr +
-                             ", path: Path): " + handle + "\n";
+                             ", path: string): " + handle + "\n";
                     types += "---@field Unload fun(self: " + mgr +
                              ", handle: " + handle + ")\n";
                     types += "---@field Reload fun(self: " + mgr +
