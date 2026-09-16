@@ -102,9 +102,6 @@ public:
         m_tilemap_layer_collision_component_manager;
     std::unique_ptr<ScriptBinaryDataManager> m_script_binary_data_manager;
     std::unique_ptr<ScriptComponentManager> m_script_component_manager;
-
-    // Global script: created at startup, not attached to any entity, ticked at
-    // the start of every frame and kept alive across scene switches.
     std::unique_ptr<Script> m_global_script;
 
     std::unique_ptr<IDebugDrawer> m_debug_drawer;

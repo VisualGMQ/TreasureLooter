@@ -66,6 +66,11 @@ uint16_t UDPPeer::GetPort() const {
     return m_peer->address.port;
 }
 
+uint32_t UDPPeer::GetRTT() const {
+    TL_RETURN_VALUE_IF_NULL(m_peer, 0);
+    return m_peer->roundTripTime;
+}
+
 bool UDPPeer::IsValid() const {
     return m_host && m_peer;
 }

@@ -298,18 +298,63 @@ const Mat33& Transform::GetLocalMat() const {
     return m_mat;
 }
 
+const Mat33& Transform::GetGlobalMat() {
+    EnsureUpdated();
+    return m_global_mat;
+}
+
 const Mat33& Transform::GetGlobalMat() const {
     return m_global_mat;
 }
 
-void Transform::UpdateMat(const Transform* parent) {
+void Transform::UpdateMat() {
     m_mat = Mat33::CreateTranslation(m_position) *
             Mat33::CreateRotation(m_rotation) * Mat33::CreateScale(m_scale);
-    if (parent) {
-        m_global_mat = parent->GetGlobalMat() * m_mat;
+    if (m_parent) {
+        m_global_mat = m_parent->GetGlobalMat() * m_mat;
     } else {
         m_global_mat = m_mat;
     }
+
+    m_cached_position = m_position;
+    m_cached_rotation = m_rotation;
+    m_cached_scale = m_scale;
+    m_is_dirty = false;
+}
+
+void Transform::MarkDirty() {
+    m_is_dirty = true;
+}
+
+void Transform::SetParent(const Transform* parent) {
+    if (m_parent == parent) {
+        return;
+    }
+    m_parent = const_cast<Transform*>(parent);
+    m_is_dirty = true;
+}
+
+bool Transform::isLocalDirty() const {
+    return m_is_dirty || m_position != m_cached_position ||
+           m_rotation != m_cached_rotation || m_scale != m_cached_scale;
+}
+
+bool Transform::IsDirty() const {
+    if (isLocalDirty()) {
+        return true;
+    }
+    return m_parent != nullptr && m_parent->IsDirty();
+}
+
+bool Transform::EnsureUpdated() {
+    const bool parent_changed =
+        m_parent != nullptr && m_parent->EnsureUpdated();
+    if (!parent_changed && !isLocalDirty()) {
+        return false;
+    }
+
+    UpdateMat();
+    return true;
 }
 
 Radians GetAngle(const Vec2& norm_a, const Vec2& norm_b) {

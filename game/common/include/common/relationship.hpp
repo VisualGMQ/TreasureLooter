@@ -29,5 +29,6 @@ public:
     void Update();
 
 private:
-    void updatePoseRecursive(const Transform& parent_transform, Entity child);
+    void updatePoseRecursive(const Transform& parent_transform, Entity child,
+                             bool parent_changed);
 };

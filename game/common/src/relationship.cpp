@@ -27,6 +27,15 @@ void Relationship::AddChild(Entity entity) {
 
     m_children.push_back(entity);
     relationship->m_parent = m_owner;
+
+    // Keep the transform's parent pointer in sync so that reading its global
+    // transform before the next RelationshipManager::Update() is still correct.
+    auto& transform_manager = COMMON_CONTEXT.m_transform_manager;
+    Transform* parent_transform = transform_manager->Get(m_owner);
+    Transform* child_transform = transform_manager->Get(entity);
+    if (parent_transform && child_transform) {
+        child_transform->SetParent(parent_transform);
+    }
 }
 
 bool Relationship::HasChildren() const {
@@ -38,6 +47,10 @@ void Relationship::RemoveChild(Entity entity) {
     if (it != m_children.end()) {
         auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(*it);
         relationship->m_parent = null_entity;
+        if (auto* child_transform =
+                COMMON_CONTEXT.m_transform_manager->Get(*it)) {
+            child_transform->SetParent(nullptr);
+        }
     }
     m_children.erase(it);
 }
@@ -72,15 +85,20 @@ void RelationshipManager::Update() {
         return;
     }
 
-    root_transform->UpdateMat(nullptr);
+    const bool root_changed = root_transform->IsDirty();
+    if (root_changed) {
+        root_transform->UpdateMat();
+    }
 
     for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-        updatePoseRecursive(*root_transform, relationship->Get(i));
+        updatePoseRecursive(*root_transform, relationship->Get(i),
+                            root_changed);
     }
 }
 
 void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
-                                              Entity child) {
+                                              Entity child,
+                                              bool parent_changed) {
     auto& transform_manager = COMMON_CONTEXT.m_transform_manager;
     Transform* transform = transform_manager->Get(child);
 
@@ -88,12 +106,23 @@ void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
         return;
     }
 
-    transform->UpdateMat(&parent_transform);
+    // Keep the cached parent in sync: a reparented node marks itself dirty so
+    // its matrices are rebuilt below.
+    if (transform->GetParent() != &parent_transform) {
+        transform->SetParent(&parent_transform);
+    }
+
+    // Only rebuild the matrices when something actually changed: either an
+    // ancestor moved or this transform (or its parent link) changed.
+    const bool changed = parent_changed || transform->IsDirty();
+    if (changed) {
+        transform->UpdateMat();
+    }
 
     Relationship* child_relationship = Get(child);
     TL_RETURN_IF_NULL(child_relationship);
 
     for (size_t i = 0; i < child_relationship->GetChildrenCount(); i++) {
-        updatePoseRecursive(*transform, child_relationship->Get(i));
+        updatePoseRecursive(*transform, child_relationship->Get(i), changed);
     }
 }

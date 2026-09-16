@@ -32,6 +32,7 @@
         <element name="entity" type="uint32_t" proto_id="1"/>
         <element name="seq" type="uint32_t" proto_id="2"/>
         <element name="target" type="NetVec2" proto_id="3"/>
+        <element name="timestamp" type="double" proto_id ="4" />
     </class>
 
     <enum name="ClientActionType" proto="true">
@@ -42,7 +43,6 @@
     <class name="ClientAction" proto_id="9">
         <element name="action" type="ClientActionType" proto_id="1"/>
         <option name="move_disp" type="NetVec2" proto_id="2"/>
-        <element name="timestamp" type="double" proto_id ="3" />
         <element name="seq" type="uint32_t" proto_id="4" />
     </class>
 </schema>

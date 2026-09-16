@@ -500,6 +500,7 @@
 ---@class UDPPeer
 ---@field Disconnect fun(self: UDPPeer)
 ---@field GetID fun(self: UDPPeer): number
+---@field GetRTT fun(self: UDPPeer): number
 ---@field IsValid fun(self: UDPPeer): boolean
 ---@field InvalidID number
 

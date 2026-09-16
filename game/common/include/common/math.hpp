@@ -586,11 +586,25 @@ struct Transform {
 
     Transform();
 
-    const Mat33 &GetLocalMat() const;
+    [[nodiscard]] const Mat33 &GetLocalMat() const;
 
-    const Mat33 &GetGlobalMat() const;
+    [[nodiscard]] const Mat33 &GetGlobalMat();
+    [[nodiscard]] const Mat33 &GetGlobalMat() const;
 
-    void UpdateMat(const Transform *parent);
+    void UpdateMat();
+
+    void MarkDirty();
+
+    void SetParent(const Transform *parent);
+
+    [[nodiscard]] const Transform *GetParent() const { return m_parent; }
+
+    [[nodiscard]] bool IsDirty() const;
+
+    /**
+     * @return whether the global matrix changed.
+     */
+    bool EnsureUpdated();
 
     bool operator==(const Transform &o) const noexcept {
         return m_position == o.m_position && m_rotation == o.m_rotation &&
@@ -600,8 +614,17 @@ struct Transform {
     bool operator!=(const Transform &o) const noexcept { return !(*this == o); }
 
 private:
+    [[nodiscard]] bool isLocalDirty() const;
+
     Mat33 m_mat;
     Mat33 m_global_mat;
+
+    Transform *m_parent = nullptr;
+    bool m_is_dirty = true;
+
+    Vec2 m_cached_position;
+    Degrees m_cached_rotation;
+    Vec2 m_cached_scale;
 };
 
 /**

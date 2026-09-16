@@ -81,12 +81,7 @@ function _M:IsWantMoving()
     return self._move_velocity:LengthSquared() > 0
 end
 
----@param elapse_time TimeType|nil
-function _M:Update(elapse_time)
-    if elapse_time and self._move_velocity:LengthSquared() > 0 then
-        self:SetMoveDisp(self._move_velocity * elapse_time)
-    end
-
+function _M:Update()
     MoveComponent.Update(self)
 
     if not self:IsWantMoving() then

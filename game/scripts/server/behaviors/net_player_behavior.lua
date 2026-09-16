@@ -2,6 +2,7 @@ local ServerGameObjectBehavior = require("server.gameobject_behavior")
 
 ---@class ServerNetPlayerBehavior : ServerGameObjectBehavior
 ---@field _has_input boolean  has received input from client
+---@field _move_last_seq number
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ServerGameObjectBehavior })
@@ -12,6 +13,7 @@ function _M.new(entity)
     local self = setmetatable(ServerGameObjectBehavior.new(entity), _M)
     ---@cast self ServerNetPlayerBehavior
     self._has_input = false
+    self._move_last_seq = 0
     return self
 end
 
@@ -37,7 +39,9 @@ function _M:onClientActionEvent(peer, payload)
     if action == TL_Schema.ClientActionType.ClientActionType_Move then
         if payload:has_m_move_disp() then
             local disp = payload:m_move_disp()
-            go.m_move_component:AddMoveDisp(TL_Common.Vec2(disp:m_x(), disp:m_y()))
+            go.m_move_component:SetMoveDisp(TL_Common.Vec2(disp:m_x(), disp:m_y()))
+            go.m_move_component:Update()
+            self._move_last_seq = payload:m_seq()
             self._has_input = true
         else
             ctx:Log("don't has move displacement field: ", self:GetEntity())
@@ -59,7 +63,7 @@ function _M:OnUpdate(elapse_time)
     end
 
     self._has_input = false
-    go.m_move_component:Update()
+    -- go.m_move_component:Update()
 
     local position = go.m_transform:GetGlobalPosition()
 
@@ -69,7 +73,7 @@ function _M:OnUpdate(elapse_time)
 
     local move = TL_Proto.Move()
     move:set_m_entity(0)
-    move:set_m_seq(0)
+    move:set_m_seq(self._move_last_seq)
     move:set_m_target(net_position)
 
     local net_msg = TL_Proto.NetMsg()

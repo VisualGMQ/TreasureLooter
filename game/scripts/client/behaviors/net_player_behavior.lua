@@ -1,6 +1,13 @@
 local ClientGameObjectBehavior = require("client.gameobject_behavior")
 
+---@class ClientMoveReconcilation
+---@field seq number
+---@field disp Vec2
+
 ---@class ClientNetPlayerBehavior : ClientGameObjectBehavior
+---@field private _move_packet_seq number
+---@field private _last_acked number
+---@field private _reconcilation_list ClientMoveReconcilation[]
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ClientGameObjectBehavior })
@@ -10,6 +17,9 @@ setmetatable(_M, { __index = ClientGameObjectBehavior })
 function _M.new(entity)
     local self = setmetatable(ClientGameObjectBehavior.new(entity), _M)
     ---@cast self ClientNetPlayerBehavior
+    self._move_packet_seq = 1
+    self._last_acked = 0
+    self._reconcilation_list = {}
     return self
 end
 
@@ -28,16 +38,31 @@ function _M:onMoveNetEvent(move)
         return
     end
 
+    local seq = move:m_seq()
+    if seq <= self._last_acked then
+        return
+    end
+    self._last_acked = seq
+
+    -- reset to server position
     local net_target = move:m_target()
     local target = TL_Common.Vec2(net_target:m_x(), net_target:m_y())
     local offset = target - go.m_transform:GetGlobalPosition()
-    local offset_squared_len = offset:LengthSquared()
-
-    if offset_squared_len > 0 then
+    if offset:LengthSquared() > 0 then
         go.m_move_component:SetMoveDisp(offset)
     end
-
     go.m_move_component:Update()
+
+    -- do reconciliation
+    while #self._reconcilation_list > 0
+        and self._reconcilation_list[1].seq <= seq do
+        table.remove(self._reconcilation_list, 1)
+    end
+
+    for _, elem in ipairs(self._reconcilation_list) do
+        go.m_move_component:SetMoveDisp(elem.disp)
+        go.m_move_component:Update()
+    end
 end
 
 ---@param elapse_time TimeType
@@ -61,12 +86,26 @@ function _M:OnUpdate(elapse_time)
             local move_component = self.m_gameobject.m_move_component
             move_component:SetDir(axises)
             local disp = move_component:GetVelocity() *  elapse_time
+            -- send move packet to net
             action_type = TL_Schema.ClientActionType.ClientActionType_Move
             local net_disp = TL_Proto.NetVec2()
             net_disp:set_m_x(disp.x)
             net_disp:set_m_y(disp.y)
             action:set_m_move_disp(net_disp)
-            ctx:Log("send move packet: disp = ", disp)
+            action:set_m_seq(self._move_packet_seq)
+
+            -- client move first
+            move_component:SetMoveDisp(disp)
+            move_component:Update(elapse_time)
+
+            -- remember it so it can be replayed until the server acks it
+            local reconciliation = {
+                seq = self._move_packet_seq,
+                disp = disp
+            }
+            table.insert(self._reconcilation_list, reconciliation)
+
+            self._move_packet_seq = self._move_packet_seq + 1
         end
     end
 

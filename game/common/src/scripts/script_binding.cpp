@@ -1269,6 +1269,7 @@ void bindUDP(lua_State* L) {
                 .addConstructor<void(void)>()
                 .addFunction("Disconnect", &UDPPeer::Disconnect)
                 .addFunction("GetID", &UDPPeer::GetID)
+                .addFunction("GetRTT", &UDPPeer::GetRTT)
                 .addFunction("IsValid", &UDPPeer::IsValid)
                 .addStaticProperty("InvalidID",
                                    +[]() { return UDPPeer::InvalidID; })
