@@ -103,7 +103,7 @@ static int ScriptComponentManager_GetTable(lua_State* L) {
         return 1;
     }
 
-    auto entity = luabridge::Stack<Entity>::get(L, 2);
+    auto entity = luabridge::Stack<LogicEntity>::get(L, 2);
     if (!entity) {
         lua_pushnil(L);
         return 1;
@@ -324,10 +324,10 @@ void bindMath(lua_State* L) {
                 .addPropertyReadWrite("m_size", &Region::m_size)
             .endClass()
             .beginClass<TransformManager>("TransformManager")
-                .addFunction("Get", +[](TransformManager* m, Entity e) {
+                .addFunction("Get", +[](TransformManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](TransformManager* m, Entity e) {
+                .addFunction("Has", +[](TransformManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
             .endClass()
@@ -676,10 +676,10 @@ void bindCCT(lua_State* L) {
                                  &CharacterController::GetPhysicsShape))
             .endClass()
             .beginClass<CCTManager>("CCTManager")
-                .addFunction("Get", +[](CCTManager* m, Entity e) {
+                .addFunction("Get", +[](CCTManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](CCTManager* m, Entity e) {
+                .addFunction("Has", +[](CCTManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
                 .addFunction("Enable", &CCTManager::Enable)
@@ -745,7 +745,7 @@ void bindPhysics(lua_State* L) {
                     })
             .endClass()
             .beginClass<StaticCollisionManager>("StaticCollisionManager")
-                .addFunction("Get", +[](StaticCollisionManager* m, Entity e) {
+                .addFunction("Get", +[](StaticCollisionManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
                 .addFunction("Has", &StaticCollisionManager::Has)
@@ -961,11 +961,11 @@ void bindTilemapCollisionComponent(lua_State* L) {
             .beginClass<TilemapLayerCollisionComponentManager>(
                 "TilemapCollisionComponentManager")
                 .addFunction("Get",
-                             +[](TilemapLayerCollisionComponentManager* m, Entity e) {
+                             +[](TilemapLayerCollisionComponentManager* m, LogicEntity e) {
                                  return m->Get(e);
                              })
                 .addFunction("Has",
-                             +[](TilemapLayerCollisionComponentManager* m, Entity e) {
+                             +[](TilemapLayerCollisionComponentManager* m, LogicEntity e) {
                                  return m->Has(e);
                              })
             .endClass()
@@ -977,7 +977,7 @@ void bindTrigger(lua_State* L) {
         .beginNamespace("TL_Common")
             .addProperty("null_trigger_id", +[]() -> TriggerID { return null_trigger_id; })
             .beginClass<Trigger>("Trigger")
-                .addConstructor<void(Entity, const TriggerDefinition&), void(const TriggerDefinition&), void(void)>()
+                .addConstructor<void(LogicEntity, const TriggerDefinition&), void(const TriggerDefinition&), void(void)>()
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
                 .addFunction("SetEventType", &Trigger::SetEventType)
@@ -1017,12 +1017,12 @@ void bindTrigger(lua_State* L) {
                 .addFunction("Update", &Trigger::Update)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
-                .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
+                .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(LogicEntity)>(&TriggerComponentManager::Get))
                 .addFunction("Has", &TriggerComponentManager::Has)
                 .addFunction("Enable", &TriggerComponentManager::Enable)
                 .addFunction("Disable", &TriggerComponentManager::Disable)
                 .addFunction("IsEnable", &TriggerComponentManager::IsEnable)
-                .addFunction("RegisterEntity", +[](TriggerComponentManager* manager, Entity entity,  const TriggerDefinition& definition) {
+                .addFunction("RegisterEntity", +[](TriggerComponentManager* manager, LogicEntity entity,  const TriggerDefinition& definition) {
                         TL_RETURN_IF_NULL(manager);
                         manager->RegisterEntity(entity, entity, definition);
                         })
@@ -1055,14 +1055,14 @@ void bindRelationship(lua_State* L) {
                 .addFunction("RemoveFromParent", &Relationship::RemoveFromParent)
             .endClass()
             .beginClass<RelationshipManager>("RelationshipManager")
-                .addFunction("Get", +[](RelationshipManager* m, Entity e) {
+                .addFunction("Get", +[](RelationshipManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](RelationshipManager* m, Entity e) {
+                .addFunction("Has", +[](RelationshipManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
                 .addFunction("RegisterEntity",
-                             +[](RelationshipManager* m, Entity e) {
+                             +[](RelationshipManager* m, LogicEntity e) {
                                  m->RegisterEntity(e, e);
                              })
             .endClass()
@@ -1076,10 +1076,10 @@ void bindEntityName(lua_State* L) {
                 .addPropertyReadWrite("m_name", &EntityName::m_name)
             .endClass()
             .beginClass<EntityNameManager>("EntityNameManager")
-                .addFunction("Get", +[](EntityNameManager* m, Entity e) {
+                .addFunction("Get", +[](EntityNameManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](EntityNameManager* m, Entity e) {
+                .addFunction("Has", +[](EntityNameManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
                 .addFunction("FindChildByName", &EntityNameManager::FindChildByName)
@@ -1178,7 +1178,7 @@ void bindBindPoint(lua_State* L) {
                 .addProperty("m_bind_points", &BindPoints::m_bind_points)
             .endClass()
             .beginClass<BindPointsComponentManager>("BindPointsComponentManager")
-                    .addFunction("Get", +[](BindPointsComponentManager* m, Entity e) {
+                    .addFunction("Get", +[](BindPointsComponentManager* m, LogicEntity e) {
                         return m->Get(e);
                     })
                     .addFunction("Has", &BindPointsComponentManager::Has)
@@ -1236,7 +1236,7 @@ void bindEntity(lua_State* L) {
         .beginNamespace("TL_Common")
         .addProperty(
             "null_entity",
-            +[]() -> Entity { return static_cast<Entity>(null_entity); })
+            +[]() -> LogicEntity { return static_cast<LogicEntity>(null_entity); })
         .endNamespace();
 }
 

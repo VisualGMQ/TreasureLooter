@@ -5,7 +5,7 @@
 -- type and `TL_Common` is a global value (no `require` needed).
 -- Types declared in schema_meta.lua / proto_meta.lua are referenced as globals.
 
----@alias Entity number
+---@alias LogicEntity number
 ---@alias TimeType number
 ---@alias TimerID number
 ---@alias EventListenerID number
@@ -174,10 +174,10 @@
 ---@field GetUUID fun(self: AnimationHandle): UUID
 
 ---@class Scene
----@field Instantiate fun(self: Scene, prefab: PrefabHandle, transform: Transform?): Entity
----@field RemoveEntity fun(self: Scene, entity: Entity)
----@field GetRootEntity fun(self: Scene): Entity
----@field GetUIRootEntity fun(self: Scene): Entity
+---@field Instantiate fun(self: Scene, prefab: PrefabHandle, transform: Transform?): LogicEntity
+---@field RemoveEntity fun(self: Scene, entity: LogicEntity)
+---@field GetRootEntity fun(self: Scene): LogicEntity
+---@field GetUIRootEntity fun(self: Scene): LogicEntity
 
 ---@class TilemapHandle : Tilemap
 ---@field IsValid fun(self: TilemapHandle): boolean
@@ -198,8 +198,8 @@
 ---@field m_bind_points { [string]: BindPoint }
 
 ---@class BindPointsComponentManager
----@field Get fun(self: BindPointsComponentManager, entity: Entity): BindPoints
----@field Has fun(self: BindPointsComponentManager, entity: Entity): boolean
+---@field Get fun(self: BindPointsComponentManager, entity: LogicEntity): BindPoints
+---@field Has fun(self: BindPointsComponentManager, entity: LogicEntity): boolean
 ---@field ToggleDebugDraw fun(self: BindPointsComponentManager)
 
 ---@class Tile
@@ -258,11 +258,11 @@
 ---@field GetFilename fun(self: Tilemap): string
 
 ---@class Relationship
----@field AddChild fun(self: Relationship, entity: Entity)
----@field Get fun(self: Relationship, index: number): Entity
+---@field AddChild fun(self: Relationship, entity: LogicEntity)
+---@field Get fun(self: Relationship, index: number): LogicEntity
 ---@field GetChildrenCount fun(self: Relationship): number
----@field GetParent fun(self: Relationship): Entity
----@field RemoveChild fun(self: Relationship, entity: Entity)
+---@field GetParent fun(self: Relationship): LogicEntity
+---@field RemoveChild fun(self: Relationship, entity: LogicEntity)
 ---@field RemoveFromParent fun(self: Relationship)
 
 ---@class ScriptBinaryDataManager
@@ -270,14 +270,14 @@
 ---@field Find fun(self: ScriptBinaryDataManager, path: string): ScriptBinaryDataHandle
 
 ---@class ScriptComponentManager
----@field Get fun(self: ScriptComponentManager, entity: Entity): any
----@field Has fun(self: ScriptComponentManager, entity: Entity): boolean
----@field IsEnable fun(self: ScriptComponentManager, entity: Entity): boolean
----@field SubscribeEvent fun(self: ScriptComponentManager, entity: Entity, eventName: string)
+---@field Get fun(self: ScriptComponentManager, entity: LogicEntity): any
+---@field Has fun(self: ScriptComponentManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: ScriptComponentManager, entity: LogicEntity): boolean
+---@field SubscribeEvent fun(self: ScriptComponentManager, entity: LogicEntity, eventName: string)
 
 ---@class TransformManager
----@field Get fun(self: TransformManager, entity: Entity): Transform?
----@field Has fun(self: TransformManager, entity: Entity): boolean
+---@field Get fun(self: TransformManager, entity: LogicEntity): Transform?
+---@field Has fun(self: TransformManager, entity: LogicEntity): boolean
 
 ---@class ImageManager
 ---@field Load fun(self: ImageManager, path: Path|string, force: boolean?): ImageHandle
@@ -329,8 +329,8 @@
 ---@field GetTilemapCollision fun(self: TilemapCollisionComponent): TilemapCollisionInfo?
 
 ---@class TilemapCollisionComponentManager
----@field Get fun(self: TilemapCollisionComponentManager, entity: Entity): TilemapCollisionComponent?
----@field Has fun(self: TilemapCollisionComponentManager, entity: Entity): boolean
+---@field Get fun(self: TilemapCollisionComponentManager, entity: LogicEntity): TilemapCollisionComponent?
+---@field Has fun(self: TilemapCollisionComponentManager, entity: LogicEntity): boolean
 
 ---@class StaticCollision
 ---@field GetPhysicsShapeCount fun(self: StaticCollision): number
@@ -339,11 +339,11 @@
 ---@field GetPhysicsShapeLocalPosition fun(self: StaticCollision, index: number): Vec2
 
 ---@class StaticCollisionManager
----@field Get fun(self: StaticCollisionManager, entity: Entity): StaticCollision?
----@field Has fun(self: StaticCollisionManager, entity: Entity): boolean
----@field IsEnable fun(self: StaticCollisionManager, entity: Entity): boolean
----@field Enable fun(self: StaticCollisionManager, entity: Entity)
----@field Disable fun(self: StaticCollisionManager, entity: Entity)
+---@field Get fun(self: StaticCollisionManager, entity: LogicEntity): StaticCollision?
+---@field Has fun(self: StaticCollisionManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: StaticCollisionManager, entity: LogicEntity): boolean
+---@field Enable fun(self: StaticCollisionManager, entity: LogicEntity)
+---@field Disable fun(self: StaticCollisionManager, entity: LogicEntity)
 
 ---@class EventDebugger
 ---@field SendDebugEvent fun(self: EventDebugger, value: number)
@@ -391,7 +391,7 @@
 ---@field SetCollisionMask fun(self: PhysicsShape, collision_group: CollisionGroup)
 ---@field GetCollisionMask fun(self: PhysicsShape): CollisionGroup
 ---@field GetType fun(self: PhysicsShape): number
----@field GetOwner fun(self: PhysicsShape): Entity
+---@field GetOwner fun(self: PhysicsShape): LogicEntity
 ---@field MoveTo fun(self: PhysicsShape, position: Vec2)
 ---@field Move fun(self: PhysicsShape, offset: Vec2)
 ---@field GetStorageType fun(self: PhysicsShape): number
@@ -409,13 +409,13 @@
 ---@field GetPhysicsShape fun(self: CharacterController): PhysicsShape?
 
 ---@class CCTManager
----@field Get fun(self: CCTManager, entity: Entity): CharacterController?
----@field Has fun(self: CCTManager, entity: Entity): boolean
----@field Enable fun(self: CCTManager, entity: Entity)
----@field Disable fun(self: CCTManager, entity: Entity)
+---@field Get fun(self: CCTManager, entity: LogicEntity): CharacterController?
+---@field Has fun(self: CCTManager, entity: LogicEntity): boolean
+---@field Enable fun(self: CCTManager, entity: LogicEntity)
+---@field Disable fun(self: CCTManager, entity: LogicEntity)
 
 ---@class OverlapResult
----@field m_dst_entity Entity
+---@field m_dst_entity LogicEntity
 ---@field m_dst_shape PhysicsShape?
 
 ---@class PhysicsScene
@@ -432,7 +432,7 @@
 ---@field IsTriggerEveryFrameWhenTouch fun(self: Trigger): boolean
 ---@field GetTouchingShapes fun(self: Trigger): PhysicsShape[]
 ---@field GetUnderlyingShapes fun(self: Trigger): PhysicsShape[]
----@field GetOwner fun(self: Trigger): Entity
+---@field GetOwner fun(self: Trigger): LogicEntity
 ---@field SetEnterListener fun(self: Trigger, cb: fun(self: TriggerEnterEvent))
 ---@field SetLeaveListener fun(self: Trigger, cb: fun(self: TriggerLeaveEvent))
 ---@field SetTouchListener fun(self: Trigger, cb: fun(self: TriggerTouchEvent))
@@ -445,39 +445,39 @@
 ---@class TriggerEnterEvent
 ---@field GetType fun(self: TriggerEnterEvent): TriggerEventType
 ---@field GetOverlapResult fun(self: TriggerEnterEvent): OverlapResult
----@field GetSrcEntity fun(self: TriggerEnterEvent): Entity
+---@field GetSrcEntity fun(self: TriggerEnterEvent): LogicEntity
 
 ---@class TriggerLeaveEvent
 ---@field GetType fun(self: TriggerLeaveEvent): TriggerEventType
 ---@field GetOverlapResult fun(self: TriggerLeaveEvent): OverlapResult
----@field GetSrcEntity fun(self: TriggerLeaveEvent): Entity
+---@field GetSrcEntity fun(self: TriggerLeaveEvent): LogicEntity
 
 ---@class TriggerTouchEvent
 ---@field GetType fun(self: TriggerTouchEvent): TriggerEventType
 ---@field GetOverlapResult fun(self: TriggerTouchEvent): OverlapResult
----@field GetSrcEntity fun(self: TriggerTouchEvent): Entity
+---@field GetSrcEntity fun(self: TriggerTouchEvent): LogicEntity
 
 ---@class TriggerComponentManager
----@field Get fun(self: TriggerComponentManager, entity: Entity): Trigger
----@field Has fun(self: TriggerComponentManager, entity: Entity): boolean
----@field IsEnable fun(self: TriggerComponentManager, entity: Entity): boolean
----@field Enable fun(self: TriggerComponentManager, entity: Entity)
----@field Disable fun(self: TriggerComponentManager, entity: Entity)
----@field RegisterEntity fun(self: TriggerComponentManager, entity: Entity, definition: TriggerDefinition)
+---@field Get fun(self: TriggerComponentManager, entity: LogicEntity): Trigger
+---@field Has fun(self: TriggerComponentManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: TriggerComponentManager, entity: LogicEntity): boolean
+---@field Enable fun(self: TriggerComponentManager, entity: LogicEntity)
+---@field Disable fun(self: TriggerComponentManager, entity: LogicEntity)
+---@field RegisterEntity fun(self: TriggerComponentManager, entity: LogicEntity, definition: TriggerDefinition)
 
 ---@class RelationshipManager
----@field Get fun(self: RelationshipManager, entity: Entity): Relationship?
----@field Has fun(self: RelationshipManager, entity: Entity): boolean
----@field RegisterEntity fun(self: RelationshipManager, entity: Entity)
+---@field Get fun(self: RelationshipManager, entity: LogicEntity): Relationship?
+---@field Has fun(self: RelationshipManager, entity: LogicEntity): boolean
+---@field RegisterEntity fun(self: RelationshipManager, entity: LogicEntity)
 
 ---@class EntityName
 ---@field m_name string
 
 ---@class EntityNameManager
----@field Get fun(self: EntityNameManager, entity: Entity): EntityName?
----@field Has fun(self: EntityNameManager, entity: Entity): boolean
----@field FindChildByName fun(self: EntityNameManager, entity: Entity, name: string): Entity
----@field FindChildrenByName fun(self: EntityNameManager, entity: Entity, name: string): Entity[]
+---@field Get fun(self: EntityNameManager, entity: LogicEntity): EntityName?
+---@field Has fun(self: EntityNameManager, entity: LogicEntity): boolean
+---@field FindChildByName fun(self: EntityNameManager, entity: LogicEntity, name: string): LogicEntity
+---@field FindChildrenByName fun(self: EntityNameManager, entity: LogicEntity, name: string): LogicEntity[]
 
 ---@class DebugDraw
 ---@field kOneFrame TimeType
@@ -597,7 +597,7 @@
 -- The runtime global table created by `beginNamespace("TL_Common")`.
 ---@class TL_Common
 -- entities / ids
----@field null_entity Entity
+---@field null_entity LogicEntity
 ---@field null_timer_id TimerID
 ---@field null_event_listener_id EventListenerID
 ---@field null_trigger_id TriggerID

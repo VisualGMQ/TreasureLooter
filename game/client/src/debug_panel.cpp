@@ -33,9 +33,9 @@ std::string_view ParamConvertError::GetErrMsg() const {
     return m_err_msg;
 }
 
-ParamConvertError ConvertParam(std::string_view text, Entity& out_entity) {
-    constexpr std::string_view entity_prefix = "Entity<";
-    std::underlying_type_t<Entity> entity_number;
+ParamConvertError ConvertParam(std::string_view text, LogicEntity& out_entity) {
+    constexpr std::string_view entity_prefix = "LogicEntity<";
+    std::underlying_type_t<LogicEntity> entity_number;
     ParamConvertError error{fmt::format("convert entity from {} failed", text)};
 
     if (text.size() > entity_prefix.size()) {
@@ -44,7 +44,7 @@ ParamConvertError ConvertParam(std::string_view text, Entity& out_entity) {
             auto result = std::from_chars(text.data() + entity_prefix.size(),
                                           text.data() + idx, entity_number);
             TL_RETURN_VALUE_IF_FALSE(result.ec == std::errc{}, error);
-            out_entity = static_cast<Entity>(entity_number);
+            out_entity = static_cast<LogicEntity>(entity_number);
             return {};
         }
     }
@@ -73,7 +73,7 @@ ParamConvertError ConvertParam(std::string_view text, std::string& out_value) {
 }
 
 template <>
-std::vector<std::string> GetDebugPanelParamHint<Entity>() {
+std::vector<std::string> GetDebugPanelParamHint<LogicEntity>() {
     static std::vector<std::string> result;
     result.clear();
 
@@ -84,9 +84,9 @@ std::vector<std::string> GetDebugPanelParamHint<Entity>() {
 
     for (auto& entity : entities) {
         result.push_back(
-            "Entity<" +
+            "LogicEntity<" +
             std::to_string(
-                static_cast<std::underlying_type_t<Entity>>(entity)) +
+                static_cast<std::underlying_type_t<LogicEntity>>(entity)) +
             ">");
     }
 

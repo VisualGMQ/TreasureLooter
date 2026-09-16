@@ -6,7 +6,7 @@
 #include "common/profile.hpp"
 
 TilemapLayerRenderComponent::TilemapLayerRenderComponent(
-    Entity entity, const TilemapLayerDefinition& create_info) {
+    PresentEntity entity, const TilemapLayerDefinition& create_info) {
     TL_RETURN_IF_FALSE(create_info.m_tilemap);
 
     m_tilemap_handle = create_info.m_tilemap;
@@ -45,7 +45,8 @@ const Tilemap* TilemapLayerRenderComponent::GetTilemap() const {
     return m_tilemap_handle.Get();
 }
 
-void TilemapLayerRenderComponentManager::SubmitDrawCommand(Entity entity) {
+void TilemapLayerRenderComponentManager::SubmitDrawCommand(
+    PresentEntity entity) {
     PROFILE_SECTION();
 
     auto tilemap_layer = Get(entity);

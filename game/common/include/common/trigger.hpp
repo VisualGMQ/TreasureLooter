@@ -20,15 +20,15 @@ constexpr NullTriggerID null_trigger_id;
 
 class TriggerEnterEvent {
 public:
-    explicit TriggerEnterEvent(Entity src_entity, TriggerEventType,
+    explicit TriggerEnterEvent(LogicEntity src_entity, TriggerEventType,
                                OverlapResult, TriggerID);
     [[nodiscard]] TriggerEventType GetType() const;
-    [[nodiscard]] Entity GetSrcEntity() const;
+    [[nodiscard]] LogicEntity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
     [[nodiscard]] TriggerID GetTriggerID() const;
 
 private:
-    Entity m_src_entity = null_entity;
+    LogicEntity m_src_entity = null_entity;
     TriggerEventType m_type;
     OverlapResult m_overlap;
     TriggerID m_trigger_id = null_trigger_id;
@@ -36,15 +36,15 @@ private:
 
 class TriggerLeaveEvent {
 public:
-    explicit TriggerLeaveEvent(Entity src_entity, TriggerEventType,
+    explicit TriggerLeaveEvent(LogicEntity src_entity, TriggerEventType,
                                OverlapResult, TriggerID);
     [[nodiscard]] TriggerEventType GetType() const;
-    [[nodiscard]] Entity GetSrcEntity() const;
+    [[nodiscard]] LogicEntity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
     [[nodiscard]] TriggerID GetTriggerID() const;
 
 private:
-    Entity m_src_entity = null_entity;
+    LogicEntity m_src_entity = null_entity;
     TriggerEventType m_type;
     OverlapResult m_overlap;
     TriggerID m_trigger_id = null_trigger_id;
@@ -52,15 +52,15 @@ private:
 
 class TriggerTouchEvent {
 public:
-    explicit TriggerTouchEvent(Entity src_entity, TriggerEventType,
+    explicit TriggerTouchEvent(LogicEntity src_entity, TriggerEventType,
                                OverlapResult, TriggerID);
     [[nodiscard]] TriggerEventType GetType() const;
-    [[nodiscard]] Entity GetSrcEntity() const;
+    [[nodiscard]] LogicEntity GetSrcEntity() const;
     [[nodiscard]] const OverlapResult& GetOverlapResult() const;
     [[nodiscard]] TriggerID GetTriggerID() const;
 
 private:
-    Entity m_src_entity = null_entity;
+    LogicEntity m_src_entity = null_entity;
     TriggerEventType m_type;
     OverlapResult m_overlap;
     TriggerID m_trigger_id = null_trigger_id;
@@ -84,7 +84,7 @@ public:
     };
 
     Trigger() = default;
-    Trigger(Entity, const TriggerDefinition&);
+    Trigger(LogicEntity, const TriggerDefinition&);
     explicit Trigger(const TriggerDefinition&);
     ~Trigger();
     [[nodiscard]] const std::vector<PhysicsData>& GetPhysicsData() const;
@@ -100,7 +100,7 @@ public:
 
     void EnableTriggerEveryFrameWhenTouch(bool);
     [[nodiscard]] bool IsTriggerEveryFrameWhenTouch() const;
-    [[nodiscard]] Entity GetOwner() const;
+    [[nodiscard]] LogicEntity GetOwner() const;
 
     void Enable() const;
     void Disable() const;
@@ -121,7 +121,7 @@ public:
 private:
     static std::underlying_type_t<TriggerID> trigger_id_counter;
 
-    Entity m_entity = null_entity;
+    LogicEntity m_entity = null_entity;
     TriggerID m_id = null_trigger_id;
     std::vector<PhysicsData> m_physics_data;
     TriggerEventType m_event_type = TriggerEventType::None;
@@ -137,8 +137,8 @@ private:
 class TriggerComponentManager : public ComponentManager<Trigger> {
 public:
     void Update();
-    void Enable(Entity) override;
-    void Disable(Entity) override;
+    void Enable(LogicEntity) override;
+    void Disable(LogicEntity) override;
 
     void ToggleDebugDraw();
     void RenderDebug() const;

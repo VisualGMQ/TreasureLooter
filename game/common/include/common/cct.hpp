@@ -7,7 +7,7 @@
 class CharacterController {
 public:
     friend class CCTManager;
-    explicit CharacterController(Entity entity,
+    explicit CharacterController(LogicEntity entity,
                                  const CCTDefinition& create_info);
 
     void MoveAndSlide(const Vec2& dir);
@@ -34,6 +34,6 @@ private:
 
 class CCTManager : public ComponentManager<CharacterController> {
 public:
-    void Enable(Entity entity) override;
-    void Disable(Entity entity) override;
+    void Enable(LogicEntity entity) override;
+    void Disable(LogicEntity entity) override;
 };

@@ -11,12 +11,12 @@ struct EntityName {
 
 class EntityNameManager: public ComponentManager<EntityName> {
 public:
-    Entity FindChildByName(Entity entity, const std::string& name);
-    std::vector<Entity> FindChildrenByName(Entity entity, const std::string& name);
-    Entity Find(const std::string_view name);
+    LogicEntity FindChildByName(LogicEntity entity, const std::string& name);
+    std::vector<LogicEntity> FindChildrenByName(LogicEntity entity, const std::string& name);
+    LogicEntity Find(const std::string_view name);
 
 private:
-    void findChildByName(Entity entity, const std::string& name, Entity& result);
-    void findChildrenByName(Entity entity, const std::string& name, std::vector<Entity>& result);
+    void findChildByName(LogicEntity entity, const std::string& name, LogicEntity& result);
+    void findChildrenByName(LogicEntity entity, const std::string& name, std::vector<LogicEntity>& result);
 };
 

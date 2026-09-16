@@ -24,7 +24,7 @@ public:
     ClientHFSMDebugger& operator=(ClientHFSMDebugger&&) = delete;
 
     /// Show or hide the HFSM window of the given entity.
-    void ToggleVisible(Entity entity);
+    void ToggleVisible(LogicEntity entity);
 
     /// Draw every visible HFSM window. Must be called inside an ImGui frame.
     void Render();
@@ -32,10 +32,10 @@ public:
 private:
     struct Graph;
 
-    [[nodiscard]] Graph& GetGraph(Entity entity);
+    [[nodiscard]] Graph& GetGraph(LogicEntity entity);
     void RenderGraph(Graph& graph, class HFSMComponent& component);
-    [[nodiscard]] bool RenderWindow(Entity entity, class HFSMComponent& component);
+    [[nodiscard]] bool RenderWindow(LogicEntity entity, class HFSMComponent& component);
 
-    std::unordered_map<Entity, std::unique_ptr<Graph>> m_graphs;
-    std::unordered_set<Entity> m_visible;
+    std::unordered_map<LogicEntity, std::unique_ptr<Graph>> m_graphs;
+    std::unordered_set<LogicEntity> m_visible;
 };

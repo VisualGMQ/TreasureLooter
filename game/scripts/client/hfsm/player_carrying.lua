@@ -2,11 +2,11 @@ local HFSMUtil = require("client.hfsm.hfsm_util")
 local States = require("client.hfsm.player_states")
 
 ---@class PlayerCarryingNode
----@field _entity Entity
+---@field _entity LogicEntity
 local _M = {}
 _M.__index = _M
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return PlayerCarryingNode
 function _M.new(entity)
     local self = setmetatable({}, _M)

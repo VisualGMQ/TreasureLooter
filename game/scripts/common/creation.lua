@@ -232,7 +232,7 @@ end
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfsm_definition)
     assert(false, "shouldn't step into here")
 end
@@ -242,7 +242,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateItem(scene, spawn_info, position, object_definitions)
     assert(false, "shouldn't step into here")
 end
@@ -252,7 +252,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateFX(scene, spawn_info, position, object_definitions)
     assert(false, "shouldn't step into here")
 end
@@ -262,7 +262,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateSkill(scene, spawn_info, position, object_definitions)
     assert(false, "shouldn't step into here")
 end
@@ -271,7 +271,7 @@ end
 ---@param scene Scene
 ---@param prefab PrefabHandle
 ---@param transform Transform
----@return Entity
+---@return LogicEntity
 function _M:CreatePrefab(scene, prefab, transform)
     assert(false, "shouldn't step into here")
 end

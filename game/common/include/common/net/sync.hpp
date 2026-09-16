@@ -7,14 +7,14 @@
 
 class ReplicateComponent {
 public:
-    explicit ReplicateComponent(Entity entity);
-    [[nodiscard]] Entity GetRawEntity() const;
+    explicit ReplicateComponent(LogicEntity entity);
+    [[nodiscard]] LogicEntity GetRawEntity() const;
 
     void ReceiveNetMsg();
     void Update(TimeType elapse_time);
 
 private:
-    Entity m_raw_entity = null_entity;
+    LogicEntity m_raw_entity = null_entity;
 
     Transform m_old_transform;
 };

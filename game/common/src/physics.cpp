@@ -273,14 +273,14 @@ void PhysicsShape::DeletorForProxy::operator()(PhysicsShape *shape) const {
     COMMON_CONTEXT.m_physics_scene->RemoveShape(shape);
 }
 
-PhysicsShape::PhysicsShape(Entity entity, PhysicsShapeDefinitionHandle handle,
+PhysicsShape::PhysicsShape(LogicEntity entity, PhysicsShapeDefinitionHandle handle,
                            PhysicsStorageType storage_type) {
     TL_RETURN_IF_FALSE(handle);
 
     *this = PhysicsShape(entity, *handle, storage_type);
 }
 
-PhysicsShape::PhysicsShape(Entity entity,
+PhysicsShape::PhysicsShape(LogicEntity entity,
                            const PhysicsShapeDefinition &definition,
                            PhysicsStorageType storage_type)
     : m_storage_type{storage_type}, m_owner{entity} {
@@ -296,7 +296,7 @@ PhysicsShape::PhysicsShape(Entity entity,
     m_collision_mask = definition.m_collision_mask;
 }
 
-Entity PhysicsShape::GetOwner() const {
+LogicEntity PhysicsShape::GetOwner() const {
     return m_owner;
 }
 
@@ -433,7 +433,7 @@ PhysicsScene::PhysicsScene() {
     m_cached_sweep_results.reserve(100);
 }
 
-PhysicsShape *PhysicsScene::CreateShape(Entity entity,
+PhysicsShape *PhysicsScene::CreateShape(LogicEntity entity,
                                         PhysicsShapeDefinitionHandle handle) {
     TL_RETURN_DEFAULT_IF_FALSE(handle);
 
@@ -444,7 +444,7 @@ PhysicsShape *PhysicsScene::CreateShape(Entity entity,
 }
 
 PhysicsShape *PhysicsScene::CreateShapeInChunk(
-    Entity entity, TilemapCollision *tilemap_collision,
+    LogicEntity entity, TilemapCollision *tilemap_collision,
     PhysicsShapeDefinitionHandle handle) {
     TL_RETURN_DEFAULT_IF_FALSE(handle);
 
@@ -452,7 +452,7 @@ PhysicsShape *PhysicsScene::CreateShapeInChunk(
 }
 
 PhysicsShape *PhysicsScene::CreateShapeInChunk(
-    Entity entity, TilemapCollision *tilemap_collision,
+    LogicEntity entity, TilemapCollision *tilemap_collision,
     const PhysicsShapeDefinition &definition) {
     if (!tilemap_collision) {
         return nullptr;

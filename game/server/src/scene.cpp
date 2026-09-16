@@ -6,17 +6,17 @@
 #include "common/transform.hpp"
 #include "server/context.hpp"
 
-Entity ServerScene::GetUIRootEntity() const {
+LogicEntity ServerScene::GetUIRootEntity() const {
     return null_entity;
 }
 
-void ServerScene::registerEntity(Entity entity,
+void ServerScene::registerEntity(LogicEntity entity,
                                  const EntityInstance& instance) {
-    COMMON_CONTEXT.AttachComponentsOnEntity(entity, instance);
+    COMMON_CONTEXT.AttachComponentsOnLogicEntity(entity, instance);
 }
 
 void ServerScene::initRootEntity(const Path& script_path) {
-    m_root_entity = COMMON_CONTEXT.CreateEntity();
+    m_root_entity = COMMON_CONTEXT.CreateLogicEntity();
     m_entities.insert(m_root_entity);
     COMMON_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     COMMON_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity,

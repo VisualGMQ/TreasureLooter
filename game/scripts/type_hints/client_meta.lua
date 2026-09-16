@@ -55,12 +55,12 @@
 ---@field SetBoundary fun(self: Camera, boundary: Rect)
 
 ---@class SpriteManager
----@field Get fun(self: SpriteManager, entity: Entity): Sprite?
----@field Has fun(self: SpriteManager, entity: Entity): boolean
----@field IsEnable fun(self: SpriteManager, entity: Entity): boolean
----@field Enable fun(self: SpriteManager, entity: Entity)
----@field Disable fun(self: SpriteManager, entity: Entity)
----@field RegisterEntity fun(self: SpriteManager, entity: Entity, def: Sprite)
+---@field Get fun(self: SpriteManager, entity: LogicEntity): Sprite?
+---@field Has fun(self: SpriteManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: SpriteManager, entity: LogicEntity): boolean
+---@field Enable fun(self: SpriteManager, entity: LogicEntity)
+---@field Disable fun(self: SpriteManager, entity: LogicEntity)
+---@field RegisterEntity fun(self: SpriteManager, entity: LogicEntity, def: Sprite)
 
 ---@class DrawOrder
 ---@field m_z_order number
@@ -68,9 +68,9 @@
 ---@field GetGlobalOrder fun(self: DrawOrder): number
 
 ---@class DrawOrderManager
----@field Get fun(self: DrawOrderManager, entity: Entity): DrawOrder?
----@field Has fun(self: DrawOrderManager, entity: Entity): boolean
----@field RegisterEntity fun(self: DrawOrderManager, entity: Entity, def: DrawOrderDefinition)
+---@field Get fun(self: DrawOrderManager, entity: LogicEntity): DrawOrder?
+---@field Has fun(self: DrawOrderManager, entity: LogicEntity): boolean
+---@field RegisterEntity fun(self: DrawOrderManager, entity: LogicEntity, def: DrawOrderDefinition)
 
 ---@class AnimationPlayer
 ---@field Play fun(self: AnimationPlayer)
@@ -86,7 +86,7 @@
 ---@field ChangeAnimation fun(self: AnimationPlayer, handle: AnimationHandle)
 ---@field ClearAnimation fun(self: AnimationPlayer)
 ---@field HasAnimation fun(self: AnimationPlayer): boolean
----@field Sync fun(self: AnimationPlayer, entity: Entity)
+---@field Sync fun(self: AnimationPlayer, entity: LogicEntity)
 ---@field SetRate fun(self: AnimationPlayer, rate: number)
 ---@field GetRate fun(self: AnimationPlayer): number
 ---@field EnableAutoPlay fun(self: AnimationPlayer, enable: boolean)
@@ -94,27 +94,27 @@
 ---@field GetID fun(self: AnimationPlayer): number
 
 ---@class AnimationPlayerManager
----@field AddComponent fun(self: AnimationPlayerManager, entity: Entity, def: AnimationPlayerDefinition): AnimationPlayer?
----@field Get fun(self: AnimationPlayerManager, entity: Entity, index: number): AnimationPlayer?
----@field GetComponentSize fun(self: AnimationPlayerManager, entity: Entity): number
----@field RemoveComponent fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer)
----@field Has fun(self: AnimationPlayerManager, entity: Entity): boolean
----@field IsEnable fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer): boolean
----@field Enable fun(self: AnimationPlayerManager, entity: Entity, index: number)
----@field EnablePlayer fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer)
----@field EnableAll fun(self: AnimationPlayerManager, entity: Entity)
----@field Disable fun(self: AnimationPlayerManager, entity: Entity, index: number)
----@field DisablePlayer fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer)
----@field DisableAll fun(self: AnimationPlayerManager, entity: Entity)
----@field RegisterEntity fun(self: AnimationPlayerManager, entity: Entity, def: MultiAnimationPlayerDefinition)
+---@field AddComponent fun(self: AnimationPlayerManager, entity: LogicEntity, def: AnimationPlayerDefinition): AnimationPlayer?
+---@field Get fun(self: AnimationPlayerManager, entity: LogicEntity, index: number): AnimationPlayer?
+---@field GetComponentSize fun(self: AnimationPlayerManager, entity: LogicEntity): number
+---@field RemoveComponent fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer)
+---@field Has fun(self: AnimationPlayerManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer): boolean
+---@field Enable fun(self: AnimationPlayerManager, entity: LogicEntity, index: number)
+---@field EnablePlayer fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer)
+---@field EnableAll fun(self: AnimationPlayerManager, entity: LogicEntity)
+---@field Disable fun(self: AnimationPlayerManager, entity: LogicEntity, index: number)
+---@field DisablePlayer fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer)
+---@field DisableAll fun(self: AnimationPlayerManager, entity: LogicEntity)
+---@field RegisterEntity fun(self: AnimationPlayerManager, entity: LogicEntity, def: MultiAnimationPlayerDefinition)
 
 ---@class TilemapRenderComponent
 ---@field GetLayer fun(self: TilemapRenderComponent): TilemapLayer?
 ---@field GetTilemap fun(self: TilemapRenderComponent): TilemapHandle
 
 ---@class TilemapRenderComponentManager
----@field Get fun(self: TilemapRenderComponentManager, entity: Entity): TilemapRenderComponent?
----@field Has fun(self: TilemapRenderComponentManager, entity: Entity): boolean
+---@field Get fun(self: TilemapRenderComponentManager, entity: LogicEntity): TilemapRenderComponent?
+---@field Has fun(self: TilemapRenderComponentManager, entity: LogicEntity): boolean
 
 ---@class UITextInput
 ---@field m_align number
@@ -148,33 +148,33 @@
 ---@field GetTextInput fun(self: UIWidget): UITextInput?
 
 ---@class UIComponentManager
----@field Get fun(self: UIComponentManager, entity: Entity): UIWidget?
----@field Has fun(self: UIComponentManager, entity: Entity): boolean
+---@field Get fun(self: UIComponentManager, entity: LogicEntity): UIWidget?
+---@field Has fun(self: UIComponentManager, entity: LogicEntity): boolean
 
 ---@class UIMouseHoverEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 
 ---@class UIMouseDownEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 ---@field GetButton fun(self: UIMouseDownEvent): MouseButton
 
 ---@class UIMouseUpEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 ---@field GetButton fun(self: UIMouseUpEvent): MouseButton
 
 ---@class UIMouseClickedEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 
 ---@class UICheckToggledEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 ---@field m_checked boolean
 
 ---@class UIDragEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 
 ---@class AnimationEndEvent
 ---@field GetAnimationPlayerID fun(self: AnimationEndEvent): number
----@field GetEntity fun(self: AnimationEndEvent): Entity
+---@field GetEntity fun(self: AnimationEndEvent): LogicEntity
 ---@field GetAnimation fun(self: AnimationEndEvent): AnimationHandle
 
 ---@class ClientContext : CommonContext

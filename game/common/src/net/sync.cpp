@@ -1,8 +1,8 @@
 ﻿#include "common/net/sync.hpp"
 
-ReplicateComponent::ReplicateComponent(Entity entity) : m_raw_entity{entity} {}
+ReplicateComponent::ReplicateComponent(LogicEntity entity) : m_raw_entity{entity} {}
 
-Entity ReplicateComponent::GetRawEntity() const {
+LogicEntity ReplicateComponent::GetRawEntity() const {
     return m_raw_entity;
 }
 

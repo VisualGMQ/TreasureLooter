@@ -3,7 +3,7 @@
 #include "common/context.hpp"
 #include "common/profile.hpp"
 
-CharacterController::CharacterController(Entity entity,
+CharacterController::CharacterController(LogicEntity entity,
                                          const CCTDefinition& create_info)
     : m_skin{create_info.m_skin}, m_min_disp{create_info.m_min_disp} {
     m_shape = PhysicsShape::Proxy{COMMON_CONTEXT.m_physics_scene->CreateShape(
@@ -12,7 +12,7 @@ CharacterController::CharacterController(Entity entity,
 
 bool CharacterController::EnableDebugOutput = false;
 
-void CCTManager::Enable(Entity entity) {
+void CCTManager::Enable(LogicEntity entity) {
     ComponentManager<CharacterController>::Enable(entity);
 
     if (auto it = m_components.find(entity); it != m_components.end()) {
@@ -20,7 +20,7 @@ void CCTManager::Enable(Entity entity) {
     }
 }
 
-void CCTManager::Disable(Entity entity) {
+void CCTManager::Disable(LogicEntity entity) {
     ComponentManager<CharacterController>::Disable(entity);
 
     if (auto it = m_components.find(entity); it != m_components.end()) {

@@ -59,8 +59,8 @@ local convert_param_fns = {
         return nil
     end,
 
-    Entity = function(text)
-        local num = string.match(text, "^Entity%<(%d+)%>$")
+    LogicEntity = function(text)
+        local num = string.match(text, "^LogicEntity%<(%d+)%>$")
         if num then
             return tonumber(num)
         end
@@ -70,7 +70,7 @@ local convert_param_fns = {
 
 ---@param scene Scene
 ---@param relationship_mgr RelationshipManager
----@return Entity[]
+---@return LogicEntity[]
 local function collect_entities(scene, relationship_mgr)
     local result = {}
 
@@ -115,7 +115,7 @@ local hint_fns = {
         return result
     end,
 
-    Entity = function()
+    LogicEntity = function()
         local ctx = TL_Client.GetContext()
         local scene = ctx:GetSceneManager():GetCurrentScene()
         if not scene then
@@ -124,7 +124,7 @@ local hint_fns = {
 
         local result = {}
         for _, entity in collect_entities(scene, ctx:GetRelationshipManager()) do
-            table.insert(result, "Entity<" .. tostring(entity) .. ">")
+            table.insert(result, "LogicEntity<" .. tostring(entity) .. ">")
         end
         return result
     end,

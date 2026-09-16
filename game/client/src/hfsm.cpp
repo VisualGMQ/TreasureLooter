@@ -58,7 +58,7 @@ ClientHFSMDebugger::ClientHFSMDebugger() = default;
 
 ClientHFSMDebugger::~ClientHFSMDebugger() = default;
 
-void ClientHFSMDebugger::ToggleVisible(Entity entity) {
+void ClientHFSMDebugger::ToggleVisible(LogicEntity entity) {
     if (auto it = m_visible.find(entity); it != m_visible.end()) {
         m_visible.erase(it);
         m_graphs.erase(entity);
@@ -67,7 +67,7 @@ void ClientHFSMDebugger::ToggleVisible(Entity entity) {
     }
 }
 
-ClientHFSMDebugger::Graph& ClientHFSMDebugger::GetGraph(Entity entity) {
+ClientHFSMDebugger::Graph& ClientHFSMDebugger::GetGraph(LogicEntity entity) {
     auto& graph = m_graphs[entity];
     if (!graph) {
         graph = std::make_unique<Graph>();
@@ -170,7 +170,7 @@ void ClientHFSMDebugger::RenderGraph(Graph& graph, HFSMComponent& component) {
     graph.editor.update();
 }
 
-bool ClientHFSMDebugger::RenderWindow(Entity entity,
+bool ClientHFSMDebugger::RenderWindow(LogicEntity entity,
                                       HFSMComponent& component) {
     std::string title = component.GetAssetName();
     if (title.empty()) {
@@ -180,7 +180,7 @@ bool ClientHFSMDebugger::RenderWindow(Entity entity,
     // entities sharing an asset don't collide.
     title += "###hfsm_debug_";
     title += std::to_string(
-        static_cast<std::underlying_type_t<Entity>>(entity));
+        static_cast<std::underlying_type_t<LogicEntity>>(entity));
 
     bool open = true;
     ImGui::SetNextWindowSize(ImVec2(640.f, 420.f), ImGuiCond_FirstUseEver);
@@ -198,7 +198,7 @@ void ClientHFSMDebugger::Render() {
     }
 
     for (auto it = m_visible.begin(); it != m_visible.end();) {
-        const Entity entity = *it;
+        const LogicEntity entity = *it;
         HFSMComponent* component = COMMON_CONTEXT.m_hfsm_manager->Get(entity);
         if (!component) {
             m_graphs.erase(entity);

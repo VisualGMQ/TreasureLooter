@@ -10,16 +10,16 @@ local World = require("common.world")
 
 ---@class GameEntry : ScriptBehavior
 ---@field m_level_definition LevelDefinitionHandle
----@field m_map_layers table<string, Entity>
+---@field m_map_layers table<string, LogicEntity>
 ---@field m_spawn_points table<string, SpawnPoint>
----@field m_player_on_layer Entity
+---@field m_player_on_layer LogicEntity
 ---@field m_object_definitions ObjectDefinitionTable
 ---@field m_creation_strategy Creation
 local GameEntry = {}
 GameEntry.__index = GameEntry
 setmetatable(GameEntry, { __index = ScriptBehavior })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param creation_strategy Creation
 ---@return GameEntry
 function GameEntry.new(entity, creation_strategy)
@@ -63,7 +63,7 @@ function GameEntry:ChangeLevel(level)
 end
 
 ---@param level_definition LevelDefinitionHandle
----@param map_layer_entities table<string, Entity>
+---@param map_layer_entities table<string, LogicEntity>
 ---@return table<string, SpawnPoint>
 function GameEntry.gatherSpawnPoints(level_definition, map_layer_entities)
     local spawn_point_infos = {}
@@ -107,7 +107,7 @@ end
 ---@param root_relationship Relationship
 ---@param map_definition MapDefinition
 ---@param land string
----@return table<string, Entity>
+---@return table<string, LogicEntity>
 function GameEntry.createMapLayers(scene, root_relationship, map_definition, land)
     local ctx = TL_Common.GetContext()
     local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()

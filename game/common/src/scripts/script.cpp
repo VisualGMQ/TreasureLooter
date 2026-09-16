@@ -145,7 +145,7 @@ void ScriptComponentManager::Render() {
     doRender(level->GetUIRootEntity());
 }
 
-void ScriptComponentManager::doUpdate(Entity entity) {
+void ScriptComponentManager::doUpdate(LogicEntity entity) {
     PROFILE_SECTION();
 
     if (auto it = m_components.find(entity);
@@ -166,7 +166,7 @@ void ScriptComponentManager::doUpdate(Entity entity) {
     }
 }
 
-void ScriptComponentManager::doRender(Entity entity) {
+void ScriptComponentManager::doRender(LogicEntity entity) {
     PROFILE_SECTION();
 
     if (auto it = m_components.find(entity);
@@ -185,7 +185,7 @@ void ScriptComponentManager::doRender(Entity entity) {
 // Script
 // -----------------------------------------------------------------------------
 
-Script::Script(Entity entity, ScriptBinaryDataHandle handle)
+Script::Script(LogicEntity entity, ScriptBinaryDataHandle handle)
     : m_entity(entity) {
     TL_RETURN_IF_FALSE(handle);
 
@@ -230,7 +230,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
     luabridge::LuaRef class_table = luabridge::LuaRef::fromStack(m_L, -1);
     luabridge::LuaRef new_fn = class_table.rawget("new");
     const lua_Integer entity_val = static_cast<lua_Integer>(
-        static_cast<std::underlying_type_t<Entity>>(m_entity));
+        static_cast<std::underlying_type_t<LogicEntity>>(m_entity));
 
     if (new_fn.isFunction()) {
         new_fn.push(m_L);  // class_table, new_fn
@@ -257,7 +257,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
         return;
     }
 
-    LOGE("[Script]: module {} must has new(Entity) function",
+    LOGE("[Script]: module {} must has new(LogicEntity) function",
          handle->GetClassName());
     lua_pop(m_L, 1);  // class_table
 }
@@ -296,7 +296,7 @@ void Script::callMethodWithEntity(const char* method) {
     if (!prepare) return;
 
     lua_Integer entity_val = static_cast<lua_Integer>(
-        static_cast<std::underlying_type_t<Entity>>(m_entity));
+        static_cast<std::underlying_type_t<LogicEntity>>(m_entity));
     prepare->m_fn.push(m_L);
     prepare->m_instance.push(m_L);
     lua_pushinteger(m_L, entity_val);

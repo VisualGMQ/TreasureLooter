@@ -3,11 +3,11 @@ local ClientAttackComponent = require("client.components.attack")
 local HFSMUtil = require("client.hfsm.hfsm_util")
 
 ---@class PlayerOrdinaryNode
----@field _entity Entity
+---@field _entity LogicEntity
 local _M = {}
 _M.__index = _M
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return PlayerOrdinaryNode
 function _M.new(entity)
     local self = setmetatable({}, _M)

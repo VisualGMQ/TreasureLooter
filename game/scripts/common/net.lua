@@ -3,7 +3,7 @@
 ---@field port integer
 local _M = {}
 
-_M.ip = "180.76.170.253"
+_M.ip = "localhost"
 _M.port = 1238
 
 return _M

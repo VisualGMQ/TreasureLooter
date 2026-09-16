@@ -80,6 +80,7 @@ void ClientContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 
     CommonContext::Initialize(argc, argv);
+    m_present_transform_manager = std::make_unique<PresentTransformManager>();
     m_assets_manager = std::make_unique<ClientAssetsManager>();
     m_scene_manager = std::make_unique<ClientSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
@@ -211,11 +212,46 @@ void ClientContext::ConnectToServer(const NetAddress& address) {
     }
 }
 
-void ClientContext::AttachComponentsOnEntity(Entity entity,
-                                             const EntityInstance& instance) {
-    CommonContext::AttachComponentsOnEntity(entity, instance);
+void ClientContext::AttachComponentsOnLogicEntity(
+    LogicEntity entity, const EntityInstance& instance) {
+    CommonContext::AttachComponentsOnLogicEntity(entity, instance);
 
     auto& prefab = *instance.m_prefab;
+
+    if (prefab.m_net_replicat_info) {
+        m_replicate_component_manager->RegisterEntity(
+            entity, prefab.m_net_replicat_info->m_raw_entity);
+    }
+    if (!prefab.m_client_script.empty()) {
+        auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
+        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
+        m_script_component_manager->RegisterEntity(entity, entity, handle);
+    }
+    if (prefab.m_hfsm) {
+        m_hfsm_manager->Create(entity, prefab.m_hfsm);
+    }
+}
+
+PresentEntity ClientContext::CreatePresentEntity(LogicEntity logic_entity) {
+    return ToPresentEntity(logic_entity);
+}
+
+PresentEntity ClientContext::GetPresentEntity(
+    LogicEntity logic_entity) const {
+    return ToPresentEntity(logic_entity);
+}
+
+void ClientContext::AttachComponentsOnPresentEntity(
+    PresentEntity entity, const EntityInstance& instance) {
+    auto& prefab = *instance.m_prefab;
+
+    // the present transform mirrors the logic transform, render systems read
+    // this one.
+    if (auto* logic_transform = m_transform_manager->Get(ToLogicEntity(entity))) {
+        m_present_transform_manager->RegisterEntity(entity, *logic_transform);
+    } else {
+        m_present_transform_manager->RegisterEntity(entity);
+    }
 
     if (prefab.m_sprite) {
         m_sprite_manager->RegisterEntity(entity, prefab.m_sprite.value());
@@ -236,29 +272,46 @@ void ClientContext::AttachComponentsOnEntity(Entity entity,
     if (prefab.m_ui) {
         m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
-    if (prefab.m_net_replicat_info) {
-        m_replicate_component_manager->RegisterEntity(
-            entity, prefab.m_net_replicat_info->m_raw_entity);
-    }
-    if (!prefab.m_client_script.empty()) {
-        auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
-        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
-        m_script_component_manager->RegisterEntity(entity, entity, handle);
-    }
-    if (prefab.m_hfsm) {
-        m_hfsm_manager->Create(entity, prefab.m_hfsm);
-    }
 }
 
-void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
+void ClientContext::RemoveAllComponentsOnPresentEntity(PresentEntity entity) {
     m_sprite_manager->RemoveEntity(entity);
     m_ui_manager->RemoveEntity(entity);
     m_tilemap_layer_render_component_manager->RemoveEntity(entity);
     m_animation_player_manager->RemoveEntity(entity);
     m_draw_order_manager->RemoveEntity(entity);
+    m_present_transform_manager->RemoveEntity(entity);
+}
+
+void ClientContext::RemovePresentEntity(LogicEntity logic_entity) {
+    RemoveAllComponentsOnPresentEntity(GetPresentEntity(logic_entity));
+}
+
+void ClientContext::removePresentEntityWithChildren(LogicEntity entity) {
+    RemovePresentEntity(entity);
+
+    auto* relationship = m_relationship_manager->Get(entity);
+    if (!relationship) {
+        return;
+    }
+
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        removePresentEntityWithChildren(relationship->Get(i));
+    }
+}
+
+void ClientContext::RemoveEntity(LogicEntity entity) {
+    // the logic entity and its descendants are removed deferred (in
+    // doRemoveEntities), so remove the corresponding present entities here.
+    removePresentEntityWithChildren(entity);
+
+    CommonContext::RemoveEntity(entity);
+}
+
+void ClientContext::RemoveAllComponentsOnLogicEntity(LogicEntity entity) {
     m_hfsm_manager->RemoveEntity(entity);
 
-    CommonContext::RemoveAllComponentsOnEntity(entity);
+    CommonContext::RemoveAllComponentsOnLogicEntity(entity);
 }
 
 const ClientConfig& ClientContext::GetConfig() const {
@@ -287,6 +340,30 @@ Vec2 ClientContext::WorldCoordToWindow(const Vec2& world_pos) const {
     window_pos.x = (world_pos.x - camera_pos.x) * scale.x + screen_center.x;
     window_pos.y = (world_pos.y - camera_pos.y) * scale.y + screen_center.y;
     return window_pos;
+}
+
+void ClientContext::syncPresentTransform(LogicEntity entity,
+                                         Transform* parent) {
+    auto* logic_transform = m_transform_manager->Get(entity);
+    auto* present_transform =
+        m_present_transform_manager->Get(GetPresentEntity(entity));
+
+    Transform* present_parent = parent;
+    if (logic_transform && present_transform) {
+        present_transform->m_position = logic_transform->m_position;
+        present_transform->m_rotation = logic_transform->m_rotation;
+        present_transform->m_size = logic_transform->m_size;
+        present_transform->SetParent(parent);
+        present_transform->UpdateMat();
+        present_parent = present_transform;
+    }
+
+    auto* relationship = m_relationship_manager->Get(entity);
+    if (relationship) {
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            syncPresentTransform(relationship->Get(i), present_parent);
+        }
+    }
 }
 
 void ClientContext::logicUpdate(TimeType elapse) {
@@ -348,6 +425,11 @@ void ClientContext::renderUpdate(TimeType elapse) {
 
     m_renderer->Clear();
     beginImGui();
+
+    if (auto level = m_scene_manager->GetCurrentScene()) {
+        syncPresentTransform(level->GetRootEntity(), nullptr);
+        syncPresentTransform(level->GetUIRootEntity(), nullptr);
+    }
 
     if (m_global_script) {
         m_global_script->callMethodNoArg("OnRender");
@@ -446,6 +528,7 @@ void ClientContext::Shutdown() {
     m_net_peer.Reset();
 
     m_tilemap_layer_render_component_manager.reset();
+    m_present_transform_manager.reset();
     m_tilemap_detour_manager.reset();
     m_client_tilemap_detour_manager = nullptr;
     m_tilemap_layer_collision_component_manager.reset();

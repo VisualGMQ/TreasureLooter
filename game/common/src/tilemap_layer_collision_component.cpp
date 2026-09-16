@@ -1,7 +1,7 @@
 #include "common/tilemap_layer_collision_component.hpp"
 
 TilemapLayerCollisionComponent::TilemapLayerCollisionComponent(
-    Entity entity, const TilemapLayerDefinition& create_info,
+    LogicEntity entity, const TilemapLayerDefinition& create_info,
     const Vec2UI& tile_in_chunk_size) {
     TL_RETURN_IF_FALSE(create_info.m_tilemap);
 

@@ -6,10 +6,10 @@ class ServerScene : public Scene {
 public:
     using Scene::Scene;
 
-    Entity GetUIRootEntity() const override;
+    LogicEntity GetUIRootEntity() const override;
 
 protected:
-    void registerEntity(Entity, const EntityInstance&) override;
+    void registerEntity(LogicEntity, const EntityInstance&) override;
     void initRootEntity(const Path& script_path) override;
 };
 

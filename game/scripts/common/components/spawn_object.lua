@@ -4,7 +4,7 @@ local Component = require("common.components.component")
 ---@field _object_did DID
 ---@field _count integer
 ---@field _spawn_animations AnimationHandle[]
----@field _idle_controllers Entity[]
+---@field _idle_controllers LogicEntity[]
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = Component })
@@ -24,8 +24,8 @@ end
 
 ---@param ctx any
 ---@param scene Scene
----@param mine_entity Entity
----@return Entity
+---@param mine_entity LogicEntity
+---@return LogicEntity
 function _M:borrowController(ctx, scene, mine_entity)
     local controller_entity
     if #self._idle_controllers > 0 then
@@ -63,7 +63,7 @@ function _M:borrowController(ctx, scene, mine_entity)
     return controller_entity
 end
 
----@param controller_entity Entity
+---@param controller_entity LogicEntity
 function _M:returnController(controller_entity)
     table.insert(self._idle_controllers, controller_entity)
 end

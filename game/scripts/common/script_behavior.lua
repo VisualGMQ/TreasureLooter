@@ -1,9 +1,9 @@
 ---@class ScriptBehavior
----@field _entity Entity
+---@field _entity LogicEntity
 local ScriptBehavior = {}
 ScriptBehavior.__index = ScriptBehavior
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return ScriptBehavior
 function ScriptBehavior.new(entity)
     local self = setmetatable({}, ScriptBehavior)
@@ -11,7 +11,7 @@ function ScriptBehavior.new(entity)
     return self
 end
 
----@return Entity
+---@return LogicEntity
 function ScriptBehavior:GetEntity()
     return self._entity
 end

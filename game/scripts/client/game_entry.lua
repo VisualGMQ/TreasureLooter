@@ -9,7 +9,7 @@ local ClientGameEntry = {}
 ClientGameEntry.__index = ClientGameEntry
 setmetatable(ClientGameEntry, { __index = GameEntry })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return ClientGameEntry
 function ClientGameEntry.new(entity)
     local self = setmetatable(GameEntry.new(entity, ClientCreation), ClientGameEntry)

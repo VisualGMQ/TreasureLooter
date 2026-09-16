@@ -249,21 +249,21 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
-                                rapidxml::xml_document<>& doc, Entity payload,
+                                rapidxml::xml_document<>& doc, LogicEntity payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     node->value(doc.allocate_string(
-        std::to_string(static_cast<std::underlying_type_t<Entity>>(payload))
+        std::to_string(static_cast<std::underlying_type_t<LogicEntity>>(payload))
             .c_str()));
     return node;
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
-                 Entity& payload) {
-    std::underlying_type_t<Entity> numeric;
+                 LogicEntity& payload) {
+    std::underlying_type_t<LogicEntity> numeric;
     Deserialize(ctx, node, numeric);
-    payload = static_cast<Entity>(numeric);
+    payload = static_cast<LogicEntity>(numeric);
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,

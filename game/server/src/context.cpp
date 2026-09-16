@@ -167,9 +167,9 @@ const ServerConfig& ServerContext::GetConfig() const {
     return m_config;
 }
 
-void ServerContext::AttachComponentsOnEntity(Entity entity,
-                                             const EntityInstance& instance) {
-    CommonContext::AttachComponentsOnEntity(entity, instance);
+void ServerContext::AttachComponentsOnLogicEntity(
+    LogicEntity entity, const EntityInstance& instance) {
+    CommonContext::AttachComponentsOnLogicEntity(entity, instance);
 
     auto& prefab = *instance.m_prefab;
     if (!prefab.m_server_script.empty()) {

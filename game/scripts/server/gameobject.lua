@@ -11,7 +11,7 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = GameObject })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param definition ServerGameObjectDefinition
 ---@return ServerGameObject
 function _M.new(entity, definition)

@@ -22,7 +22,7 @@ local function context_debug_fill_rect_world(ctx, px, py, half, r, g, b, a)
     end
 end
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param display_name string
 ---@param relationship_mgr RelationshipManager
 local function draw_entity_tree(entity, display_name, relationship_mgr)
@@ -48,7 +48,7 @@ local function draw_entity_tree(entity, display_name, relationship_mgr)
     if open then
         for i = 0, relationship:GetChildrenCount() - 1 do
             local child = relationship:Get(i)
-            draw_entity_tree(child, "Entity", relationship_mgr)
+            draw_entity_tree(child, "LogicEntity", relationship_mgr)
         end
         ImGui.TreePop()
     end

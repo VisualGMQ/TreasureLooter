@@ -7,7 +7,7 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ClientGameObjectBehavior })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return RockFellBehavior
 function _M.new(entity)
     local self = setmetatable(ClientGameObjectBehavior.new(entity), _M)
@@ -15,7 +15,7 @@ function _M.new(entity)
     return self
 end
 
----@param caster_entity Entity
+---@param caster_entity LogicEntity
 function _M:Start(caster_entity)
     local go = self.m_gameobject
     if go.m_skill_components and #go.m_skill_components > 0 then

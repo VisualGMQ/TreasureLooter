@@ -2,7 +2,7 @@ local Component = require("common.components.component")
 
 ---@class SpawnedComponent : Component
 ---@field _mine_gameobject any
----@field _controller_entity Entity
+---@field _controller_entity LogicEntity
 ---@field _target_x number
 ---@field _elapsed number
 ---@field _duration number
@@ -12,7 +12,7 @@ setmetatable(_M, { __index = Component })
 
 ---@param gameobject any
 ---@param mine_gameobject any
----@param controller_entity Entity
+---@param controller_entity LogicEntity
 ---@param target_x number
 ---@return SpawnedComponent
 function _M.new(gameobject, mine_gameobject, controller_entity, target_x)

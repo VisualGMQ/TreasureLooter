@@ -1,7 +1,7 @@
 local ObjectDefinitionTable = require("common.object_def_table")
 
 ---@class World
----@field m_land_entity Entity
+---@field m_land_entity LogicEntity
 ---@field m_object_definitions ObjectDefinitionTable
 ---@field m_buff_appliers any
 local _M = {}

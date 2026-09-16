@@ -7,9 +7,9 @@ public:
     void SubmitUI();
 
 private:
-    void submit(Entity root_entity);
-    void submitRecursive(Entity entity);
+    void submit(LogicEntity root_entity);
+    void submitRecursive(LogicEntity entity);
     
-    void submitUI(Entity root_entity);
-    void submitUIRecursive(Entity entity);
+    void submitUI(LogicEntity root_entity);
+    void submitUIRecursive(LogicEntity entity);
 };

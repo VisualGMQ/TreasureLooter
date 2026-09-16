@@ -14,7 +14,7 @@ local ServerGameEntry = {}
 ServerGameEntry.__index = ServerGameEntry
 setmetatable(ServerGameEntry, { __index = GameEntry })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return ServerGameEntry
 function ServerGameEntry.new(entity)
     local self = setmetatable(GameEntry.new(entity, ServerCreation), ServerGameEntry)

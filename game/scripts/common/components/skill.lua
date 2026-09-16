@@ -26,8 +26,8 @@ local Component = require("common.components.component")
 ---@field _elapsed number
 ---@field _is_casting boolean
 ---@field _on_hit_callback fun(caster: any, target: any)|nil
----@field _hit_entities table<Entity, boolean>
----@field _caster Entity
+---@field _hit_entities table<LogicEntity, boolean>
+---@field _caster LogicEntity
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = Component })
@@ -136,12 +136,12 @@ function _M:SetHitCallback(cb)
     self._on_hit_callback = cb
 end
 
----@return Entity
+---@return LogicEntity
 function _M:GetCaster()
     return self._caster
 end
 
----@param caster Entity
+---@param caster LogicEntity
 function _M:Cast(caster)
     if self._is_casting then return end
     if #self._phases == 0 then return end

@@ -1,12 +1,12 @@
 local World = require("common.world")
 
 ---@class FXEntry
----@field entity Entity
+---@field entity LogicEntity
 ---@field gameobject any
 ---@field anim_end_event_id EventListenerID
 
 ---@class ClientWorld : World
----@field m_player_hint Entity
+---@field m_player_hint LogicEntity
 ---@field _idle_fx_pool FXEntry[]
 local _M = {}
 _M.__index = _M

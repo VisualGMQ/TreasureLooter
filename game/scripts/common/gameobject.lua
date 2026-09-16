@@ -11,12 +11,12 @@ local RaiseUpComponent = require("common.components.raise_up")
 ---@field m_weapon_copmonent WeaponComponent
 ---@field m_item_component ItemComponent
 ---@field m_raise_up_component RaiseUpComponent
----@field _entity Entity
+---@field _entity LogicEntity
 ---@field _did DID
 local _M = {}
 _M.__index = _M
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param did DID
 ---@return GameObject
 function _M.new(entity, did)
@@ -28,7 +28,7 @@ function _M.new(entity, did)
     return self
 end
 
----@return Entity
+---@return LogicEntity
 function _M:GetEntity()
     return self._entity
 end

@@ -5,7 +5,7 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ClientGameObjectBehavior })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return PlayerBehavior
 function _M.new(entity)
     local self = ClientGameObjectBehavior.new(entity)

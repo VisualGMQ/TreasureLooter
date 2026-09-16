@@ -67,11 +67,11 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
                                 const std::string& name);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Path& payload);
 
-// Entity
+// LogicEntity
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
-                                Entity payload,
+                                LogicEntity payload,
                                 const std::string& name);
-void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Entity& payload);
+void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, LogicEntity& payload);
 
 // bool
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,

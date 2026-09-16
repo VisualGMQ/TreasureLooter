@@ -27,7 +27,7 @@ NullTriggerID::operator TriggerID() const {
     return static_cast<TriggerID>(0);
 }
 
-TriggerEnterEvent::TriggerEnterEvent(Entity src_entity, TriggerEventType type,
+TriggerEnterEvent::TriggerEnterEvent(LogicEntity src_entity, TriggerEventType type,
                                      OverlapResult overlap,
                                      TriggerID trigger_id)
     : m_src_entity{src_entity},
@@ -39,7 +39,7 @@ TriggerEventType TriggerEnterEvent::GetType() const {
     return m_type;
 }
 
-Entity TriggerEnterEvent::GetSrcEntity() const {
+LogicEntity TriggerEnterEvent::GetSrcEntity() const {
     return m_src_entity;
 }
 
@@ -51,7 +51,7 @@ TriggerID TriggerEnterEvent::GetTriggerID() const {
     return m_trigger_id;
 }
 
-TriggerTouchEvent::TriggerTouchEvent(Entity src_entity, TriggerEventType type,
+TriggerTouchEvent::TriggerTouchEvent(LogicEntity src_entity, TriggerEventType type,
                                      OverlapResult overlap,
                                      TriggerID trigger_id)
     : m_src_entity{src_entity},
@@ -63,7 +63,7 @@ TriggerEventType TriggerLeaveEvent::GetType() const {
     return m_type;
 }
 
-Entity TriggerLeaveEvent::GetSrcEntity() const {
+LogicEntity TriggerLeaveEvent::GetSrcEntity() const {
     return m_src_entity;
 }
 
@@ -75,7 +75,7 @@ TriggerID TriggerLeaveEvent::GetTriggerID() const {
     return m_trigger_id;
 }
 
-TriggerLeaveEvent::TriggerLeaveEvent(Entity src_entity, TriggerEventType type,
+TriggerLeaveEvent::TriggerLeaveEvent(LogicEntity src_entity, TriggerEventType type,
                                      OverlapResult overlap,
                                      TriggerID trigger_id)
     : m_src_entity{src_entity},
@@ -87,7 +87,7 @@ TriggerEventType TriggerTouchEvent::GetType() const {
     return m_type;
 }
 
-Entity TriggerTouchEvent::GetSrcEntity() const {
+LogicEntity TriggerTouchEvent::GetSrcEntity() const {
     return m_src_entity;
 }
 
@@ -103,7 +103,7 @@ std::underlying_type_t<TriggerID> Trigger::trigger_id_counter =
     static_cast<std::underlying_type_t<TriggerID>>(
         static_cast<TriggerID>(null_trigger_id));
 
-Trigger::Trigger(Entity entity, const TriggerDefinition& definition)
+Trigger::Trigger(LogicEntity entity, const TriggerDefinition& definition)
     : m_event_type{definition.m_event_type},
       m_entity{entity},
       m_trig_every_frame_when_touch{definition.m_trig_every_frame_when_touch},
@@ -177,7 +177,7 @@ bool Trigger::IsTriggerEveryFrameWhenTouch() const {
     return m_trig_every_frame_when_touch;
 }
 
-Entity Trigger::GetOwner() const {
+LogicEntity Trigger::GetOwner() const {
     return m_entity;
 }
 
@@ -324,7 +324,7 @@ void TriggerComponentManager::Update() {
     }
 }
 
-void TriggerComponentManager::Enable(Entity entity) {
+void TriggerComponentManager::Enable(LogicEntity entity) {
     auto trigger = Get(entity);
     TL_RETURN_IF_NULL(trigger);
 
@@ -334,7 +334,7 @@ void TriggerComponentManager::Enable(Entity entity) {
     }
 }
 
-void TriggerComponentManager::Disable(Entity entity) {
+void TriggerComponentManager::Disable(LogicEntity entity) {
     auto trigger = Get(entity);
     TL_RETURN_IF_NULL(trigger);
 

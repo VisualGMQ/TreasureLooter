@@ -22,7 +22,7 @@ function _M.new(gameobject, definition)
     return setmetatable(self, _M)
 end
 
----@param caster Entity
+---@param caster LogicEntity
 function _M:Cast(caster)
     if self._is_casting then return end
 

@@ -23,7 +23,7 @@ void ClientScene::OnEnter() {
                     event.type != SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
                     return;
                 }
-                Entity entity = this->GetUIRootEntity();
+                LogicEntity entity = this->GetUIRootEntity();
                 Transform* transform =
                     COMMON_CONTEXT.m_transform_manager->Get(entity);
                 if (!(event.data1 == 0 && event.data2 == 0)) {
@@ -40,30 +40,40 @@ void ClientScene::OnQuit() {
     Scene::OnQuit();
 }
 
-Entity ClientScene::GetUIRootEntity() const {
+LogicEntity ClientScene::GetUIRootEntity() const {
     return m_ui_root_entity;
 }
 
-void ClientScene::registerEntity(Entity entity,
+void ClientScene::registerEntity(LogicEntity entity,
                                  const EntityInstance& instance) {
-    CLIENT_CONTEXT.AttachComponentsOnEntity(entity, instance);
+    CLIENT_CONTEXT.AttachComponentsOnLogicEntity(entity, instance);
+    PresentEntity present_entity = CLIENT_CONTEXT.CreatePresentEntity(entity);
+    CLIENT_CONTEXT.AttachComponentsOnPresentEntity(present_entity, instance);
 }
 
 void ClientScene::initRootEntity(const Path& script_path) {
-    m_root_entity = CLIENT_CONTEXT.CreateEntity();
+    m_root_entity = CLIENT_CONTEXT.CreateLogicEntity();
     m_entities.insert(m_root_entity);
     CLIENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
     CLIENT_CONTEXT.m_relationship_manager->RegisterEntity(m_root_entity,
                                                           m_root_entity);
-    CLIENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_root_entity);
+    PresentEntity root_present_entity =
+        CLIENT_CONTEXT.CreatePresentEntity(m_root_entity);
+    CLIENT_CONTEXT.m_present_transform_manager->RegisterEntity(
+        root_present_entity);
+    CLIENT_CONTEXT.m_draw_order_manager->RegisterEntity(root_present_entity);
 
-    m_ui_root_entity = CLIENT_CONTEXT.CreateEntity();
+    m_ui_root_entity = CLIENT_CONTEXT.CreateLogicEntity();
     m_entities.insert(m_ui_root_entity);
     CLIENT_CONTEXT.m_transform_manager->RegisterEntity(m_ui_root_entity);
     CLIENT_CONTEXT.m_relationship_manager->RegisterEntity(m_ui_root_entity,
                                                           m_ui_root_entity);
-    CLIENT_CONTEXT.m_ui_manager->RegisterEntity(m_ui_root_entity);
-    CLIENT_CONTEXT.m_draw_order_manager->RegisterEntity(m_ui_root_entity);
+    PresentEntity ui_root_present_entity =
+        CLIENT_CONTEXT.CreatePresentEntity(m_ui_root_entity);
+    CLIENT_CONTEXT.m_present_transform_manager->RegisterEntity(
+        ui_root_present_entity);
+    CLIENT_CONTEXT.m_ui_manager->RegisterEntity(ui_root_present_entity);
+    CLIENT_CONTEXT.m_draw_order_manager->RegisterEntity(ui_root_present_entity);
     UIWidget* ui = CLIENT_CONTEXT.m_ui_manager->Get(m_ui_root_entity);
     ui->m_anchor = UIAnchor::None;
     ui->m_panel = std::make_unique<UIPanelComponent>();
@@ -88,7 +98,7 @@ void ClientScene::initEntities(SceneDefinitionHandle level_content) {
         COMMON_CONTEXT.m_relationship_manager->Get(m_ui_root_entity);
 
     for (auto& instance : level_content->m_entities) {
-        Entity entity = Instantiate(instance.m_prefab);
+        LogicEntity entity = Instantiate(instance.m_prefab);
         TL_CONTINUE_IF_FALSE(entity != null_entity);
 
         if (instance.m_transform) {

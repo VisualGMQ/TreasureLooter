@@ -28,26 +28,26 @@ public:
     /**
      * instantiate entity but don't put into level scene
      */
-    Entity Instantiate(PrefabHandle, const Transform* = nullptr);
+    LogicEntity Instantiate(PrefabHandle, const Transform* = nullptr);
 
-    void RemoveEntity(Entity);
-    void RemoveEntityFromInnerList(Entity);
+    void RemoveEntity(LogicEntity);
+    void RemoveEntityFromInnerList(LogicEntity);
 
-    [[nodiscard]] bool HasEntity(Entity) const;
+    [[nodiscard]] bool HasEntity(LogicEntity) const;
 
-    [[nodiscard]] Entity GetRootEntity() const;
-    [[nodiscard]] virtual Entity GetUIRootEntity() const = 0;
+    [[nodiscard]] LogicEntity GetRootEntity() const;
+    [[nodiscard]] virtual LogicEntity GetUIRootEntity() const = 0;
 
-    const std::unordered_set<Entity>& GetAllEntities() const;
+    const std::unordered_set<LogicEntity>& GetAllEntities() const;
 
 protected:
-    virtual void registerEntity(Entity, const EntityInstance&) = 0;
+    virtual void registerEntity(LogicEntity, const EntityInstance&) = 0;
     virtual void initRootEntity(const Path& script_path) = 0;
     virtual void initEntities(SceneDefinitionHandle level_content);
 
-    Entity m_root_entity{};
+    LogicEntity m_root_entity{};
 
-    std::unordered_set<Entity> m_entities;
+    std::unordered_set<LogicEntity> m_entities;
 
 private:
     bool m_visible = false;
@@ -67,7 +67,7 @@ public:
 
     virtual void Switch(SceneHandle);
 
-    void RemoveEntity(Entity);
+    void RemoveEntity(LogicEntity);
 
     [[nodiscard]] SceneHandle GetCurrentScene() const;
 

@@ -4,7 +4,7 @@
 #include "common/math.hpp"
 #include "schema/physics_schema.hpp"
 
-StaticCollision::StaticCollision(Entity entity,
+StaticCollision::StaticCollision(LogicEntity entity,
                                  const StaticCollisionDefinition& definition) {
     for (PhysicsShapeDefinitionHandle collision : definition.m_collisions) {
         PhysicsShape* actor =
@@ -39,7 +39,7 @@ void StaticCollisionManager::Update() {
     }
 }
 
-void StaticCollisionManager::Enable(Entity entity) {
+void StaticCollisionManager::Enable(LogicEntity entity) {
     auto collision = Get(entity);
     TL_RETURN_IF_NULL(collision);
     ComponentManager<StaticCollision>::Enable(entity);
@@ -49,7 +49,7 @@ void StaticCollisionManager::Enable(Entity entity) {
     }
 }
 
-void StaticCollisionManager::Disable(Entity entity) {
+void StaticCollisionManager::Disable(LogicEntity entity) {
     auto collision = Get(entity);
     TL_RETURN_IF_NULL(collision);
     ComponentManager<StaticCollision>::Enable(entity);

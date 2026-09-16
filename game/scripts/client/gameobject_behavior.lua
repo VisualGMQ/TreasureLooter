@@ -23,7 +23,7 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ScriptBehavior })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return ClientGameObjectBehavior
 function _M.new(entity)
     local self = ScriptBehavior.new(entity)

@@ -63,7 +63,7 @@ setmetatable(_M, { __index = GameObject })
 ---@field m_skill_component_definitions ClientSkillComponentDefinition[]|nil
 ---@field m_buff_apply_component_definition BuffApplyComponentDefinition|nil
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param definition ClientGameObjectDefinition
 ---@return ClientGameObject
 function _M.new(entity, definition)
@@ -110,7 +110,7 @@ function _M.new(entity, definition)
     return setmetatable(self, _M)
 end
 
----@return Entity
+---@return LogicEntity
 function _M:GetEntity()
     return self._entity
 end

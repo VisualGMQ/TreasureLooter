@@ -150,20 +150,27 @@ static void bindSprite(lua_State* L) {
                 .addPropertyReadWrite("m_flip", &SpriteDefinition::m_flip)
             .endClass()
             .beginClass<SpriteManager>("SpriteManager")
-                .addFunction("Get", +[](SpriteManager* m, Entity e) {
-                    return m->Get(e);
+                .addFunction("Get", +[](SpriteManager* m, LogicEntity e) {
+                    return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("Has", +[](SpriteManager* m, Entity e) {
-                    return m->Has(e);
+                .addFunction("Has", +[](SpriteManager* m, LogicEntity e) {
+                    return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("RegisterEntity",
-                             +[](SpriteManager* m, Entity e,
+                             +[](SpriteManager* m, LogicEntity e,
                                  const SpriteDefinition& s) {
-                                 m->RegisterEntity(e, s);
+                                 m->RegisterEntity(
+                                     CLIENT_CONTEXT.GetPresentEntity(e), s);
                              })
-                .addFunction("IsEnable", &SpriteManager::IsEnable)
-                .addFunction("Enable", &SpriteManager::Enable)
-                .addFunction("Disable", &SpriteManager::Disable)
+                .addFunction("IsEnable", +[](SpriteManager* m, LogicEntity e) {
+                    return m->IsEnable(CLIENT_CONTEXT.GetPresentEntity(e));
+                })
+                .addFunction("Enable", +[](SpriteManager* m, LogicEntity e) {
+                    m->Enable(CLIENT_CONTEXT.GetPresentEntity(e));
+                })
+                .addFunction("Disable", +[](SpriteManager* m, LogicEntity e) {
+                    m->Disable(CLIENT_CONTEXT.GetPresentEntity(e));
+                })
             .endClass()
         .endNamespace();
 }
@@ -177,15 +184,15 @@ static void bindDrawOrder(lua_State* L) {
                 .addFunction("GetGlobalOrder", &DrawOrder::GetGlobalOrder)
             .endClass()
             .beginClass<DrawOrderManager>("DrawOrderManager")
-                .addFunction("Get", +[](DrawOrderManager* m, Entity e) {
-                    return m->Get(e);
+                .addFunction("Get", +[](DrawOrderManager* m, LogicEntity e) {
+                    return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("Has", +[](DrawOrderManager* m, Entity e) {
-                    return m->Has(e);
+                .addFunction("Has", +[](DrawOrderManager* m, LogicEntity e) {
+                    return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("RegisterEntity",
-                             +[](DrawOrderManager* m, Entity e, const DrawOrderDefinition& def) {
-                                 m->RegisterEntity(e, def);
+                             +[](DrawOrderManager* m, LogicEntity e, const DrawOrderDefinition& def) {
+                                 m->RegisterEntity(CLIENT_CONTEXT.GetPresentEntity(e), def);
                              })
             .endClass()
         .endNamespace();
@@ -215,8 +222,8 @@ static void bindAnimationPlayer(lua_State* L) {
                              })
                 .addFunction("ClearAnimation", &AnimationPlayer::ClearAnimation)
                 .addFunction("HasAnimation", &AnimationPlayer::HasAnimation)
-                .addFunction("Sync", +[](AnimationPlayer* p, Entity e) {
-                    p->Sync(e);
+                .addFunction("Sync", +[](AnimationPlayer* p, LogicEntity e) {
+                    p->Sync(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("SetRate", &AnimationPlayer::SetRate)
                 .addFunction("GetRate", &AnimationPlayer::GetRate)
@@ -231,45 +238,45 @@ static void bindAnimationPlayer(lua_State* L) {
             .endClass()
             .beginClass<AnimationPlayerManager>("AnimationPlayerManager")
                 .addFunction("AddComponent",
-                             +[](AnimationPlayerManager* m, Entity e, const AnimationPlayerDefinition& def) -> AnimationPlayer* {
-                                 return m->AddComponent(e, def);
+                             +[](AnimationPlayerManager* m, LogicEntity e, const AnimationPlayerDefinition& def) -> AnimationPlayer* {
+                                 return m->AddComponent(CLIENT_CONTEXT.GetPresentEntity(e), def);
                              })
-                .addFunction("Get", +[](AnimationPlayerManager* m, Entity e, uint32_t index) -> AnimationPlayer* {
-                    return m->Get(e, index);
+                .addFunction("Get", +[](AnimationPlayerManager* m, LogicEntity e, uint32_t index) -> AnimationPlayer* {
+                    return m->Get(CLIENT_CONTEXT.GetPresentEntity(e), index);
                 })
-                .addFunction("GetComponentSize", +[](AnimationPlayerManager* m, Entity e) -> uint32_t {
-                    return static_cast<uint32_t>(m->GetComponentSize(e));
+                .addFunction("GetComponentSize", +[](AnimationPlayerManager* m, LogicEntity e) -> uint32_t {
+                    return static_cast<uint32_t>(m->GetComponentSize(CLIENT_CONTEXT.GetPresentEntity(e)));
                 })
-                .addFunction("RemoveComponent", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    m->RemoveComponent(e, p);
+                .addFunction("RemoveComponent", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    m->RemoveComponent(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
-                    return m->Has(e);
+                .addFunction("Has", +[](AnimationPlayerManager* m, LogicEntity e) {
+                    return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("IsEnable", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    return m->IsEnable(e, p);
+                .addFunction("IsEnable", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    return m->IsEnable(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("Enable", +[](AnimationPlayerManager* m, Entity e, uint32_t index) {
-                    m->Enable(e, index);
+                .addFunction("Enable", +[](AnimationPlayerManager* m, LogicEntity e, uint32_t index) {
+                    m->Enable(CLIENT_CONTEXT.GetPresentEntity(e), index);
                 })
-                .addFunction("EnablePlayer", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    m->Enable(e, p);
+                .addFunction("EnablePlayer", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    m->Enable(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("EnableAll", +[](AnimationPlayerManager* m, Entity e) {
-                    m->EnableAll(e);
+                .addFunction("EnableAll", +[](AnimationPlayerManager* m, LogicEntity e) {
+                    m->EnableAll(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("Disable", +[](AnimationPlayerManager* m, Entity e, uint32_t index) {
-                    m->Disable(e, index);
+                .addFunction("Disable", +[](AnimationPlayerManager* m, LogicEntity e, uint32_t index) {
+                    m->Disable(CLIENT_CONTEXT.GetPresentEntity(e), index);
                 })
-                .addFunction("DisablePlayer", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    m->Disable(e, p);
+                .addFunction("DisablePlayer", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    m->Disable(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("DisableAll", +[](AnimationPlayerManager* m, Entity e) {
-                    m->DisableAll(e);
+                .addFunction("DisableAll", +[](AnimationPlayerManager* m, LogicEntity e) {
+                    m->DisableAll(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("RegisterEntity",
-                             +[](AnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
-                                 m->RegisterEntity(e, def);
+                             +[](AnimationPlayerManager* m, LogicEntity e, const MultiAnimationPlayerDefinition& def) {
+                                 m->RegisterEntity(CLIENT_CONTEXT.GetPresentEntity(e), def);
                              })
             .endClass()
         .endNamespace();
@@ -285,12 +292,12 @@ static void bindTilemapRenderComponent(lua_State* L) {
             .beginClass<TilemapLayerRenderComponentManager>(
                 "TilemapRenderComponentManager")
                 .addFunction("Get",
-                             +[](TilemapLayerRenderComponentManager* m, Entity e) {
-                                 return m->Get(e);
+                             +[](TilemapLayerRenderComponentManager* m, LogicEntity e) {
+                                 return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));
                              })
                 .addFunction("Has",
-                             +[](TilemapLayerRenderComponentManager* m, Entity e) {
-                                 return m->Has(e);
+                             +[](TilemapLayerRenderComponentManager* m, LogicEntity e) {
+                                 return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                              })
             .endClass()
         .endNamespace();
@@ -347,10 +354,10 @@ static void bindUI(lua_State* L) {
                 })
             .endClass()
             .beginClass<UIComponentManager>("UIComponentManager")
-                .addFunction("Get", +[](UIComponentManager* m, Entity e) {
+                .addFunction("Get", +[](UIComponentManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](UIComponentManager* m, Entity e) {
+                .addFunction("Has", +[](UIComponentManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
             .endClass()

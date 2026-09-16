@@ -282,7 +282,7 @@ void AnimationPlayer::Update(TimeType delta_time) {
             Pause();
             m_cur_time = GetMaxTime();
             COMMON_CONTEXT.m_event_system->EnqueueEvent<AnimationEndEvent>(
-                AnimationEndEvent{m_id, m_entity, m_animation});
+                AnimationEndEvent{m_id, ToLogicEntity(m_entity), m_animation});
         }
     }
 }
@@ -309,12 +309,12 @@ void AnimationPlayer::Update(TimeType delta_time) {
         }                                                              \
     }
 
-void AnimationPlayer::Sync(Entity entity) {
+void AnimationPlayer::Sync(PresentEntity entity) {
     TL_RETURN_IF_FALSE(m_animation);
     m_entity = entity;
     auto& ctx = CLIENT_CONTEXT;
 
-    if (auto transform = ctx.m_transform_manager->Get(entity)) {
+    if (auto transform = ctx.m_present_transform_manager->Get(entity)) {
 #define BINDING_TARGET transform->m_position
         BEGIN_BINDING_POINT(AnimationBindingPoint::TransformPosition) {
             HANDLE_LINEAR_TRACK();
@@ -384,7 +384,8 @@ void AnimationPlayer::Sync(Entity entity) {
 #undef BINDING_TARGET
     }
 
-    if (auto bind_points = ctx.m_bind_point_component_manager->Get(entity)) {
+    if (auto bind_points =
+            ctx.m_bind_point_component_manager->Get(ToLogicEntity(entity))) {
         for (auto& [name, bind_point] : bind_points->m_bind_points) {
             if (auto it = m_bind_point_track_players.find(name);
                 it != m_bind_point_track_players.end()) {

@@ -18,7 +18,8 @@ public:
     void HandleEvents(const SDL_Event& event) override;
     void Update() override;
     void Shutdown() override;
-    void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
+    void AttachComponentsOnLogicEntity(LogicEntity,
+                                       const EntityInstance&) override;
 
     [[nodiscard]] const ServerConfig& GetConfig() const;
 

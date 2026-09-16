@@ -25,7 +25,7 @@
 // clang-format on
 
 template <>
-struct luabridge::Stack<Entity> : public luabridge::Enum<Entity> {};
+struct luabridge::Stack<LogicEntity> : public luabridge::Enum<LogicEntity> {};
 
 template <>
 struct luabridge::Stack<TimerID> : public luabridge::Enum<TimerID> {};

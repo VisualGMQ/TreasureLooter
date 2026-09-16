@@ -133,7 +133,7 @@ local function bind_point_world_position(pt)
 end
 
 ---@param script_mgr ScriptComponentManager
----@param e Entity
+---@param e LogicEntity
 ---@return boolean|nil
 local function script_manager_is_enable(script_mgr, e)
     local ok, v = pcall(function()
@@ -263,7 +263,7 @@ function _M.DisplayAnimationPlayer(ap)
 end
 
 ---@param anim_mgr AnimationPlayerManager
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayAnimationPlayerManager(anim_mgr, e)
     ImGui.PushID("AnimationPlayerManager")
     local count = anim_mgr:GetComponentSize(e)
@@ -314,7 +314,7 @@ local function inspect_script_value(label, v, depth)
 end
 
 ---@param script_mgr ScriptComponentManager
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayScript(script_mgr, e)
     ImGui.PushID("Script")
     local script_en = script_manager_is_enable(script_mgr, e)
@@ -425,7 +425,7 @@ function _M.DisplayTrigger(tr)
 end
 
 ---@param bind_mgr BindPointsComponentManager
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayBindPoints(bind_mgr, e)
     ImGui.PushID("BindPoints")
     local ok, err = pcall(function()
@@ -503,9 +503,9 @@ end
 
 --- 根据 ctx / entity 绘制各 Component（由 debug Inspector 调用）
 ---@param ctx ClientContext
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayInspector(ctx, e)
-    ImGui.Text(string.format("Entity: %d", e))
+    ImGui.Text(string.format("LogicEntity: %d", e))
 
     local transform_mgr = ctx:GetTransformManager()
     if transform_mgr:Has(e) then

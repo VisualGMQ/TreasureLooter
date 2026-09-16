@@ -37,7 +37,7 @@ private:
     std::string m_err_msg;
 };
 
-ParamConvertError ConvertParam(std::string_view text, Entity& out_value);
+ParamConvertError ConvertParam(std::string_view text, LogicEntity& out_value);
 ParamConvertError ConvertParam(std::string_view text, bool& out_value);
 ParamConvertError ConvertParam(std::string_view text, std::string& out_value);
 
@@ -109,7 +109,7 @@ template <typename T>
 std::vector<std::string> GetDebugPanelParamHint();
 
 template <>
-std::vector<std::string> GetDebugPanelParamHint<Entity>();
+std::vector<std::string> GetDebugPanelParamHint<LogicEntity>();
 template <>
 std::vector<std::string> GetDebugPanelParamHint<bool>();
 template <>

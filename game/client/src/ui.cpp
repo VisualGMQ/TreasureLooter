@@ -197,7 +197,7 @@ void UIPanelComponent::UpdateSize(const Transform& old_transform,
     }
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity child = relationship.Get(i);
+        LogicEntity child = relationship.Get(i);
         Transform* transform = CLIENT_CONTEXT.m_transform_manager->Get(child);
         UIWidget* child_ui = CLIENT_CONTEXT.m_ui_manager->Get(child);
 
@@ -239,7 +239,7 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
     }
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity child = relationship.Get(i);
+        LogicEntity child = relationship.Get(i);
         Transform* child_transform =
             CLIENT_CONTEXT.m_transform_manager->Get(child);
         UIWidget* child_ui = CLIENT_CONTEXT.m_ui_manager->Get(child);
@@ -325,7 +325,7 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
     }
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity entity = relationship.Get(i);
+        LogicEntity entity = relationship.Get(i);
         UIWidget* ui = CLIENT_CONTEXT.m_ui_manager->Get(entity);
         Transform* child_transform =
             CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -348,7 +348,7 @@ void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
     Vec2 start_position = new_transform.m_position + ui.m_padding;
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity entity = relationship.Get(i);
+        LogicEntity entity = relationship.Get(i);
         UIWidget* ui = CLIENT_CONTEXT.m_ui_manager->Get(entity);
         Transform* child_transform =
             CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -444,7 +444,7 @@ UIComponentManager::~UIComponentManager() {
         m_key_event_listener);
 }
 
-void UIComponentManager::SetFocusedWidget(Entity entity) {
+void UIComponentManager::SetFocusedWidget(LogicEntity entity) {
     TL_RETURN_IF_TRUE(m_focused_entity == entity);
     if (m_focused_entity != null_entity) {
         SDL_StopTextInput(CLIENT_CONTEXT.m_window->GetWindow());
@@ -457,11 +457,11 @@ void UIComponentManager::SetFocusedWidget(Entity entity) {
     }
 }
 
-Entity UIComponentManager::GetFocusedWidget() const {
+LogicEntity UIComponentManager::GetFocusedWidget() const {
     return m_focused_entity;
 }
 
-bool UIComponentManager::IsFocusedWidget(Entity entity) const {
+bool UIComponentManager::IsFocusedWidget(LogicEntity entity) const {
     return m_focused_entity == entity;
 }
 
@@ -483,7 +483,7 @@ void UIComponentManager::Update(TimeType elapse_time) {
     auto level = CLIENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
-    Entity ui_root_entity = level->GetUIRootEntity();
+    LogicEntity ui_root_entity = level->GetUIRootEntity();
     Transform* transform =
         CLIENT_CONTEXT.m_transform_manager->Get(ui_root_entity);
     TL_RETURN_IF_TRUE(transform->m_size == Vec2::ZERO);
@@ -493,7 +493,7 @@ void UIComponentManager::Update(TimeType elapse_time) {
     m_is_first_update = false;
 }
 
-void UIComponentManager::SubmitDrawCommand(Entity entity) {
+void UIComponentManager::SubmitDrawCommand(LogicEntity entity) {
     auto& renderer = CLIENT_CONTEXT.m_renderer;
     render(*renderer, entity);
 }
@@ -506,7 +506,7 @@ void UIComponentManager::HandleEvent() {
         return;
     }
 
-    Entity ui_root_entity = level->GetUIRootEntity();
+    LogicEntity ui_root_entity = level->GetUIRootEntity();
     auto relationship =
         CLIENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
 
@@ -527,7 +527,7 @@ void UIComponentManager::HandleEvent() {
         }
 
         for (uint32_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            Entity child = relationship->Get(i);
+            LogicEntity child = relationship->Get(i);
             UIWidget* child_ui = CLIENT_CONTEXT.m_ui_manager->Get(child);
             if (child_ui->m_focus_index && child_ui->m_focus_index != i) {
                 continue;
@@ -538,7 +538,7 @@ void UIComponentManager::HandleEvent() {
 #endif
 }
 
-void UIComponentManager::updateSize(Entity entity) {
+void UIComponentManager::updateSize(LogicEntity entity) {
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
@@ -558,7 +558,7 @@ void UIComponentManager::updateSize(Entity entity) {
     }
 }
 
-void UIComponentManager::updateTransform(Entity entity) {
+void UIComponentManager::updateTransform(LogicEntity entity) {
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
     auto ui = Get(entity);
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -582,7 +582,7 @@ void UIComponentManager::updateTransform(Entity entity) {
     ui->m_old_transform = *transform;
 }
 
-void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
+void UIComponentManager::handleEvent(LogicEntity entity, size_t finger_index,
                                      const Button& button, const Vec2& position,
                                      const Vec2& offset) {
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -594,7 +594,7 @@ void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
     if (!isFocusing(*ui, finger_index) && relationship) {
         for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            Entity child = relationship->Get(i);
+            LogicEntity child = relationship->Get(i);
             auto child_transform =
                 CLIENT_CONTEXT.m_transform_manager->Get(child);
             if (!child_transform) {
@@ -694,7 +694,7 @@ void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
     }
 }
 
-void UIComponentManager::render(Renderer& renderer, Entity entity) {
+void UIComponentManager::render(Renderer& renderer, LogicEntity entity) {
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
@@ -734,7 +734,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     dst.m_topleft = transform->m_position;
 
     const DrawOrder* draw_order =
-        CLIENT_CONTEXT.m_draw_order_manager->Get(entity);
+        CLIENT_CONTEXT.m_draw_order_manager->Get(ToPresentEntity(entity));
     double z_order = draw_order ? draw_order->GetGlobalOrder() : 0;
     float y = transform->m_position.y;
 

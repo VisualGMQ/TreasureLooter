@@ -36,7 +36,7 @@ const std::string& HFSMNode::GetName() const {
     return m_name;
 }
 
-LuaHFSMNode::LuaHFSMNode(HFSMNodeID id, std::string name, Entity entity,
+LuaHFSMNode::LuaHFSMNode(HFSMNodeID id, std::string name, LogicEntity entity,
                            ScriptBinaryDataHandle handle)
     : HFSMNode(id, std::move(name)), m_script(entity, handle) {}
 
@@ -180,7 +180,7 @@ luabridge::LuaRef LuaHFSMComponent::GetBlackBoard() const {
 }
 
 LuaHFSMComponent* HFSMComponentManager::Create(
-    Entity entity, ScriptHFSMDefinitionHandle definition) {
+    LogicEntity entity, ScriptHFSMDefinitionHandle definition) {
     TL_RETURN_VALUE_IF_NULL_WITH_LOG(definition.Get(), nullptr, LOGE,
                                      "[HFSM]: definition is null");
 
@@ -245,7 +245,7 @@ LuaHFSMComponent* HFSMComponentManager::Create(
     return component;
 }
 
-LuaHFSMComponent* HFSMComponentManager::Get(Entity entity) {
+LuaHFSMComponent* HFSMComponentManager::Get(LogicEntity entity) {
     return static_cast<LuaHFSMComponent*>(
         ComponentManager<HFSMComponent>::Get(entity));
 }

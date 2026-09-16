@@ -5,11 +5,11 @@ local States = require("client.hfsm.player_states")
 local k_put_down_distance = 20
 
 ---@class PlayerPuttingDownNode
----@field _entity Entity
+---@field _entity LogicEntity
 local _M = {}
 _M.__index = _M
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return PlayerPuttingDownNode
 function _M.new(entity)
     local self = setmetatable({}, _M)

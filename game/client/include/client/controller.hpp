@@ -46,7 +46,7 @@ private:
 };
 
 struct VirtualJoystick {
-    Entity m_ui_entity = null_entity;
+    LogicEntity m_ui_entity = null_entity;
     Circle m_circle;
     float m_max_drag_dist = 400;
     EventListenerID m_drag_event{};
@@ -54,7 +54,7 @@ struct VirtualJoystick {
 };
 
 struct VirtualButton {
-    Entity m_ui_entity = null_entity;
+    LogicEntity m_ui_entity = null_entity;
     EventListenerID m_press_event{};
     EventListenerID m_release_event{};
     const Button* m_button{};

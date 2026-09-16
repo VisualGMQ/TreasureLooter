@@ -11,7 +11,7 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ClientGameObjectBehavior })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return FireballBehavior
 function _M.new(entity)
     local self = setmetatable(ClientGameObjectBehavior.new(entity), _M)
@@ -31,7 +31,7 @@ function _M:SetFireSpeed(speed)
     self.m_fire_speed = speed
 end
 
----@param caster_entity Entity
+---@param caster_entity LogicEntity
 function _M:Start(caster_entity)
     local go = self.m_gameobject
     if go.m_skill_components and #go.m_skill_components > 0 then

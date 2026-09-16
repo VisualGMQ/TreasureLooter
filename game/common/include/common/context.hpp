@@ -62,18 +62,18 @@ public:
 
     virtual void Update() = 0;
     virtual void HandleEvents(const SDL_Event&);
-
-    virtual void AttachComponentsOnEntity(Entity, const EntityInstance&);
-    virtual void RemoveAllComponentsOnEntity(Entity);
+    virtual void AttachComponentsOnLogicEntity(LogicEntity,
+                                               const EntityInstance&);
+    virtual void RemoveAllComponentsOnLogicEntity(LogicEntity);
 
     // Create the global (autoload-style) script from a path. No-op if empty.
     void InitGlobalScript(const Path& script_path);
 
     [[nodiscard]] bool IsRunning() const;
 
-    Entity CreateEntity();
-    Entity CreateReplicateEntity(Entity raw_entity);
-    void RemoveEntity(Entity);
+    LogicEntity CreateLogicEntity();
+    LogicEntity CreateReplicateEntity(LogicEntity raw_entity);
+    virtual void RemoveEntity(LogicEntity);
 
     [[nodiscard]] const CommonConfig& GetCommonConfig() const;
 
@@ -83,7 +83,7 @@ public:
     [[nodiscard]] const std::vector<std::string_view>& GetOSArgs() const;
     [[nodiscard]] std::string_view GetAppPath() const;
 
-    [[nodiscard]] bool IsReplicateEntity(Entity) const;
+    [[nodiscard]] bool IsReplicateEntity(LogicEntity) const;
 
     std::unique_ptr<EventSystem> m_event_system;
     std::unique_ptr<EventDebugger> m_event_debugger_system;
@@ -124,13 +124,13 @@ private:
 
     bool m_should_exit = true;
     bool m_is_inited = false;
-    std::underlying_type_t<Entity> m_last_entity = 1;
-    std::vector<Entity> m_pending_delete_entities;
+    std::underlying_type_t<LogicEntity> m_last_entity = 1;
+    std::vector<LogicEntity> m_pending_delete_entities;
 
     CommonConfig m_common_config;
 
-    void doRemoveEntityWithChildren(Entity);
-    void doRemoveEntityFromParent(Entity);
+    void doRemoveEntityWithChildren(LogicEntity);
+    void doRemoveEntityFromParent(LogicEntity);
 };
 
 #define COMMON_CONTEXT ::CommonContext::GetInst()

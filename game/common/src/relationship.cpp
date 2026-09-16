@@ -6,21 +6,21 @@
 #include "common/scene.hpp"
 #include "common/transform.hpp"
 
-Relationship::Relationship(Entity entity) : m_owner{entity} {}
+Relationship::Relationship(LogicEntity entity) : m_owner{entity} {}
 
 size_t Relationship::GetChildrenCount() const {
     return m_children.size();
 }
 
-Entity Relationship::GetParent() const {
+LogicEntity Relationship::GetParent() const {
     return m_parent;
 }
 
-Entity Relationship::Get(size_t index) const {
+LogicEntity Relationship::Get(size_t index) const {
     return m_children[index];
 }
 
-void Relationship::AddChild(Entity entity) {
+void Relationship::AddChild(LogicEntity entity) {
     TL_RETURN_IF_FALSE(entity != null_entity);
     auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(entity);
     TL_RETURN_IF_NULL(relationship);
@@ -42,7 +42,7 @@ bool Relationship::HasChildren() const {
     return !m_children.empty();
 }
 
-void Relationship::RemoveChild(Entity entity) {
+void Relationship::RemoveChild(LogicEntity entity) {
     auto it = std::find(m_children.begin(), m_children.end(), entity);
     if (it != m_children.end()) {
         auto relationship = COMMON_CONTEXT.m_relationship_manager->Get(*it);
@@ -72,7 +72,7 @@ void RelationshipManager::Update() {
     auto level = COMMON_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
-    Entity root = level->GetRootEntity();
+    LogicEntity root = level->GetRootEntity();
 
     auto relationship = Get(root);
     TL_RETURN_IF_NULL(relationship);
@@ -97,7 +97,7 @@ void RelationshipManager::Update() {
 }
 
 void RelationshipManager::updatePoseRecursive(const Transform& parent_transform,
-                                              Entity child,
+                                              LogicEntity child,
                                               bool parent_changed) {
     auto& transform_manager = COMMON_CONTEXT.m_transform_manager;
     Transform* transform = transform_manager->Get(child);
