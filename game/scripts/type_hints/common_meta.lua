@@ -646,3 +646,5 @@
 ---@field DecomposeVector fun(velocity: Vec2, tangent: Vec2): DecompositionResult
 ---@field Rotate fun(v: Vec2, degrees: Degrees): Vec2
 TL_Common = {}
+
+---@alias NetID number

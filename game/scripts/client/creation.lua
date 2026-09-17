@@ -1,18 +1,5 @@
-local ClientGameObject = require("client.gameobject")
-local ClientAttackComponent = require("client.components.attack")
-local ClientMoveComponent = require("client.components.move")
-local ClientWeaponComponent = require("client.components.weapon")
-local ClientHpComponent = require("client.components.hp")
-local ClientItemComponent = require("client.components.item")
-local ClientInteractComponent = require("client.components.interact")
-local ClientFXComponent = require("client.components.fx")
-local ClientSpawnObjectComponent = require("client.components.spawn_object")
-local ClientConstructableComponent = require("client.components.constructable")
-local ClientSkillComponent = require("client.components.skill")
 local ClientWorld = require("client.world")
-local ClientGameObjectBehavior = require("client.gameobject_behavior")
 local Creation = require("common.creation")
-local GameObject = require("common.gameobject")
 
 ---@class ClientCreation : Creation
 local _M = {}
@@ -358,7 +345,7 @@ end
 ---@param net_id number
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
----@return LogicEntity, GameObject
+---@return LogicEntity, ClientGameObject
 function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definitions, hfsm_definition)
     local ctx = TL_Client.GetContext()
 

@@ -9,11 +9,7 @@ local World = require("common.world")
 ---@field m_position Vec2
 
 ---@class GameEntry : ScriptBehavior
----@field m_level_definition LevelDefinitionHandle
 ---@field m_map_layers table<string, LogicEntity>
----@field m_spawn_points table<string, SpawnPoint>
----@field m_player_on_layer LogicEntity
----@field m_object_definitions ObjectDefinitionTable
 ---@field m_creation_strategy Creation
 local GameEntry = {}
 GameEntry.__index = GameEntry
@@ -35,16 +31,19 @@ function GameEntry:OnInit()
     local object_definition_table_handle = ctx:GetAssetsManager():GetObjectDefinitionTableManager():Load(
     "assets/gpa/object_definition_table.object_definition_table.xml")
     self.m_object_definitions = ObjectDefinitionTable.new(object_definition_table_handle)
-    World.GetInst().m_object_definitions = self.m_object_definitions
-    World.GetInst().m_buff_appliers = BuffApplierTable.new()
+    local world = World.GetInst()
+    world.m_object_definitions = self.m_object_definitions
+    world.m_buff_appliers = BuffApplierTable.new()
     self:ChangeLevel(TL_Common.Path("assets/gpa/levels/net_test.level.xml"))
 end
 
 ---@param level Path
 function GameEntry:ChangeLevel(level)
     local ctx = TL_Common.GetContext()
+    local world = World.GetInst()
 
-    self.m_level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
+    local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
+    world.m_level_definition = level_definition
     local new_scene_definition = ctx:GetAssetsManager():GetSceneDefinitionManager():Create()
     local new_scene = ctx:GetSceneManager():Create(new_scene_definition)
 
@@ -59,7 +58,7 @@ function GameEntry:ChangeLevel(level)
     end
 
     ctx:Log("change level to ", level)
-    self:InitSceneFromLevelDefinition(scene, self.m_level_definition)
+    self:InitSceneFromLevelDefinition(scene, level_definition)
 end
 
 ---@param level_definition LevelDefinitionHandle
@@ -141,6 +140,7 @@ end
 ---@param level_definition LevelDefinitionHandle
 function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
     local ctx = TL_Common.GetContext()
+    local world = World.GetInst()
     local root_entity = scene:GetRootEntity()
     local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
     if not root_relationship then
@@ -148,7 +148,8 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
         return
     end
 
-    self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
+    local spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
+    world.m_spawn_points = spawn_points
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
 
     if level_definition.m_map_definition.m_detour:IsValid() then
@@ -166,7 +167,7 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
     -- create objects
     for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
         local did = spawn_info.m_did
-        local spawn_point = self.m_spawn_points[spawn_info.m_spawn_point_name]
+        local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
 
         if not spawn_point then
             ctx:Log("spawn failed: can't find spawn point ", spawn_point, " for object ", spawn_info.m_did)

@@ -36,5 +36,7 @@
     <asset name="ServerConfig" extension=".server_config">
         <!-- don't use handle, due to asset rely on ClientConfig itself! -->
         <element name="global_script" type="Path"/>
+        <element name="listen_ip" type="std::string" default='"0.0.0.0"'/>
+        <element name="listen_port" type="uint32_t" default="1238"/>
     </asset>
 </schema>

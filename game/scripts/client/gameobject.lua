@@ -96,6 +96,11 @@ function _M.new(entity, definition)
     return setmetatable(self, _M)
 end
 
+function _M:IsReplicate()
+    return self:GetNetID() ~= 0
+end
+
+
 ---@param elapse_time TimeType
 function _M:OnUpdate(elapse_time)
     if self.m_spawned_component then
