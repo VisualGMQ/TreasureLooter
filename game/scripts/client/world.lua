@@ -7,7 +7,7 @@ local World = require("common.world")
 
 ---@class ClientWorld : World
 ---@field m_player_hint LogicEntity
----@field _idle_fx_pool FXEntry[]
+---@field private _idle_fx_pool FXEntry[]
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = World })

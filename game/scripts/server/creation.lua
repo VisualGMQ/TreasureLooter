@@ -20,10 +20,11 @@ end
 ---@param scene Scene
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
+---@param net_id number
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
 ---@return LogicEntity, ServerGameObject
-function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfsm_definition)
+function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definitions, hfsm_definition)
     local ctx = TL_Common.GetContext()
 
     local transform = TL_Common.Transform()
@@ -52,9 +53,11 @@ function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfs
         move_definition.m_cct = ctx:GetCCTManager():Get(entity)
         move_definition.m_speed = definition.m_move.m_speed
 
+        ---@type ServerGameObjectDefinition
         local go_definition = {}
         go_definition.m_did = spawn_info.m_did
         go_definition.m_move_component_definition = move_definition
+        go_definition.m_net_id = net_id
         script:initGameObject(go_definition)
     end
 

@@ -3,10 +3,13 @@ local GameObject = require("common.gameobject")
 
 ---@class ServerGameObjectDefinition
 ---@field m_did DID
+---@field m_net_id number
 ---@field m_move_component_definition ServerMoveComponentDefinition|nil
 
 ---@class ServerGameObject : GameObject
+---@field private _net_id number
 ---@field m_move_component ServerMoveComponent|nil
+---@field m_logic_component any
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = GameObject })
@@ -20,7 +23,12 @@ function _M.new(entity, definition)
     if definition.m_move_component_definition then
         self.m_move_component = ServerMoveComponent.new(self, definition.m_move_component_definition)
     end
+    self._net_id = definition.m_net_id
     return setmetatable(self, _M)
+end
+
+function _M:GetNetID()
+    return self._net_id
 end
 
 ---@param elapse_time TimeType

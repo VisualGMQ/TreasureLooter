@@ -35,6 +35,13 @@ function _M:onClientActionEvent(peer, payload)
         return
     end
 
+    -- The ClientAction event is delivered to every listener, so ignore actions
+    -- that were not sent by the peer owning this player (net_id == the peer id
+    -- stored when the player was spawned).
+    if go:GetNetID() ~= peer:GetID() then
+        return
+    end
+
     local action = payload:m_action()
     if action == TL_Schema.ClientActionType.ClientActionType_Move then
         if payload:has_m_move_disp() then
@@ -72,6 +79,7 @@ function _M:OnUpdate(elapse_time)
     net_position:set_m_y(position.y)
 
     local move = TL_Proto.Move()
+    move:set_m_net_id(go:GetNetID())
     move:set_m_entity(0)
     move:set_m_seq(self._move_last_seq)
     move:set_m_target(net_position)

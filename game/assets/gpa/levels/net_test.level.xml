@@ -25,18 +25,7 @@
 			<hint_fx_did>FXDID1</hint_fx_did>
 			<hfsm/>
 		</player_related_definition>
-		<spawn_objects>
-			<elem>
-				<did>CharacterDID1</did>
-				<client_script>scripts/client/behaviors/net_player_behavior.lua</client_script>
-				<server_script/>
-				<spawn_point_name>player_spawn_point</spawn_point_name>
-				<spawn_on_layer>walls</spawn_on_layer>
-				<team_id>
-					<value>team1</value>
-				</team_id>
-			</elem>
-		</spawn_objects>
+		<spawn_objects/>
 		<land>land</land>
 	</payload>
 </LevelDefinition>

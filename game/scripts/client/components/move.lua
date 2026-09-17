@@ -16,7 +16,7 @@ local Common = require("common.common")
 ---@field private _speed number
 ---@field private _move_dir Vec2
 ---@field private _anim_player AnimationPlayer
----@field private _sprite Sprite
+---@field private _sprite Sprite?
 ---@field private _move_up_anim AnimationHandle
 ---@field private _move_down_anim AnimationHandle
 ---@field private _move_left_anim AnimationHandle
@@ -81,21 +81,24 @@ function _M:IsWantMoving()
     return self._move_velocity:LengthSquared() > 0
 end
 
-function _M:Update()
+---@param elapse_time TimeType?
+function _M:Update(elapse_time)
     MoveComponent.Update(self)
 
     if not self:IsWantMoving() then
         if self._anim_player ~= nil then
             self._anim_player:Stop()
         end
-        if self._direction == Common.Direction.Up then
-            self._sprite.m_region.m_topleft = TL_Common.Vec2(16, 0)
-        elseif self._direction == Common.Direction.Left then
-            self._sprite.m_region.m_topleft = TL_Common.Vec2(32, 0)
-        elseif self._direction == Common.Direction.Right then
-            self._sprite.m_region.m_topleft = TL_Common.Vec2(48, 0)
-        elseif self._direction == Common.Direction.Down then
-            self._sprite.m_region.m_topleft = TL_Common.Vec2(0, 0)
+        if self._sprite then
+            if self._direction == Common.Direction.Up then
+                self._sprite.m_region.m_topleft = TL_Common.Vec2(16, 0)
+            elseif self._direction == Common.Direction.Left then
+                self._sprite.m_region.m_topleft = TL_Common.Vec2(32, 0)
+            elseif self._direction == Common.Direction.Right then
+                self._sprite.m_region.m_topleft = TL_Common.Vec2(48, 0)
+            elseif self._direction == Common.Direction.Down then
+                self._sprite.m_region.m_topleft = TL_Common.Vec2(0, 0)
+            end
         end
         return
     end

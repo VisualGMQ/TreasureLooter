@@ -14,22 +14,6 @@ local BuffReceiveComponent = require("common.components.buff_receive")
 local BuffApplyComponent = require("common.components.buff_apply")
 local GameObject = require("common.gameobject")
 
----@class ClientGameObjectData
----@field m_move_component ClientMoveComponent
----@field m_hp_component ClientHpComponent
----@field m_attack_component ClientAttackComponent
----@field m_weapon_component ClientWeaponComponent
----@field m_item_component ClientItemComponent
----@field m_interact_component ClientInteractComponent
----@field m_fx_component FXComponent
----@field m_raise_up_component ClientRaiseUpComponent
----@field m_spawn_object_component ClientSpawnObjectComponent
----@field m_spawned_component ClientSpawnedComponent
----@field m_constructable_component ClientConstructableComponent
----@field m_skill_components ClientSkillComponent[]
----@field m_buff_receive_component BuffReceiveComponent
----@field m_buff_apply_component BuffApplyComponent
-
 ---@class ClientGameObject : GameObject
 ---@field m_move_component ClientMoveComponent|nil
 ---@field m_hp_component ClientHpComponent|nil
@@ -45,12 +29,14 @@ local GameObject = require("common.gameobject")
 ---@field m_skill_components ClientSkillComponent[]
 ---@field m_buff_receive_component BuffReceiveComponent
 ---@field m_buff_apply_component BuffApplyComponent|nil
+---@field m_logic_component any
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = GameObject })
 
 ---@class ClientGameObjectDefinition
 ---@field m_did DID
+---@field m_net_id number
 ---@field m_move_component_definition ClientMoveComponentDefinition|nil
 ---@field m_hp_component_definition ClientHpComponentDefinition|nil
 ---@field m_attack_component_definition ClientAttackComponentDefinition|nil
@@ -67,7 +53,7 @@ setmetatable(_M, { __index = GameObject })
 ---@param definition ClientGameObjectDefinition
 ---@return ClientGameObject
 function _M.new(entity, definition)
-    local self = GameObject.new(entity, definition.m_did)
+    local self = GameObject.new(entity, definition.m_did, definition.m_net_id)
     ---@cast self ClientGameObject
     if definition.m_move_component_definition then
         self.m_move_component = ClientMoveComponent.new(self, definition.m_move_component_definition)
@@ -108,11 +94,6 @@ function _M.new(entity, definition)
     self.m_buff_receive_component = BuffReceiveComponent.new(self)
     self.m_raise_up_component = ClientRaiseUpComponent.new(self)
     return setmetatable(self, _M)
-end
-
----@return LogicEntity
-function _M:GetEntity()
-    return self._entity
 end
 
 ---@param elapse_time TimeType
@@ -168,10 +149,6 @@ function _M:OnQuit()
 
     if self.m_constructable_component then
         self.m_constructable_component:OnQuit()
-    end
-
-    if self.m_logic_component then
-        self.m_logic_component:OnQuit()
     end
 
     for _, skill_component in ipairs(self.m_skill_components) do

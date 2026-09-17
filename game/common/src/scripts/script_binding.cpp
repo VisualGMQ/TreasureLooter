@@ -1218,7 +1218,6 @@ void bindSceneManager(lua_State* L) {
 void bindHandleTypes(lua_State* L) {
     BindHandle<ImageBase>("ImageHandle", L, "Image");
     BindHandle<Scene>("SceneHandle", L, "Scene");
-    BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
     BindHandle<Tilemap>("TilemapHandle", L, "Tilemap");
     BindHandle<FontBase>("FontHandle", L, "Font");

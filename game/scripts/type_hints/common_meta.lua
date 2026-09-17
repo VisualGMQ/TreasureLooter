@@ -355,6 +355,8 @@
 ---@class Time
 ---@field GetElapseTime fun(self: Time): number
 ---@field GetCurrentTime fun(self: Time): number
+---@field GetFPS fun(self: Time): number
+---@field GetUnlimitFPS fun(self: Time): number
 
 ---@class Timer
 ---@field SetInterval fun(self: Timer, time: TimeType)
@@ -373,7 +375,8 @@
 
 ---@class TimerManager
 ---@field Create fun(self: TimerManager, interval: TimeType, event_type: TimerEventType, loop: number): Timer
----@field Remove fun(self: TimerManager, id: TimerID)
+-- C++ has two overloads: Remove(TimerID) and Remove(const Timer&).
+---@field Remove fun(self: TimerManager, id: TimerID|Timer)
 ---@field Find fun(self: TimerManager, id: TimerID): Timer
 
 ---@class TimerEvent
@@ -383,6 +386,12 @@
 ---@class TimerStopEvent
 ---@field GetTimer fun(self: TimerStopEvent): Timer
 ---@field GetEventType fun(self: TimerStopEvent): TimerEventType
+
+---@class HFSMComponent
+---@field ChangeState fun(self: HFSMComponent, id: integer)
+
+---@class HFSMComponentManager
+---@field Get fun(self: HFSMComponentManager, entity: LogicEntity): HFSMComponent?
 
 ---@class PhysicsShape
 ---@field GetPosition fun(self: PhysicsShape): Vec2
@@ -559,6 +568,7 @@
 ---@field GetSceneManager fun(self: CommonContext): SceneManager
 ---@field GetTime fun(self: CommonContext): Time
 ---@field GetTimerManager fun(self: CommonContext): TimerManager
+---@field GetHFSMComponentManager fun(self: CommonContext): HFSMComponentManager
 ---@field GetTransformManager fun(self: CommonContext): TransformManager
 ---@field GetTriggerComponentManager fun(self: CommonContext): TriggerComponentManager
 ---@field GetRelationshipManager fun(self: CommonContext): RelationshipManager

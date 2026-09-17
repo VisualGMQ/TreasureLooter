@@ -14,6 +14,8 @@ local g_world = nil
 function _M.new()
     local self = setmetatable({}, _M)
     self.m_land_entity = TL_Common.null_entity
+    self.m_object_definitions = {}
+    self.m_buff_appliers = {}
     return self
 end
 

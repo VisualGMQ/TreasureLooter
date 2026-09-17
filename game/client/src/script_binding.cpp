@@ -140,15 +140,6 @@ static void bindCamera(lua_State* L) {
 static void bindSprite(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
-            .beginClass<SpriteDefinition>("Sprite")
-                .addConstructor<void(void)>()
-                .addPropertyReadWrite("m_image", &SpriteDefinition::m_image)
-                .addPropertyReadWrite("m_region", &SpriteDefinition::m_region)
-                .addPropertyReadWrite("m_size", &SpriteDefinition::m_size)
-                .addPropertyReadWrite("m_anchor", &SpriteDefinition::m_anchor)
-                .addPropertyReadWrite("m_color", &SpriteDefinition::m_color)
-                .addPropertyReadWrite("m_flip", &SpriteDefinition::m_flip)
-            .endClass()
             .beginClass<SpriteManager>("SpriteManager")
                 .addFunction("Get", +[](SpriteManager* m, LogicEntity e) {
                     return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));

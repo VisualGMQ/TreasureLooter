@@ -7,13 +7,11 @@
 
 ---@class Window
 
----@class Sprite
----@field m_image ImageHandle
----@field m_region Region
----@field m_size Vec2
----@field m_anchor Vec2
----@field m_color Color
----@field m_flip number
+-- `Sprite` is a C++ alias of `SpriteDefinition` (client/include/client/sprite.hpp:
+-- `using Sprite = SpriteDefinition;`). It is bound once by schema_meta.lua as
+-- `SpriteDefinition`, so here it is only a LuaCATS alias, not a second runtime
+-- class (`TL_Client.Sprite` does not exist at runtime).
+---@alias Sprite SpriteDefinition
 
 ---@class Action
 ---@field IsPressed fun(self: Action, id: number?): boolean
@@ -207,7 +205,6 @@
 -- The runtime global table created by `beginNamespace("TL_Client")`.
 ---@class TL_Client
 -- constructors
----@field Sprite fun(): Sprite
 -- schema definition constructors registered under this namespace
 ---@field DrawOrderDefinition fun(): DrawOrderDefinition
 ---@field AnimationPlayerDefinition fun(): AnimationPlayerDefinition

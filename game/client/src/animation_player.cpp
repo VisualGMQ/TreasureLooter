@@ -335,6 +335,11 @@ void AnimationPlayer::Sync(PresentEntity entity) {
             HANDLE_DISCRETE_TRACK();
         }
 #undef BINDING_TARGET
+
+        // The render systems read the cached global matrix (const
+        // Transform::GetGlobalMat()), so refresh it after the transform tracks
+        // wrote into this render-only transform.
+        transform->UpdateMat();
     }
 
     if (auto sprite = ctx.m_sprite_manager->Get(entity)) {

@@ -26,9 +26,12 @@ end
 ---@param display_name string
 ---@param relationship_mgr RelationshipManager
 local function draw_entity_tree(entity, display_name, relationship_mgr)
-    ImGui.PushID(entity)
-
     local relationship = relationship_mgr:Get(entity)
+    if not relationship then
+        return
+    end
+
+    ImGui.PushID(entity)
 
     local sel_mark = (selected_entity == entity) and " *" or ""
     local label = string.format("%s [%d]%s###hierarchy_%d", display_name, entity, sel_mark, entity)

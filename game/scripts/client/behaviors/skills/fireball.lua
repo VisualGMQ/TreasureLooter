@@ -40,7 +40,9 @@ function _M:Start(caster_entity)
         skill:SetHitCallback(function(caster, target)
             local ctx = TL_Client.GetContext()
             local scene = ctx:GetSceneManager():GetCurrentScene()
-            scene:RemoveEntity(self:GetEntity())
+            if scene then
+                scene:RemoveEntity(self:GetEntity())
+            end
         end)
     end
 end

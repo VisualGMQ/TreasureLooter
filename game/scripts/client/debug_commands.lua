@@ -70,6 +70,7 @@ function _M.RegisterAllDebugCommand()
 
     DebugCmdRegister.RegisterDebugCmd("spawn.fx", function(did, x, y)
         local world = ClientWorld.GetInst()
+        ---@cast world ClientWorld
         world:AddFX(did, TL_Common.Vec2(x, y))
 
         TL_Client.GetContext():Log("[debug] spawn.fx: spawned fx at ", TL_Common.Vec2(x, y))

@@ -1695,13 +1695,22 @@ std::string GenerateSchemaMetaDefinitionCode(const SchemaInfoManager& manager) {
                 // enum values are plain integers at runtime
                 types += "---@alias " + ename + " number\n\n";
 
-                // value table under TL_Schema (e.g. TL_Schema.Foo.Bar)
-                ns += "---@field " + ename + " { ";
+                // value table under TL_Schema (e.g. TL_Schema.Foo.Bar). Emitted
+                // as a named class with one `---@field` per member rather than
+                // an inline anonymous table type: LuaLS 3.19.1 fails to resolve
+                // the last function-typed field (GetEnumFromName) of a large
+                // inline table type.
+                const std::string values = ename + "Values";
+                types += "---@class " + values + "\n";
                 for (const auto& item : enum_info.m_items) {
-                    ns += FormatMetaFieldName(item.m_name) + ": number, ";
+                    types += "---@field " + FormatMetaFieldName(item.m_name) +
+                             " number\n";
                 }
-                ns += "GetEnumName: fun(value: number): string, ";
-                ns += "GetEnumFromName: fun(name: string): number? }\n";
+                types +=
+                    "---@field GetEnumFromName fun(name: string): number?\n";
+                types += "---@field GetEnumName fun(value: number): string\n\n";
+
+                ns += "---@field " + ename + " " + values + "\n";
             }
             const std::string flags = ename + "Flags";
             if (emitted_flags.insert(flags).second) {

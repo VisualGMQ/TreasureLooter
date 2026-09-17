@@ -17,6 +17,7 @@ end
 
 function _M:OnInit()
     local world = ClientWorld.GetInst()
+    ---@cast world ClientWorld
     local go = HFSMUtil.GetGameObject(self._entity)
     if go and go.m_interact_component then
         go.m_interact_component:SetHintFX(world.m_player_hint)

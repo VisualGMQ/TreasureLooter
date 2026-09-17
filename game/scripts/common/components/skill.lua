@@ -67,8 +67,8 @@ function _M.new(gameobject, skill_definition)
             end
 
             local collision_data = nil
-            if phase.m_collision and phase.m_collision.m_collision then
-                local colldef = phase.m_collision.m_collision
+            local colldef = phase.m_collision and phase.m_collision.m_collision
+            if colldef then
                 local shape_count = #colldef.m_physics_shapes
 
                 local mask_value = 0

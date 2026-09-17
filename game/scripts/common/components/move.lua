@@ -63,7 +63,10 @@ function _M:AddMoveDisp(disp)
     self._move_disp = self._move_disp + disp
 end
 
-function _M:Update()
+-- The base consumes a per-frame displacement (`_move_disp`); the elapsed time
+-- is accepted for interface consistency with the other component updates.
+---@param elapse_time TimeType?
+function _M:Update(elapse_time)
     local disp = self._move_disp
     if disp:LengthSquared() == 0 then
         return

@@ -394,9 +394,10 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_script_component_manager->Update();
     m_hfsm_manager->Update();
 
-    m_animation_player_manager->Update(elapse);
+    // NOTE: animation players and the UI layout are render-side and are updated
+    // in renderUpdate, after the logic transforms have been mirrored into the
+    // present transforms.
     m_ui_manager->HandleEvent();
-    m_ui_manager->Update(elapse);
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
@@ -407,12 +408,19 @@ void ClientContext::logicUpdate(TimeType elapse) {
         m_net_host->Flush();
     }
 
-    m_event_system->Update();
+    // NOTE: the event system is updated in logicPostUpdate (i.e. after
+    // renderUpdate) so that events enqueued during the render phase, such as
+    // AnimationEndEvent, are still dispatched in the same frame.
     m_timer_manager->Update(elapse);
 }
 
 void ClientContext::logicPostUpdate(TimeType elapse) {
     PROFILE_SECTION();
+
+    // Dispatched here (after renderUpdate) so events enqueued by the render
+    // phase (e.g. AnimationEndEvent) are handled in the same frame. Kept before
+    // doRemoveEntities() so RemoveEntityEvent is still dispatched next frame.
+    m_event_system->Update();
 
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
@@ -431,6 +439,10 @@ void ClientContext::renderUpdate(TimeType elapse) {
         syncPresentTransform(level->GetUIRootEntity(), nullptr);
     }
 
+    // Runs after the present transforms were mirrored from logic so the
+    // animation transform tracks are not overwritten by the sync.
+    m_animation_player_manager->Update(elapse);
+
     if (m_global_script) {
         m_global_script->callMethodNoArg("OnRender");
     }
@@ -444,6 +456,7 @@ void ClientContext::renderUpdate(TimeType elapse) {
     draw_cmd_submitter.Submit();
     m_renderer->ApplyDrawcall();
 
+    m_ui_manager->Update(elapse);
     draw_cmd_submitter.SubmitUI();
     m_renderer->ApplyDrawcall();
 

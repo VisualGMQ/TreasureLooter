@@ -1,4 +1,5 @@
 local ClientGameObjectBehavior = require("client.gameobject_behavior")
+local ClientWorld = require("client.world")
 
 ---@class ClientMoveReconcilation
 ---@field seq number
@@ -26,15 +27,21 @@ end
 function _M:OnInit()
     local ctx = TL_Client.GetContext()
     ctx:GetEventSystem():AddNetMsg_MoveEvent(function(id, peer, payload)
-        self:onMoveNetEvent(payload)
+        self:onMoveNetEvent(peer, payload)
     end)
 end
 
+---@param peer UDPPeer
 ---@param move ProtoMove
 ---@private
-function _M:onMoveNetEvent(move)
+function _M:onMoveNetEvent(peer, move)
     local go = self:GetGameObject()
     if not go or not go.m_move_component then
+        return
+    end
+
+    -- the server broadcasts every player's move; only reconcile our own entity
+    if move:m_net_id() ~= go:GetNetID() then
         return
     end
 
@@ -84,6 +91,9 @@ function _M:OnUpdate(elapse_time)
         local axises = input_manager:MakeAxises("MoveX", "MoveY"):Value(0)
         if axises:LengthSquared() ~= 0 then
             local move_component = self.m_gameobject.m_move_component
+            if not move_component then
+                return
+            end
             move_component:SetDir(axises)
             local disp = move_component:GetVelocity() *  elapse_time
             -- send move packet to net

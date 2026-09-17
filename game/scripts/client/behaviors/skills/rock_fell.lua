@@ -36,7 +36,9 @@ function _M:OnUpdate(elapse_time)
         if not skill._is_casting then
             local ctx = TL_Client.GetContext()
             local scene = ctx:GetSceneManager():GetCurrentScene()
-            scene:RemoveEntity(self:GetEntity())
+            if scene then
+                scene:RemoveEntity(self:GetEntity())
+            end
         end
     end
 end

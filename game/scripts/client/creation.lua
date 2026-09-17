@@ -273,6 +273,7 @@ function _M.CreatePlayerHintFX(scene, did, config, client_script)
     end
 
     local world = ClientWorld.GetInst()
+    ---@cast world ClientWorld
     world.m_player_hint = entity
 
     return entity
@@ -342,7 +343,9 @@ function _M:createWeaponController(scene, character_entity)
     if controller_relationship then
         controller_relationship:RemoveFromParent()
         local character_relationship = ctx:GetRelationshipManager():Get(character_entity)
-        character_relationship:AddChild(controller_entity)
+        if character_relationship then
+            character_relationship:AddChild(controller_entity)
+        end
     end
 
     return controller_entity
@@ -352,10 +355,11 @@ end
 ---@param scene Scene
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
+---@param net_id number
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
 ---@return LogicEntity, GameObject
-function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfsm_definition)
+function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definitions, hfsm_definition)
     local ctx = TL_Client.GetContext()
 
     local transform = TL_Common.Transform()
@@ -393,7 +397,11 @@ function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfs
         if weapon_item_relationship then
             weapon_item_relationship:RemoveFromParent()
             local controller_relationship = ctx:GetRelationshipManager():Get(controller_entity)
-            controller_relationship:AddChild(weapon_item_entity)
+            if controller_relationship then
+                controller_relationship:AddChild(weapon_item_entity)
+            else
+                ctx:Log("weapon controller don't has relationship component")
+            end
         else
             ctx:Log("weapon item don't has relationship component")
         end
@@ -408,6 +416,7 @@ function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfs
     local script = ctx:GetScriptManager():Get(entity)
     if script then
         local go_definition = _M.ConvertCharacterDefinitionToGODefinition(entity, spawn_info.m_did, definition, controller_entity)
+        go_definition.m_net_id = net_id
         script:initGameObject(go_definition)
     end
 
