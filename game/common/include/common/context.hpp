@@ -43,7 +43,7 @@ public:
     /**
      * initialize 3rdlib systems
      */
-    virtual void InitSystem();
+    virtual void InitSystem() = 0;
 
     /**
      * shutdown 3rdlib systems
@@ -115,6 +115,7 @@ public:
 protected:
     class ImGuiContext* m_imgui_context{};
 
+    void initSystem(SDL_InitFlags);
     void initCommonConfig();
     void doRemoveEntities();
 

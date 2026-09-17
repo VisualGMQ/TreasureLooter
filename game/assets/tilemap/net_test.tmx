@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="2">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="37">
  <tileset firstgid="1" name="TilesetDungeon" tilewidth="16" tileheight="16" tilecount="48" columns="12">
   <image source="../Backgrounds/Tilesets/TilesetDungeon.png" width="192" height="64"/>
   <tile id="24">
@@ -219,7 +219,112 @@
 </data>
  </layer>
  <objectgroup id="3" name="spawn_points">
-  <object id="1" name="player_spawn_point" x="142.333" y="157.667">
+  <object id="1" name="player_spawn_point1" x="119.666" y="107">
+   <point/>
+  </object>
+  <object id="2" name="spike_spawn_point1" x="23.6667" y="22.6667">
+   <point/>
+  </object>
+  <object id="3" name="spike_spawn_point2" x="40" y="23.6667">
+   <point/>
+  </object>
+  <object id="4" name="spike_spawn_point3" x="24" y="39">
+   <point/>
+  </object>
+  <object id="5" name="spike_spawn_point4" x="39" y="34">
+   <point/>
+  </object>
+  <object id="6" name="spike_spawn_point5" x="440.333" y="23.6667">
+   <point/>
+  </object>
+  <object id="7" name="spike_spawn_point6" x="456" y="20.3333">
+   <point/>
+  </object>
+  <object id="8" name="spike_spawn_point7" x="440" y="42">
+   <point/>
+  </object>
+  <object id="9" name="spike_spawn_point8" x="455.333" y="37.3333">
+   <point/>
+  </object>
+  <object id="10" name="spike_spawn_point9" x="23.6667" y="278.667">
+   <point/>
+  </object>
+  <object id="11" name="spike_spawn_point10" x="39.6667" y="275.667">
+   <point/>
+  </object>
+  <object id="12" name="spike_spawn_point11" x="23.3333" y="294">
+   <point/>
+  </object>
+  <object id="13" name="spike_spawn_point12" x="39.3333" y="293">
+   <point/>
+  </object>
+  <object id="14" name="spike_spawn_point13" x="439.667" y="279.333">
+   <point/>
+  </object>
+  <object id="15" name="spike_spawn_point14" x="455.667" y="277.333">
+   <point/>
+  </object>
+  <object id="16" name="spike_spawn_point15" x="440" y="293.667">
+   <point/>
+  </object>
+  <object id="17" name="spike_spawn_point16" x="454.333" y="293">
+   <point/>
+  </object>
+  <object id="18" name="spike_spawn_point17" x="152" y="123.334">
+   <point/>
+  </object>
+  <object id="19" name="spike_spawn_point18" x="169" y="122">
+   <point/>
+  </object>
+  <object id="20" name="spike_spawn_point19" x="148.666" y="105">
+   <point/>
+  </object>
+  <object id="21" name="spike_spawn_point20" x="169.334" y="103">
+   <point/>
+  </object>
+  <object id="22" name="spike_spawn_point21" x="331" y="229.667">
+   <point/>
+  </object>
+  <object id="23" name="spike_spawn_point22" x="330.667" y="212.334">
+   <point/>
+  </object>
+  <object id="24" name="spike_spawn_point23" x="313.333" y="232.333">
+   <point/>
+  </object>
+  <object id="25" name="spike_spawn_point24" x="311.334" y="215.666">
+   <point/>
+  </object>
+  <object id="26" name="spike_spawn_point25" x="327.333" y="102.667">
+   <point/>
+  </object>
+  <object id="27" name="spike_spawn_point26" x="311.333" y="100.333">
+   <point/>
+  </object>
+  <object id="28" name="spike_spawn_point27" x="327.333" y="118">
+   <point/>
+  </object>
+  <object id="29" name="spike_spawn_point28" x="312" y="118.333">
+   <point/>
+  </object>
+  <object id="30" name="spike_spawn_point29" x="150.667" y="215">
+   <point/>
+  </object>
+  <object id="31" name="spike_spawn_point30" x="169" y="211">
+   <point/>
+  </object>
+  <object id="32" name="spike_spawn_point31" x="152.333" y="228.667">
+   <point/>
+  </object>
+  <object id="33" name="spike_spawn_point32" x="169" y="227">
+   <point/>
+  </object>
+  <object id="34" name="player_spawn_point2" x="359" y="99.6667">
+   <point/>
+  </object>
+  <object id="35" name="player_spawn_point3" x="360.667" y="215.667">
+   <point/>
+  </object>
+  <object id="36" name="player_spawn_point4" x="121.333" y="215">
    <point/>
   </object>
  </objectgroup>
@@ -233,9 +338,9 @@
 119,0,0,0,0,25,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,0,0,0,0,123,
 119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
 119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
-119,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,37,0,0,0,0,0,0,0,0,0,0,0,0,123,
-119,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,37,0,0,0,0,0,0,0,0,0,0,0,0,123,
-119,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,37,0,0,0,0,0,0,0,0,0,0,0,0,123,
+119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
+119,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
+119,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
 119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
 119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,123,
 119,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,123,

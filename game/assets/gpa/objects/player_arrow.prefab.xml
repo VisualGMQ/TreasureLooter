@@ -1,0 +1,38 @@
+<Prefab>
+	<uuid>6d08b976-d247-46f3-b9af-cd2045976e4d</uuid>
+	<payload>
+		<name>
+			<value>player_arrow</value>
+		</name>
+		<transform>
+			<value>
+				<position x="0.000000" y="0.000000"/>
+				<scale x="1.000000" y="1.000000"/>
+				<rotation>0.000000</rotation>
+			</value>
+		</transform>
+		<draw_order>
+			<value>
+				<draw_layer>TilemapArch</draw_layer>
+				<enable_y_sorting>true</enable_y_sorting>
+			</value>
+		</draw_order>
+		<sprite>
+			<value>
+				<image>assets/UI/Arrow.png</image>
+				<region>
+					<topleft x="0.000000" y="0.000000"/>
+					<size x="13.000000" y="13.000000"/>
+				</region>
+				<size x="13.000000" y="13.000000"/>
+				<anchor x="0.000000" y="0.000000"/>
+				<flip>
+					<item>None</item>
+				</flip>
+				<color r="1.000000" g="1.000000" b="1.000000" a="1.000000"/>
+			</value>
+		</sprite>
+		<client_script/>
+		<server_script/>
+	</payload>
+</Prefab>

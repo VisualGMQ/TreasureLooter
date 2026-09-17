@@ -136,7 +136,19 @@
 ---@field GetCursorX fun(self: UITextInput): number
 ---@field RefreshText fun(self: UITextInput)
 
+---@class PlayerController
+--- Virtual controls exist on Android only; the calls are no-ops elsewhere.
+---@field RegisterVirtualController fun(self: PlayerController, scene: SceneHandle)
+---@field DestroyVirtualController fun(self: PlayerController, scene: SceneHandle)
+
+---@class UIText
+---@field m_align number
+---@field m_color Color
+---@field ChangeText fun(self: UIText, text: string)
+---@field GetText fun(self: UIText): string
+
 ---@class UIWidget
+---@field m_enable_draw boolean
 ---@field m_use_clip boolean
 ---@field m_disabled boolean
 ---@field m_selected boolean
@@ -144,6 +156,7 @@
 ---@field m_margin Vec2
 ---@field m_padding Vec2
 ---@field GetTextInput fun(self: UIWidget): UITextInput?
+---@field GetText fun(self: UIWidget): UIText?
 
 ---@class UIComponentManager
 ---@field Get fun(self: UIComponentManager, entity: LogicEntity): UIWidget?
@@ -184,6 +197,7 @@
 ---@field GetRenderer fun(self: ClientContext): Renderer
 ---@field GetWindow fun(self: ClientContext): Window
 ---@field GetInputManager fun(self: ClientContext): InputManager
+---@field GetPlayerController fun(self: ClientContext): PlayerController
 ---@field GetAnimationPlayerManager fun(self: ClientContext): AnimationPlayerManager
 ---@field GetUIManager fun(self: ClientContext): UIComponentManager
 ---@field GetTilemapRenderComponentManager fun(self: ClientContext): TilemapRenderComponentManager

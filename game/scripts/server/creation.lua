@@ -53,10 +53,16 @@ function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definiti
         move_definition.m_cct = ctx:GetCCTManager():Get(entity)
         move_definition.m_speed = definition.m_move.m_speed
 
+        ---@type ServerHpComponentDefinition
+        local hp_definition = {}
+        hp_definition.m_hp = definition.m_hp.m_hp
+        hp_definition.m_invincible_time = definition.m_hp.m_invincible_time
+
         ---@type ServerGameObjectDefinition
         local go_definition = {}
         go_definition.m_did = spawn_info.m_did
         go_definition.m_move_component_definition = move_definition
+        go_definition.m_hp_component_definition = hp_definition
         go_definition.m_net_id = net_id
         script:initGameObject(go_definition)
     end

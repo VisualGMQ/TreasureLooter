@@ -110,7 +110,7 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
-    m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
+    m_renderer->SetClearColor(client_config.m_screen_color);
     initImGui();
 
     m_ui_manager = std::make_unique<UIComponentManager>();
@@ -156,7 +156,9 @@ void ClientContext::Initialize(int argc, char** argv) {
         GetCommonConfig().m_entry_scene);
     m_scene_manager->Switch(level);
 
-    m_player_controller->RegisterVirtualController(level, client_config);
+    // The android virtual joystick/attack button are registered per scene from
+    // Lua (see ClientGameEntry), so they belong to the scene that is played
+    // instead of the entry/title scene.
 
     m_time->SetFPS(GetCommonConfig().m_client_fps);
 }
@@ -568,6 +570,11 @@ void ClientContext::Shutdown() {
 }
 
 ClientContext::~ClientContext() {}
+
+void ClientContext::InitSystem() {
+    initSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
+               SDL_INIT_GAMEPAD);
+}
 
 void ClientContext::beginImGui() {
     PROFILE_SECTION();

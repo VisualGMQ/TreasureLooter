@@ -66,6 +66,10 @@ ServerContext& ServerContext::GetInst() {
     return *instance;
 }
 
+void ServerContext::InitSystem() {
+    initSystem(SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD);
+}
+
 void ServerContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 

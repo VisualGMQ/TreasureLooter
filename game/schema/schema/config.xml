@@ -30,6 +30,7 @@
 
         <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
         <element name="logic_size" type="Vec2UI" default="{1024, 720}"/>
+        <element name="screen_color" type="Color" default="Color::White"/>
         <element name="virtual_joystick" type="VirtualJoystickConfig"/>
         <element name="virtual_attack_button" type="VirtualButtonConfig"/>
         <handle  name="default_font" type="Font"/>

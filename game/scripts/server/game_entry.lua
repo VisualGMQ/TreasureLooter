@@ -32,4 +32,13 @@ function ServerGameEntry:OnInit()
     world:RegisterNetEventHandler()
 end
 
+--- The global script is updated every frame: it drives the world's post-win
+--- countdown (there is no per-world update callback).
+---@param elapse_time TimeType
+function ServerGameEntry:OnUpdate(elapse_time)
+    local world = ServerWorld.GetInst()
+    ---@cast world ServerWorld
+    world:Update(elapse_time)
+end
+
 return ServerGameEntry

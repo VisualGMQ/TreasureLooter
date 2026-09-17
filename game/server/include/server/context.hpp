@@ -14,6 +14,7 @@ public:
     ServerContext(ServerContext&&) = delete;
     ServerContext& operator=(ServerContext&&) = delete;
 
+    void InitSystem() override;
     void Initialize(int argc, char** argv) override;
     void HandleEvents(const SDL_Event& event) override;
     void Update() override;

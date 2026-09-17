@@ -11,9 +11,12 @@
 #include "schema/serialize/serialize.hpp"
 #include "schema/asset_info.hpp"
 
+#include <array>
+#include <charconv>
 #include <memory>
 #include <optional>
 #include <string>
+#include <type_traits>
 
 class Image;
 class Tilemap;
@@ -138,6 +141,34 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
                                 const std::string& name);
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Color& payload);
 
+// `Serialize` returns nullptr for empty optionals, vectors, handles, ... and
+// RapidXML's `append_node` writes through the argument, so linking a nullptr
+// into the document corrupts it (or crashes). Every append goes through this.
+inline void AppendNode(rapidxml::xml_node<>& parent,
+                       rapidxml::xml_node<>* child) {
+    if (child) {
+        parent.append_node(child);
+    }
+}
+
+// Floats are written with `std::to_chars` (shortest representation that
+// round-trips), instead of `std::to_string` which truncates to 6 decimals and
+// therefore loses precision on every save/load cycle. Integers keep
+// `std::to_string`.
+template <typename T>
+std::string ToSerializedString(T value) {
+    if constexpr (std::is_floating_point_v<T>) {
+        std::array<char, 32> buffer{};
+        auto [ptr, ec] = std::to_chars(buffer.data(),
+                                       buffer.data() + buffer.size(), value);
+        if (ec == std::errc{}) {
+            return std::string(buffer.data(),
+                               static_cast<size_t>(ptr - buffer.data()));
+        }
+    }
+    return std::to_string(value);
+}
+
 // optional
 template <typename T>
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc,
@@ -149,7 +180,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->append_node(Serialize(ctx,doc, payload.value(), "value"));
+    AppendNode(*node, Serialize(ctx,doc, payload.value(), "value"));
     return node;
 }
 
@@ -180,24 +211,23 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 
     for (auto& elem : payload) {
         auto elem_node = Serialize(ctx,doc, elem, "elem");
-        node->append_node(elem_node);
+        AppendNode(*node, elem_node);
     }
     return node;
 }
 
 template <typename T>
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, std::vector<T>& payload) {
-    auto value_node = node.first_node("elem");
-    while (value_node) {
-        if (std::string_view{value_node->name()} != "elem") {
-            continue;
-        }
-
+    // Deserialization replaces the previous content: reloading an asset into an
+    // object that already holds data used to append the old elements.
+    payload.clear();
+    // `next_sibling("elem")` instead of `next_sibling()`: a foreign sibling
+    // would make the old `continue` branch spin forever.
+    for (auto* value_node = node.first_node("elem"); value_node;
+         value_node = value_node->next_sibling("elem")) {
         T new_value;
         Deserialize(ctx, *value_node, new_value);
         payload.emplace_back(std::move(new_value));
-
-        value_node = value_node->next_sibling();
     }
 }
 
@@ -214,13 +244,13 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
                                   doc.allocate_string(name.c_str()));
     auto w_node = Serialize(ctx, doc, payload.GetWidth(), "width");
     auto h_node = Serialize(ctx, doc, payload.GetHeight(), "height");
-    node->append_node(w_node);
-    node->append_node(h_node);
+    AppendNode(*node, w_node);
+    AppendNode(*node, h_node);
 
     for (size_t x = 0; x < payload.GetWidth(); x++) {
         for (size_t y = 0; y < payload.GetHeight(); y++) {
             auto elem_node = Serialize(ctx, doc, payload.Get(x, y), "elem");
-            node->append_node(elem_node);
+            AppendNode(*node, elem_node);
         }
     }
     return node;
@@ -239,18 +269,13 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, MatStorag
 
     auto value_node = node.first_node("elem");
     size_t x = 0, y = 0;
-    while (value_node && x < w) {
-        if (std::string_view{value_node->name()} != "elem") {
-            continue;
-        }
-
+    for (; value_node && x < w; value_node = value_node->next_sibling("elem")) {
         Deserialize(ctx, *value_node, payload.Get(x, y));
         y++;
         if (y >= h) {
             y = 0;
             x++;
         }
-        value_node = value_node->next_sibling();
     }
 }
 
@@ -268,7 +293,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 
     for (auto& elem : payload) {
         auto elem_node = Serialize(ctx,doc, elem, "elem");
-        node->append_node(elem_node);
+        AppendNode(*node, elem_node);
     }
     return node;
 }
@@ -276,16 +301,10 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 template <typename T, size_t Size>
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  std::array<T, Size>& payload) {
-    auto value_node = node.first_node("elem");
     size_t size = Size;
-    while (value_node && size > 0) {
-        if (std::string_view{value_node->name()} != "elem") {
-            continue;
-        }
-
+    for (auto* value_node = node.first_node("elem"); value_node && size > 0;
+         value_node = value_node->next_sibling("elem")) {
         Deserialize(ctx, *value_node, payload[Size - size]);
-
-        value_node = value_node->next_sibling();
         size--;
     }
 }
@@ -307,9 +326,9 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
             doc.allocate_node(rapidxml::node_type::node_element, "elem");
         auto key_node = Serialize(ctx,doc, key, "key");
         auto value_node = Serialize(ctx,doc, value, "value");
-        elem_node->append_node(key_node);
-        elem_node->append_node(value_node);
-        node->append_node(elem_node);
+        AppendNode(*elem_node, key_node);
+        AppendNode(*elem_node, value_node);
+        AppendNode(*node, elem_node);
     }
     return node;
 }
@@ -317,9 +336,10 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
 template <typename Key, typename Value>
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  std::unordered_map<Key, Value>& payload) {
-    auto elem_node = node.first_node("elem");
-
-    while (elem_node) {
+    // Deserialization replaces the previous content (see the vector overload).
+    payload.clear();
+    for (auto* elem_node = node.first_node("elem"); elem_node;
+         elem_node = elem_node->next_sibling("elem")) {
         auto key_node = elem_node->first_node("key");
         auto value_node = elem_node->first_node("value");
         if (!key_node || !value_node) {
@@ -333,7 +353,6 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
         Deserialize(ctx, *key_node, key);
         Deserialize(ctx, *value_node, value);
         payload.emplace(std::move(key), std::move(value));
-        elem_node = elem_node->next_sibling("elem");
     }
 }
 
@@ -353,10 +372,10 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     auto uuid_node = Serialize(ctx,doc, payload.m_uuid, "uuid");
-    node->append_node(uuid_node);
+    AppendNode(*node, uuid_node);
 
     auto value_node = Serialize(ctx, doc, *payload.m_payload, "payload");
-    node->append_node(value_node);
+    AppendNode(*node, value_node);
     return node;
 }
 
@@ -364,9 +383,17 @@ template <typename T>
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  AssetLoadResult<T>& payload) {
     auto uuid_node = node.first_node("uuid");
+    if (!uuid_node) {
+        LOGE("[Deserialize] {} node has no uuid", node.name());
+        return;
+    }
     Deserialize(ctx, *uuid_node, payload.m_uuid);
 
     auto value_node = node.first_node("payload");
+    if (!value_node) {
+        LOGE("[Deserialize] {} node has no payload", node.name());
+        return;
+    }
     payload.m_payload = std::make_unique<T>();
     Deserialize(ctx, *value_node, *payload.m_payload);
 }
@@ -378,8 +405,8 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->append_node(Serialize(ctx,doc, payload.m_time, "time"));
-    node->append_node(Serialize(ctx,doc, payload.m_value, "value"));
+    AppendNode(*node, Serialize(ctx,doc, payload.m_time, "time"));
+    AppendNode(*node, Serialize(ctx,doc, payload.m_value, "value"));
     return node;
 }
 
@@ -412,8 +439,8 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,rapidxml::xml_document<>& doc
                 LOGE("save asset <embed> failed");
             }
 
-            node->append_node(uuid_node);
-            node->append_node(value_node);
+            AppendNode(*node, uuid_node);
+            AppendNode(*node, value_node);
             return node;
         }
     }
@@ -444,7 +471,12 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node, Handle<T>
         }
     }
 
-    Path filename = node.value();
+    const char* value = node.value();
+    if (!value) {
+        LOGE("[Asset]: handle node has no value");
+        return;
+    }
+    Path filename = value;
     payload = manager.Find(filename);
     if (!payload) {
         payload = manager.Load(filename);
@@ -461,9 +493,9 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     auto x_attr = doc.allocate_attribute(
-        "x", doc.allocate_string(std::to_string(payload.x).c_str()));
+        "x", doc.allocate_string(ToSerializedString(payload.x).c_str()));
     auto y_attr = doc.allocate_attribute(
-        "y", doc.allocate_string(std::to_string(payload.y).c_str()));
+        "y", doc.allocate_string(ToSerializedString(payload.y).c_str()));
     node->append_attribute(x_attr);
     node->append_attribute(y_attr);
     return node;

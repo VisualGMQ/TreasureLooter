@@ -5,6 +5,8 @@
 #include "common/entity.hpp"
 #include "common/transform.hpp"
 
+#include "client/controller.hpp"
+
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
 #include "common/context.hpp"
@@ -333,7 +335,16 @@ static void bindUI(lua_State* L) {
                 .addFunction("GetCursorX", &UITextInput::GetCursorX)
                 .addFunction("RefreshText", &UITextInput::RefreshText)
             .endClass()
+            .beginClass<UIText>("UIText")
+                .addFunction("ChangeText", &UIText::ChangeText)
+                .addFunction("GetText", +[](const UIText* t) -> std::string {
+                    return t->GetText();
+                })
+                .addPropertyReadWrite("m_color", &UIText::m_color)
+                .addPropertyReadWrite("m_align", &UIText::m_align)
+            .endClass()
             .beginClass<UIWidget>("UIWidget")
+                .addPropertyReadWrite("m_enable_draw", &UIWidget::m_enable_draw)
                 .addPropertyReadWrite("m_use_clip", &UIWidget::m_use_clip)
                 .addPropertyReadWrite("m_disabled", &UIWidget::m_disabled)
                 .addPropertyReadWrite("m_selected", &UIWidget::m_selected)
@@ -342,6 +353,9 @@ static void bindUI(lua_State* L) {
                 .addPropertyReadWrite("m_padding", &UIWidget::m_padding)
                 .addFunction("GetTextInput", +[](UIWidget* w) -> UITextInput* {
                     return w->m_text_input.get();
+                })
+                .addFunction("GetText", +[](UIWidget* w) -> UIText* {
+                    return w->m_text.get();
                 })
             .endClass()
             .beginClass<UIComponentManager>("UIComponentManager")
@@ -413,6 +427,10 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> InputManager* {
                                  return ctx->m_input_manager.get();
                              })
+                .addFunction("GetPlayerController",
+                             +[](ClientContext* ctx) -> PlayerController* {
+                                 return ctx->m_player_controller.get();
+                             })
                 .addFunction("GetAnimationPlayerManager",
                              +[](ClientContext* ctx) -> AnimationPlayerManager* {
                                  return ctx->m_animation_player_manager.get();
@@ -480,6 +498,26 @@ static void bindDebugPanel(lua_State* L) {
 
 // clang-format on
 
+static void bindPlayerController(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Client")
+            .beginClass<PlayerController>("PlayerController")
+                // Android only; a no-op on the other platforms. The scene is
+                // passed explicitly so the virtual controls are created for the
+                // scene that is actually played (the game scene), instead of
+                // being attached to the entry/title scene and lost on switch.
+                .addFunction("RegisterVirtualController",
+                             +[](PlayerController* controller,
+                                 SceneHandle scene) {
+                                 controller->RegisterVirtualController(
+                                     scene, CLIENT_CONTEXT.GetConfig());
+                             })
+                .addFunction("DestroyVirtualController",
+                             &PlayerController::DestroyVirtualController)
+            .endClass()
+        .endNamespace();
+}
+
 void BindClientModule(lua_State* L) {
     registerLuaScriptEventBindings(L);
     bindTilemapRenderComponent(L);
@@ -488,6 +526,7 @@ void BindClientModule(lua_State* L) {
     bindSprite(L);
     bindDrawOrder(L);
     bindAnimationPlayer(L);
+    bindPlayerController(L);
     bindUI(L);
     bindClientUIEvents(L);
     bindClientContext(L);

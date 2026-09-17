@@ -38,6 +38,7 @@ public:
     ClientContext& operator=(ClientContext&&) = delete;
     ~ClientContext() override;
 
+    void InitSystem() override;
     void Initialize(int argc, char** argv) override;
     void Shutdown() override;
 

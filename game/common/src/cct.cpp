@@ -35,12 +35,15 @@ void CCTManager::Disable(LogicEntity entity) {
         }                                              \
     } while (0)
 
-void CharacterController::MoveAndSlide(const Vec2& dir) {
+bool CharacterController::MoveAndSlide(const Vec2& dir) {
     PROFILE_SECTION();
+    m_touched_shape = nullptr;
+    m_touched_normal = Vec2::ZERO;
+    m_touched_shapes.clear();
 
     if (!m_shape) {
         CCT_DEBUG_LOG("physics shape is nullptr");
-        return;
+        return false;
     }
 
     float disp_length = dir.Length();
@@ -48,7 +51,7 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     CCT_DEBUG_LOG("disp length: {}", disp_length);
     if (disp_length <= m_min_disp) {
         CCT_DEBUG_LOG("disp length too small, exit");
-        return;
+        return false;
     }
 
     Vec2 disp = dir;
@@ -75,16 +78,20 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
         uint32_t hitted = physics_scene->Sweep(*m_shape, disp_normalized,
                                                disp_length + m_skin, &hit, 1);
 
-        for (int i = 0; i < hitted; i++) {
-            CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
-                          hit.m_shape->GetPosition(), hit.m_normal, hit.m_t);
-        }
-
         if (!hitted) {
             CCT_DEBUG_LOG("not hitted, move along {}", disp);
             m_shape->Move(disp);
             break;
         }
+
+        for (int i = 0; i < hitted; i++) {
+            CCT_DEBUG_LOG("hitted {}: position = {}, normal = {},  t = {}", i,
+                          hit.m_shape->GetPosition(), hit.m_normal, hit.m_t);
+        }
+
+        m_touched_shape = hit.m_shape;
+        m_touched_normal = hit.m_normal;
+        recordTouchedShape(hit.m_shape, hit.m_normal);
 
         if (hit.m_is_initial_overlap) {
             CCT_DEBUG_LOG("initial overlap, move along {}", disp);
@@ -121,6 +128,8 @@ void CharacterController::MoveAndSlide(const Vec2& dir) {
     CCT_DEBUG_LOG("end iter, final position: {}", m_shape->GetPosition());
 
     m_shape->MoveTo(m_shape->GetPosition());
+
+    return m_touched_shape == nullptr;
 }
 
 Vec2 CharacterController::GetPosition() const {
@@ -150,6 +159,33 @@ void CharacterController::Teleport(const Vec2& pos) {
     if (m_shape) {
         m_shape->MoveTo(pos);
     }
+}
+
+bool CharacterController::HasTouched() const {
+    return m_touched_shape != nullptr;
+}
+
+PhysicsShape* CharacterController::GetTouchedShape() {
+    return m_touched_shape;
+}
+
+Vec2 CharacterController::GetTouchedNormal() const {
+    return m_touched_normal;
+}
+
+const std::vector<TouchedShape>& CharacterController::GetTouchedShapes() const {
+    return m_touched_shapes;
+}
+
+void CharacterController::recordTouchedShape(PhysicsShape* shape,
+                                             const Vec2& normal) {
+    for (auto& touched : m_touched_shapes) {
+        if (touched.m_shape == shape) {
+            touched.m_normal = normal;
+            return;
+        }
+    }
+    m_touched_shapes.push_back(TouchedShape{shape, normal});
 }
 
 const PhysicsShape* CharacterController::GetPhysicsShape() const {

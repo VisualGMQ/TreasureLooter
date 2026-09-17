@@ -34,6 +34,16 @@ CommonContext* CommonContext::m_current_context{};
 
 constexpr std::underlying_type_t<LogicEntity> gReplicateEntityStart = 2000000;
 
+void CommonContext::initSystem(SDL_InitFlags init_flags) {
+    LOGT("system init");
+    SDL_CALL(SDL_Init(init_flags));
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+
+    SDL_CALL(TTF_Init());
+
+    UDPInit();
+}
+
 void CommonContext::initCommonConfig() {
     auto handle = m_assets_manager->GetManager<CommonConfig>().Load(
         std::string{"assets/gpa/common_config"} +
@@ -58,17 +68,6 @@ CommonContext& CommonContext::GetInst() {
 CommonContext::CommonContext() {}
 
 CommonContext::~CommonContext() {}
-
-void CommonContext::InitSystem() {
-    LOGT("system init");
-    SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-                      SDL_INIT_GAMEPAD));
-    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
-
-    SDL_CALL(TTF_Init());
-
-    UDPInit();
-}
 
 void CommonContext::ShutdownSystem() {
     UDPShutdown();

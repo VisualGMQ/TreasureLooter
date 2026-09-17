@@ -151,6 +151,14 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
         }
 #undef TARGET_TYPE
 
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(
+            AnimationBindingPoint::TransformPositionOffset) {
+            HANDLE_LINEAR_TRACK_CREATION();
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
 #define TARGET_TYPE Flags<Flip>
         HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteFlip) {
             HANDLE_DISCRETE_TRACK_CREATION();
@@ -309,6 +317,28 @@ void AnimationPlayer::Update(TimeType delta_time) {
         }                                                              \
     }
 
+// Same as above but added on top of the current value, for binding points
+// defined as an offset (the value mirrored from the logic transform is
+// refreshed every frame, so this doesn't accumulate).
+#define HANDLE_LINEAR_TRACK_ADD()                                      \
+    if (it->second->GetType() == AnimationTrackType::Linear) {         \
+        auto& raw_track = static_cast<const AnimationTrackPlayer<      \
+            decltype(BINDING_TARGET), AnimationTrackType::Linear>&>(   \
+            *it->second);                                              \
+        if (raw_track.NeedSync()) {                                    \
+            BINDING_TARGET = BINDING_TARGET + raw_track.GetValue();    \
+        }                                                              \
+    }
+#define HANDLE_DISCRETE_TRACK_ADD()                                    \
+    if (it->second->GetType() == AnimationTrackType::Discrete) {       \
+        auto& raw_track = static_cast<const AnimationTrackPlayer<      \
+            decltype(BINDING_TARGET), AnimationTrackType::Discrete>&>( \
+            *it->second);                                              \
+        if (raw_track.NeedSync()) {                                    \
+            BINDING_TARGET = BINDING_TARGET + raw_track.GetValue();    \
+        }                                                              \
+    }
+
 void AnimationPlayer::Sync(PresentEntity entity) {
     TL_RETURN_IF_FALSE(m_animation);
     m_entity = entity;
@@ -333,6 +363,14 @@ void AnimationPlayer::Sync(PresentEntity entity) {
         BEGIN_BINDING_POINT(AnimationBindingPoint::TransformRotation) {
             HANDLE_LINEAR_TRACK();
             HANDLE_DISCRETE_TRACK();
+        }
+#undef BINDING_TARGET
+
+#define BINDING_TARGET transform->m_position
+        BEGIN_BINDING_POINT(
+            AnimationBindingPoint::TransformPositionOffset) {
+            HANDLE_LINEAR_TRACK_ADD();
+            HANDLE_DISCRETE_TRACK_ADD();
         }
 #undef BINDING_TARGET
 

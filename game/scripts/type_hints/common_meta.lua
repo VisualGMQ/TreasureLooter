@@ -423,6 +423,11 @@
 ---@field GetMinDisp fun(self: CharacterController): number
 ---@field Teleport fun(self: CharacterController, pos: Vec2)
 ---@field GetPhysicsShape fun(self: CharacterController): PhysicsShape?
+---@field GetTouchedShape fun(self: CharacterController): PhysicsShape?
+---@field GetTouchedNormal fun(self: CharacterController): Vec2
+---@field GetTouchedShapeCount fun(self: CharacterController): number
+---@field GetTouchedShapeAt fun(self: CharacterController, index: number): PhysicsShape?
+---@field GetTouchedNormalAt fun(self: CharacterController, index: number): Vec2
 
 ---@class CCTManager
 ---@field Get fun(self: CCTManager, entity: LogicEntity): CharacterController?

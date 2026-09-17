@@ -690,6 +690,29 @@ void bindCCT(lua_State* L) {
                 .addFunction("GetPhysicsShape",
                              static_cast<PhysicsShape* (CharacterController::*)()>(
                                  &CharacterController::GetPhysicsShape))
+                .addFunction("GetTouchedShape",
+                             &CharacterController::GetTouchedShape)
+                .addFunction("GetTouchedNormal",
+                             &CharacterController::GetTouchedNormal)
+                .addFunction("GetTouchedShapeCount",
+                             +[](const CharacterController* cct) {
+                                 return cct->GetTouchedShapes().size();
+                             })
+                .addFunction("GetTouchedShapeAt",
+                             +[](const CharacterController* cct, size_t index)
+                                 -> PhysicsShape* {
+                                 const auto& shapes = cct->GetTouchedShapes();
+                                 return index < shapes.size()
+                                            ? shapes[index].m_shape
+                                            : nullptr;
+                             })
+                .addFunction("GetTouchedNormalAt",
+                             +[](const CharacterController* cct, size_t index) {
+                                 const auto& shapes = cct->GetTouchedShapes();
+                                 return index < shapes.size()
+                                            ? shapes[index].m_normal
+                                            : Vec2::ZERO;
+                             })
             .endClass()
             .beginClass<CCTManager>("CCTManager")
                 .addFunction("Get", +[](CCTManager* m, LogicEntity e) {
