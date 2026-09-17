@@ -28,6 +28,10 @@ template <>
 struct luabridge::Stack<LogicEntity> : public luabridge::Enum<LogicEntity> {};
 
 template <>
+struct luabridge::Stack<PresentEntity> : public luabridge::Enum<PresentEntity> {
+};
+
+template <>
 struct luabridge::Stack<TimerID> : public luabridge::Enum<TimerID> {};
 
 template <>

@@ -51,14 +51,11 @@ function _M:onMoveNetEvent(peer, move)
     end
     self._last_acked = seq
 
-    -- reset to server position
+    -- physics transform: snap straight to the authoritative position, then
+    -- replay the inputs the server has not acknowledged yet
     local net_target = move:m_target()
     local target = TL_Common.Vec2(net_target:m_x(), net_target:m_y())
-    local offset = target - go.m_transform:GetGlobalPosition()
-    if offset:LengthSquared() > 0 then
-        go.m_move_component:SetMoveDisp(offset)
-    end
-    go.m_move_component:Update()
+    go.m_move_component:Teleport(target)
 
     -- do reconciliation
     while #self._reconcilation_list > 0

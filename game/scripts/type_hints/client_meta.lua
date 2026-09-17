@@ -177,6 +177,8 @@
 
 ---@class ClientContext : CommonContext
 ---@field GetCamera fun(self: ClientContext): Camera
+---@field GetPresentEntity fun(self: ClientContext, entity: LogicEntity): PresentEntity
+---@field GetPresentTransformManager fun(self: ClientContext): PresentTransformManager
 ---@field GetSpriteManager fun(self: ClientContext): SpriteManager
 ---@field GetDrawOrderManager fun(self: ClientContext): DrawOrderManager
 ---@field GetRenderer fun(self: ClientContext): Renderer

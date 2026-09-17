@@ -434,6 +434,17 @@ static void bindClientContext(lua_State* L) {
             .addFunction("GetNetPeer", +[](ClientContext* ctx) -> UDPPeer& {
                             return ctx->m_net_peer;
                         })
+            // The present (render only) entity + its transform manager. The
+            // logic->present mapping still lives in Lua (client/go_accessor.lua)
+            // so no convenience binding is needed.
+            .addFunction("GetPresentEntity",
+                         +[](ClientContext* ctx, LogicEntity e) {
+                             return ctx->GetPresentEntity(e);
+                         })
+            .addFunction("GetPresentTransformManager",
+                         +[](ClientContext* ctx) -> PresentTransformManager* {
+                             return ctx->m_present_transform_manager.get();
+                         })
             .addFunction("GetConfig",
                          +[](ClientContext* ctx) -> const ClientConfig* {
                              return &ctx->GetConfig();

@@ -317,6 +317,12 @@ void bindMath(lua_State* L) {
                              +[](Transform* t) {
                                  return GetPosition(t->GetGlobalMat());
                              })
+                // Refresh the cached local/global matrices after the fields
+                // were changed (render systems read the cached global mat).
+                .addFunction("UpdateMat", &Transform::UpdateMat)
+                // Same, but also refreshes the whole subtree (parent before
+                // children). Use this when the transform has children.
+                .addFunction("UpdateHierarchy", &Transform::UpdateHierarchy)
             .endClass()
             .beginClass<Region>("Region")
                 .template addConstructor<void ()>()
@@ -330,6 +336,16 @@ void bindMath(lua_State* L) {
                 .addFunction("Has", +[](TransformManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
+            .endClass()
+            .beginClass<PresentTransformManager>("PresentTransformManager")
+                .addFunction("Get",
+                             +[](PresentTransformManager* m, PresentEntity e) {
+                                 return m->Get(e);
+                             })
+                .addFunction("Has",
+                             +[](PresentTransformManager* m, PresentEntity e) {
+                                 return m->Has(e);
+                             })
             .endClass()
         .endNamespace();
 }

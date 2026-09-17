@@ -6,6 +6,7 @@
 -- Types declared in schema_meta.lua / proto_meta.lua are referenced as globals.
 
 ---@alias LogicEntity number
+---@alias PresentEntity number
 ---@alias TimeType number
 ---@alias TimerID number
 ---@alias EventListenerID number
@@ -111,6 +112,8 @@
 ---@field m_size Vec2
 ---@field m_scale Vec2
 ---@field GetGlobalPosition fun(self: Transform): Vec2
+---@field UpdateMat fun(self: Transform)
+---@field UpdateHierarchy fun(self: Transform)
 
 ---@class Region
 ---@field m_topleft Vec2
@@ -278,6 +281,10 @@
 ---@class TransformManager
 ---@field Get fun(self: TransformManager, entity: LogicEntity): Transform?
 ---@field Has fun(self: TransformManager, entity: LogicEntity): boolean
+
+---@class PresentTransformManager
+---@field Get fun(self: PresentTransformManager, entity: PresentEntity): Transform?
+---@field Has fun(self: PresentTransformManager, entity: PresentEntity): boolean
 
 ---@class ImageManager
 ---@field Load fun(self: ImageManager, path: Path|string, force: boolean?): ImageHandle

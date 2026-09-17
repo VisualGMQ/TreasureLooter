@@ -294,6 +294,27 @@ Vec2 Rotate(const Vec2& p, Degrees d) {
 
 Transform::Transform() : m_size{1.0, 1.0} {}
 
+// A Transform copy only copies the pose: the hierarchy (parent/children) and
+// the cached matrices belong to the owning instance and are rebuilt lazily.
+Transform::Transform(const Transform& other)
+    : m_position{other.m_position},
+      m_rotation{other.m_rotation},
+      m_size{other.m_size} {}
+
+Transform& Transform::operator=(const Transform& other) {
+    if (this == &other) {
+        return *this;
+    }
+
+    m_position = other.m_position;
+    m_rotation = other.m_rotation;
+    m_size = other.m_size;
+    m_is_dirty = true;
+    return *this;
+}
+
+Transform::~Transform() { detachFromParent(); }
+
 const Mat33& Transform::GetLocalMat() const {
     return m_mat;
 }
@@ -330,8 +351,53 @@ void Transform::SetParent(const Transform* parent) {
     if (m_parent == parent) {
         return;
     }
+
+    detachFromParent();
+
     m_parent = const_cast<Transform*>(parent);
+    if (m_parent) {
+        m_parent->m_children.push_back(this);
+    }
     m_is_dirty = true;
+}
+
+void Transform::detachFromParent() {
+    if (!m_parent) {
+        return;
+    }
+
+    auto& siblings = m_parent->m_children;
+    for (auto it = siblings.begin(); it != siblings.end(); ++it) {
+        if (*it == this) {
+            siblings.erase(it);
+            break;
+        }
+    }
+    m_parent = nullptr;
+}
+
+void Transform::UpdateHierarchy() {
+    UpdateMat();
+
+    for (auto* child : m_children) {
+        if (child) {
+            child->UpdateHierarchy();
+        }
+    }
+}
+
+void Transform::DetachChildren() {
+    for (auto* child : m_children) {
+        if (child) {
+            child->m_parent = nullptr;
+        }
+    }
+    m_children.clear();
+}
+
+void Transform::ResetHierarchy() {
+    m_parent = nullptr;
+    m_children.clear();
 }
 
 bool Transform::isLocalDirty() const {
