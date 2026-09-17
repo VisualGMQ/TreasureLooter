@@ -19,6 +19,8 @@
         <element name="entry_scene" type="Path"/>
 
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
+        <element name="client_fps" type="uint32_t" default="240"/>
+        <element name="server_fps" type="uint32_t" default="30"/>
     </asset>
 
     <asset name="ClientConfig" extension=".client_config">

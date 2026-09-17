@@ -74,7 +74,8 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_scene_manager = std::make_unique<ServerSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
     m_tilemap_detour_manager = std::make_unique<TilemapDetourManager>();
-    m_tilemap_layer_collision_component_manager = std::make_unique<TilemapLayerCollisionComponentManager>();
+    m_tilemap_layer_collision_component_manager =
+        std::make_unique<TilemapLayerCollisionComponentManager>();
 
     // must call here, due to it rely on assets manager
     CommonContext::initCommonConfig();
@@ -92,12 +93,11 @@ void ServerContext::Initialize(int argc, char** argv) {
 
     InitGlobalScript(m_config.m_global_script);
 
-
-    SceneHandle level =
-        m_assets_manager->GetManager<Scene>().Load(GetCommonConfig().m_entry_scene);
+    SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
+        GetCommonConfig().m_entry_scene);
     m_scene_manager->Switch(level);
 
-    m_time->SetFPS(30);
+    m_time->SetFPS(GetCommonConfig().m_server_fps);
 }
 
 void ServerContext::HandleEvents(const SDL_Event& event) {

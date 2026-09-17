@@ -39,9 +39,9 @@ uint32_t Time::GetFPS() const {
     return static_cast<uint32_t>(1.0 / m_elapsed_time);
 }
 
-void Time::SetFPS(float fps) {
+void Time::SetFPS(uint32_t fps) {
     m_limit_fps = fps;
-    m_fps_require_time = 1000.0 / fps;
+    m_fps_require_time = 1000.0 / static_cast<double>(fps);
 }
 
 bool Time::IsFPSLimited() const {

@@ -10,6 +10,7 @@ local k_player_client_replicate_script = TL_Common.Path("scripts/client/behavior
 
 ---@class ClientWorld : World
 ---@field m_player_hint LogicEntity
+---@field private _interp_delay number
 ---@field private _net_gameobjects table<NetID, ClientGameObject>
 ---@field private _idle_fx_pool FXEntry[]
 local _M = {}
@@ -23,7 +24,12 @@ function _M.new()
     self.m_player_hint = TL_Common.null_entity
     self._idle_fx_pool = {}
     self._net_gameobjects = {}
+    self._interp_delay = 1.5 / TL_Common.GetContext():GetCommonConfig().m_server_fps
     return setmetatable(self, _M)
+end
+
+function _M:GetNetInterpDelay()
+    return self._interp_delay
 end
 
 ---@param ctx any

@@ -158,7 +158,7 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     m_player_controller->RegisterVirtualController(level, client_config);
 
-    m_time->SetFPS(240);
+    m_time->SetFPS(GetCommonConfig().m_client_fps);
 }
 
 void ClientContext::HandleEvents(const SDL_Event& event) {

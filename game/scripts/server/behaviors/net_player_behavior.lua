@@ -1,8 +1,8 @@
 local ServerGameObjectBehavior = require("server.gameobject_behavior")
 
 ---@class ServerNetPlayerBehavior : ServerGameObjectBehavior
----@field _has_input boolean  has received input from client
----@field _move_last_seq number
+---@field private _move_last_seq number
+---@field private _broadcast_accum TimeType
 local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = ServerGameObjectBehavior })
@@ -12,8 +12,8 @@ setmetatable(_M, { __index = ServerGameObjectBehavior })
 function _M.new(entity)
     local self = setmetatable(ServerGameObjectBehavior.new(entity), _M)
     ---@cast self ServerNetPlayerBehavior
-    self._has_input = false
     self._move_last_seq = 0
+    self._broadcast_accum = 0
     return self
 end
 
@@ -49,7 +49,6 @@ function _M:onClientActionEvent(peer, payload)
             go.m_move_component:SetMoveDisp(TL_Common.Vec2(disp:m_x(), disp:m_y()))
             go.m_move_component:Update()
             self._move_last_seq = payload:m_seq()
-            self._has_input = true
         else
             ctx:Log("don't has move displacement field: ", self:GetEntity())
         end
@@ -65,12 +64,14 @@ function _M:OnUpdate(elapse_time)
         return
     end
 
-    if not self._has_input then
+    -- Broadcast at a fixed rate (independent of the input rate) so remote
+    -- clients receive evenly spaced snapshots and can interpolate smoothly.
+    local interval = 1.0 / TL_Common.GetContext():GetCommonConfig().m_server_fps
+    self._broadcast_accum = self._broadcast_accum + elapse_time
+    if self._broadcast_accum < interval then
         return
     end
-
-    self._has_input = false
-    -- go.m_move_component:Update()
+    self._broadcast_accum = 0
 
     local position = go.m_transform:GetGlobalPosition()
 
@@ -82,6 +83,7 @@ function _M:OnUpdate(elapse_time)
     move:set_m_net_id(go:GetNetID())
     move:set_m_entity(0)
     move:set_m_seq(self._move_last_seq)
+    move:set_m_timestamp(TL_Server.GetContext():GetTime():GetCurrentTime())
     move:set_m_target(net_position)
 
     local net_msg = TL_Proto.NetMsg()
