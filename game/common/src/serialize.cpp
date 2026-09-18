@@ -17,9 +17,6 @@ bool fromChars(const char* first, const char* last, T& value) {
     return ec == std::errc{};
 }
 
-// Floats go through `std::from_chars` (locale independent, no exceptions)
-// instead of `std::stof`/`std::stod`. Leading whitespace and a leading '+' are
-// skipped to stay compatible with what `stof` accepted before.
 template <typename T>
 bool parseFloat(const char* first, const char* last, T& value) {
     while (first != last && std::isspace(static_cast<unsigned char>(*first))) {

@@ -89,6 +89,7 @@ jobs:
         sudo apt update -y
         sudo apt install cmake ninja-build -y
         yes | sdkmanager --licenses
+        sdkmanager "ndk;29.0.14206865"
         cp -r ./game ./android/app/jni/
         cp -r game/assets android/app/src/main/assets/
         cp -r game/scripts android/app/src/main/assets/

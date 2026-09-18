@@ -4,6 +4,7 @@ plugins {
 
 android {
     namespace = "org.visualgmq.treasurelooter"
+    ndkVersion = "29.0.14206865"
     compileSdkVersion 35
     defaultConfig {
         minSdkVersion 21
