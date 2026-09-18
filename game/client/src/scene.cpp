@@ -51,7 +51,7 @@ void ClientScene::registerEntity(LogicEntity entity,
     CLIENT_CONTEXT.AttachComponentsOnPresentEntity(present_entity, instance);
 }
 
-void ClientScene::initRootEntity(const Path& script_path) {
+void ClientScene::initRootEntity(SceneDefinitionHandle scene_definition) {
     m_root_entity = CLIENT_CONTEXT.CreateLogicEntity();
     m_entities.insert(m_root_entity);
     CLIENT_CONTEXT.m_transform_manager->RegisterEntity(m_root_entity);
@@ -82,10 +82,10 @@ void ClientScene::initRootEntity(const Path& script_path) {
     transform->m_size =
         static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize());
 
-    if (!script_path.empty()) {
-        auto handle =
-            CLIENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>()
-                .Load(script_path);
+    auto handle =
+        CLIENT_CONTEXT.m_assets_manager->GetManager<ScriptBinaryData>().Load(
+            scene_definition->m_client_script);
+    if (handle) {
         CLIENT_CONTEXT.m_script_component_manager->RegisterEntity(
             m_root_entity, m_root_entity, handle);
     }

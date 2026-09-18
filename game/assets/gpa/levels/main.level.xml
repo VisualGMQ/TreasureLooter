@@ -25,6 +25,8 @@
 			<hint_fx_did>FXDID1</hint_fx_did>
 			<hfsm>assets/gpa/hfsm/player.hfsm_definition.xml</hfsm>
 		</player_related_definition>
+		<client_player_script>scripts/client/behaviors/net_player_behavior.lua</client_player_script>
+		<server_player_script>scripts/server/behaviors/net_player_behavior.lua</server_player_script>
 		<spawn_objects>
 			<elem>
 				<did>ItemDID4</did>
@@ -46,16 +48,7 @@
 					<value>invalid</value>
 				</team_id>
 			</elem>
-			<elem>
-				<did>CharacterDID1</did>
-				<client_script>scripts/client/behaviors/player_behavior.lua</client_script>
-				<server_script/>
-				<spawn_point_name>player_spawn_point</spawn_point_name>
-				<spawn_on_layer>arch</spawn_on_layer>
-				<team_id>
-					<value>team1</value>
-				</team_id>
-			</elem>
+			<!-- slime disabled for now: only the player is tested
 			<elem>
 				<did>CharacterDID2</did>
 				<client_script>scripts/client/behaviors/slime_behavior.lua</client_script>
@@ -66,6 +59,7 @@
 					<value>team2</value>
 				</team_id>
 			</elem>
+			-->
 			<elem>
 				<did>ItemDID5</did>
 				<client_script>scripts/client/behaviors/workbench.lua</client_script>

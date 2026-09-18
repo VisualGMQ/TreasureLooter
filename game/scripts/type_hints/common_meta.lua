@@ -304,7 +304,7 @@
 ---@field Create fun(self: SceneManager, definition: SceneDefinitionHandle): SceneHandle
 ---@field Unload fun(self: SceneManager, handle: SceneHandle)
 ---@field GetCurrentScene fun(self: SceneManager): Scene?
----@field Switch fun(self: SceneManager, scene: SceneHandle)
+---@field Switch fun(self: SceneManager, scene: SceneHandle, on_switched: (fun()|nil))
 
 ---@class FontManager
 ---@field Load fun(self: FontManager, path: Path|string, force: boolean?): FontHandle

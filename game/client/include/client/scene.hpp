@@ -9,11 +9,11 @@ public:
     void OnEnter() override;
     void OnQuit() override;
 
-    LogicEntity GetUIRootEntity() const override;
+    [[nodiscard]] LogicEntity GetUIRootEntity() const override;
     
 protected:
     void registerEntity(LogicEntity, const EntityInstance&) override;
-    void initRootEntity(const Path& script_path) override;
+    void initRootEntity(SceneDefinitionHandle) override;
     void initEntities(SceneDefinitionHandle level_content) override;
     
 private:

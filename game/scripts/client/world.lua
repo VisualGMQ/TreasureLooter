@@ -190,7 +190,12 @@ function _M:onSpawnPlayerReply(reply)
 
     local hfsm_definition = nil
     if net_id == ctx:GetNetPeer():GetID() then
-        spawn_info.m_client_script = k_player_client_script
+        local player_script = self.m_level_definition and self.m_level_definition.m_client_player_script
+        if player_script and not player_script:empty() then
+            spawn_info.m_client_script = player_script
+        else
+            spawn_info.m_client_script = k_player_client_script
+        end
         local hfsm_path = self.m_level_definition and self.m_level_definition.m_player_related_definition.m_hfsm
         if hfsm_path and not hfsm_path:empty() then
             hfsm_definition = ctx:GetAssetsManager():GetScriptHFSMDefinitionManager():Load(hfsm_path)

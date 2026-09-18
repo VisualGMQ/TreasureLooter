@@ -1,6 +1,7 @@
 <SceneDefinition>
 	<uuid>6927c579-d36c-47bf-bddc-74b7cf4437f8</uuid>
 	<payload>
-		<script_path></script_path>
+		<client_script/>
+		<server_script/>
 	</payload>
 </SceneDefinition>

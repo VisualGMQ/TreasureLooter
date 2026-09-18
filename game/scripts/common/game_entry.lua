@@ -34,30 +34,23 @@ function GameEntry:OnInit()
     local world = World.GetInst()
     world.m_object_definitions = self.m_object_definitions
     world.m_buff_appliers = BuffApplierTable.new()
-    self:ChangeLevel(TL_Common.Path("assets/gpa/levels/net_test.level.xml"))
+    self:LoadLevel(TL_Common.Path("assets/gpa/levels/main.level.xml"))
 end
 
 ---@param level Path
-function GameEntry:ChangeLevel(level)
+function GameEntry:LoadLevel(level)
     local ctx = TL_Common.GetContext()
     local world = World.GetInst()
 
     local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
     world.m_level_definition = level_definition
-    local new_scene_definition = ctx:GetAssetsManager():GetSceneDefinitionManager():Create()
-    local new_scene = ctx:GetSceneManager():Create(new_scene_definition)
+    ctx:Log("load level", level)
 
-    local scene_mgr = ctx:GetSceneManager()
-    scene_mgr:Switch(new_scene)
-    ctx:GetAssetsManager():GetSceneDefinitionManager():Unload(new_scene_definition)
-
-    local scene = scene_mgr:GetCurrentScene()
+    local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
-        ctx:Log("create scene failed")
+        ctx:Log("load level failed: no current scene")
         return
     end
-
-    ctx:Log("change level to ", level)
     self:InitSceneFromLevelDefinition(scene, level_definition)
 end
 

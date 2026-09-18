@@ -1,7 +1,8 @@
 <SceneDefinition>
 	<uuid>e112e8a6-0000-0000-0000-000000000000</uuid>
 	<payload>
-		<script_path/>
+		<client_script/>
+		<server_script/>
 		<entities>
 			<elem>
 				<transform>

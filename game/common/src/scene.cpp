@@ -83,14 +83,16 @@ const std::unordered_set<LogicEntity>& Scene::GetAllEntities() const {
     return m_entities;
 }
 
-void Scene::initEntities(SceneDefinitionHandle) {}
-
 void Scene::initByDescription(SceneDefinitionHandle level_content) {
-    initRootEntity(level_content->m_script_path);
+    initRootEntity(level_content);
     initEntities(level_content);
 }
 
 void SceneManager::Switch(SceneHandle level) {
+    m_pending_level = level;
+}
+
+void SceneManager::SwitchImmediate(SceneHandle level) {
     if (m_level) {
         m_level->OnQuit();
     }
@@ -109,4 +111,10 @@ void SceneManager::RemoveEntity(LogicEntity entity) {
 
 SceneHandle SceneManager::GetCurrentScene() const {
     return m_level;
+}
+
+void SceneManager::Update() {
+    TL_RETURN_IF_FALSE(m_pending_level);
+    SwitchImmediate(m_pending_level);
+    m_pending_level = nullptr;
 }

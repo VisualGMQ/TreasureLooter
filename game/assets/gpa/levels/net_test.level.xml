@@ -25,6 +25,8 @@
 			<hint_fx_did>FXDID1</hint_fx_did>
 			<hfsm/>
 		</player_related_definition>
+		<client_player_script>scripts/client/behaviors/net_player_behavior.lua</client_player_script>
+		<server_player_script>scripts/server/behaviors/net_player_behavior.lua</server_player_script>
 		<spawn_objects/>
 		<land>land</land>
 	</payload>

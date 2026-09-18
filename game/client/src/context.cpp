@@ -131,8 +131,7 @@ void ClientContext::Initialize(int argc, char** argv) {
         *m_input_manager, *m_event_system, *m_assets_manager,
         *m_transform_manager, *m_relationship_manager);
 
-    m_animation_player_manager =
-        std::make_unique<AnimationPlayerManager>();
+    m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
 
     m_debug_panel = std::make_unique<DebugPanel>();
     m_hfsm_debugger = std::make_unique<ClientHFSMDebugger>();
@@ -154,11 +153,7 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
         GetCommonConfig().m_entry_scene);
-    m_scene_manager->Switch(level);
-
-    // The android virtual joystick/attack button are registered per scene from
-    // Lua (see ClientGameEntry), so they belong to the scene that is played
-    // instead of the entry/title scene.
+    m_scene_manager->SwitchImmediate(level);
 
     m_time->SetFPS(GetCommonConfig().m_client_fps);
 }
@@ -238,8 +233,7 @@ PresentEntity ClientContext::CreatePresentEntity(LogicEntity logic_entity) {
     return ToPresentEntity(logic_entity);
 }
 
-PresentEntity ClientContext::GetPresentEntity(
-    LogicEntity logic_entity) const {
+PresentEntity ClientContext::GetPresentEntity(LogicEntity logic_entity) const {
     return ToPresentEntity(logic_entity);
 }
 
@@ -247,9 +241,8 @@ void ClientContext::AttachComponentsOnPresentEntity(
     PresentEntity entity, const EntityInstance& instance) {
     auto& prefab = *instance.m_prefab;
 
-    // the present transform mirrors the logic transform, render systems read
-    // this one.
-    if (auto* logic_transform = m_transform_manager->Get(ToLogicEntity(entity))) {
+    if (auto* logic_transform =
+            m_transform_manager->Get(ToLogicEntity(entity))) {
         m_present_transform_manager->RegisterEntity(entity, *logic_transform);
     } else {
         m_present_transform_manager->RegisterEntity(entity);
@@ -396,9 +389,6 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_script_component_manager->Update();
     m_hfsm_manager->Update();
 
-    // NOTE: animation players and the UI layout are render-side and are updated
-    // in renderUpdate, after the logic transforms have been mirrored into the
-    // present transforms.
     m_ui_manager->HandleEvent();
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
@@ -410,18 +400,13 @@ void ClientContext::logicUpdate(TimeType elapse) {
         m_net_host->Flush();
     }
 
-    // NOTE: the event system is updated in logicPostUpdate (i.e. after
-    // renderUpdate) so that events enqueued during the render phase, such as
-    // AnimationEndEvent, are still dispatched in the same frame.
     m_timer_manager->Update(elapse);
 }
 
 void ClientContext::logicPostUpdate(TimeType elapse) {
     PROFILE_SECTION();
 
-    // Dispatched here (after renderUpdate) so events enqueued by the render
-    // phase (e.g. AnimationEndEvent) are handled in the same frame. Kept before
-    // doRemoveEntities() so RemoveEntityEvent is still dispatched next frame.
+    m_scene_manager->Update();
     m_event_system->Update();
 
     m_mouse->PostUpdate();
@@ -441,8 +426,6 @@ void ClientContext::renderUpdate(TimeType elapse) {
         syncPresentTransform(level->GetUIRootEntity(), nullptr);
     }
 
-    // Runs after the present transforms were mirrored from logic so the
-    // animation transform tracks are not overwritten by the sync.
     m_animation_player_manager->Update(elapse);
 
     if (m_global_script) {
@@ -534,7 +517,7 @@ void ClientContext::registerAllDebugCommands() {
 void ClientContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
-    m_scene_manager->Switch({});
+    m_scene_manager->SwitchImmediate({});
 
     m_player_controller.reset();
     if (m_net_peer.IsValid()) {
@@ -611,15 +594,9 @@ void ClientContext::initImGui() {
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
-    // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(
-        main_scale);  // Bake a fixed style scale. (until we have a solution for
-    // dynamic style scaling, changing this requires resetting
-    // Style + calling this again)
-    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
-    // io.ConfigDpiScaleFonts=true makes this unnecessary. We
-    // leave both here for documentation purpose)
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
 
     ImGui_ImplSDL3_InitForSDLRenderer(m_window->GetWindow(),
                                       m_renderer->GetRenderer());

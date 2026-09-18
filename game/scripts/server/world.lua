@@ -12,9 +12,10 @@ local k_player_script = TL_Common.Path("scripts/server/behaviors/net_player_beha
 
 ---@return ServerWorld
 function _M.new()
-    local self = setmetatable({}, _M)
+    local self = World.new()
+    ---@cast self ServerWorld
     self._replicate_peers = {}
-    return self
+    return setmetatable(self, _M)
 end
 
 ---@param peer UDPPeer
@@ -91,7 +92,12 @@ function _M:createPlayer(peer, create_info)
 
     local spawn_info = TL_Schema.ObjectSpawnDefinition()
     spawn_info.m_did = did
-    spawn_info.m_server_script = k_player_script
+    local player_script = self.m_level_definition and self.m_level_definition.m_server_player_script
+    if player_script and not player_script:empty() then
+        spawn_info.m_server_script = player_script
+    else
+        spawn_info.m_server_script = k_player_script
+    end
     spawn_info.m_spawn_point_name = k_player_spawn_point
 
     local net_id = peer:GetID()

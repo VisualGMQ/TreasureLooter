@@ -2,8 +2,10 @@
 #include "common/animation.hpp"
 #include "common/event.hpp"
 #include "common/image.hpp"
+#include "schema/gameplay_config.hpp"
 #include "schema/scene_definition.hpp"
 
+#include <functional>
 #include <unordered_set>
 
 class Scene {
@@ -38,12 +40,12 @@ public:
     [[nodiscard]] LogicEntity GetRootEntity() const;
     [[nodiscard]] virtual LogicEntity GetUIRootEntity() const = 0;
 
-    const std::unordered_set<LogicEntity>& GetAllEntities() const;
+    [[nodiscard]] const std::unordered_set<LogicEntity>& GetAllEntities() const;
 
 protected:
     virtual void registerEntity(LogicEntity, const EntityInstance&) = 0;
-    virtual void initRootEntity(const Path& script_path) = 0;
-    virtual void initEntities(SceneDefinitionHandle level_content);
+    virtual void initRootEntity(SceneDefinitionHandle) = 0;
+    virtual void initEntities(SceneDefinitionHandle level_content) = 0;
 
     LogicEntity m_root_entity{};
 
@@ -65,12 +67,18 @@ public:
     
     virtual SceneHandle Create(SceneDefinitionHandle) = 0;
 
-    virtual void Switch(SceneHandle);
+    void Switch(SceneHandle level);
+
+    void SwitchImmediate(SceneHandle level);
 
     void RemoveEntity(LogicEntity);
 
     [[nodiscard]] SceneHandle GetCurrentScene() const;
 
+    void Update();
+
 private:
     SceneHandle m_level;
+    SceneHandle m_pending_level;
+    std::function<void()> m_pending_switch_callback;
 };

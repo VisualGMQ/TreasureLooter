@@ -9,7 +9,8 @@
     </class>
 
     <asset name="SceneDefinition" extension=".scene">
-        <element type="Path" name="script_path" />
+        <element type="Path" name="client_script" />
+        <element type="Path" name="server_script" />
         <array type="EntityInstance" name="entities" />
     </asset>
 </schema>

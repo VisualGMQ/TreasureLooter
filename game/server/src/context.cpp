@@ -99,7 +99,7 @@ void ServerContext::Initialize(int argc, char** argv) {
 
     SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
         GetCommonConfig().m_entry_scene);
-    m_scene_manager->Switch(level);
+    m_scene_manager->SwitchImmediate(level);
 
     m_time->SetFPS(GetCommonConfig().m_server_fps);
 }
@@ -122,7 +122,7 @@ void ServerContext::Update() {
 
     PROFILE_SECTION();
 
-    if (m_net_host) {
+    if (m_net_host && m_net_host->IsValid()) {
         m_net_host->HandleIncomingNetPacket();
     }
 
@@ -149,6 +149,7 @@ void ServerContext::Update() {
         m_net_host->Flush();
     }
 
+    m_scene_manager->Update();
     m_event_system->Update();
     m_timer_manager->Update(elapse_time);
 
@@ -160,7 +161,7 @@ void ServerContext::Update() {
 void ServerContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
-    m_scene_manager->Switch({});
+    m_scene_manager->SwitchImmediate({});
     m_tilemap_detour_manager.reset();
     m_tilemap_layer_collision_component_manager.reset();
 

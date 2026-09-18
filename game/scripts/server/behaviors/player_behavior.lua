@@ -1,6 +1,6 @@
 local ServerGameObjectBehavior = require("server.gameobject_behavior")
 
----@class ServerNetPlayerBehavior : ServerGameObjectBehavior
+---@class ServerPlayerBehavior : ServerGameObjectBehavior
 ---@field private _move_last_seq number
 ---@field private _broadcast_accum TimeType
 local _M = {}
@@ -8,10 +8,10 @@ _M.__index = _M
 setmetatable(_M, { __index = ServerGameObjectBehavior })
 
 ---@param entity LogicEntity
----@return ServerNetPlayerBehavior
+---@return ServerPlayerBehavior
 function _M.new(entity)
     local self = setmetatable(ServerGameObjectBehavior.new(entity), _M)
-    ---@cast self ServerNetPlayerBehavior
+    ---@cast self ServerPlayerBehavior
     self._move_last_seq = 0
     self._broadcast_accum = 0
     return self
@@ -64,8 +64,6 @@ function _M:OnUpdate(elapse_time)
         return
     end
 
-    -- Broadcast at a fixed rate (independent of the input rate) so remote
-    -- clients receive evenly spaced snapshots and can interpolate smoothly.
     local interval = 1.0 / TL_Common.GetContext():GetCommonConfig().m_server_fps
     self._broadcast_accum = self._broadcast_accum + elapse_time
     if self._broadcast_accum < interval then
