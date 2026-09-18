@@ -30,7 +30,9 @@ function _M:onMaterialEnter(event)
         local ClientWorld = require("client.world")
         local pos = self._gameobject.m_transform:GetGlobalPosition()
         pos.y = pos.y + 10
-        ClientWorld.GetInst():AddFX(self._fx_on_accept_material, pos)
+        local world = ClientWorld.GetInst()
+        ---@cast world ClientWorld
+        world:AddFX(self._fx_on_accept_material, pos)
     end
 
     ConstructableComponent.onMaterialEnter(self, event)

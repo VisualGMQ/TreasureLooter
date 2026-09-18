@@ -294,22 +294,133 @@ Vec2 Rotate(const Vec2& p, Degrees d) {
 
 Transform::Transform() : m_size{1.0, 1.0} {}
 
+// A Transform copy only copies the pose: the hierarchy (parent/children) and
+// the cached matrices belong to the owning instance and are rebuilt lazily.
+Transform::Transform(const Transform& other)
+    : m_position{other.m_position},
+      m_rotation{other.m_rotation},
+      m_size{other.m_size} {}
+
+Transform& Transform::operator=(const Transform& other) {
+    if (this == &other) {
+        return *this;
+    }
+
+    m_position = other.m_position;
+    m_rotation = other.m_rotation;
+    m_size = other.m_size;
+    m_is_dirty = true;
+    return *this;
+}
+
+Transform::~Transform() { detachFromParent(); }
+
 const Mat33& Transform::GetLocalMat() const {
     return m_mat;
+}
+
+const Mat33& Transform::GetGlobalMat() {
+    EnsureUpdated();
+    return m_global_mat;
 }
 
 const Mat33& Transform::GetGlobalMat() const {
     return m_global_mat;
 }
 
-void Transform::UpdateMat(const Transform* parent) {
+void Transform::UpdateMat() {
     m_mat = Mat33::CreateTranslation(m_position) *
             Mat33::CreateRotation(m_rotation) * Mat33::CreateScale(m_scale);
-    if (parent) {
-        m_global_mat = parent->GetGlobalMat() * m_mat;
+    if (m_parent) {
+        m_global_mat = m_parent->GetGlobalMat() * m_mat;
     } else {
         m_global_mat = m_mat;
     }
+
+    m_cached_position = m_position;
+    m_cached_rotation = m_rotation;
+    m_cached_scale = m_scale;
+    m_is_dirty = false;
+}
+
+void Transform::MarkDirty() {
+    m_is_dirty = true;
+}
+
+void Transform::SetParent(const Transform* parent) {
+    if (m_parent == parent) {
+        return;
+    }
+
+    detachFromParent();
+
+    m_parent = const_cast<Transform*>(parent);
+    if (m_parent) {
+        m_parent->m_children.push_back(this);
+    }
+    m_is_dirty = true;
+}
+
+void Transform::detachFromParent() {
+    if (!m_parent) {
+        return;
+    }
+
+    auto& siblings = m_parent->m_children;
+    for (auto it = siblings.begin(); it != siblings.end(); ++it) {
+        if (*it == this) {
+            siblings.erase(it);
+            break;
+        }
+    }
+    m_parent = nullptr;
+}
+
+void Transform::UpdateHierarchy() {
+    UpdateMat();
+
+    for (auto* child : m_children) {
+        if (child) {
+            child->UpdateHierarchy();
+        }
+    }
+}
+
+void Transform::DetachChildren() {
+    for (auto* child : m_children) {
+        if (child) {
+            child->m_parent = nullptr;
+        }
+    }
+    m_children.clear();
+}
+
+void Transform::ResetHierarchy() {
+    m_parent = nullptr;
+    m_children.clear();
+}
+
+bool Transform::isLocalDirty() const {
+    return m_is_dirty || m_position != m_cached_position ||
+           m_rotation != m_cached_rotation || m_scale != m_cached_scale;
+}
+
+bool Transform::IsDirty() const {
+    if (isLocalDirty()) {
+        return true;
+    }
+    return m_parent != nullptr && m_parent->IsDirty();
+}
+
+bool Transform::EnsureUpdated() {
+    const bool parent_changed =
+        m_parent != nullptr && m_parent->EnsureUpdated();
+    if (!parent_changed && !isLocalDirty()) {
+        return false;
+    }
+
+    UpdateMat();
+    return true;
 }
 
 Radians GetAngle(const Vec2& norm_a, const Vec2& norm_b) {

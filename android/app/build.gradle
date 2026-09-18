@@ -4,6 +4,7 @@ plugins {
 
 android {
     namespace = "org.visualgmq.treasurelooter"
+    ndkVersion = "29.0.14206865"
     compileSdkVersion 35
     defaultConfig {
         minSdkVersion 21
@@ -27,10 +28,14 @@ android {
         }
     }
     buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
         }
+        // release {
+        //     minifyEnabled false
+        //     proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        // }
     }
     applicationVariants.all { variant ->
         tasks["merge${variant.name.capitalize()}Assets"]

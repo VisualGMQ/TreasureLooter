@@ -32,7 +32,17 @@
 
 CommonContext* CommonContext::m_current_context{};
 
-constexpr std::underlying_type_t<Entity> gReplicateEntityStart = 1000000;
+constexpr std::underlying_type_t<LogicEntity> gReplicateEntityStart = 2000000;
+
+void CommonContext::initSystem(SDL_InitFlags init_flags) {
+    LOGT("system init");
+    SDL_CALL(SDL_Init(init_flags));
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+
+    SDL_CALL(TTF_Init());
+
+    UDPInit();
+}
 
 void CommonContext::initCommonConfig() {
     auto handle = m_assets_manager->GetManager<CommonConfig>().Load(
@@ -58,17 +68,6 @@ CommonContext& CommonContext::GetInst() {
 CommonContext::CommonContext() {}
 
 CommonContext::~CommonContext() {}
-
-void CommonContext::InitSystem() {
-    LOGT("system init");
-    SDL_CALL(SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-                      SDL_INIT_GAMEPAD));
-    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
-
-    SDL_CALL(TTF_Init());
-
-    UDPInit();
-}
 
 void CommonContext::ShutdownSystem() {
     UDPShutdown();
@@ -152,8 +151,8 @@ void CommonContext::HandleEvents(const SDL_Event& event) {
     m_event_system->HandleEvent(event);
 }
 
-void CommonContext::AttachComponentsOnEntity(Entity entity,
-                                             const EntityInstance& instance) {
+void CommonContext::AttachComponentsOnLogicEntity(
+    LogicEntity entity, const EntityInstance& instance) {
     const Transform* transform =
         instance.m_transform ? &instance.m_transform.value() : nullptr;
     auto& prefab = *instance.m_prefab;
@@ -161,7 +160,7 @@ void CommonContext::AttachComponentsOnEntity(Entity entity,
     m_transform_manager->RegisterEntity(
         entity, transform ? *transform : prefab.m_transform.value());
     // update global mat
-    m_transform_manager->Get(entity)->UpdateMat(nullptr);
+    m_transform_manager->Get(entity)->UpdateMat();
     if (prefab.m_tilemap_layer) {
         m_tilemap_layer_collision_component_manager->RegisterEntity(
             entity, TilemapLayerCollisionComponent{
@@ -192,13 +191,13 @@ void CommonContext::AttachComponentsOnEntity(Entity entity,
     m_relationship_manager->RegisterEntity(entity, entity);
     auto relationship = m_relationship_manager->Get(entity);
     for (auto child : prefab.m_children) {
-        Entity child_entity =
+        LogicEntity child_entity =
             m_scene_manager->GetCurrentScene()->Instantiate(child);
         relationship->AddChild(child_entity);
     }
 }
 
-void CommonContext::RemoveAllComponentsOnEntity(Entity entity) {
+void CommonContext::RemoveAllComponentsOnLogicEntity(LogicEntity entity) {
     m_transform_manager->RemoveEntity(entity);
     m_relationship_manager->RemoveEntity(entity);
     m_tilemap_layer_collision_component_manager->RemoveEntity(entity);
@@ -222,19 +221,19 @@ bool CommonContext::IsRunning() const {
     return !m_should_exit;
 }
 
-Entity CommonContext::CreateEntity() {
-    return static_cast<Entity>(m_last_entity++);
+LogicEntity CommonContext::CreateLogicEntity() {
+    return static_cast<LogicEntity>(m_last_entity++);
 }
 
-Entity CommonContext::CreateReplicateEntity(Entity raw_entity) {
-    auto entity = static_cast<Entity>(
-        static_cast<std::underlying_type_t<Entity>>(raw_entity) +
+LogicEntity CommonContext::CreateReplicateEntity(LogicEntity raw_entity) {
+    auto entity = static_cast<LogicEntity>(
+        static_cast<std::underlying_type_t<LogicEntity>>(raw_entity) +
         gReplicateEntityStart);
     m_replicate_component_manager->RegisterEntity(entity, raw_entity);
     return entity;
 }
 
-void CommonContext::RemoveEntity(Entity entity) {
+void CommonContext::RemoveEntity(LogicEntity entity) {
     m_pending_delete_entities.push_back(entity);
 }
 
@@ -249,11 +248,11 @@ void CommonContext::doRemoveEntities() {
     m_pending_delete_entities.clear();
 }
 
-void CommonContext::doRemoveEntityFromParent(Entity entity) {
+void CommonContext::doRemoveEntityFromParent(LogicEntity entity) {
     auto relationship = m_relationship_manager->Get(entity);
     TL_RETURN_IF_NULL(relationship);
 
-    Entity parent_entity = relationship->GetParent();
+    LogicEntity parent_entity = relationship->GetParent();
     TL_RETURN_IF_FALSE(parent_entity != null_entity);
 
     auto parent_relationship = m_relationship_manager->Get(parent_entity);
@@ -261,7 +260,7 @@ void CommonContext::doRemoveEntityFromParent(Entity entity) {
     parent_relationship->RemoveChild(entity);
 }
 
-void CommonContext::doRemoveEntityWithChildren(Entity entity) {
+void CommonContext::doRemoveEntityWithChildren(LogicEntity entity) {
     TL_RETURN_IF_FALSE(entity != null_entity);
 
     auto relationship = m_relationship_manager->Get(entity);
@@ -271,7 +270,7 @@ void CommonContext::doRemoveEntityWithChildren(Entity entity) {
         }
     }
 
-    RemoveAllComponentsOnEntity(entity);
+    RemoveAllComponentsOnLogicEntity(entity);
 
     m_event_system->EnqueueEvent(RemoveEntityEvent{entity});
 }
@@ -300,7 +299,7 @@ std::string_view CommonContext::GetAppPath() const {
     return m_args[0];
 }
 
-bool CommonContext::IsReplicateEntity(Entity entity) const {
-    return static_cast<std::underlying_type_t<Entity>>(entity) >=
+bool CommonContext::IsReplicateEntity(LogicEntity entity) const {
+    return static_cast<std::underlying_type_t<LogicEntity>>(entity) >=
            gReplicateEntityStart;
 }

@@ -9,17 +9,13 @@ local World = require("common.world")
 ---@field m_position Vec2
 
 ---@class GameEntry : ScriptBehavior
----@field m_level_definition LevelDefinitionHandle
----@field m_map_layers table<string, Entity>
----@field m_spawn_points table<string, SpawnPoint>
----@field m_player_on_layer Entity
----@field m_object_definitions ObjectDefinitionTable
+---@field m_map_layers table<string, LogicEntity>
 ---@field m_creation_strategy Creation
 local GameEntry = {}
 GameEntry.__index = GameEntry
 setmetatable(GameEntry, { __index = ScriptBehavior })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param creation_strategy Creation
 ---@return GameEntry
 function GameEntry.new(entity, creation_strategy)
@@ -35,35 +31,31 @@ function GameEntry:OnInit()
     local object_definition_table_handle = ctx:GetAssetsManager():GetObjectDefinitionTableManager():Load(
     "assets/gpa/object_definition_table.object_definition_table.xml")
     self.m_object_definitions = ObjectDefinitionTable.new(object_definition_table_handle)
-    World.GetInst().m_object_definitions = self.m_object_definitions
-    World.GetInst().m_buff_appliers = BuffApplierTable.new()
-    self:ChangeLevel(TL_Common.Path("assets/gpa/levels/main.level.xml"))
+    local world = World.GetInst()
+    world.m_object_definitions = self.m_object_definitions
+    world.m_buff_appliers = BuffApplierTable.new()
+    self:LoadLevel(TL_Common.Path("assets/gpa/levels/main.level.xml"))
 end
 
 ---@param level Path
-function GameEntry:ChangeLevel(level)
+function GameEntry:LoadLevel(level)
     local ctx = TL_Common.GetContext()
+    local world = World.GetInst()
 
-    self.m_level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
-    local new_scene_definition = ctx:GetAssetsManager():GetSceneDefinitionManager():Create()
-    local new_scene = ctx:GetSceneManager():Create(new_scene_definition)
+    local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
+    world.m_level_definition = level_definition
+    ctx:Log("load level", level)
 
-    local scene_mgr = ctx:GetSceneManager()
-    scene_mgr:Switch(new_scene)
-    ctx:GetAssetsManager():GetSceneDefinitionManager():Unload(new_scene_definition)
-
-    local scene = scene_mgr:GetCurrentScene()
+    local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
-        ctx:Log("create scene failed")
+        ctx:Log("load level failed: no current scene")
         return
     end
-
-    ctx:Log("change level to ", level)
-    self:InitSceneFromLevelDefinition(scene, self.m_level_definition)
+    self:InitSceneFromLevelDefinition(scene, level_definition)
 end
 
 ---@param level_definition LevelDefinitionHandle
----@param map_layer_entities table<string, Entity>
+---@param map_layer_entities table<string, LogicEntity>
 ---@return table<string, SpawnPoint>
 function GameEntry.gatherSpawnPoints(level_definition, map_layer_entities)
     local spawn_point_infos = {}
@@ -107,7 +99,7 @@ end
 ---@param root_relationship Relationship
 ---@param map_definition MapDefinition
 ---@param land string
----@return table<string, Entity>
+---@return table<string, LogicEntity>
 function GameEntry.createMapLayers(scene, root_relationship, map_definition, land)
     local ctx = TL_Common.GetContext()
     local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
@@ -141,10 +133,16 @@ end
 ---@param level_definition LevelDefinitionHandle
 function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
     local ctx = TL_Common.GetContext()
+    local world = World.GetInst()
     local root_entity = scene:GetRootEntity()
     local root_relationship = ctx:GetRelationshipManager():Get(root_entity)
+    if not root_relationship then
+        ctx:Log("init scene failed: root entity has no relationship component")
+        return
+    end
 
-    self.m_spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
+    local spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
+    world.m_spawn_points = spawn_points
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
 
     if level_definition.m_map_definition.m_detour:IsValid() then
@@ -162,7 +160,7 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
     -- create objects
     for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
         local did = spawn_info.m_did
-        local spawn_point = self.m_spawn_points[spawn_info.m_spawn_point_name]
+        local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
 
         if not spawn_point then
             ctx:Log("spawn failed: can't find spawn point ", spawn_point, " for object ", spawn_info.m_did)
@@ -175,6 +173,10 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
         local target_entity = self.m_map_layers[spawn_info.m_spawn_on_layer]
         ctx:Log("spawn point name ", spawn_point.m_name)
         local relationship = ctx:GetRelationshipManager():Get(target_entity)
+        if not relationship then
+            ctx:Log("spawn failed: target layer has no relationship component")
+            goto continue
+        end
 
         local definition = self.m_object_definitions:Get(spawn_info.m_did)
 
@@ -183,7 +185,7 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
             if spawn_info.m_team_id == TL_Schema.TeamID.team1 then
                 hfsm_definition = player_hfsm_handle
             end
-            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, self.m_object_definitions, hfsm_definition)
+            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, 0, self.m_object_definitions, hfsm_definition)
             relationship:AddChild(entity)
         elseif DID.IsItemDID(did) then
             local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
@@ -194,17 +196,20 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
         elseif DID.IsSkillDID(did) then
             local entity = self.m_creation_strategy:CreateSkill(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
             relationship:AddChild(entity)
-        elseif TL_Schema.FilenameIsPrefab(definition:GetFilename()) then
-            local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(definition:GetFilename())
-            if not prefab:IsValid() then
-                ctx:Log("spawn failed: can't load prefab")
-                goto continue
-            end
-
-            local entity = self.m_creation_strategy:CreatePrefab(scene, prefab, transform)
-            relationship:AddChild(entity)
         else
-            ctx:Log("spawn failed: no support file type")
+            local filename = definition and definition:GetFilename()
+            if filename and TL_Schema.FilenameIsPrefab(filename) then
+                local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(filename)
+                if not prefab:IsValid() then
+                    ctx:Log("spawn failed: can't load prefab")
+                    goto continue
+                end
+
+                local entity = self.m_creation_strategy:CreatePrefab(scene, prefab, transform)
+                relationship:AddChild(entity)
+            else
+                ctx:Log("spawn failed: no support file type")
+            end
         end
         ::continue::
     end

@@ -151,6 +151,14 @@ void AnimationPlayer::ChangeAnimation(AnimationHandle animation) {
         }
 #undef TARGET_TYPE
 
+#define TARGET_TYPE Vec2
+        HANDLE_TRACK_BINDING_POINT(
+            AnimationBindingPoint::TransformPositionOffset) {
+            HANDLE_LINEAR_TRACK_CREATION();
+            HANDLE_DISCRETE_TRACK_CREATION();
+        }
+#undef TARGET_TYPE
+
 #define TARGET_TYPE Flags<Flip>
         HANDLE_TRACK_BINDING_POINT(AnimationBindingPoint::SpriteFlip) {
             HANDLE_DISCRETE_TRACK_CREATION();
@@ -282,7 +290,7 @@ void AnimationPlayer::Update(TimeType delta_time) {
             Pause();
             m_cur_time = GetMaxTime();
             COMMON_CONTEXT.m_event_system->EnqueueEvent<AnimationEndEvent>(
-                AnimationEndEvent{m_id, m_entity, m_animation});
+                AnimationEndEvent{m_id, ToLogicEntity(m_entity), m_animation});
         }
     }
 }
@@ -309,12 +317,34 @@ void AnimationPlayer::Update(TimeType delta_time) {
         }                                                              \
     }
 
-void AnimationPlayer::Sync(Entity entity) {
+// Same as above but added on top of the current value, for binding points
+// defined as an offset (the value mirrored from the logic transform is
+// refreshed every frame, so this doesn't accumulate).
+#define HANDLE_LINEAR_TRACK_ADD()                                      \
+    if (it->second->GetType() == AnimationTrackType::Linear) {         \
+        auto& raw_track = static_cast<const AnimationTrackPlayer<      \
+            decltype(BINDING_TARGET), AnimationTrackType::Linear>&>(   \
+            *it->second);                                              \
+        if (raw_track.NeedSync()) {                                    \
+            BINDING_TARGET = BINDING_TARGET + raw_track.GetValue();    \
+        }                                                              \
+    }
+#define HANDLE_DISCRETE_TRACK_ADD()                                    \
+    if (it->second->GetType() == AnimationTrackType::Discrete) {       \
+        auto& raw_track = static_cast<const AnimationTrackPlayer<      \
+            decltype(BINDING_TARGET), AnimationTrackType::Discrete>&>( \
+            *it->second);                                              \
+        if (raw_track.NeedSync()) {                                    \
+            BINDING_TARGET = BINDING_TARGET + raw_track.GetValue();    \
+        }                                                              \
+    }
+
+void AnimationPlayer::Sync(PresentEntity entity) {
     TL_RETURN_IF_FALSE(m_animation);
     m_entity = entity;
     auto& ctx = CLIENT_CONTEXT;
 
-    if (auto transform = ctx.m_transform_manager->Get(entity)) {
+    if (auto transform = ctx.m_present_transform_manager->Get(entity)) {
 #define BINDING_TARGET transform->m_position
         BEGIN_BINDING_POINT(AnimationBindingPoint::TransformPosition) {
             HANDLE_LINEAR_TRACK();
@@ -335,6 +365,19 @@ void AnimationPlayer::Sync(Entity entity) {
             HANDLE_DISCRETE_TRACK();
         }
 #undef BINDING_TARGET
+
+#define BINDING_TARGET transform->m_position
+        BEGIN_BINDING_POINT(
+            AnimationBindingPoint::TransformPositionOffset) {
+            HANDLE_LINEAR_TRACK_ADD();
+            HANDLE_DISCRETE_TRACK_ADD();
+        }
+#undef BINDING_TARGET
+
+        // The render systems read the cached global matrix (const
+        // Transform::GetGlobalMat()), so refresh it after the transform tracks
+        // wrote into this render-only transform.
+        transform->UpdateMat();
     }
 
     if (auto sprite = ctx.m_sprite_manager->Get(entity)) {
@@ -384,7 +427,8 @@ void AnimationPlayer::Sync(Entity entity) {
 #undef BINDING_TARGET
     }
 
-    if (auto bind_points = ctx.m_bind_point_component_manager->Get(entity)) {
+    if (auto bind_points =
+            ctx.m_bind_point_component_manager->Get(ToLogicEntity(entity))) {
         for (auto& [name, bind_point] : bind_points->m_bind_points) {
             if (auto it = m_bind_point_track_players.find(name);
                 it != m_bind_point_track_players.end()) {

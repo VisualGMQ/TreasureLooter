@@ -11,7 +11,7 @@ local k_default_script = TL_Common.Path("scripts/server/gameobject_behavior.lua"
 ---@param scene Scene
 ---@param prefab PrefabHandle
 ---@param transform Transform
----@return Entity
+---@return LogicEntity
 function _M:CreatePrefab(scene, prefab, transform)
     return scene:Instantiate(prefab, transform)
 end
@@ -20,10 +20,11 @@ end
 ---@param scene Scene
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
+---@param net_id number
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
----@return Entity, ServerGameObject
-function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfsm_definition)
+---@return LogicEntity, ServerGameObject
+function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definitions, hfsm_definition)
     local ctx = TL_Common.GetContext()
 
     local transform = TL_Common.Transform()
@@ -52,9 +53,11 @@ function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfs
         move_definition.m_cct = ctx:GetCCTManager():Get(entity)
         move_definition.m_speed = definition.m_move.m_speed
 
+        ---@type ServerGameObjectDefinition
         local go_definition = {}
         go_definition.m_did = spawn_info.m_did
         go_definition.m_move_component_definition = move_definition
+        go_definition.m_net_id = net_id
         script:initGameObject(go_definition)
     end
 
@@ -73,7 +76,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject|nil
+---@return LogicEntity, GameObject|nil
 function _M:CreateItem(scene, spawn_info, position, object_definitions)
     TL_Common.GetContext():Log("server doesn't support spawning item ", spawn_info.m_did, " yet")
     return TL_Common.null_entity, nil
@@ -84,7 +87,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject|nil
+---@return LogicEntity, GameObject|nil
 function _M:CreateFX(scene, spawn_info, position, object_definitions)
     TL_Common.GetContext():Log("server doesn't support spawning fx ", spawn_info.m_did, " yet")
     return TL_Common.null_entity, nil
@@ -95,7 +98,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject|nil
+---@return LogicEntity, GameObject|nil
 function _M:CreateSkill(scene, spawn_info, position, object_definitions)
     TL_Common.GetContext():Log("server doesn't support spawning skill ", spawn_info.m_did, " yet")
     return TL_Common.null_entity, nil

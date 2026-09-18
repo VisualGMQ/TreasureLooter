@@ -150,7 +150,7 @@ public:
     void SetCurTime(TimeType time);
 
     void Update(TimeType delta_time);
-    void Sync(Entity entity);
+    void Sync(PresentEntity entity);
 
     void SetRate(float rate);
     [[nodiscard]] float GetRate() const;
@@ -164,7 +164,7 @@ private:
     static std::underlying_type_t<AnimationPlayerID> next_id;
 
     AnimationPlayerID m_id = null_animation_player_id;
-    Entity m_entity = null_entity;
+    PresentEntity m_entity = null_entity;
     AnimationHandle m_animation;
 
     std::unordered_map<AnimationBindingPoint,
@@ -180,11 +180,12 @@ private:
     float m_rate = 1.0;
 };
 
-class AnimationPlayerManager : public MultiComponentManager<AnimationPlayer> {
+class AnimationPlayerManager
+    : public MultiComponentManager<AnimationPlayer, PresentEntity> {
 public:
     void Update(TimeType delta_time);
 
-    void RegisterEntity(Entity entity,
+    void RegisterEntity(PresentEntity entity,
                         const MultiAnimationPlayerDefinition& definition) {
         for (const auto& def : definition.m_animations) {
             AddComponent(entity, def);
@@ -194,15 +195,15 @@ public:
 
 class AnimationEndEvent {
 public:
-    AnimationEndEvent(AnimationPlayerID animation_player_id, Entity entity, AnimationHandle animation)
+    AnimationEndEvent(AnimationPlayerID animation_player_id, LogicEntity entity, AnimationHandle animation)
         : m_animation_player_id(animation_player_id), m_entity(entity), m_animation(animation) {}
 
     [[nodiscard]] AnimationPlayerID GetAnimationPlayerID() const { return m_animation_player_id; }
-    [[nodiscard]] Entity GetEntity() const { return m_entity; }
+    [[nodiscard]] LogicEntity GetEntity() const { return m_entity; }
     [[nodiscard]] AnimationHandle GetAnimation() const { return m_animation; }
 
 private:
     AnimationPlayerID m_animation_player_id;
-    Entity m_entity;
+    LogicEntity m_entity;
     AnimationHandle m_animation;
 };

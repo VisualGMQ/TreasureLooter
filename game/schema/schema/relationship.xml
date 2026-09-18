@@ -2,6 +2,6 @@
     <include>common/entity.hpp</include>
 
     <class name="RelationshipDefinition">
-        <array type="Entity" name="children"/>
+        <array type="LogicEntity" name="children"/>
     </class>
 </schema>

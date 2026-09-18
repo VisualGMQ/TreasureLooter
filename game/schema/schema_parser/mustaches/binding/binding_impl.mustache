@@ -15,6 +15,14 @@ void bindSchemaAssetManager(lua_State* L) {
                 return AssetInfoManager::FilenameIs{{{type}}}(filename);
             })
             {{/asset_filename_checks}}
+        .endNamespace();
+
+    // The asset managers (and the AssetsManager class itself) live in
+    // TL_Common so the hand-written bindings in TL_Common can extend the same
+    // class registration (LuaBridge merges registrations that share namespace
+    // and name).
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
             .beginClass<IAssetsManager>("AssetsManager")
             {{#asset_manager_getters}}
                 .addFunction("Get{{{type}}}Manager",

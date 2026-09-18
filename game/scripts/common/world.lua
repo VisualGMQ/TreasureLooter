@@ -1,8 +1,10 @@
 local ObjectDefinitionTable = require("common.object_def_table")
 
 ---@class World
----@field m_land_entity Entity
+---@field m_land_entity LogicEntity
+---@field m_spawn_points table<string, SpawnPoint>
 ---@field m_object_definitions ObjectDefinitionTable
+---@field m_level_definition LevelDefinitionHandle
 ---@field m_buff_appliers any
 local _M = {}
 _M.__index = _M
@@ -14,6 +16,9 @@ local g_world = nil
 function _M.new()
     local self = setmetatable({}, _M)
     self.m_land_entity = TL_Common.null_entity
+    self.m_object_definitions = {}
+    self.m_buff_appliers = {}
+    self.m_spawn_points = {}
     return self
 end
 

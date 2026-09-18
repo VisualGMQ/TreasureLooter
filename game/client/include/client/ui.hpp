@@ -161,54 +161,69 @@ private:
 };
 
 struct UIMouseHoverEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
 };
 
 struct UIMouseDownEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
     const Button& m_button;
 };
 
 struct UIMouseUpEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
     const Button& m_button;
 };
 
 struct UIMouseClickedEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
 };
 
 struct UICheckToggledEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
     bool m_checked = false;
 };
 
 struct UIDragEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
 };
 
-class UIComponentManager : public ComponentManager<UIWidget> {
+class UIComponentManager : public ComponentManager<UIWidget, PresentEntity> {
 public:
     UIComponentManager();
     ~UIComponentManager() override;
     void Update(TimeType elapse_time);
-    void SubmitDrawCommand(Entity);
+    void SubmitDrawCommand(LogicEntity);
     void HandleEvent();
 
-    void SetFocusedWidget(Entity entity);
-    Entity GetFocusedWidget() const;
-    bool IsFocusedWidget(Entity entity) const;
+    void SetFocusedWidget(LogicEntity entity);
+    LogicEntity GetFocusedWidget() const;
+    bool IsFocusedWidget(LogicEntity entity) const;
     bool IsCursorVisible() const;
 
+    // UI widgets are stored on present entities, but all UI code works with
+    // logic entities (it traverses the logic relationship tree).
+    [[nodiscard]] UIWidget* Get(LogicEntity entity) const {
+        return ComponentManager<UIWidget, PresentEntity>::Get(
+            ToPresentEntity(entity));
+    }
+    [[nodiscard]] bool Has(LogicEntity entity) const {
+        return ComponentManager<UIWidget, PresentEntity>::Has(
+            ToPresentEntity(entity));
+    }
+    [[nodiscard]] bool IsEnable(LogicEntity entity) const {
+        return ComponentManager<UIWidget, PresentEntity>::IsEnable(
+            ToPresentEntity(entity));
+    }
+
 private:
-    void updateSize(Entity);
-    void updateTransform(Entity);
+    void updateSize(LogicEntity);
+    void updateTransform(LogicEntity);
     /**
      * @param finger_index -1 means mouse
      */
-    void handleEvent(Entity, size_t finger_index, const Button&,
+    void handleEvent(LogicEntity, size_t finger_index, const Button&,
                      const Vec2& position, const Vec2& offset);
-    void render(Renderer&, Entity);
+    void render(Renderer&, LogicEntity);
     bool isFocusing(const UIWidget&, size_t finger_index) const;
 
     void handleTextInput(EventListenerID, const SDL_TextInputEvent& e);
@@ -217,7 +232,7 @@ private:
     static constexpr float CURSOR_BLINK_INTERVAL = 0.53f;
 
     bool m_is_first_update = true;
-    Entity m_focused_entity{};
+    LogicEntity m_focused_entity{};
 
     // for UITextInput
     float m_cursor_timer = 0;

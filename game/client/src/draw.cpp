@@ -36,20 +36,23 @@ void DrawCommandSubmitter::SubmitUI() {
     }
 }
 
-void DrawCommandSubmitter::submit(Entity root_entity) {
+void DrawCommandSubmitter::submit(LogicEntity root_entity) {
     submitRecursive(root_entity);
 }
 
-void DrawCommandSubmitter::submitUI(Entity root_entity) {
+void DrawCommandSubmitter::submitUI(LogicEntity root_entity) {
     submitUIRecursive(root_entity);
 }
 
-void DrawCommandSubmitter::submitRecursive(Entity entity) {
+void DrawCommandSubmitter::submitRecursive(LogicEntity entity) {
     PROFILE_SECTION();
+
+    PresentEntity present_entity = ToPresentEntity(entity);
 
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
 
-    auto draw_order = CLIENT_CONTEXT.m_draw_order_manager->Get(entity);
+    auto draw_order =
+        CLIENT_CONTEXT.m_draw_order_manager->Get(present_entity);
 
     bool should_enable_y_sorting =
         !CLIENT_CONTEXT.m_renderer->IsRecordingYSorting() && draw_order &&
@@ -58,9 +61,9 @@ void DrawCommandSubmitter::submitRecursive(Entity entity) {
         CLIENT_CONTEXT.m_renderer->BeginYSorting();
     }
 
-    CLIENT_CONTEXT.m_sprite_manager->SubmitDrawCommand(entity);
+    CLIENT_CONTEXT.m_sprite_manager->SubmitDrawCommand(present_entity);
     CLIENT_CONTEXT.m_tilemap_layer_render_component_manager->SubmitDrawCommand(
-        entity);
+        present_entity);
 
     TL_RETURN_IF_NULL(relationship);
     for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
@@ -72,12 +75,15 @@ void DrawCommandSubmitter::submitRecursive(Entity entity) {
     }
 }
 
-void DrawCommandSubmitter::submitUIRecursive(Entity entity) {
+void DrawCommandSubmitter::submitUIRecursive(LogicEntity entity) {
     PROFILE_SECTION();
+
+    PresentEntity present_entity = ToPresentEntity(entity);
 
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
 
-    auto draw_order = CLIENT_CONTEXT.m_draw_order_manager->Get(entity);
+    auto draw_order =
+        CLIENT_CONTEXT.m_draw_order_manager->Get(present_entity);
 
     bool should_enable_y_sorting =
         !CLIENT_CONTEXT.m_renderer->IsRecordingYSorting() && draw_order &&

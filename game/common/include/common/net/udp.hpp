@@ -43,6 +43,9 @@ public:
     [[nodiscard]] std::string GetIP() const;
     [[nodiscard]] uint32_t GetHost() const;
     [[nodiscard]] uint16_t GetPort() const;
+    // Mean round trip time in milliseconds, maintained by ENet for reliable
+    // exchanges (also exposed by the Lua binding as `UDPPeer:GetRTT()`).
+    [[nodiscard]] uint32_t GetRTT() const;
 
     [[nodiscard]] bool IsValid() const;
     void Reset();

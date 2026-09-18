@@ -4,7 +4,7 @@
 #include "common/debug_drawer.hpp"
 
 void ClientTilemapLayerCollisionComponentManager::RenderDebug() {
-    for (Entity entity : m_debug_entities) {
+    for (LogicEntity entity : m_debug_entities) {
         auto collision = Get(entity);
         TL_CONTINUE_IF_NULL(collision);
         renderCollision(*collision, *CLIENT_CONTEXT.m_debug_drawer);
@@ -12,7 +12,7 @@ void ClientTilemapLayerCollisionComponentManager::RenderDebug() {
 }
 
 void ClientTilemapLayerCollisionComponentManager::EnableDebugEntity(
-    Entity entity, bool enable) {
+    LogicEntity entity, bool enable) {
     if (enable) {
         m_debug_entities.insert(entity);
     } else {

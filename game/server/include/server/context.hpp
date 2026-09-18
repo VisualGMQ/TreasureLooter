@@ -14,11 +14,13 @@ public:
     ServerContext(ServerContext&&) = delete;
     ServerContext& operator=(ServerContext&&) = delete;
 
+    void InitSystem() override;
     void Initialize(int argc, char** argv) override;
     void HandleEvents(const SDL_Event& event) override;
     void Update() override;
     void Shutdown() override;
-    void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
+    void AttachComponentsOnLogicEntity(LogicEntity,
+                                       const EntityInstance&) override;
 
     [[nodiscard]] const ServerConfig& GetConfig() const;
 

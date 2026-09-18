@@ -3,7 +3,7 @@ local ClientGameObjectBehavior = require("client.gameobject_behavior")
 ---@class HFSMUtil
 local _M = {}
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return any
 function _M.GetGameObject(entity)
     local ctx = TL_Client.GetContext()
@@ -14,7 +14,7 @@ function _M.GetGameObject(entity)
     return behavior.m_gameobject
 end
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param state_id integer
 function _M.ChangeState(entity, state_id)
     local ctx = TL_Client.GetContext()

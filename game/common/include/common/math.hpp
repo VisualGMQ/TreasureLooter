@@ -585,12 +585,51 @@ struct Transform {
     };
 
     Transform();
+    Transform(const Transform &other);
+    Transform &operator=(const Transform &other);
+    ~Transform();
 
-    const Mat33 &GetLocalMat() const;
+    [[nodiscard]] const Mat33 &GetLocalMat() const;
 
-    const Mat33 &GetGlobalMat() const;
+    [[nodiscard]] const Mat33 &GetGlobalMat();
+    [[nodiscard]] const Mat33 &GetGlobalMat() const;
 
-    void UpdateMat(const Transform *parent);
+    /**
+     * update self and parents
+     */
+    void UpdateMat();
+
+    /**
+     * update all hierarchy
+     */
+    void UpdateHierarchy();
+
+    void MarkDirty();
+
+    void SetParent(const Transform *parent);
+
+    [[nodiscard]] const Transform *GetParent() const { return m_parent; }
+
+    /**
+     * Detach every child from this transform (their parent becomes null),
+     * without touching this transform itself. Used when this transform is
+     * removed so its children don't keep a dangling parent.
+     */
+    void DetachChildren();
+
+    /**
+     * Drop both the parent and the children links without touching any other
+     * transform. Only for bulk teardown (managers), where the destruction
+     * order is unspecified.
+     */
+    void ResetHierarchy();
+
+    [[nodiscard]] bool IsDirty() const;
+
+    /**
+     * @return whether the global matrix changed.
+     */
+    bool EnsureUpdated();
 
     bool operator==(const Transform &o) const noexcept {
         return m_position == o.m_position && m_rotation == o.m_rotation &&
@@ -600,8 +639,21 @@ struct Transform {
     bool operator!=(const Transform &o) const noexcept { return !(*this == o); }
 
 private:
+    [[nodiscard]] bool isLocalDirty() const;
+
+    // Remove this transform from its parent's children list (no dirty mark).
+    void detachFromParent();
+
     Mat33 m_mat;
     Mat33 m_global_mat;
+
+    Transform *m_parent = nullptr;
+    std::vector<Transform *> m_children;
+    bool m_is_dirty = true;
+
+    Vec2 m_cached_position;
+    Degrees m_cached_rotation;
+    Vec2 m_cached_scale;
 };
 
 /**

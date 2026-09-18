@@ -6,12 +6,30 @@
 #include "schema/serialize/anim.hpp"
 #include "schema/serialize/anim_player.hpp"
 #include "schema/serialize/flip.hpp"
+#include <cctype>
 #include <charconv>
 #include <stdexcept>
+#include <string_view>
 
 template <typename T>
 bool fromChars(const char* first, const char* last, T& value) {
     auto [ptr, ec] = std::from_chars(first, last, value);
+    return ec == std::errc{};
+}
+
+template <typename T>
+bool parseFloat(const char* first, const char* last, T& value) {
+    while (first != last && std::isspace(static_cast<unsigned char>(*first))) {
+        ++first;
+    }
+    if (first != last && *first == '+') {
+        ++first;
+    }
+    if (first == last) {
+        return false;
+    }
+    auto [ptr, ec] =
+        std::from_chars(first, last, value, std::chars_format::general);
     return ec == std::errc{};
 }
 
@@ -245,25 +263,29 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Path& payload) {
-    payload = node.value();
+    if (!node.value()) {
+        payload.clear();
+        return;
+    }
+    payload = std::string(node.value(), node.value_size());
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
-                                rapidxml::xml_document<>& doc, Entity payload,
+                                rapidxml::xml_document<>& doc, LogicEntity payload,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     node->value(doc.allocate_string(
-        std::to_string(static_cast<std::underlying_type_t<Entity>>(payload))
+        std::to_string(static_cast<std::underlying_type_t<LogicEntity>>(payload))
             .c_str()));
     return node;
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
-                 Entity& payload) {
-    std::underlying_type_t<Entity> numeric;
+                 LogicEntity& payload) {
+    std::underlying_type_t<LogicEntity> numeric;
     Deserialize(ctx, node, numeric);
-    payload = static_cast<Entity>(numeric);
+    payload = static_cast<LogicEntity>(numeric);
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
@@ -271,20 +293,22 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 const bool& payload, const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->value(payload ? "true" : "false");
+    node->value(doc.allocate_string(payload ? "true" : "false"));
     return node;
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  bool& payload) {
-    std::string_view value = node.value();
+    std::string_view value =
+        node.value() ? std::string_view{node.value(), node.value_size()}
+                     : std::string_view{};
     if (value == "true") {
         payload = true;
     } else if (value == "false") {
         payload = false;
     } else {
         LOGE("[Deserialize]: deserialize bool type failed, value: {}",
-             node.value());
+             node.value() ? node.value() : "(null)");
     }
 }
 
@@ -294,7 +318,7 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->value(doc.allocate_string(std::to_string(payload).c_str()));
+    node->value(doc.allocate_string(ToSerializedString(payload).c_str()));
     return node;
 }
 
@@ -303,27 +327,25 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 const float& payload, const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->value(doc.allocate_string(std::to_string(payload).c_str()));
+    node->value(doc.allocate_string(ToSerializedString(payload).c_str()));
     return node;
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  double& payload) {
-    try {
-        double value = std::stod(node.value());
-        payload = value;
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stod exception: {}, {}", e.what(), node.value());
+    if (!node.value() ||
+        !parseFloat(node.value(), node.value() + node.value_size(), payload)) {
+        LOGE("[Deserialize]: parse double failed, value: {}",
+             node.value() ? node.value() : "(null)");
     }
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  float& payload) {
-    try {
-        float value = std::stof(node.value());
-        payload = value;
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stof exception: {}, {}", e.what(), node.value());
+    if (!node.value() ||
+        !parseFloat(node.value(), node.value() + node.value_size(), payload)) {
+        LOGE("[Deserialize]: parse float failed, value: {}",
+             node.value() ? node.value() : "(null)");
     }
 }
 
@@ -356,18 +378,21 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->value(doc.allocate_string(std::to_string(payload.Value()).c_str()));
+    node->value(
+        doc.allocate_string(ToSerializedString(payload.Value()).c_str()));
     return node;
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Degrees& payload) {
-    try {
-        payload = std::stof(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stof exception: {}, value = {}", e.what(),
-             node.value());
+    float value = 0.0f;
+    if (!node.value() ||
+        !parseFloat(node.value(), node.value() + node.value_size(), value)) {
+        LOGE("[Deserialize]: parse Degrees failed, value = {}",
+             node.value() ? node.value() : "(null)");
+        return;
     }
+    payload = value;
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
@@ -376,18 +401,21 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
                                 const std::string& name) {
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
-    node->value(doc.allocate_string(std::to_string(payload.Value()).c_str()));
+    node->value(
+        doc.allocate_string(ToSerializedString(payload.Value()).c_str()));
     return node;
 }
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Radians& payload) {
-    try {
-        payload = std::stof(node.value());
-    } catch (std::exception& e) {
-        LOGE("[Deserialize]: stof exception: {}, value = {}", e.what(),
-             node.value());
+    float value = 0.0f;
+    if (!node.value() ||
+        !parseFloat(node.value(), node.value() + node.value_size(), value)) {
+        LOGE("[Deserialize]: parse Radians failed, value = {}",
+             node.value() ? node.value() : "(null)");
+        return;
     }
+    payload = value;
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
@@ -422,6 +450,10 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
 template <typename T>
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Handle<Image>& payload) {
+    if (!node.value()) {
+        LOGE("[Asset]: image node '{}' has no value", node.name());
+        return;
+    }
     Path filename = node.value();
     auto& manager = COMMON_CONTEXT.m_assets_manager->GetManager<Handle<T>>();
     payload = manager.Find(filename);
@@ -445,16 +477,24 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Tilemap*& payload) {
+    payload = nullptr;
+    if (!node.value()) {
+        LOGE("[Deserialize]: tilemap node '{}' has no value", node.name());
+        return;
+    }
+
     Path filename = node.value();
     auto& manager = COMMON_CONTEXT.m_assets_manager->GetManager<Tilemap>();
-    auto handle = manager.Load(filename);
+    auto handle = manager.Find(filename);
     if (!handle) {
         handle = manager.Load(filename);
     }
-
     if (!handle) {
-        payload = handle.Get();
+        LOGE("[Deserialize]: load tilemap '{}' failed", filename);
+        return;
     }
+
+    payload = handle.Get();
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
@@ -466,6 +506,10 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Handle<Tilemap>& payload) {
+    if (!node.value()) {
+        LOGE("[Asset]: tilemap node '{}' has no value", node.name());
+        return;
+    }
     Path filename = node.value();
     auto& manager = COMMON_CONTEXT.m_assets_manager->GetManager<Tilemap>();
     payload = manager.Find(filename);
@@ -486,8 +530,11 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  std::string& payload) {
-    Path filename = node.value();
-    payload = node.value();
+    if (!node.value()) {
+        payload.clear();
+        return;
+    }
+    payload.assign(node.value(), node.value_size());
 }
 
 rapidxml::xml_node<>* Serialize(CommonContext& ctx,
@@ -502,6 +549,10 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  UUIDv4& payload) {
+    if (!node.value()) {
+        LOGE("[Deserialize]: uuid node '{}' has no value", node.name());
+        return;
+    }
     payload = UUIDv4::CreateFromString(node.value());
 }
 
@@ -541,13 +592,13 @@ rapidxml::xml_node<>* Serialize(CommonContext& ctx,
     auto node = doc.allocate_node(rapidxml::node_type::node_element,
                                   doc.allocate_string(name.c_str()));
     auto r_attr = doc.allocate_attribute(
-        "r", doc.allocate_string(std::to_string(payload.r).c_str()));
+        "r", doc.allocate_string(ToSerializedString(payload.r).c_str()));
     auto g_attr = doc.allocate_attribute(
-        "g", doc.allocate_string(std::to_string(payload.g).c_str()));
+        "g", doc.allocate_string(ToSerializedString(payload.g).c_str()));
     auto b_attr = doc.allocate_attribute(
-        "b", doc.allocate_string(std::to_string(payload.b).c_str()));
+        "b", doc.allocate_string(ToSerializedString(payload.b).c_str()));
     auto a_attr = doc.allocate_attribute(
-        "a", doc.allocate_string(std::to_string(payload.a).c_str()));
+        "a", doc.allocate_string(ToSerializedString(payload.a).c_str()));
     node->append_attribute(r_attr);
     node->append_attribute(g_attr);
     node->append_attribute(b_attr);
@@ -561,16 +612,24 @@ void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
     auto g_attr = node.first_attribute("g");
     auto b_attr = node.first_attribute("b");
     auto a_attr = node.first_attribute("a");
-    try {
-        payload.r = std::stod(r_attr->value());
-        payload.g = std::stod(g_attr->value());
-        payload.b = std::stod(b_attr->value());
-        payload.a = std::stod(a_attr->value());
-    } catch (std::exception& e) {
-        LOGE(
-            "[Deserialize]: stod exception: {}, r = {}, g = {}, b = {}, a = {}",
-            e.what(), r_attr->value(), g_attr->value(), b_attr->value(),
-            a_attr->value());
+    // Without the null check a node that is missing one of the attributes
+    // dereferenced a null pointer and filled the color with garbage.
+    if (!r_attr || !g_attr || !b_attr || !a_attr) {
+        LOGE("[Deserialize]: color node '{}' misses r/g/b/a attributes",
+             node.name());
+        return;
+    }
+
+    const auto parse = [](const rapidxml::xml_attribute<>& attr,
+                          float& value) {
+        return parseFloat(attr.value(), attr.value() + attr.value_size(),
+                          value);
+    };
+    if (!parse(*r_attr, payload.r) || !parse(*g_attr, payload.g) ||
+        !parse(*b_attr, payload.b) || !parse(*a_attr, payload.a)) {
+        LOGE("[Deserialize]: parse Color failed, r = {}, g = {}, b = {}, a = {}",
+             r_attr->value(), g_attr->value(), b_attr->value(),
+             a_attr->value());
     }
 }
 
@@ -626,6 +685,13 @@ rapidxml::xml_node<>* serializeAnimTrack(CommonContext& ctx,
 
 #define TARGET_TYPE Vec2
     HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformScale) {
+        HANDLE_LINEAR_TRACK_SERIALIZE();
+        HANDLE_DISCRETE_TRACK_SERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_SERIALIZE(AnimationBindingPoint::TransformPositionOffset) {
         HANDLE_LINEAR_TRACK_SERIALIZE();
         HANDLE_DISCRETE_TRACK_SERIALIZE();
     }
@@ -759,10 +825,18 @@ deserializeTrack(CommonContext& ctx, rapidxml::xml_node<>& node) {
     }
 
     auto keyframes_node = node.first_node("keyframes");
+    if (!keyframes_node) {
+        LOGE("[Deserialize]: animation track has no keyframes node");
+        return {binding_point, nullptr};
+    }
     auto keyframe_node = keyframes_node->first_node("keyframe");
     AnimationTrackType type = AnimationTrackType::Discrete;
     auto type_node = node.first_node("type");
-    Deserialize(ctx, *type_node, type);
+    if (type_node) {
+        Deserialize(ctx, *type_node, type);
+    } else {
+        LOGE("[Deserialize]: animation track has no type node");
+    }
 
     std::unique_ptr<AnimationTrackBase> track;
 
@@ -784,6 +858,14 @@ deserializeTrack(CommonContext& ctx, rapidxml::xml_node<>& node) {
 
 #define TARGET_TYPE Degrees
     HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformRotation) {
+        HANDLE_CREATE_TRACK();
+        HANDLE_LINEAR_TRACK_DESERIALIZE();
+        HANDLE_DISCRETE_TRACK_DESERIALIZE();
+    }
+#undef TARGET_TYPE
+
+#define TARGET_TYPE Vec2
+    HANDLE_ANIM_DESERIALIZE(AnimationBindingPoint::TransformPositionOffset) {
         HANDLE_CREATE_TRACK();
         HANDLE_LINEAR_TRACK_DESERIALIZE();
         HANDLE_DISCRETE_TRACK_DESERIALIZE();
@@ -850,6 +932,11 @@ deserializeTrack(CommonContext& ctx, rapidxml::xml_node<>& node) {
     }
 #undef TARGET_TYPE
 
+    if (!track) {
+        LOGE("[Deserialize]: unsupported animation track (binding={}, type={})",
+             static_cast<int>(binding_point), static_cast<int>(type));
+    }
+
     return {binding_point, std::move(track)};
 }
 
@@ -859,27 +946,48 @@ deserializeTrack(CommonContext& ctx, rapidxml::xml_node<>& node) {
 
 void Deserialize(CommonContext& ctx, const rapidxml::xml_node<>& node,
                  Animation& payload) {
+    // Deserialization replaces the previous content (see the vector overload).
+    payload.GetTracks().clear();
+    payload.GetBindPointTracks().clear();
+
     auto tracks_node = node.first_node("tracks");
     if (tracks_node) {
-        auto n = tracks_node->first_node();
-        while (n) {
+        for (auto* n = tracks_node->first_node(); n; n = n->next_sibling()) {
             auto [binding, track] = deserializeTrack(ctx, *n);
+            if (!track) {
+                continue;
+            }
             payload.AddTrack(binding, std::move(track));
-            n = n->next_sibling();
         }
     }
 
     auto bind_point_tracks_node = node.first_node("bind_point_tracks");
     if (bind_point_tracks_node) {
-        auto n = bind_point_tracks_node->first_node();
-        while (n) {
+        for (auto* n = bind_point_tracks_node->first_node(); n;
+             n = n->next_sibling()) {
             auto name_attribute = n->first_attribute("name");
-            auto [_, track] = deserializeTrack(ctx, *n);
+            if (!name_attribute) {
+                LOGE("[Deserialize]: bind_point_tracks entry has no name");
+                continue;
+            }
+
+            auto [binding, track] = deserializeTrack(ctx, *n);
+            if (!track) {
+                continue;
+            }
+            // Only `BindPoint` tracks are `Vec2` tracks: anything else would
+            // make the downcast below undefined behaviour.
+            if (binding != AnimationBindingPoint::BindPoint) {
+                LOGE("[Deserialize]: bind_point_tracks entry '{}' has binding "
+                     "{} instead of BindPoint",
+                     name_attribute->value(), static_cast<int>(binding));
+                continue;
+            }
+
             payload.AddBindPointTrack(
                 name_attribute->value(),
                 std::unique_ptr<IAnimationTrack<Vec2>>(
                     static_cast<IAnimationTrack<Vec2>*>(track.release())));
-            n = n->next_sibling();
         }
     }
 }

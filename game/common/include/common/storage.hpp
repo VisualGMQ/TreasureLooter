@@ -22,6 +22,8 @@ public:
         const Path& filename, IOMode mode, bool binary = false,
         bool advance_mode = false);
 
+    static bool Exists(const Path& filename);
+
     size_t GetSize() const;
     std::vector<char> Read() const;
     void Write(const char* data, size_t size);

@@ -8,7 +8,7 @@ setmetatable(_M, { __index = SpawnedComponent })
 
 ---@param gameobject any
 ---@param mine_gameobject any
----@param controller_entity Entity
+---@param controller_entity LogicEntity
 ---@param target_x number
 ---@param spawn_anim_indices integer[]
 ---@return ClientSpawnedComponent

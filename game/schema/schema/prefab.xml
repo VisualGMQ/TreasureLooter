@@ -14,7 +14,7 @@
     <import>hfsm</import>
 
     <class name="ReplicateInfo">
-        <element name="raw_entity" type="Entity"/>
+        <element name="raw_entity" type="LogicEntity"/>
     </class>
 
     <asset name="Prefab" extension=".prefab">

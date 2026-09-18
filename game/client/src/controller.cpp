@@ -162,7 +162,7 @@ void PlayerController::initVirualJoystick(SceneHandle level,
     transform.m_position =
         static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize()) -
         client_config.m_virtual_joystick.m_offset;
-    Entity virtual_joystick_entity = level->Instantiate(joystick_prefab);
+    LogicEntity virtual_joystick_entity = level->Instantiate(joystick_prefab);
 
     SDL_WindowEvent resize_event{};
     resize_event.data1 = CLIENT_CONTEXT.m_window->GetWindowSize().w;
@@ -199,7 +199,7 @@ void PlayerController::initVirualAttackButton(SceneHandle level,
     transform.m_position =
         static_cast<Vec2>(CLIENT_CONTEXT.m_window->GetWindowSize()) -
         client_config.m_virtual_attack_button.m_offset;
-    Entity entity = level->Instantiate(button_prefab);
+    LogicEntity entity = level->Instantiate(button_prefab);
     *m_transform_mgr.Get(entity) = transform;
 
     Relationship* ui_relationship =

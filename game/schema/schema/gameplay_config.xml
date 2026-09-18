@@ -235,6 +235,9 @@
         <element name="map_definition" type="MapDefinition" />
         <element name="land" type="std::string" />
         <element name="player_related_definition" type="PlayerRelatedDefinition" />
+        <!--scripts attached to the local/remote player when it joins-->
+        <element name="client_player_script" type="Path" />
+        <element name="server_player_script" type="Path" />
         <array name="spawn_objects" type="ObjectSpawnDefinition"/>
     </asset>
 

@@ -22,13 +22,16 @@ local function context_debug_fill_rect_world(ctx, px, py, half, r, g, b, a)
     end
 end
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param display_name string
 ---@param relationship_mgr RelationshipManager
 local function draw_entity_tree(entity, display_name, relationship_mgr)
-    ImGui.PushID(entity)
-
     local relationship = relationship_mgr:Get(entity)
+    if not relationship then
+        return
+    end
+
+    ImGui.PushID(entity)
 
     local sel_mark = (selected_entity == entity) and " *" or ""
     local label = string.format("%s [%d]%s###hierarchy_%d", display_name, entity, sel_mark, entity)
@@ -48,7 +51,7 @@ local function draw_entity_tree(entity, display_name, relationship_mgr)
     if open then
         for i = 0, relationship:GetChildrenCount() - 1 do
             local child = relationship:Get(i)
-            draw_entity_tree(child, "Entity", relationship_mgr)
+            draw_entity_tree(child, "LogicEntity", relationship_mgr)
         end
         ImGui.TreePop()
     end

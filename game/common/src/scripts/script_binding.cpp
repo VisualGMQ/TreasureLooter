@@ -103,7 +103,7 @@ static int ScriptComponentManager_GetTable(lua_State* L) {
         return 1;
     }
 
-    auto entity = luabridge::Stack<Entity>::get(L, 2);
+    auto entity = luabridge::Stack<LogicEntity>::get(L, 2);
     if (!entity) {
         lua_pushnil(L);
         return 1;
@@ -317,6 +317,12 @@ void bindMath(lua_State* L) {
                              +[](Transform* t) {
                                  return GetPosition(t->GetGlobalMat());
                              })
+                // Refresh the cached local/global matrices after the fields
+                // were changed (render systems read the cached global mat).
+                .addFunction("UpdateMat", &Transform::UpdateMat)
+                // Same, but also refreshes the whole subtree (parent before
+                // children). Use this when the transform has children.
+                .addFunction("UpdateHierarchy", &Transform::UpdateHierarchy)
             .endClass()
             .beginClass<Region>("Region")
                 .template addConstructor<void ()>()
@@ -324,12 +330,22 @@ void bindMath(lua_State* L) {
                 .addPropertyReadWrite("m_size", &Region::m_size)
             .endClass()
             .beginClass<TransformManager>("TransformManager")
-                .addFunction("Get", +[](TransformManager* m, Entity e) {
+                .addFunction("Get", +[](TransformManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](TransformManager* m, Entity e) {
+                .addFunction("Has", +[](TransformManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
+            .endClass()
+            .beginClass<PresentTransformManager>("PresentTransformManager")
+                .addFunction("Get",
+                             +[](PresentTransformManager* m, PresentEntity e) {
+                                 return m->Get(e);
+                             })
+                .addFunction("Has",
+                             +[](PresentTransformManager* m, PresentEntity e) {
+                                 return m->Has(e);
+                             })
             .endClass()
         .endNamespace();
 }
@@ -636,7 +652,7 @@ void bindTimer(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TimerEvent>([fn, id=timer.GetID()](EventListenerID, const TimerEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTimer().GetID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     timer.SetTimerListener(listener_id);
                 })
@@ -644,7 +660,7 @@ void bindTimer(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TimerStopEvent>([fn, id=timer.GetID()](EventListenerID, const TimerStopEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTimer().GetID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     timer.SetTimerStopListener(listener_id);
                 })
@@ -674,12 +690,35 @@ void bindCCT(lua_State* L) {
                 .addFunction("GetPhysicsShape",
                              static_cast<PhysicsShape* (CharacterController::*)()>(
                                  &CharacterController::GetPhysicsShape))
+                .addFunction("GetTouchedShape",
+                             &CharacterController::GetTouchedShape)
+                .addFunction("GetTouchedNormal",
+                             &CharacterController::GetTouchedNormal)
+                .addFunction("GetTouchedShapeCount",
+                             +[](const CharacterController* cct) {
+                                 return cct->GetTouchedShapes().size();
+                             })
+                .addFunction("GetTouchedShapeAt",
+                             +[](const CharacterController* cct, size_t index)
+                                 -> PhysicsShape* {
+                                 const auto& shapes = cct->GetTouchedShapes();
+                                 return index < shapes.size()
+                                            ? shapes[index].m_shape
+                                            : nullptr;
+                             })
+                .addFunction("GetTouchedNormalAt",
+                             +[](const CharacterController* cct, size_t index) {
+                                 const auto& shapes = cct->GetTouchedShapes();
+                                 return index < shapes.size()
+                                            ? shapes[index].m_normal
+                                            : Vec2::ZERO;
+                             })
             .endClass()
             .beginClass<CCTManager>("CCTManager")
-                .addFunction("Get", +[](CCTManager* m, Entity e) {
+                .addFunction("Get", +[](CCTManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](CCTManager* m, Entity e) {
+                .addFunction("Has", +[](CCTManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
                 .addFunction("Enable", &CCTManager::Enable)
@@ -745,7 +784,7 @@ void bindPhysics(lua_State* L) {
                     })
             .endClass()
             .beginClass<StaticCollisionManager>("StaticCollisionManager")
-                .addFunction("Get", +[](StaticCollisionManager* m, Entity e) {
+                .addFunction("Get", +[](StaticCollisionManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
                 .addFunction("Has", &StaticCollisionManager::Has)
@@ -961,11 +1000,11 @@ void bindTilemapCollisionComponent(lua_State* L) {
             .beginClass<TilemapLayerCollisionComponentManager>(
                 "TilemapCollisionComponentManager")
                 .addFunction("Get",
-                             +[](TilemapLayerCollisionComponentManager* m, Entity e) {
+                             +[](TilemapLayerCollisionComponentManager* m, LogicEntity e) {
                                  return m->Get(e);
                              })
                 .addFunction("Has",
-                             +[](TilemapLayerCollisionComponentManager* m, Entity e) {
+                             +[](TilemapLayerCollisionComponentManager* m, LogicEntity e) {
                                  return m->Has(e);
                              })
             .endClass()
@@ -977,7 +1016,7 @@ void bindTrigger(lua_State* L) {
         .beginNamespace("TL_Common")
             .addProperty("null_trigger_id", +[]() -> TriggerID { return null_trigger_id; })
             .beginClass<Trigger>("Trigger")
-                .addConstructor<void(Entity, const TriggerDefinition&), void(const TriggerDefinition&), void(void)>()
+                .addConstructor<void(LogicEntity, const TriggerDefinition&), void(const TriggerDefinition&), void(void)>()
                 .addFunction("GetEventType",
                             &Trigger::GetEventType)
                 .addFunction("SetEventType", &Trigger::SetEventType)
@@ -994,7 +1033,7 @@ void bindTrigger(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TriggerEnterEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerEnterEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     trigger.SetEnterListener(listener_id);
                 })
@@ -1002,7 +1041,7 @@ void bindTrigger(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TriggerLeaveEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerLeaveEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     trigger.SetLeaveListener(listener_id);
                 })
@@ -1010,19 +1049,19 @@ void bindTrigger(lua_State* L) {
                     TL_RETURN_IF_FALSE(fn.isCallable());
                     auto listener_id = LuaEventListenerRegistry::Add<TriggerTouchEvent>([fn, id=trigger.GetID()](EventListenerID, const TriggerTouchEvent& event) {
                         TL_RETURN_IF_FALSE(event.GetTriggerID() == id);
-                        luabridge::call(fn, event);
+                        tl::CallLuaWithLog(fn, event);
                     });
                     trigger.SetTouchListener(listener_id);
                 })
                 .addFunction("Update", &Trigger::Update)
             .endClass()
             .beginClass<TriggerComponentManager>("TriggerComponentManager")
-                .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(Entity)>(&TriggerComponentManager::Get))
+                .addFunction("Get", static_cast<Trigger*(TriggerComponentManager::*)(LogicEntity)>(&TriggerComponentManager::Get))
                 .addFunction("Has", &TriggerComponentManager::Has)
                 .addFunction("Enable", &TriggerComponentManager::Enable)
                 .addFunction("Disable", &TriggerComponentManager::Disable)
                 .addFunction("IsEnable", &TriggerComponentManager::IsEnable)
-                .addFunction("RegisterEntity", +[](TriggerComponentManager* manager, Entity entity,  const TriggerDefinition& definition) {
+                .addFunction("RegisterEntity", +[](TriggerComponentManager* manager, LogicEntity entity,  const TriggerDefinition& definition) {
                         TL_RETURN_IF_NULL(manager);
                         manager->RegisterEntity(entity, entity, definition);
                         })
@@ -1055,14 +1094,14 @@ void bindRelationship(lua_State* L) {
                 .addFunction("RemoveFromParent", &Relationship::RemoveFromParent)
             .endClass()
             .beginClass<RelationshipManager>("RelationshipManager")
-                .addFunction("Get", +[](RelationshipManager* m, Entity e) {
+                .addFunction("Get", +[](RelationshipManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](RelationshipManager* m, Entity e) {
+                .addFunction("Has", +[](RelationshipManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
                 .addFunction("RegisterEntity",
-                             +[](RelationshipManager* m, Entity e) {
+                             +[](RelationshipManager* m, LogicEntity e) {
                                  m->RegisterEntity(e, e);
                              })
             .endClass()
@@ -1076,10 +1115,10 @@ void bindEntityName(lua_State* L) {
                 .addPropertyReadWrite("m_name", &EntityName::m_name)
             .endClass()
             .beginClass<EntityNameManager>("EntityNameManager")
-                .addFunction("Get", +[](EntityNameManager* m, Entity e) {
+                .addFunction("Get", +[](EntityNameManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](EntityNameManager* m, Entity e) {
+                .addFunction("Has", +[](EntityNameManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
                 .addFunction("FindChildByName", &EntityNameManager::FindChildByName)
@@ -1178,7 +1217,7 @@ void bindBindPoint(lua_State* L) {
                 .addProperty("m_bind_points", &BindPoints::m_bind_points)
             .endClass()
             .beginClass<BindPointsComponentManager>("BindPointsComponentManager")
-                    .addFunction("Get", +[](BindPointsComponentManager* m, Entity e) {
+                    .addFunction("Get", +[](BindPointsComponentManager* m, LogicEntity e) {
                         return m->Get(e);
                     })
                     .addFunction("Has", &BindPointsComponentManager::Has)
@@ -1218,7 +1257,6 @@ void bindSceneManager(lua_State* L) {
 void bindHandleTypes(lua_State* L) {
     BindHandle<ImageBase>("ImageHandle", L, "Image");
     BindHandle<Scene>("SceneHandle", L, "Scene");
-    BindHandle<Prefab>("PrefabHandle", L, "Prefab");
     BindHandle<Animation>("AnimationHandle", L, "Animation");
     BindHandle<Tilemap>("TilemapHandle", L, "Tilemap");
     BindHandle<FontBase>("FontHandle", L, "Font");
@@ -1236,7 +1274,7 @@ void bindEntity(lua_State* L) {
         .beginNamespace("TL_Common")
         .addProperty(
             "null_entity",
-            +[]() -> Entity { return static_cast<Entity>(null_entity); })
+            +[]() -> LogicEntity { return static_cast<LogicEntity>(null_entity); })
         .endNamespace();
 }
 
@@ -1269,6 +1307,7 @@ void bindUDP(lua_State* L) {
                 .addConstructor<void(void)>()
                 .addFunction("Disconnect", &UDPPeer::Disconnect)
                 .addFunction("GetID", &UDPPeer::GetID)
+                .addFunction("GetRTT", &UDPPeer::GetRTT)
                 .addFunction("IsValid", &UDPPeer::IsValid)
                 .addStaticProperty("InvalidID",
                                    +[]() { return UDPPeer::InvalidID; })

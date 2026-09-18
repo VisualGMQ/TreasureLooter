@@ -11,7 +11,8 @@ Vec2 BindPoint::GetGlobalPosition() const {
 void BindPoint::UpdateGlobalPosition(const Transform& parent) {
     Transform transform;
     transform.m_position = m_position;
-    transform.UpdateMat(&parent);
+    transform.SetParent(&parent);
+    transform.UpdateMat();
     auto& global_mat = transform.GetGlobalMat();
     m_global_position = GetPosition(global_mat);
 }

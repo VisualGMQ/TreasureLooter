@@ -7,13 +7,11 @@
 
 ---@class Window
 
----@class Sprite
----@field m_image ImageHandle
----@field m_region Region
----@field m_size Vec2
----@field m_anchor Vec2
----@field m_color Color
----@field m_flip number
+-- `Sprite` is a C++ alias of `SpriteDefinition` (client/include/client/sprite.hpp:
+-- `using Sprite = SpriteDefinition;`). It is bound once by schema_meta.lua as
+-- `SpriteDefinition`, so here it is only a LuaCATS alias, not a second runtime
+-- class (`TL_Client.Sprite` does not exist at runtime).
+---@alias Sprite SpriteDefinition
 
 ---@class Action
 ---@field IsPressed fun(self: Action, id: number?): boolean
@@ -55,12 +53,12 @@
 ---@field SetBoundary fun(self: Camera, boundary: Rect)
 
 ---@class SpriteManager
----@field Get fun(self: SpriteManager, entity: Entity): Sprite?
----@field Has fun(self: SpriteManager, entity: Entity): boolean
----@field IsEnable fun(self: SpriteManager, entity: Entity): boolean
----@field Enable fun(self: SpriteManager, entity: Entity)
----@field Disable fun(self: SpriteManager, entity: Entity)
----@field RegisterEntity fun(self: SpriteManager, entity: Entity, def: Sprite)
+---@field Get fun(self: SpriteManager, entity: LogicEntity): Sprite?
+---@field Has fun(self: SpriteManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: SpriteManager, entity: LogicEntity): boolean
+---@field Enable fun(self: SpriteManager, entity: LogicEntity)
+---@field Disable fun(self: SpriteManager, entity: LogicEntity)
+---@field RegisterEntity fun(self: SpriteManager, entity: LogicEntity, def: Sprite)
 
 ---@class DrawOrder
 ---@field m_z_order number
@@ -68,9 +66,9 @@
 ---@field GetGlobalOrder fun(self: DrawOrder): number
 
 ---@class DrawOrderManager
----@field Get fun(self: DrawOrderManager, entity: Entity): DrawOrder?
----@field Has fun(self: DrawOrderManager, entity: Entity): boolean
----@field RegisterEntity fun(self: DrawOrderManager, entity: Entity, def: DrawOrderDefinition)
+---@field Get fun(self: DrawOrderManager, entity: LogicEntity): DrawOrder?
+---@field Has fun(self: DrawOrderManager, entity: LogicEntity): boolean
+---@field RegisterEntity fun(self: DrawOrderManager, entity: LogicEntity, def: DrawOrderDefinition)
 
 ---@class AnimationPlayer
 ---@field Play fun(self: AnimationPlayer)
@@ -86,7 +84,7 @@
 ---@field ChangeAnimation fun(self: AnimationPlayer, handle: AnimationHandle)
 ---@field ClearAnimation fun(self: AnimationPlayer)
 ---@field HasAnimation fun(self: AnimationPlayer): boolean
----@field Sync fun(self: AnimationPlayer, entity: Entity)
+---@field Sync fun(self: AnimationPlayer, entity: LogicEntity)
 ---@field SetRate fun(self: AnimationPlayer, rate: number)
 ---@field GetRate fun(self: AnimationPlayer): number
 ---@field EnableAutoPlay fun(self: AnimationPlayer, enable: boolean)
@@ -94,27 +92,27 @@
 ---@field GetID fun(self: AnimationPlayer): number
 
 ---@class AnimationPlayerManager
----@field AddComponent fun(self: AnimationPlayerManager, entity: Entity, def: AnimationPlayerDefinition): AnimationPlayer?
----@field Get fun(self: AnimationPlayerManager, entity: Entity, index: number): AnimationPlayer?
----@field GetComponentSize fun(self: AnimationPlayerManager, entity: Entity): number
----@field RemoveComponent fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer)
----@field Has fun(self: AnimationPlayerManager, entity: Entity): boolean
----@field IsEnable fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer): boolean
----@field Enable fun(self: AnimationPlayerManager, entity: Entity, index: number)
----@field EnablePlayer fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer)
----@field EnableAll fun(self: AnimationPlayerManager, entity: Entity)
----@field Disable fun(self: AnimationPlayerManager, entity: Entity, index: number)
----@field DisablePlayer fun(self: AnimationPlayerManager, entity: Entity, player: AnimationPlayer)
----@field DisableAll fun(self: AnimationPlayerManager, entity: Entity)
----@field RegisterEntity fun(self: AnimationPlayerManager, entity: Entity, def: MultiAnimationPlayerDefinition)
+---@field AddComponent fun(self: AnimationPlayerManager, entity: LogicEntity, def: AnimationPlayerDefinition): AnimationPlayer?
+---@field Get fun(self: AnimationPlayerManager, entity: LogicEntity, index: number): AnimationPlayer?
+---@field GetComponentSize fun(self: AnimationPlayerManager, entity: LogicEntity): number
+---@field RemoveComponent fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer)
+---@field Has fun(self: AnimationPlayerManager, entity: LogicEntity): boolean
+---@field IsEnable fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer): boolean
+---@field Enable fun(self: AnimationPlayerManager, entity: LogicEntity, index: number)
+---@field EnablePlayer fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer)
+---@field EnableAll fun(self: AnimationPlayerManager, entity: LogicEntity)
+---@field Disable fun(self: AnimationPlayerManager, entity: LogicEntity, index: number)
+---@field DisablePlayer fun(self: AnimationPlayerManager, entity: LogicEntity, player: AnimationPlayer)
+---@field DisableAll fun(self: AnimationPlayerManager, entity: LogicEntity)
+---@field RegisterEntity fun(self: AnimationPlayerManager, entity: LogicEntity, def: MultiAnimationPlayerDefinition)
 
 ---@class TilemapRenderComponent
 ---@field GetLayer fun(self: TilemapRenderComponent): TilemapLayer?
 ---@field GetTilemap fun(self: TilemapRenderComponent): TilemapHandle
 
 ---@class TilemapRenderComponentManager
----@field Get fun(self: TilemapRenderComponentManager, entity: Entity): TilemapRenderComponent?
----@field Has fun(self: TilemapRenderComponentManager, entity: Entity): boolean
+---@field Get fun(self: TilemapRenderComponentManager, entity: LogicEntity): TilemapRenderComponent?
+---@field Has fun(self: TilemapRenderComponentManager, entity: LogicEntity): boolean
 
 ---@class UITextInput
 ---@field m_align number
@@ -138,7 +136,19 @@
 ---@field GetCursorX fun(self: UITextInput): number
 ---@field RefreshText fun(self: UITextInput)
 
+---@class PlayerController
+--- Virtual controls exist on Android only; the calls are no-ops elsewhere.
+---@field RegisterVirtualController fun(self: PlayerController, scene: SceneHandle)
+---@field DestroyVirtualController fun(self: PlayerController, scene: SceneHandle)
+
+---@class UIText
+---@field m_align number
+---@field m_color Color
+---@field ChangeText fun(self: UIText, text: string)
+---@field GetText fun(self: UIText): string
+
 ---@class UIWidget
+---@field m_enable_draw boolean
 ---@field m_use_clip boolean
 ---@field m_disabled boolean
 ---@field m_selected boolean
@@ -146,44 +156,48 @@
 ---@field m_margin Vec2
 ---@field m_padding Vec2
 ---@field GetTextInput fun(self: UIWidget): UITextInput?
+---@field GetText fun(self: UIWidget): UIText?
 
 ---@class UIComponentManager
----@field Get fun(self: UIComponentManager, entity: Entity): UIWidget?
----@field Has fun(self: UIComponentManager, entity: Entity): boolean
+---@field Get fun(self: UIComponentManager, entity: LogicEntity): UIWidget?
+---@field Has fun(self: UIComponentManager, entity: LogicEntity): boolean
 
 ---@class UIMouseHoverEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 
 ---@class UIMouseDownEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 ---@field GetButton fun(self: UIMouseDownEvent): MouseButton
 
 ---@class UIMouseUpEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 ---@field GetButton fun(self: UIMouseUpEvent): MouseButton
 
 ---@class UIMouseClickedEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 
 ---@class UICheckToggledEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 ---@field m_checked boolean
 
 ---@class UIDragEvent
----@field m_entity Entity
+---@field m_entity LogicEntity
 
 ---@class AnimationEndEvent
 ---@field GetAnimationPlayerID fun(self: AnimationEndEvent): number
----@field GetEntity fun(self: AnimationEndEvent): Entity
+---@field GetEntity fun(self: AnimationEndEvent): LogicEntity
 ---@field GetAnimation fun(self: AnimationEndEvent): AnimationHandle
 
 ---@class ClientContext : CommonContext
 ---@field GetCamera fun(self: ClientContext): Camera
+---@field GetPresentEntity fun(self: ClientContext, entity: LogicEntity): PresentEntity
+---@field GetPresentTransformManager fun(self: ClientContext): PresentTransformManager
 ---@field GetSpriteManager fun(self: ClientContext): SpriteManager
 ---@field GetDrawOrderManager fun(self: ClientContext): DrawOrderManager
 ---@field GetRenderer fun(self: ClientContext): Renderer
 ---@field GetWindow fun(self: ClientContext): Window
 ---@field GetInputManager fun(self: ClientContext): InputManager
+---@field GetPlayerController fun(self: ClientContext): PlayerController
 ---@field GetAnimationPlayerManager fun(self: ClientContext): AnimationPlayerManager
 ---@field GetUIManager fun(self: ClientContext): UIComponentManager
 ---@field GetTilemapRenderComponentManager fun(self: ClientContext): TilemapRenderComponentManager
@@ -207,7 +221,6 @@
 -- The runtime global table created by `beginNamespace("TL_Client")`.
 ---@class TL_Client
 -- constructors
----@field Sprite fun(): Sprite
 -- schema definition constructors registered under this namespace
 ---@field DrawOrderDefinition fun(): DrawOrderDefinition
 ---@field AnimationPlayerDefinition fun(): AnimationPlayerDefinition

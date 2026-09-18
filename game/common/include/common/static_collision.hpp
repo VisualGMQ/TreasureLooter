@@ -10,7 +10,7 @@ class StaticCollision {
 public:
     friend class StaticCollisionManager;
 
-    explicit StaticCollision(Entity entity, const StaticCollisionDefinition&);
+    explicit StaticCollision(LogicEntity entity, const StaticCollisionDefinition&);
     ~StaticCollision();
 
     [[nodiscard]] std::size_t GetPhysicsShapeCount() const noexcept {
@@ -40,7 +40,7 @@ private:
 
 class StaticCollisionManager : public ComponentManager<StaticCollision> {
 public:
-    void Enable(Entity) override;
-    void Disable(Entity) override;
+    void Enable(LogicEntity) override;
+    void Disable(LogicEntity) override;
     void Update();
 };

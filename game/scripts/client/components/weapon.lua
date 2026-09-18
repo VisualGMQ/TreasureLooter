@@ -1,7 +1,7 @@
 local WeaponComponent = require("common.components.weapon")
 
 ---@class ClientWeaponComponentDefinition
----@field m_weapon_entity Entity
+---@field m_weapon_entity LogicEntity
 
 ---@class ClientWeaponComponent : WeaponComponent
 local _M = {}

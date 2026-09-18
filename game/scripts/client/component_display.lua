@@ -108,9 +108,12 @@ function _M.DisplayPhysicsShapeReadonly(id_suffix, shape)
     ImGui.PopID()
 end
 
----@param t Transform
+---@param t Transform?
 ---@return Vec2
 function _M.TransformWorldPosition(t)
+    if not t then
+        return TL_Common.Vec2.ZERO
+    end
     local ok, w = pcall(function()
         return t:GetGlobalPosition()
     end)
@@ -133,7 +136,7 @@ local function bind_point_world_position(pt)
 end
 
 ---@param script_mgr ScriptComponentManager
----@param e Entity
+---@param e LogicEntity
 ---@return boolean|nil
 local function script_manager_is_enable(script_mgr, e)
     local ok, v = pcall(function()
@@ -181,8 +184,11 @@ local function display_color_rgba(title, c)
     ImGui.PopID()
 end
 
----@param t Transform
+---@param t Transform?
 function _M.DisplayTransform(t)
+    if not t then
+        return
+    end
     ImGui.PushID("Transform")
     _M.DisplayVec2("m_position (local)", t.m_position)
     local rot_deg = 0
@@ -200,8 +206,11 @@ function _M.DisplayTransform(t)
     ImGui.PopID()
 end
 
----@param rel Relationship
+---@param rel Relationship?
 function _M.DisplayRelationship(rel)
+    if not rel then
+        return
+    end
     ImGui.PushID("Relationship")
     local children_count = rel:GetChildrenCount()
     if children_count > 0 then
@@ -217,8 +226,11 @@ function _M.DisplayRelationship(rel)
     ImGui.PopID()
 end
 
----@param s Sprite
+---@param s Sprite?
 function _M.DisplaySprite(s)
+    if not s then
+        return
+    end
     ImGui.PushID("Sprite")
     local img = s.m_image
     if img ~= nil and img:IsValid() then
@@ -249,8 +261,11 @@ function _M.DisplayDrawOrder(order)
     ImGui.PopID()
 end
 
----@param ap AnimationPlayer
+---@param ap AnimationPlayer?
 function _M.DisplayAnimationPlayer(ap)
+    if not ap then
+        return
+    end
     ImGui.PushID("AnimationPlayer")
     readonly_checkbox("IsPlaying", ap:IsPlaying())
     readonly_checkbox("IsAutoPlayEnabled", ap:IsAutoPlayEnabled())
@@ -263,7 +278,7 @@ function _M.DisplayAnimationPlayer(ap)
 end
 
 ---@param anim_mgr AnimationPlayerManager
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayAnimationPlayerManager(anim_mgr, e)
     ImGui.PushID("AnimationPlayerManager")
     local count = anim_mgr:GetComponentSize(e)
@@ -314,7 +329,7 @@ local function inspect_script_value(label, v, depth)
 end
 
 ---@param script_mgr ScriptComponentManager
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayScript(script_mgr, e)
     ImGui.PushID("Script")
     local script_en = script_manager_is_enable(script_mgr, e)
@@ -353,8 +368,11 @@ function _M.DisplayUITextInput(ti)
     ImGui.PopID()
 end
 
----@param ui UIWidget
+---@param ui UIWidget?
 function _M.DisplayUIWidget(ui)
+    if not ui then
+        return
+    end
     ImGui.PushID("UIWidget")
     readonly_checkbox("m_use_clip", ui.m_use_clip)
     readonly_checkbox("m_disabled", ui.m_disabled)
@@ -370,8 +388,11 @@ function _M.DisplayUIWidget(ui)
     ImGui.PopID()
 end
 
----@param tc TilemapRenderComponent
+---@param tc TilemapRenderComponent?
 function _M.DisplayTilemapRenderComponent(tc)
+    if not tc then
+        return
+    end
     ImGui.PushID("TilemapRender")
     readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
     if tc:GetTilemap() then
@@ -382,8 +403,11 @@ function _M.DisplayTilemapRenderComponent(tc)
     ImGui.PopID()
 end
 
----@param tc TilemapCollisionComponent
+---@param tc TilemapCollisionComponent?
 function _M.DisplayTilemapCollisionComponent(tc)
+    if not tc then
+        return
+    end
     ImGui.PushID("TilemapCollision")
     readonly_checkbox("has GetLayer ptr", tc:GetLayer() ~= nil)
     local col = tc:GetTilemapCollision()
@@ -425,7 +449,7 @@ function _M.DisplayTrigger(tr)
 end
 
 ---@param bind_mgr BindPointsComponentManager
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayBindPoints(bind_mgr, e)
     ImGui.PushID("BindPoints")
     local ok, err = pcall(function()
@@ -455,8 +479,11 @@ function _M.DisplayBindPoints(bind_mgr, e)
     ImGui.PopID()
 end
 
----@param sc StaticCollision
+---@param sc StaticCollision?
 function _M.DisplayStaticCollision(sc)
+    if not sc then
+        return
+    end
     ImGui.PushID("StaticCollision")
     local n = sc:GetPhysicsShapeCount()
     readonly_drag_int("physics shape count", n)
@@ -483,8 +510,11 @@ function _M.DisplayStaticCollision(sc)
     ImGui.PopID()
 end
 
----@param cct CharacterController
+---@param cct CharacterController?
 function _M.DisplayCharacterController(cct)
+    if not cct then
+        return
+    end
     ImGui.PushID("CCT")
     readonly_drag_float("GetPosition.x", cct:GetPosition().x)
     readonly_drag_float("GetPosition.y", cct:GetPosition().y)
@@ -503,9 +533,9 @@ end
 
 --- 根据 ctx / entity 绘制各 Component（由 debug Inspector 调用）
 ---@param ctx ClientContext
----@param e Entity
+---@param e LogicEntity
 function _M.DisplayInspector(ctx, e)
-    ImGui.Text(string.format("Entity: %d", e))
+    ImGui.Text(string.format("LogicEntity: %d", e))
 
     local transform_mgr = ctx:GetTransformManager()
     if transform_mgr:Has(e) then

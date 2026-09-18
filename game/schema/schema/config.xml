@@ -19,6 +19,8 @@
         <element name="entry_scene" type="Path"/>
 
         <element name="tile_in_chunk_size" type = "Vec2UI"/>
+        <element name="client_fps" type="uint32_t" default="240"/>
+        <element name="server_fps" type="uint32_t" default="30"/>
     </asset>
 
     <asset name="ClientConfig" extension=".client_config">
@@ -28,6 +30,7 @@
 
         <element name="camera_scale" type = "Vec2" default="{1, 1}"/>
         <element name="logic_size" type="Vec2UI" default="{1024, 720}"/>
+        <element name="screen_color" type="Color" default="Color::White"/>
         <element name="virtual_joystick" type="VirtualJoystickConfig"/>
         <element name="virtual_attack_button" type="VirtualButtonConfig"/>
         <handle  name="default_font" type="Font"/>
@@ -36,5 +39,7 @@
     <asset name="ServerConfig" extension=".server_config">
         <!-- don't use handle, due to asset rely on ClientConfig itself! -->
         <element name="global_script" type="Path"/>
+        <element name="listen_ip" type="std::string" default='"0.0.0.0"'/>
+        <element name="listen_port" type="uint32_t" default="1238"/>
     </asset>
 </schema>

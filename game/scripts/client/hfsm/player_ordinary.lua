@@ -3,11 +3,11 @@ local ClientAttackComponent = require("client.components.attack")
 local HFSMUtil = require("client.hfsm.hfsm_util")
 
 ---@class PlayerOrdinaryNode
----@field _entity Entity
+---@field _entity LogicEntity
 local _M = {}
 _M.__index = _M
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return PlayerOrdinaryNode
 function _M.new(entity)
     local self = setmetatable({}, _M)
@@ -17,6 +17,7 @@ end
 
 function _M:OnInit()
     local world = ClientWorld.GetInst()
+    ---@cast world ClientWorld
     local go = HFSMUtil.GetGameObject(self._entity)
     if go and go.m_interact_component then
         go.m_interact_component:SetHintFX(world.m_player_hint)

@@ -6,11 +6,12 @@
 
 #include <algorithm>
 
-template <typename T>
+template <typename T, typename EntityT = LogicEntity>
 class ComponentManager {
 public:
     using component_type = std::unique_ptr<T>;
     using expose_type = T*;
+    using entity_type = EntityT;
 
     ComponentManager() = default;
     ComponentManager(const ComponentManager&) = delete;
@@ -21,7 +22,7 @@ public:
      * register component on entity
      */
     template <typename... Args>
-    void RegisterEntity(Entity entity, Args&&... args) {
+    void RegisterEntity(EntityT entity, Args&&... args) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             LOGW("[Component]: entity {} already registered", entity);
             return;
@@ -36,7 +37,7 @@ public:
      * register inherit type of component on entity
      */
     template <typename U, typename... Args>
-    void RegisterEntityByDerive(Entity entity, Args&&... args) {
+    void RegisterEntityByDerive(EntityT entity, Args&&... args) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             LOGW("[Component]: entity {} already registered", entity);
             return;
@@ -47,39 +48,39 @@ public:
             Component{std::make_unique<U>(std::forward<Args>(args)...), true});
     }
 
-    void RemoveEntity(Entity entity) { m_components.erase(entity); }
+    void RemoveEntity(EntityT entity) { m_components.erase(entity); }
 
-    [[nodiscard]] bool Has(Entity entity) const {
+    [[nodiscard]] bool Has(EntityT entity) const {
         return m_components.find(entity) != m_components.end();
     }
 
-    [[nodiscard]] bool IsEnable(Entity entity) const {
+    [[nodiscard]] bool IsEnable(EntityT entity) const {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             return it->second.m_enable;
         }
         return false;
     }
 
-    virtual void Enable(Entity entity) {
+    virtual void Enable(EntityT entity) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             it->second.m_enable = true;
         }
     }
 
-    virtual void Disable(Entity entity) {
+    virtual void Disable(EntityT entity) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             it->second.m_enable = false;
         }
     }
 
-    [[nodiscard]] expose_type Get(Entity entity) const {
+    [[nodiscard]] expose_type Get(EntityT entity) const {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             return it->second.m_component.get();
         }
         return nullptr;
     }
 
-    [[nodiscard]] virtual expose_type Get(Entity entity) {
+    [[nodiscard]] virtual expose_type Get(EntityT entity) {
         return const_cast<expose_type>(std::as_const(*this).Get(entity));
     }
 
@@ -91,10 +92,10 @@ protected:
         bool m_enable = true;
     };
 
-    std::unordered_map<Entity, Component> m_components;
+    std::unordered_map<EntityT, Component> m_components;
 
     template <typename U>
-    void doReplaceComponent(Entity entity, U&& component) {
+    void doReplaceComponent(EntityT entity, U&& component) {
         if (auto it = m_components.find(entity); it != m_components.end()) {
             *it->second.m_component = std::forward<U>(component);
             it->second.m_enable = true;
@@ -107,11 +108,12 @@ protected:
     }
 };
 
-template <typename T>
+template <typename T, typename EntityT = LogicEntity>
 class MultiComponentManager {
 public:
     using component_type = std::unique_ptr<T>;
     using expose_type = T*;
+    using entity_type = EntityT;
 
     MultiComponentManager() = default;
     MultiComponentManager(const MultiComponentManager&) = delete;
@@ -119,7 +121,7 @@ public:
     virtual ~MultiComponentManager() = default;
 
     template <typename... Args>
-    expose_type AddComponent(Entity entity, Args&&... args) {
+    expose_type AddComponent(EntityT entity, Args&&... args) {
         auto [it, _] =
             m_components.try_emplace(entity, std::vector<Component>{});
         it->second.push_back(
@@ -127,9 +129,9 @@ public:
         return it->second.back().m_component.get();
     }
 
-    void RemoveEntity(Entity entity) { m_components.erase(entity); }
+    void RemoveEntity(EntityT entity) { m_components.erase(entity); }
 
-    void RemoveComponent(Entity entity, T* component) {
+    void RemoveComponent(EntityT entity, T* component) {
         TL_RETURN_IF_NULL(component);
 
         auto it = m_components.find(entity);
@@ -150,7 +152,7 @@ public:
         }
     }
 
-    [[nodiscard]] bool IsEnable(Entity entity, T* component) const {
+    [[nodiscard]] bool IsEnable(EntityT entity, T* component) const {
         TL_RETURN_FALSE_IF_NULL(component);
 
         auto it = m_components.find(entity);
@@ -166,7 +168,7 @@ public:
         return false;
     }
 
-    void Enable(Entity entity, uint32_t index) {
+    void Enable(EntityT entity, uint32_t index) {
         auto it = m_components.find(entity);
         if (it == m_components.end() || index >= it->second.size()) {
             return;
@@ -174,7 +176,7 @@ public:
         it->second[index].m_enable = true;
     }
 
-    void Enable(Entity entity, T* component) {
+    void Enable(EntityT entity, T* component) {
         TL_RETURN_IF_NULL(component);
 
         auto it = m_components.find(entity);
@@ -190,7 +192,7 @@ public:
         }
     }
 
-    void EnableAll(Entity entity) {
+    void EnableAll(EntityT entity) {
         auto it = m_components.find(entity);
         if (it == m_components.end()) {
             return;
@@ -201,7 +203,7 @@ public:
         }
     }
 
-    void Disable(Entity entity, uint32_t index) {
+    void Disable(EntityT entity, uint32_t index) {
         auto it = m_components.find(entity);
         if (it == m_components.end() || index >= it->second.size()) {
             return;
@@ -209,7 +211,7 @@ public:
         it->second[index].m_enable = false;
     }
 
-    void Disable(Entity entity, T* component) {
+    void Disable(EntityT entity, T* component) {
         TL_RETURN_IF_NULL(component);
 
         auto it = m_components.find(entity);
@@ -225,7 +227,7 @@ public:
         }
     }
 
-    void DisableAll(Entity entity) {
+    void DisableAll(EntityT entity) {
         auto it = m_components.find(entity);
         if (it == m_components.end()) {
             return;
@@ -236,7 +238,7 @@ public:
         }
     }
 
-    [[nodiscard]] size_t GetComponentSize(Entity entity) const {
+    [[nodiscard]] size_t GetComponentSize(EntityT entity) const {
         auto it = m_components.find(entity);
         if (it == m_components.end()) {
             return 0;
@@ -244,11 +246,11 @@ public:
         return it->second.size();
     }
 
-    [[nodiscard]] bool Has(Entity entity) const {
+    [[nodiscard]] bool Has(EntityT entity) const {
         return m_components.find(entity) != m_components.end();
     }
 
-    [[nodiscard]] expose_type Get(Entity entity, uint32_t index) const {
+    [[nodiscard]] expose_type Get(EntityT entity, uint32_t index) const {
         auto it = m_components.find(entity);
         if (it == m_components.end() || index >= it->second.size()) {
             return nullptr;
@@ -256,7 +258,7 @@ public:
         return it->second[index].m_component.get();
     }
 
-    [[nodiscard]] expose_type Get(Entity entity, uint32_t index) {
+    [[nodiscard]] expose_type Get(EntityT entity, uint32_t index) {
         return const_cast<expose_type>(std::as_const(*this).Get(entity, index));
     }
 
@@ -268,5 +270,5 @@ protected:
         bool m_enable = true;
     };
 
-    std::unordered_map<Entity, std::vector<Component>> m_components;
+    std::unordered_map<EntityT, std::vector<Component>> m_components;
 };

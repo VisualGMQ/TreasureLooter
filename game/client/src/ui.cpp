@@ -128,7 +128,12 @@ float UITextInput::GetCursorX() {
 void UITextInput::regenerateText() {
     m_font->SetFontSize(m_pt);
     m_cursor_x_dirty = true;
-    TL_RETURN_IF_TRUE(m_text.empty());
+    if (m_text.empty()) {
+        // Drop the glyph texture generated for the previous text, otherwise
+        // deleting the last character leaves it on screen.
+        m_text_image = Image{};
+        return;
+    }
     m_text_image =
         Image{*CLIENT_CONTEXT.m_renderer,
               m_font->GenerateText(std::string(m_text.c_str()), m_color)};
@@ -180,7 +185,11 @@ Image& UIText::GetTextImage() {
 }
 
 void UIText::regenerateText() {
-    TL_RETURN_IF_FALSE(!m_text.empty());
+    if (m_text.empty()) {
+        // Same as UITextInput: an empty text must not keep its old texture.
+        m_text_image = Image{};
+        return;
+    }
 
     m_font->SetFontSize(m_pt_size);
 
@@ -197,7 +206,7 @@ void UIPanelComponent::UpdateSize(const Transform& old_transform,
     }
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity child = relationship.Get(i);
+        LogicEntity child = relationship.Get(i);
         Transform* transform = CLIENT_CONTEXT.m_transform_manager->Get(child);
         UIWidget* child_ui = CLIENT_CONTEXT.m_ui_manager->Get(child);
 
@@ -239,7 +248,7 @@ void UIPanelComponent::UpdatePosition(const Transform& old_transform,
     }
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity child = relationship.Get(i);
+        LogicEntity child = relationship.Get(i);
         Transform* child_transform =
             CLIENT_CONTEXT.m_transform_manager->Get(child);
         UIWidget* child_ui = CLIENT_CONTEXT.m_ui_manager->Get(child);
@@ -325,7 +334,7 @@ void UIBoxPanelComponent::UpdateSize(const Transform& old_transform,
     }
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity entity = relationship.Get(i);
+        LogicEntity entity = relationship.Get(i);
         UIWidget* ui = CLIENT_CONTEXT.m_ui_manager->Get(entity);
         Transform* child_transform =
             CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -348,7 +357,7 @@ void UIBoxPanelComponent::UpdatePosition(const Transform& old_transform,
     Vec2 start_position = new_transform.m_position + ui.m_padding;
 
     for (size_t i = 0; i < relationship.GetChildrenCount(); i++) {
-        Entity entity = relationship.Get(i);
+        LogicEntity entity = relationship.Get(i);
         UIWidget* ui = CLIENT_CONTEXT.m_ui_manager->Get(entity);
         Transform* child_transform =
             CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -444,7 +453,7 @@ UIComponentManager::~UIComponentManager() {
         m_key_event_listener);
 }
 
-void UIComponentManager::SetFocusedWidget(Entity entity) {
+void UIComponentManager::SetFocusedWidget(LogicEntity entity) {
     TL_RETURN_IF_TRUE(m_focused_entity == entity);
     if (m_focused_entity != null_entity) {
         SDL_StopTextInput(CLIENT_CONTEXT.m_window->GetWindow());
@@ -457,11 +466,11 @@ void UIComponentManager::SetFocusedWidget(Entity entity) {
     }
 }
 
-Entity UIComponentManager::GetFocusedWidget() const {
+LogicEntity UIComponentManager::GetFocusedWidget() const {
     return m_focused_entity;
 }
 
-bool UIComponentManager::IsFocusedWidget(Entity entity) const {
+bool UIComponentManager::IsFocusedWidget(LogicEntity entity) const {
     return m_focused_entity == entity;
 }
 
@@ -483,7 +492,7 @@ void UIComponentManager::Update(TimeType elapse_time) {
     auto level = CLIENT_CONTEXT.m_scene_manager->GetCurrentScene();
     TL_RETURN_IF_NULL(level);
 
-    Entity ui_root_entity = level->GetUIRootEntity();
+    LogicEntity ui_root_entity = level->GetUIRootEntity();
     Transform* transform =
         CLIENT_CONTEXT.m_transform_manager->Get(ui_root_entity);
     TL_RETURN_IF_TRUE(transform->m_size == Vec2::ZERO);
@@ -493,7 +502,7 @@ void UIComponentManager::Update(TimeType elapse_time) {
     m_is_first_update = false;
 }
 
-void UIComponentManager::SubmitDrawCommand(Entity entity) {
+void UIComponentManager::SubmitDrawCommand(LogicEntity entity) {
     auto& renderer = CLIENT_CONTEXT.m_renderer;
     render(*renderer, entity);
 }
@@ -506,7 +515,7 @@ void UIComponentManager::HandleEvent() {
         return;
     }
 
-    Entity ui_root_entity = level->GetUIRootEntity();
+    LogicEntity ui_root_entity = level->GetUIRootEntity();
     auto relationship =
         CLIENT_CONTEXT.m_relationship_manager->Get(ui_root_entity);
 
@@ -527,7 +536,7 @@ void UIComponentManager::HandleEvent() {
         }
 
         for (uint32_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            Entity child = relationship->Get(i);
+            LogicEntity child = relationship->Get(i);
             UIWidget* child_ui = CLIENT_CONTEXT.m_ui_manager->Get(child);
             if (child_ui->m_focus_index && child_ui->m_focus_index != i) {
                 continue;
@@ -538,7 +547,7 @@ void UIComponentManager::HandleEvent() {
 #endif
 }
 
-void UIComponentManager::updateSize(Entity entity) {
+void UIComponentManager::updateSize(LogicEntity entity) {
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
@@ -548,6 +557,8 @@ void UIComponentManager::updateSize(Entity entity) {
     if (ui->m_panel) {
         if (ui->m_old_transform.m_size == Vec2::ZERO) {
             ui->m_old_transform = *transform;
+            ui->m_old_transform.m_size =
+                static_cast<Vec2>(CLIENT_CONTEXT.GetConfig().m_logic_size);
         }
         ui->m_panel->UpdateSize(ui->m_old_transform, *transform, *relationship,
                                 *ui, m_is_first_update);
@@ -558,7 +569,7 @@ void UIComponentManager::updateSize(Entity entity) {
     }
 }
 
-void UIComponentManager::updateTransform(Entity entity) {
+void UIComponentManager::updateTransform(LogicEntity entity) {
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
     auto ui = Get(entity);
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -570,6 +581,8 @@ void UIComponentManager::updateTransform(Entity entity) {
     if (ui->m_panel) {
         if (ui->m_old_transform.m_size == Vec2::ZERO) {
             ui->m_old_transform = *transform;
+            ui->m_old_transform.m_size =
+                static_cast<Vec2>(CLIENT_CONTEXT.GetConfig().m_logic_size);
         }
         ui->m_panel->UpdatePosition(ui->m_old_transform, *transform,
                                     *relationship, *ui, m_is_first_update);
@@ -582,7 +595,7 @@ void UIComponentManager::updateTransform(Entity entity) {
     ui->m_old_transform = *transform;
 }
 
-void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
+void UIComponentManager::handleEvent(LogicEntity entity, size_t finger_index,
                                      const Button& button, const Vec2& position,
                                      const Vec2& offset) {
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
@@ -594,7 +607,7 @@ void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
     auto relationship = CLIENT_CONTEXT.m_relationship_manager->Get(entity);
     if (!isFocusing(*ui, finger_index) && relationship) {
         for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
-            Entity child = relationship->Get(i);
+            LogicEntity child = relationship->Get(i);
             auto child_transform =
                 CLIENT_CONTEXT.m_transform_manager->Get(child);
             if (!child_transform) {
@@ -694,7 +707,7 @@ void UIComponentManager::handleEvent(Entity entity, size_t finger_index,
     }
 }
 
-void UIComponentManager::render(Renderer& renderer, Entity entity) {
+void UIComponentManager::render(Renderer& renderer, LogicEntity entity) {
     auto transform = CLIENT_CONTEXT.m_transform_manager->Get(entity);
     auto ui = Get(entity);
 
@@ -734,7 +747,7 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
     dst.m_topleft = transform->m_position;
 
     const DrawOrder* draw_order =
-        CLIENT_CONTEXT.m_draw_order_manager->Get(entity);
+        CLIENT_CONTEXT.m_draw_order_manager->Get(ToPresentEntity(entity));
     double z_order = draw_order ? draw_order->GetGlobalOrder() : 0;
     float y = transform->m_position.y;
 
@@ -790,44 +803,54 @@ void UIComponentManager::render(Renderer& renderer, Entity entity) {
 
         if (IsFocusedWidget(entity) && IsCursorVisible()) {
             float cursor_x = ui->m_text_input->GetCursorX();
+            // The text texture has no height while the input is empty, so the
+            // caret height comes from the font size instead of the texture:
+            // otherwise the caret shrinks as soon as everything is deleted.
             float font_h =
-                text_size.h > 0 ? static_cast<float>(text_size.h) : 16.0f;
+                static_cast<float>(ui->m_text_input->GetFontPt());
             Rect cursor_rect;
             cursor_rect.m_half_size = Vec2{1.0f, font_h * 0.5f};
             cursor_rect.m_center =
                 Vec2{region.m_topleft.x + cursor_x + 1, rect.m_center.y};
-            renderer.FillRect(cursor_rect, theme->m_foreground_color, z_order,
+            // Use the text color: the foreground color is only a tint mask and
+            // is white in most themes, which makes the cursor invisible on a
+            // light background.
+            renderer.FillRect(cursor_rect, ui->m_text_input->m_color, z_order,
                               false, y);
         }
     } else if (ui->m_text) {
         auto text_size = ui->m_text->GetTextImageSize();
+        // An empty text has no texture, so there is nothing to lay out or draw.
+        if (text_size.w > 0 && text_size.h > 0) {
+            Region region;
 
-        Region region;
+            switch (ui->m_text->m_align) {
+                case UITextAlign::Left:
+                    region.m_topleft.x =
+                        transform->m_position.x + ui->m_padding.x;
+                    break;
+                case UITextAlign::Right:
+                    region.m_topleft.x = transform->m_position.x +
+                                         transform->m_size.w - text_size.w -
+                                         ui->m_padding.x;
+                    break;
+                case UITextAlign::Center:
+                    region.m_topleft.x =
+                        transform->m_position.x +
+                        (transform->m_size.w - text_size.w) * 0.5;
+                    break;
+            }
 
-        switch (ui->m_text->m_align) {
-            case UITextAlign::Left:
-                region.m_topleft.x = transform->m_position.x + ui->m_padding.x;
-                break;
-            case UITextAlign::Right:
-                region.m_topleft.x = transform->m_position.x +
-                                     transform->m_size.w - text_size.w -
-                                     ui->m_padding.x;
-                break;
-            case UITextAlign::Center:
-                region.m_topleft.x = transform->m_position.x +
-                                     (transform->m_size.w - text_size.w) * 0.5;
-                break;
+            Image& image = ui->m_text->GetTextImage();
+            region.m_size = image.GetSize();
+            region.m_topleft.y = rect.m_center.y - region.m_size.y * 0.5;
+            image.ChangeColorMask(theme->m_foreground_color);
+            Region src;
+            src.m_size = image.GetSize();
+            renderer.DrawImage(image, src, region, Color::White, 0, Vec2::ZERO,
+                               Flip::None, z_order, false, y);
+            image.ChangeColorMask(Color::White);
         }
-
-        Image& image = ui->m_text->GetTextImage();
-        region.m_size = image.GetSize();
-        region.m_topleft.y = rect.m_center.y - region.m_size.y * 0.5;
-        image.ChangeColorMask(theme->m_foreground_color);
-        Region src;
-        src.m_size = image.GetSize();
-        renderer.DrawImage(image, src, region, Color::White, 0, Vec2::ZERO,
-                           Flip::None, z_order, false, y);
-        image.ChangeColorMask(Color::White);
     }
 
     if (ui->m_use_clip) {

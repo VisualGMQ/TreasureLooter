@@ -50,7 +50,7 @@ private:
 
 class LuaHFSMNode : public HFSMNode {
 public:
-    LuaHFSMNode(HFSMNodeID id, std::string name, Entity entity,
+    LuaHFSMNode(HFSMNodeID id, std::string name, LogicEntity entity,
                  ScriptBinaryDataHandle handle);
 
     void OnEnter() override;
@@ -135,10 +135,10 @@ public:
 
 class HFSMComponentManager : public ComponentManager<HFSMComponent> {
 public:
-    LuaHFSMComponent* Create(Entity entity,
+    LuaHFSMComponent* Create(LogicEntity entity,
                               ScriptHFSMDefinitionHandle definition);
 
-    [[nodiscard]] LuaHFSMComponent* Get(Entity entity) override;
+    [[nodiscard]] LuaHFSMComponent* Get(LogicEntity entity) override;
 
     void Update();
 };

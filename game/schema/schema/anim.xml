@@ -8,6 +8,9 @@
         <item name = "TransformPosition"/>
         <item name = "TransformScale"/>
         <item name = "TransformRotation"/>
+        <!-- offset added on top of the position mirrored from the logic
+             transform, so an animation can move an entity relatively -->
+        <item name = "TransformPositionOffset"/>
 
         <item name = "SpriteRegionPosition"/>
         <item name = "SpriteRegionSize"/>

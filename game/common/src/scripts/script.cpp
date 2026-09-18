@@ -73,6 +73,85 @@ ScriptBinaryDataManager::~ScriptBinaryDataManager() {
     if (m_L) lua_close(m_L);
 }
 
+namespace {
+
+// `require` resolves modules through Lua's own file searcher, which reads files
+// with the C standard library. That works on PC (the game scripts are plain
+// files under the working directory) but not on Android, where the scripts are
+// packed inside the APK and can only be read through SDL. This searcher reads
+// the candidates with `IOStream` (i.e. `SDL_IOFromFile`), the same way the
+// engine loads its entry scripts, so `require("client.world")` resolves on
+// every platform. It is inserted ahead of the stock Lua file searcher, which
+// stays in the list together with `package.path` as a fallback.
+int EngineModuleSearcher(lua_State* L) {
+    const char* name = luaL_checkstring(L, 1);
+    bool load_failed = false;
+
+    // Scoped so that every C++ string is destroyed before the `lua_error`
+    // below: raising unwinds with longjmp and would skip their destructors.
+    {
+        std::string module = name;
+        std::replace(module.begin(), module.end(), '.', '/');
+
+        const std::string candidates[] = {
+            "scripts/" + module + ".lua",
+            "scripts/" + module + "/init.lua",
+        };
+
+        std::string tried;
+        for (const std::string& candidate : candidates) {
+            if (!IOStream::Exists(candidate)) {
+                if (!tried.empty()) {
+                    tried += "\n\t";
+                }
+                tried += "no file '" + candidate + "'";
+                continue;
+            }
+
+            auto stream =
+                IOStream::CreateFromFile(candidate, IOMode::Read, true);
+            if (!stream || !*stream) {
+                continue;
+            }
+
+            const std::vector<char> content = stream->Read();
+            const char* data = content.empty() ? "" : content.data();
+            // The `@` prefix marks the chunk name as a file path, so Lua
+            // reports errors and tracebacks as `scripts/xxx.lua:line`.
+            const std::string chunk_name = "@" + candidate;
+            if (luaL_loadbuffer(L, data, content.size(),
+                                chunk_name.c_str()) != LUA_OK) {
+                // The message is pushed while the C++ locals are still alive
+                // and raised after they went out of scope.
+                const char* reason = lua_tostring(L, -1);
+                std::string message =
+                    "error loading module '" + std::string(name) +
+                    "' from file '" + candidate +
+                    "':\n\t" + (reason ? reason : "unknown error");
+                lua_pushlstring(L, message.data(), message.size());
+                load_failed = true;
+                break;
+            }
+
+            lua_pushstring(L, candidate.c_str());
+            // chunk, plus the resolved path passed as its 2nd argument
+            return 2;
+        }
+
+        if (!load_failed) {
+            lua_pushfstring(L, "no module '%s' in engine scripts\n\t%s",
+                            name, tried.c_str());
+        }
+    }
+
+    if (load_failed) {
+        return lua_error(L);  // raises the message pushed above
+    }
+    return 1;
+}
+
+}  // namespace
+
 void ScriptBinaryDataManager::Initialize() {
     m_L = luaL_newstate();
     if (!m_L) {
@@ -81,9 +160,10 @@ void ScriptBinaryDataManager::Initialize() {
     }
     luaL_openlibs(m_L);
 
-    // Game scripts are resolved through the standard Lua `require`, relative to
-    // the working directory (the `game/` folder): `require("client.foo")` ->
-    // `scripts/client/foo.lua`.
+    // `package.path` stays as the PC fallback (the scripts are plain files
+    // under the working directory, i.e. the `game/` folder). On Android they
+    // live inside the APK, where the stock file searcher cannot reach them, so
+    // the engine searcher installed below is what actually resolves `require`.
     lua_getglobal(m_L, "package");  // package
     if (lua_istable(m_L, -1)) {
         lua_getfield(m_L, -1, "path");  // package, path
@@ -96,6 +176,22 @@ void ScriptBinaryDataManager::Initialize() {
         lua_pop(m_L, 1);  // package
         lua_pushlstring(m_L, path.data(), path.size());
         lua_setfield(m_L, -2, "path");  // package.path = path
+
+        // Inserted ahead of the stock Lua file searcher (slot 2; Lua 5.5
+        // builds the list as preload, Lua files, C libs, C root), so game
+        // modules are resolved through the engine first while the stock
+        // searcher and `package.path` keep working as a fallback.
+        lua_getfield(m_L, -1, "searchers");  // package, searchers
+        if (lua_istable(m_L, -1)) {
+            const size_t searcher_count = lua_rawlen(m_L, -1);
+            for (size_t i = searcher_count + 1; i > 2; i--) {
+                lua_rawgeti(m_L, -1, static_cast<lua_Integer>(i - 1));
+                lua_rawseti(m_L, -2, static_cast<lua_Integer>(i));
+            }
+            lua_pushcfunction(m_L, EngineModuleSearcher);
+            lua_rawseti(m_L, -2, 2);  // searchers[2] = EngineModuleSearcher
+        }
+        lua_pop(m_L, 1);  // searchers
     }
     lua_pop(m_L, 1);  // package
 }
@@ -145,7 +241,7 @@ void ScriptComponentManager::Render() {
     doRender(level->GetUIRootEntity());
 }
 
-void ScriptComponentManager::doUpdate(Entity entity) {
+void ScriptComponentManager::doUpdate(LogicEntity entity) {
     PROFILE_SECTION();
 
     if (auto it = m_components.find(entity);
@@ -166,7 +262,7 @@ void ScriptComponentManager::doUpdate(Entity entity) {
     }
 }
 
-void ScriptComponentManager::doRender(Entity entity) {
+void ScriptComponentManager::doRender(LogicEntity entity) {
     PROFILE_SECTION();
 
     if (auto it = m_components.find(entity);
@@ -185,7 +281,7 @@ void ScriptComponentManager::doRender(Entity entity) {
 // Script
 // -----------------------------------------------------------------------------
 
-Script::Script(Entity entity, ScriptBinaryDataHandle handle)
+Script::Script(LogicEntity entity, ScriptBinaryDataHandle handle)
     : m_entity(entity) {
     TL_RETURN_IF_FALSE(handle);
 
@@ -230,7 +326,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
     luabridge::LuaRef class_table = luabridge::LuaRef::fromStack(m_L, -1);
     luabridge::LuaRef new_fn = class_table.rawget("new");
     const lua_Integer entity_val = static_cast<lua_Integer>(
-        static_cast<std::underlying_type_t<Entity>>(m_entity));
+        static_cast<std::underlying_type_t<LogicEntity>>(m_entity));
 
     if (new_fn.isFunction()) {
         new_fn.push(m_L);  // class_table, new_fn
@@ -257,7 +353,7 @@ Script::Script(Entity entity, ScriptBinaryDataHandle handle)
         return;
     }
 
-    LOGE("[Script]: module {} must has new(Entity) function",
+    LOGE("[Script]: module {} must has new(LogicEntity) function",
          handle->GetClassName());
     lua_pop(m_L, 1);  // class_table
 }
@@ -296,7 +392,7 @@ void Script::callMethodWithEntity(const char* method) {
     if (!prepare) return;
 
     lua_Integer entity_val = static_cast<lua_Integer>(
-        static_cast<std::underlying_type_t<Entity>>(m_entity));
+        static_cast<std::underlying_type_t<LogicEntity>>(m_entity));
     prepare->m_fn.push(m_L);
     prepare->m_instance.push(m_L);
     lua_pushinteger(m_L, entity_val);

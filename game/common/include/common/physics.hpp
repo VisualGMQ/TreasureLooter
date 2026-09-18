@@ -40,12 +40,12 @@ struct HitResult {
 };
 
 struct SweepResult : HitResult {
-    Entity m_entity = null_entity;
+    LogicEntity m_entity = null_entity;
     PhysicsShape *m_shape = nullptr;
 };
 
 struct OverlapResult {
-    Entity m_dst_entity = null_entity;
+    LogicEntity m_dst_entity = null_entity;
     PhysicsShape *m_dst_shape = nullptr;
 };
 
@@ -110,9 +110,9 @@ public:
         Circle,
     };
 
-    explicit PhysicsShape(Entity, PhysicsShapeDefinitionHandle,
+    explicit PhysicsShape(LogicEntity, PhysicsShapeDefinitionHandle,
                           PhysicsStorageType);
-    explicit PhysicsShape(Entity, const PhysicsShapeDefinition &,
+    explicit PhysicsShape(LogicEntity, const PhysicsShapeDefinition &,
                           PhysicsStorageType);
 
     [[nodiscard]] const Rect *AsRect() const;
@@ -137,10 +137,10 @@ public:
     void SetQueryEnable(bool enable);
     [[nodiscard]] bool IsQueryEnabled() const;
 
-    [[nodiscard]] Entity GetOwner() const;
+    [[nodiscard]] LogicEntity GetOwner() const;
 
 private:
-    Entity m_owner = null_entity;
+    LogicEntity m_owner = null_entity;
     Type m_type = Type::Unknown;
     bool m_enable_query = true;
     PhysicsStorageType m_storage_type;
@@ -214,10 +214,10 @@ public:
 
     PhysicsScene();
 
-    PhysicsShape *CreateShapeInChunk(Entity,
+    PhysicsShape *CreateShapeInChunk(LogicEntity,
                                      TilemapCollision *tilemap_collision,
                                      PhysicsShapeDefinitionHandle);
-    PhysicsShape *CreateShapeInChunk(Entity entity,
+    PhysicsShape *CreateShapeInChunk(LogicEntity entity,
                                      TilemapCollision *tilemap_collision,
                                      const PhysicsShapeDefinition &);
 
@@ -225,7 +225,7 @@ public:
                                              const Vec2UI &tile_size,
                                              const Vec2UI &chunk_size);
 
-    PhysicsShape *CreateShape(Entity, PhysicsShapeDefinitionHandle);
+    PhysicsShape *CreateShape(LogicEntity, PhysicsShapeDefinitionHandle);
 
     void RemoveTilemapCollision(TilemapCollision *);
 

@@ -66,6 +66,10 @@ ServerContext& ServerContext::GetInst() {
     return *instance;
 }
 
+void ServerContext::InitSystem() {
+    initSystem(SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD);
+}
+
 void ServerContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 
@@ -74,7 +78,8 @@ void ServerContext::Initialize(int argc, char** argv) {
     m_scene_manager = std::make_unique<ServerSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
     m_tilemap_detour_manager = std::make_unique<TilemapDetourManager>();
-    m_tilemap_layer_collision_component_manager = std::make_unique<TilemapLayerCollisionComponentManager>();
+    m_tilemap_layer_collision_component_manager =
+        std::make_unique<TilemapLayerCollisionComponentManager>();
 
     // must call here, due to it rely on assets manager
     CommonContext::initCommonConfig();
@@ -92,12 +97,11 @@ void ServerContext::Initialize(int argc, char** argv) {
 
     InitGlobalScript(m_config.m_global_script);
 
+    SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
+        GetCommonConfig().m_entry_scene);
+    m_scene_manager->SwitchImmediate(level);
 
-    SceneHandle level =
-        m_assets_manager->GetManager<Scene>().Load(GetCommonConfig().m_entry_scene);
-    m_scene_manager->Switch(level);
-
-    m_time->SetFPS(30);
+    m_time->SetFPS(GetCommonConfig().m_server_fps);
 }
 
 void ServerContext::HandleEvents(const SDL_Event& event) {
@@ -118,7 +122,7 @@ void ServerContext::Update() {
 
     PROFILE_SECTION();
 
-    if (m_net_host) {
+    if (m_net_host && m_net_host->IsValid()) {
         m_net_host->HandleIncomingNetPacket();
     }
 
@@ -145,6 +149,7 @@ void ServerContext::Update() {
         m_net_host->Flush();
     }
 
+    m_scene_manager->Update();
     m_event_system->Update();
     m_timer_manager->Update(elapse_time);
 
@@ -156,7 +161,7 @@ void ServerContext::Update() {
 void ServerContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
-    m_scene_manager->Switch({});
+    m_scene_manager->SwitchImmediate({});
     m_tilemap_detour_manager.reset();
     m_tilemap_layer_collision_component_manager.reset();
 
@@ -167,9 +172,9 @@ const ServerConfig& ServerContext::GetConfig() const {
     return m_config;
 }
 
-void ServerContext::AttachComponentsOnEntity(Entity entity,
-                                             const EntityInstance& instance) {
-    CommonContext::AttachComponentsOnEntity(entity, instance);
+void ServerContext::AttachComponentsOnLogicEntity(
+    LogicEntity entity, const EntityInstance& instance) {
+    CommonContext::AttachComponentsOnLogicEntity(entity, instance);
 
     auto& prefab = *instance.m_prefab;
     if (!prefab.m_server_script.empty()) {

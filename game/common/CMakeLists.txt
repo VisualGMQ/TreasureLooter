@@ -2,15 +2,15 @@ file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS src/*.cpp src/*.c)
 file(GLOB_RECURSE ENGINE_HEADER CONFIGURE_DEPENDS include/*.hpp include/*.h)
 file(GLOB_RECURSE ASSETS ../assets/*)
 
-add_library(${COMMON_NAME} STATIC)
+add_library(${COMMON_MODULE_NAME} STATIC)
 
 if (NEED_SCHEMA_PARSER)
-    add_dependencies(${COMMON_NAME} schema_preprocess)
+    add_dependencies(${COMMON_MODULE_NAME} schema_preprocess)
 endif()
 
 file(GLOB_RECURSE COMMON_SCRIPTS ../scripts/common/*.lua)
 
-target_sources(${COMMON_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS}
+target_sources(${COMMON_MODULE_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} ${SCHEMAS}
     ${SCHEMA_PROTO_OUTPUT_FILES}
     ${SCHEMA_DECLARE_OUTPUT_FILES}
     ${SCHEMA_SERD_OUTPUT_FILES}
@@ -21,9 +21,9 @@ target_sources(${COMMON_NAME} PRIVATE ${ENGINE_SRC} ${ENGINE_HEADER} ${ASSETS} $
     ${SCHEMA_BINDING_OUTPUT_FILES}
     ${COMMON_SCRIPTS})
 
-target_include_directories(${COMMON_NAME} PUBLIC include ../schema_generate)
-target_compile_features(${COMMON_NAME} PRIVATE cxx_std_17)
-target_link_libraries(${COMMON_NAME}
+target_include_directories(${COMMON_MODULE_NAME} PUBLIC include ../schema_generate)
+target_compile_features(${COMMON_MODULE_NAME} PRIVATE cxx_std_17)
+target_link_libraries(${COMMON_MODULE_NAME}
     PUBLIC
     SDL3::SDL3
     SDL3_ttf::SDL3_ttf
@@ -38,23 +38,22 @@ target_link_libraries(${COMMON_NAME}
     LuaBridge)
 
 if (MSVC)
-    target_compile_options(${COMMON_NAME} PUBLIC /bigobj)
+    target_compile_options(${COMMON_MODULE_NAME} PUBLIC /bigobj)
 endif()
 
 if (TL_ENABLE_PROFILE)
-    target_link_libraries(${COMMON_NAME} PUBLIC Tracy::TracyClient)
-    target_compile_definitions(${COMMON_NAME} PUBLIC TL_ENABLE_PROFILE)
+    target_link_libraries(${COMMON_MODULE_NAME} PUBLIC Tracy::TracyClient)
+    target_compile_definitions(${COMMON_MODULE_NAME} PUBLIC TL_ENABLE_PROFILE)
 endif()
 
-target_compile_definitions(${COMMON_NAME}
+target_compile_definitions(${COMMON_MODULE_NAME}
     PUBLIC $<$<CONFIG:Debug>:TL_DEBUG>
-    # `Path` is `std::filesystem::path` and is bound as a LuaBridge class; keep
-    # LuaBridge from also auto-converting it to/from a Lua string.
+    # we bind std::filesystem::path by ourselves, so disable Luabridge auto binding
     PUBLIC LUABRIDGE_DISABLE_CXX17_FILESYSTEM
     PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 if (ANDROID)
-    target_compile_definitions(${COMMON_NAME} PUBLIC TL_PLATFORM_ANDROID)
+    target_compile_definitions(${COMMON_MODULE_NAME} PUBLIC TL_PLATFORM_ANDROID)
 endif()
 
 

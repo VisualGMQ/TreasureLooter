@@ -9,7 +9,7 @@
 
 class TilemapLayerRenderComponent {
 public:
-    TilemapLayerRenderComponent(Entity entity,
+    TilemapLayerRenderComponent(PresentEntity entity,
                                const TilemapLayerDefinition& create_info);
 
     [[nodiscard]] const TilemapLayer* GetLayer() const;
@@ -23,9 +23,9 @@ private:
 };
 
 class TilemapLayerRenderComponentManager
-    : public ComponentManager<TilemapLayerRenderComponent> {
+    : public ComponentManager<TilemapLayerRenderComponent, PresentEntity> {
 public:
-    void SubmitDrawCommand(Entity);
+    void SubmitDrawCommand(PresentEntity);
 
 private:
     void drawTilemapLayer(const DrawOrder*,

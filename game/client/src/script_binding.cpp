@@ -5,6 +5,8 @@
 #include "common/entity.hpp"
 #include "common/transform.hpp"
 
+#include "client/controller.hpp"
+
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
 #include "common/context.hpp"
@@ -140,30 +142,28 @@ static void bindCamera(lua_State* L) {
 static void bindSprite(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("TL_Client")
-            .beginClass<SpriteDefinition>("Sprite")
-                .addConstructor<void(void)>()
-                .addPropertyReadWrite("m_image", &SpriteDefinition::m_image)
-                .addPropertyReadWrite("m_region", &SpriteDefinition::m_region)
-                .addPropertyReadWrite("m_size", &SpriteDefinition::m_size)
-                .addPropertyReadWrite("m_anchor", &SpriteDefinition::m_anchor)
-                .addPropertyReadWrite("m_color", &SpriteDefinition::m_color)
-                .addPropertyReadWrite("m_flip", &SpriteDefinition::m_flip)
-            .endClass()
             .beginClass<SpriteManager>("SpriteManager")
-                .addFunction("Get", +[](SpriteManager* m, Entity e) {
-                    return m->Get(e);
+                .addFunction("Get", +[](SpriteManager* m, LogicEntity e) {
+                    return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("Has", +[](SpriteManager* m, Entity e) {
-                    return m->Has(e);
+                .addFunction("Has", +[](SpriteManager* m, LogicEntity e) {
+                    return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("RegisterEntity",
-                             +[](SpriteManager* m, Entity e,
+                             +[](SpriteManager* m, LogicEntity e,
                                  const SpriteDefinition& s) {
-                                 m->RegisterEntity(e, s);
+                                 m->RegisterEntity(
+                                     CLIENT_CONTEXT.GetPresentEntity(e), s);
                              })
-                .addFunction("IsEnable", &SpriteManager::IsEnable)
-                .addFunction("Enable", &SpriteManager::Enable)
-                .addFunction("Disable", &SpriteManager::Disable)
+                .addFunction("IsEnable", +[](SpriteManager* m, LogicEntity e) {
+                    return m->IsEnable(CLIENT_CONTEXT.GetPresentEntity(e));
+                })
+                .addFunction("Enable", +[](SpriteManager* m, LogicEntity e) {
+                    m->Enable(CLIENT_CONTEXT.GetPresentEntity(e));
+                })
+                .addFunction("Disable", +[](SpriteManager* m, LogicEntity e) {
+                    m->Disable(CLIENT_CONTEXT.GetPresentEntity(e));
+                })
             .endClass()
         .endNamespace();
 }
@@ -177,15 +177,15 @@ static void bindDrawOrder(lua_State* L) {
                 .addFunction("GetGlobalOrder", &DrawOrder::GetGlobalOrder)
             .endClass()
             .beginClass<DrawOrderManager>("DrawOrderManager")
-                .addFunction("Get", +[](DrawOrderManager* m, Entity e) {
-                    return m->Get(e);
+                .addFunction("Get", +[](DrawOrderManager* m, LogicEntity e) {
+                    return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("Has", +[](DrawOrderManager* m, Entity e) {
-                    return m->Has(e);
+                .addFunction("Has", +[](DrawOrderManager* m, LogicEntity e) {
+                    return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("RegisterEntity",
-                             +[](DrawOrderManager* m, Entity e, const DrawOrderDefinition& def) {
-                                 m->RegisterEntity(e, def);
+                             +[](DrawOrderManager* m, LogicEntity e, const DrawOrderDefinition& def) {
+                                 m->RegisterEntity(CLIENT_CONTEXT.GetPresentEntity(e), def);
                              })
             .endClass()
         .endNamespace();
@@ -215,8 +215,8 @@ static void bindAnimationPlayer(lua_State* L) {
                              })
                 .addFunction("ClearAnimation", &AnimationPlayer::ClearAnimation)
                 .addFunction("HasAnimation", &AnimationPlayer::HasAnimation)
-                .addFunction("Sync", +[](AnimationPlayer* p, Entity e) {
-                    p->Sync(e);
+                .addFunction("Sync", +[](AnimationPlayer* p, LogicEntity e) {
+                    p->Sync(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("SetRate", &AnimationPlayer::SetRate)
                 .addFunction("GetRate", &AnimationPlayer::GetRate)
@@ -231,45 +231,45 @@ static void bindAnimationPlayer(lua_State* L) {
             .endClass()
             .beginClass<AnimationPlayerManager>("AnimationPlayerManager")
                 .addFunction("AddComponent",
-                             +[](AnimationPlayerManager* m, Entity e, const AnimationPlayerDefinition& def) -> AnimationPlayer* {
-                                 return m->AddComponent(e, def);
+                             +[](AnimationPlayerManager* m, LogicEntity e, const AnimationPlayerDefinition& def) -> AnimationPlayer* {
+                                 return m->AddComponent(CLIENT_CONTEXT.GetPresentEntity(e), def);
                              })
-                .addFunction("Get", +[](AnimationPlayerManager* m, Entity e, uint32_t index) -> AnimationPlayer* {
-                    return m->Get(e, index);
+                .addFunction("Get", +[](AnimationPlayerManager* m, LogicEntity e, uint32_t index) -> AnimationPlayer* {
+                    return m->Get(CLIENT_CONTEXT.GetPresentEntity(e), index);
                 })
-                .addFunction("GetComponentSize", +[](AnimationPlayerManager* m, Entity e) -> uint32_t {
-                    return static_cast<uint32_t>(m->GetComponentSize(e));
+                .addFunction("GetComponentSize", +[](AnimationPlayerManager* m, LogicEntity e) -> uint32_t {
+                    return static_cast<uint32_t>(m->GetComponentSize(CLIENT_CONTEXT.GetPresentEntity(e)));
                 })
-                .addFunction("RemoveComponent", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    m->RemoveComponent(e, p);
+                .addFunction("RemoveComponent", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    m->RemoveComponent(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("Has", +[](AnimationPlayerManager* m, Entity e) {
-                    return m->Has(e);
+                .addFunction("Has", +[](AnimationPlayerManager* m, LogicEntity e) {
+                    return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("IsEnable", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    return m->IsEnable(e, p);
+                .addFunction("IsEnable", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    return m->IsEnable(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("Enable", +[](AnimationPlayerManager* m, Entity e, uint32_t index) {
-                    m->Enable(e, index);
+                .addFunction("Enable", +[](AnimationPlayerManager* m, LogicEntity e, uint32_t index) {
+                    m->Enable(CLIENT_CONTEXT.GetPresentEntity(e), index);
                 })
-                .addFunction("EnablePlayer", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    m->Enable(e, p);
+                .addFunction("EnablePlayer", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    m->Enable(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("EnableAll", +[](AnimationPlayerManager* m, Entity e) {
-                    m->EnableAll(e);
+                .addFunction("EnableAll", +[](AnimationPlayerManager* m, LogicEntity e) {
+                    m->EnableAll(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
-                .addFunction("Disable", +[](AnimationPlayerManager* m, Entity e, uint32_t index) {
-                    m->Disable(e, index);
+                .addFunction("Disable", +[](AnimationPlayerManager* m, LogicEntity e, uint32_t index) {
+                    m->Disable(CLIENT_CONTEXT.GetPresentEntity(e), index);
                 })
-                .addFunction("DisablePlayer", +[](AnimationPlayerManager* m, Entity e, AnimationPlayer* p) {
-                    m->Disable(e, p);
+                .addFunction("DisablePlayer", +[](AnimationPlayerManager* m, LogicEntity e, AnimationPlayer* p) {
+                    m->Disable(CLIENT_CONTEXT.GetPresentEntity(e), p);
                 })
-                .addFunction("DisableAll", +[](AnimationPlayerManager* m, Entity e) {
-                    m->DisableAll(e);
+                .addFunction("DisableAll", +[](AnimationPlayerManager* m, LogicEntity e) {
+                    m->DisableAll(CLIENT_CONTEXT.GetPresentEntity(e));
                 })
                 .addFunction("RegisterEntity",
-                             +[](AnimationPlayerManager* m, Entity e, const MultiAnimationPlayerDefinition& def) {
-                                 m->RegisterEntity(e, def);
+                             +[](AnimationPlayerManager* m, LogicEntity e, const MultiAnimationPlayerDefinition& def) {
+                                 m->RegisterEntity(CLIENT_CONTEXT.GetPresentEntity(e), def);
                              })
             .endClass()
         .endNamespace();
@@ -285,12 +285,12 @@ static void bindTilemapRenderComponent(lua_State* L) {
             .beginClass<TilemapLayerRenderComponentManager>(
                 "TilemapRenderComponentManager")
                 .addFunction("Get",
-                             +[](TilemapLayerRenderComponentManager* m, Entity e) {
-                                 return m->Get(e);
+                             +[](TilemapLayerRenderComponentManager* m, LogicEntity e) {
+                                 return m->Get(CLIENT_CONTEXT.GetPresentEntity(e));
                              })
                 .addFunction("Has",
-                             +[](TilemapLayerRenderComponentManager* m, Entity e) {
-                                 return m->Has(e);
+                             +[](TilemapLayerRenderComponentManager* m, LogicEntity e) {
+                                 return m->Has(CLIENT_CONTEXT.GetPresentEntity(e));
                              })
             .endClass()
         .endNamespace();
@@ -335,7 +335,16 @@ static void bindUI(lua_State* L) {
                 .addFunction("GetCursorX", &UITextInput::GetCursorX)
                 .addFunction("RefreshText", &UITextInput::RefreshText)
             .endClass()
+            .beginClass<UIText>("UIText")
+                .addFunction("ChangeText", &UIText::ChangeText)
+                .addFunction("GetText", +[](const UIText* t) -> std::string {
+                    return t->GetText();
+                })
+                .addPropertyReadWrite("m_color", &UIText::m_color)
+                .addPropertyReadWrite("m_align", &UIText::m_align)
+            .endClass()
             .beginClass<UIWidget>("UIWidget")
+                .addPropertyReadWrite("m_enable_draw", &UIWidget::m_enable_draw)
                 .addPropertyReadWrite("m_use_clip", &UIWidget::m_use_clip)
                 .addPropertyReadWrite("m_disabled", &UIWidget::m_disabled)
                 .addPropertyReadWrite("m_selected", &UIWidget::m_selected)
@@ -345,12 +354,15 @@ static void bindUI(lua_State* L) {
                 .addFunction("GetTextInput", +[](UIWidget* w) -> UITextInput* {
                     return w->m_text_input.get();
                 })
+                .addFunction("GetText", +[](UIWidget* w) -> UIText* {
+                    return w->m_text.get();
+                })
             .endClass()
             .beginClass<UIComponentManager>("UIComponentManager")
-                .addFunction("Get", +[](UIComponentManager* m, Entity e) {
+                .addFunction("Get", +[](UIComponentManager* m, LogicEntity e) {
                     return m->Get(e);
                 })
-                .addFunction("Has", +[](UIComponentManager* m, Entity e) {
+                .addFunction("Has", +[](UIComponentManager* m, LogicEntity e) {
                     return m->Has(e);
                 })
             .endClass()
@@ -415,6 +427,10 @@ static void bindClientContext(lua_State* L) {
                              +[](ClientContext* ctx) -> InputManager* {
                                  return ctx->m_input_manager.get();
                              })
+                .addFunction("GetPlayerController",
+                             +[](ClientContext* ctx) -> PlayerController* {
+                                 return ctx->m_player_controller.get();
+                             })
                 .addFunction("GetAnimationPlayerManager",
                              +[](ClientContext* ctx) -> AnimationPlayerManager* {
                                  return ctx->m_animation_player_manager.get();
@@ -436,6 +452,17 @@ static void bindClientContext(lua_State* L) {
             .addFunction("GetNetPeer", +[](ClientContext* ctx) -> UDPPeer& {
                             return ctx->m_net_peer;
                         })
+            // The present (render only) entity + its transform manager. The
+            // logic->present mapping still lives in Lua (client/go_accessor.lua)
+            // so no convenience binding is needed.
+            .addFunction("GetPresentEntity",
+                         +[](ClientContext* ctx, LogicEntity e) {
+                             return ctx->GetPresentEntity(e);
+                         })
+            .addFunction("GetPresentTransformManager",
+                         +[](ClientContext* ctx) -> PresentTransformManager* {
+                             return ctx->m_present_transform_manager.get();
+                         })
             .addFunction("GetConfig",
                          +[](ClientContext* ctx) -> const ClientConfig* {
                              return &ctx->GetConfig();
@@ -471,6 +498,26 @@ static void bindDebugPanel(lua_State* L) {
 
 // clang-format on
 
+static void bindPlayerController(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Client")
+            .beginClass<PlayerController>("PlayerController")
+                // Android only; a no-op on the other platforms. The scene is
+                // passed explicitly so the virtual controls are created for the
+                // scene that is actually played (the game scene), instead of
+                // being attached to the entry/title scene and lost on switch.
+                .addFunction("RegisterVirtualController",
+                             +[](PlayerController* controller,
+                                 SceneHandle scene) {
+                                 controller->RegisterVirtualController(
+                                     scene, CLIENT_CONTEXT.GetConfig());
+                             })
+                .addFunction("DestroyVirtualController",
+                             &PlayerController::DestroyVirtualController)
+            .endClass()
+        .endNamespace();
+}
+
 void BindClientModule(lua_State* L) {
     registerLuaScriptEventBindings(L);
     bindTilemapRenderComponent(L);
@@ -479,6 +526,7 @@ void BindClientModule(lua_State* L) {
     bindSprite(L);
     bindDrawOrder(L);
     bindAnimationPlayer(L);
+    bindPlayerController(L);
     bindUI(L);
     bindClientUIEvents(L);
     bindClientContext(L);

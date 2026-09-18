@@ -8,7 +8,7 @@
 
 class TilemapLayerCollisionComponent {
 public:
-    TilemapLayerCollisionComponent(Entity entity,
+    TilemapLayerCollisionComponent(LogicEntity entity,
                                    const TilemapLayerDefinition& create_info,
                                    const Vec2UI& tile_in_chunk_size);
 

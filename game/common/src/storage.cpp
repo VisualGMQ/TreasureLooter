@@ -49,16 +49,28 @@ size_t IOStream::GetSize() const {
 
 std::vector<char> IOStream::Read() const {
     std::vector<char> result(GetSize());
+
     size_t size = 0;
-    size_t read_size;
-    while ((read_size = SDL_ReadIO(m_stream, result.data() + size, result.size())) > 0) {
-        size += read_size; 
+    while (size < result.size()) {
+        const size_t read_size =
+            SDL_ReadIO(m_stream, result.data() + size, result.size() - size);
+        if (read_size == 0) {
+            break;
+        }
+        size += read_size;
     }
 
-    if (read_size < 0) {
+    if (size == result.size()) {
+        return result;
+    }
+
+    if (m_stream && SDL_GetIOStatus(m_stream) == SDL_IO_STATUS_ERROR) {
         LOGE("SDL_ReadIO failed: {}", SDL_GetError());
         return {};
     }
+
+    LOGE("read incomplete: got {} of {} bytes", size, result.size());
+    result.resize(size);
     return result;
 }
 
@@ -75,6 +87,15 @@ IOStream::operator bool() const noexcept {
 
 IOStream::~IOStream() {
     SDL_CloseIO(m_stream);
+}
+
+bool IOStream::Exists(const Path& filename) {
+    SDL_IOStream* stream = SDL_IOFromFile(filename.string().c_str(), "rb");
+    if (!stream) {
+        return false;
+    }
+    SDL_CloseIO(stream);
+    return true;
 }
 
 std::shared_ptr<IOStream> IOStream::CreateFromFile(const Path& filename,

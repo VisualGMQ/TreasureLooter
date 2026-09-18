@@ -783,7 +783,7 @@ void InstanceDisplay(const char* name, const AnimationPlayer& animation) {
     InstanceDisplay("animation", anim);
 }
 
-void InstanceDisplay(const char* name, Entity e) {
+void InstanceDisplay(const char* name, LogicEntity e) {
     ImGui::Text("%s", name);
     ImGui::Text("entity: %uld", static_cast<uint32_t>(e));
 }

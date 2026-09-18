@@ -11,14 +11,14 @@ local k_fireball_distance = 25
 local k_other_skill_distance = 30
 
 ---@class PlayerFreeHandNode
----@field _entity Entity
+---@field _entity LogicEntity
 ---@field _skill_cooldown_elapsed number
 ---@field _skill2_cooldown_elapsed number
 ---@field _skill3_cooldown_elapsed number
 local _M = {}
 _M.__index = _M
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return PlayerFreeHandNode
 function _M.new(entity)
     local self = setmetatable({}, _M)

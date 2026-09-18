@@ -3,7 +3,7 @@ local InteractComponent = require("common.components.interact")
 ---@class ClientInteractComponentDefinition : InteractComponentRuntimeDefinition
 
 ---@class ClientInteractComponent : InteractComponent
----@field m_hint_fx Entity
+---@field m_hint_fx LogicEntity
 ---@field _showing boolean
 local _M = {
     k_hint_offset = -16,
@@ -22,7 +22,7 @@ function _M.new(gameobject, definition)
     return setmetatable(self, _M)
 end
 
----@param entity Entity
+---@param entity LogicEntity
 function _M:SetHintFX(entity)
     self.m_hint_fx = entity
 end

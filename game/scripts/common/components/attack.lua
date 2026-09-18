@@ -4,7 +4,7 @@ local Component = require("common.components.component")
 ---@field m_damage number
 ---@field m_attack_anim AnimationHandle
 ---@field m_hit_area Trigger
----@field m_cooldown Timer
+---@field m_cooldown TimeType
 ---@field m_anim_player AnimationPlayer
 ---@field m_transform Transform
 
@@ -33,7 +33,6 @@ function _M.new(gameobject, definition)
     self.m_attack_anim = definition.m_attack_anim
     self.m_damage = definition.m_damage
     self.m_hit_area = definition.m_hit_area
-    self.m_cooldown = definition.m_cooldown
     self._anim_player = definition.m_anim_player
     self._transform = definition.m_transform
     self._can_attack = true
@@ -46,7 +45,7 @@ function _M.new(gameobject, definition)
         self:onAttack(event)
     end)
     local timer_mgr = ctx:GetTimerManager()
-    self.m_cooldown = timer_mgr:Create(self.m_cooldown, TL_Schema.TimerEventType.Cooldown, 0)
+    self.m_cooldown = timer_mgr:Create(definition.m_cooldown, TL_Schema.TimerEventType.Cooldown, 0)
     self.m_cooldown:SetTimerListener(function(event)
         self:onAttackCooldown(event)
     end)

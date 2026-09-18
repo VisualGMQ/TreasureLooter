@@ -182,5 +182,5 @@ private:
 };
 
 struct RemoveEntityEvent {
-    Entity m_entity;
+    LogicEntity m_entity;
 };

@@ -80,6 +80,7 @@ void ClientContext::Initialize(int argc, char** argv) {
     PROFILE_SECTION();
 
     CommonContext::Initialize(argc, argv);
+    m_present_transform_manager = std::make_unique<PresentTransformManager>();
     m_assets_manager = std::make_unique<ClientAssetsManager>();
     m_scene_manager = std::make_unique<ClientSceneManager>();
     m_script_binary_data_manager = std::make_unique<ScriptBinaryDataManager>();
@@ -109,7 +110,7 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     m_window = std::make_unique<Window>("TreasureLooter", 1024, 720);
     m_renderer = std::make_unique<Renderer>(*m_window);
-    m_renderer->SetClearColor({0.3, 0.3, 0.3, 1});
+    m_renderer->SetClearColor(client_config.m_screen_color);
     initImGui();
 
     m_ui_manager = std::make_unique<UIComponentManager>();
@@ -130,8 +131,7 @@ void ClientContext::Initialize(int argc, char** argv) {
         *m_input_manager, *m_event_system, *m_assets_manager,
         *m_transform_manager, *m_relationship_manager);
 
-    m_animation_player_manager =
-        std::make_unique<AnimationPlayerManager>();
+    m_animation_player_manager = std::make_unique<AnimationPlayerManager>();
 
     m_debug_panel = std::make_unique<DebugPanel>();
     m_hfsm_debugger = std::make_unique<ClientHFSMDebugger>();
@@ -153,11 +153,9 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     SceneHandle level = m_assets_manager->GetManager<Scene>().Load(
         GetCommonConfig().m_entry_scene);
-    m_scene_manager->Switch(level);
+    m_scene_manager->SwitchImmediate(level);
 
-    m_player_controller->RegisterVirtualController(level, client_config);
-
-    m_time->SetFPS(240);
+    m_time->SetFPS(GetCommonConfig().m_client_fps);
 }
 
 void ClientContext::HandleEvents(const SDL_Event& event) {
@@ -211,11 +209,44 @@ void ClientContext::ConnectToServer(const NetAddress& address) {
     }
 }
 
-void ClientContext::AttachComponentsOnEntity(Entity entity,
-                                             const EntityInstance& instance) {
-    CommonContext::AttachComponentsOnEntity(entity, instance);
+void ClientContext::AttachComponentsOnLogicEntity(
+    LogicEntity entity, const EntityInstance& instance) {
+    CommonContext::AttachComponentsOnLogicEntity(entity, instance);
 
     auto& prefab = *instance.m_prefab;
+
+    if (prefab.m_net_replicat_info) {
+        m_replicate_component_manager->RegisterEntity(
+            entity, prefab.m_net_replicat_info->m_raw_entity);
+    }
+    if (!prefab.m_client_script.empty()) {
+        auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
+        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
+        m_script_component_manager->RegisterEntity(entity, entity, handle);
+    }
+    if (prefab.m_hfsm) {
+        m_hfsm_manager->Create(entity, prefab.m_hfsm);
+    }
+}
+
+PresentEntity ClientContext::CreatePresentEntity(LogicEntity logic_entity) {
+    return ToPresentEntity(logic_entity);
+}
+
+PresentEntity ClientContext::GetPresentEntity(LogicEntity logic_entity) const {
+    return ToPresentEntity(logic_entity);
+}
+
+void ClientContext::AttachComponentsOnPresentEntity(
+    PresentEntity entity, const EntityInstance& instance) {
+    auto& prefab = *instance.m_prefab;
+
+    if (auto* logic_transform =
+            m_transform_manager->Get(ToLogicEntity(entity))) {
+        m_present_transform_manager->RegisterEntity(entity, *logic_transform);
+    } else {
+        m_present_transform_manager->RegisterEntity(entity);
+    }
 
     if (prefab.m_sprite) {
         m_sprite_manager->RegisterEntity(entity, prefab.m_sprite.value());
@@ -236,29 +267,46 @@ void ClientContext::AttachComponentsOnEntity(Entity entity,
     if (prefab.m_ui) {
         m_ui_manager->RegisterEntity(entity, prefab.m_ui);
     }
-    if (prefab.m_net_replicat_info) {
-        m_replicate_component_manager->RegisterEntity(
-            entity, prefab.m_net_replicat_info->m_raw_entity);
-    }
-    if (!prefab.m_client_script.empty()) {
-        auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
-        ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
-        m_script_component_manager->RegisterEntity(entity, entity, handle);
-    }
-    if (prefab.m_hfsm) {
-        m_hfsm_manager->Create(entity, prefab.m_hfsm);
-    }
 }
 
-void ClientContext::RemoveAllComponentsOnEntity(Entity entity) {
+void ClientContext::RemoveAllComponentsOnPresentEntity(PresentEntity entity) {
     m_sprite_manager->RemoveEntity(entity);
     m_ui_manager->RemoveEntity(entity);
     m_tilemap_layer_render_component_manager->RemoveEntity(entity);
     m_animation_player_manager->RemoveEntity(entity);
     m_draw_order_manager->RemoveEntity(entity);
+    m_present_transform_manager->RemoveEntity(entity);
+}
+
+void ClientContext::RemovePresentEntity(LogicEntity logic_entity) {
+    RemoveAllComponentsOnPresentEntity(GetPresentEntity(logic_entity));
+}
+
+void ClientContext::removePresentEntityWithChildren(LogicEntity entity) {
+    RemovePresentEntity(entity);
+
+    auto* relationship = m_relationship_manager->Get(entity);
+    if (!relationship) {
+        return;
+    }
+
+    for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+        removePresentEntityWithChildren(relationship->Get(i));
+    }
+}
+
+void ClientContext::RemoveEntity(LogicEntity entity) {
+    // the logic entity and its descendants are removed deferred (in
+    // doRemoveEntities), so remove the corresponding present entities here.
+    removePresentEntityWithChildren(entity);
+
+    CommonContext::RemoveEntity(entity);
+}
+
+void ClientContext::RemoveAllComponentsOnLogicEntity(LogicEntity entity) {
     m_hfsm_manager->RemoveEntity(entity);
 
-    CommonContext::RemoveAllComponentsOnEntity(entity);
+    CommonContext::RemoveAllComponentsOnLogicEntity(entity);
 }
 
 const ClientConfig& ClientContext::GetConfig() const {
@@ -289,6 +337,30 @@ Vec2 ClientContext::WorldCoordToWindow(const Vec2& world_pos) const {
     return window_pos;
 }
 
+void ClientContext::syncPresentTransform(LogicEntity entity,
+                                         Transform* parent) {
+    auto* logic_transform = m_transform_manager->Get(entity);
+    auto* present_transform =
+        m_present_transform_manager->Get(GetPresentEntity(entity));
+
+    Transform* present_parent = parent;
+    if (logic_transform && present_transform) {
+        present_transform->m_position = logic_transform->m_position;
+        present_transform->m_rotation = logic_transform->m_rotation;
+        present_transform->m_size = logic_transform->m_size;
+        present_transform->SetParent(parent);
+        present_transform->UpdateMat();
+        present_parent = present_transform;
+    }
+
+    auto* relationship = m_relationship_manager->Get(entity);
+    if (relationship) {
+        for (size_t i = 0; i < relationship->GetChildrenCount(); i++) {
+            syncPresentTransform(relationship->Get(i), present_parent);
+        }
+    }
+}
+
 void ClientContext::logicUpdate(TimeType elapse) {
     PROFILE_SECTION();
 
@@ -317,9 +389,7 @@ void ClientContext::logicUpdate(TimeType elapse) {
     m_script_component_manager->Update();
     m_hfsm_manager->Update();
 
-    m_animation_player_manager->Update(elapse);
     m_ui_manager->HandleEvent();
-    m_ui_manager->Update(elapse);
     m_relationship_manager->Update();
     m_bind_point_component_manager->Update();
     m_static_collision_manager->Update();
@@ -330,12 +400,14 @@ void ClientContext::logicUpdate(TimeType elapse) {
         m_net_host->Flush();
     }
 
-    m_event_system->Update();
     m_timer_manager->Update(elapse);
 }
 
 void ClientContext::logicPostUpdate(TimeType elapse) {
     PROFILE_SECTION();
+
+    m_scene_manager->Update();
+    m_event_system->Update();
 
     m_mouse->PostUpdate();
     m_touches->PostUpdate();
@@ -348,6 +420,13 @@ void ClientContext::renderUpdate(TimeType elapse) {
 
     m_renderer->Clear();
     beginImGui();
+
+    if (auto level = m_scene_manager->GetCurrentScene()) {
+        syncPresentTransform(level->GetRootEntity(), nullptr);
+        syncPresentTransform(level->GetUIRootEntity(), nullptr);
+    }
+
+    m_animation_player_manager->Update(elapse);
 
     if (m_global_script) {
         m_global_script->callMethodNoArg("OnRender");
@@ -362,6 +441,7 @@ void ClientContext::renderUpdate(TimeType elapse) {
     draw_cmd_submitter.Submit();
     m_renderer->ApplyDrawcall();
 
+    m_ui_manager->Update(elapse);
     draw_cmd_submitter.SubmitUI();
     m_renderer->ApplyDrawcall();
 
@@ -437,7 +517,7 @@ void ClientContext::registerAllDebugCommands() {
 void ClientContext::Shutdown() {
     m_global_script.reset();
     m_script_component_manager->Clear();
-    m_scene_manager->Switch({});
+    m_scene_manager->SwitchImmediate({});
 
     m_player_controller.reset();
     if (m_net_peer.IsValid()) {
@@ -446,6 +526,7 @@ void ClientContext::Shutdown() {
     m_net_peer.Reset();
 
     m_tilemap_layer_render_component_manager.reset();
+    m_present_transform_manager.reset();
     m_tilemap_detour_manager.reset();
     m_client_tilemap_detour_manager = nullptr;
     m_tilemap_layer_collision_component_manager.reset();
@@ -472,6 +553,11 @@ void ClientContext::Shutdown() {
 }
 
 ClientContext::~ClientContext() {}
+
+void ClientContext::InitSystem() {
+    initSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
+               SDL_INIT_GAMEPAD);
+}
 
 void ClientContext::beginImGui() {
     PROFILE_SECTION();
@@ -508,15 +594,9 @@ void ClientContext::initImGui() {
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
-    // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(
-        main_scale);  // Bake a fixed style scale. (until we have a solution for
-    // dynamic style scaling, changing this requires resetting
-    // Style + calling this again)
-    style.FontScaleDpi = main_scale;  // Set initial font scale. (using
-    // io.ConfigDpiScaleFonts=true makes this unnecessary. We
-    // leave both here for documentation purpose)
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
 
     ImGui_ImplSDL3_InitForSDLRenderer(m_window->GetWindow(),
                                       m_renderer->GetRenderer());

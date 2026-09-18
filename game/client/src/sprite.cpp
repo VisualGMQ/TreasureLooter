@@ -9,14 +9,14 @@
 
 #include "common/profile.hpp"
 
-void SpriteManager::SubmitDrawCommand(Entity entity) {
+void SpriteManager::SubmitDrawCommand(PresentEntity entity) {
     PROFILE_SECTION();
 
     auto sprite = Get(entity);
     TL_RETURN_IF_FALSE(sprite && sprite->m_image && IsEnable(entity));
 
     auto& renderer = CLIENT_CONTEXT.m_renderer;
-    auto& transform_manager = CLIENT_CONTEXT.m_transform_manager;
+    auto& transform_manager = CLIENT_CONTEXT.m_present_transform_manager;
     const Transform* transform = transform_manager->Get(entity);
     TL_RETURN_IF_FALSE(transform);
 

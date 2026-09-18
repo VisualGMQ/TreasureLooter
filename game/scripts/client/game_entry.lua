@@ -9,7 +9,7 @@ local ClientGameEntry = {}
 ClientGameEntry.__index = ClientGameEntry
 setmetatable(ClientGameEntry, { __index = GameEntry })
 
----@param entity Entity
+---@param entity LogicEntity
 ---@return ClientGameEntry
 function ClientGameEntry.new(entity)
     local self = setmetatable(GameEntry.new(entity, ClientCreation), ClientGameEntry)
@@ -18,31 +18,19 @@ function ClientGameEntry.new(entity)
 end
 
 function ClientGameEntry:OnInit()
-    ClientWorld.SetInst(ClientWorld.new())
+    local world = ClientWorld.new()
+    ClientWorld.SetInst(world)
     GameEntry.OnInit(self)
     DebugCommands.RegisterAllDebugCommand()
-    -- self:initNet()
+    world:RegisterNetEventHandler()
+
+    local ctx = TL_Client.GetContext()
+    self:initNet()
 end
 
 function ClientGameEntry:initNet()
     local ctx = TL_Client.GetContext()
     local Common = require("common.net")
-
-    ctx:GetEventSystem():AddNetMsg_ConnectEvent(function(id, peer, net_msg)
-        local spawn = TL_Proto.SpawnPlayer()
-        spawn:set_m_entity(0)
-        spawn:set_m_did(TL_Schema.DID.CharacterDID1)
-
-        local msg = TL_Proto.NetMsg()
-        msg:set_m_spawn_player(spawn)
-
-        local host = ctx:GetNetHost()
-        if host then
-            host:Send(ctx:GetNetPeer(), msg, 0, TL_Common.UDPPacketFlags(TL_Common.UDPPacketFlag.Reliable))
-            ctx:Log("client sent SpawnPlayer")
-        end
-    end)
-
     ctx:ConnectToServer(TL_Common.NetAddress(Common.ip, Common.port))
     ctx:Log("client connecting to ", Common.ip, ":", Common.port)
 end

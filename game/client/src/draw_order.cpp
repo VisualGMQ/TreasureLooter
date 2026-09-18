@@ -29,8 +29,8 @@ void DrawOrderManager::Update() {
 }
 
 void DrawOrderManager::updateRecursive(bool is_parent_enable_y_sorting,
-                                       Entity entity) {
-    auto order = Get(entity);
+                                       LogicEntity entity) {
+    auto order = Get(ToPresentEntity(entity));
     if (order) {
         order->m_global_order = LayerFactor * order->m_z_order;
         order->m_inherit_y_sorting =

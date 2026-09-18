@@ -2,8 +2,10 @@
 #include "common/animation.hpp"
 #include "common/event.hpp"
 #include "common/image.hpp"
+#include "schema/gameplay_config.hpp"
 #include "schema/scene_definition.hpp"
 
+#include <functional>
 #include <unordered_set>
 
 class Scene {
@@ -28,26 +30,26 @@ public:
     /**
      * instantiate entity but don't put into level scene
      */
-    Entity Instantiate(PrefabHandle, const Transform* = nullptr);
+    LogicEntity Instantiate(PrefabHandle, const Transform* = nullptr);
 
-    void RemoveEntity(Entity);
-    void RemoveEntityFromInnerList(Entity);
+    void RemoveEntity(LogicEntity);
+    void RemoveEntityFromInnerList(LogicEntity);
 
-    [[nodiscard]] bool HasEntity(Entity) const;
+    [[nodiscard]] bool HasEntity(LogicEntity) const;
 
-    [[nodiscard]] Entity GetRootEntity() const;
-    [[nodiscard]] virtual Entity GetUIRootEntity() const = 0;
+    [[nodiscard]] LogicEntity GetRootEntity() const;
+    [[nodiscard]] virtual LogicEntity GetUIRootEntity() const = 0;
 
-    const std::unordered_set<Entity>& GetAllEntities() const;
+    [[nodiscard]] const std::unordered_set<LogicEntity>& GetAllEntities() const;
 
 protected:
-    virtual void registerEntity(Entity, const EntityInstance&) = 0;
-    virtual void initRootEntity(const Path& script_path) = 0;
-    virtual void initEntities(SceneDefinitionHandle level_content);
+    virtual void registerEntity(LogicEntity, const EntityInstance&) = 0;
+    virtual void initRootEntity(SceneDefinitionHandle) = 0;
+    virtual void initEntities(SceneDefinitionHandle level_content) = 0;
 
-    Entity m_root_entity{};
+    LogicEntity m_root_entity{};
 
-    std::unordered_set<Entity> m_entities;
+    std::unordered_set<LogicEntity> m_entities;
 
 private:
     bool m_visible = false;
@@ -65,12 +67,18 @@ public:
     
     virtual SceneHandle Create(SceneDefinitionHandle) = 0;
 
-    virtual void Switch(SceneHandle);
+    void Switch(SceneHandle level);
 
-    void RemoveEntity(Entity);
+    void SwitchImmediate(SceneHandle level);
+
+    void RemoveEntity(LogicEntity);
 
     [[nodiscard]] SceneHandle GetCurrentScene() const;
 
+    void Update();
+
 private:
     SceneHandle m_level;
+    SceneHandle m_pending_level;
+    std::function<void()> m_pending_switch_callback;
 };

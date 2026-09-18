@@ -13,6 +13,7 @@ class Mouse;
 class Keyboard;
 class SpriteManager;
 class DrawOrderManager;
+class PresentTransformManager;
 class PlayerController;
 class UIComponentManager;
 class AnimationManager;
@@ -37,6 +38,7 @@ public:
     ClientContext& operator=(ClientContext&&) = delete;
     ~ClientContext() override;
 
+    void InitSystem() override;
     void Initialize(int argc, char** argv) override;
     void Shutdown() override;
 
@@ -45,8 +47,25 @@ public:
 
     void ConnectToServer(const NetAddress&);
 
-    void AttachComponentsOnEntity(Entity, const EntityInstance&) override;
-    void RemoveAllComponentsOnEntity(Entity) override;
+    void AttachComponentsOnLogicEntity(LogicEntity,
+                                       const EntityInstance&) override;
+    void RemoveAllComponentsOnLogicEntity(LogicEntity) override;
+    /**
+     * remove the logic entity and its corresponding present entity.
+     */
+    void RemoveEntity(LogicEntity) override;
+
+    PresentEntity CreatePresentEntity(LogicEntity logic_entity);
+    [[nodiscard]] PresentEntity GetPresentEntity(LogicEntity logic_entity) const;
+
+    void AttachComponentsOnPresentEntity(PresentEntity,
+                                         const EntityInstance&);
+    void RemoveAllComponentsOnPresentEntity(PresentEntity);
+    /**
+     * remove all render components of the present entity corresponding to the
+     * given logic entity.
+     */
+    void RemovePresentEntity(LogicEntity logic_entity);
 
     [[nodiscard]] const ClientConfig& GetConfig() const;
 
@@ -60,6 +79,7 @@ public:
     std::unique_ptr<Touches> m_touches;
     std::unique_ptr<GamepadManager> m_gamepad_manager;
     std::unique_ptr<SpriteManager> m_sprite_manager;
+    std::unique_ptr<PresentTransformManager> m_present_transform_manager;
     std::unique_ptr<AnimationPlayerManager> m_animation_player_manager;
     std::unique_ptr<DrawOrderManager> m_draw_order_manager;
     std::unique_ptr<InputManager> m_input_manager;
@@ -91,6 +111,9 @@ private:
     void logicUpdate(TimeType elapse);
     void logicPostUpdate(TimeType elapse);
     void renderUpdate(TimeType elapse);
+
+    void syncPresentTransform(LogicEntity entity, class Transform* parent);
+    void removePresentEntityWithChildren(LogicEntity entity);
 
     void initClientConfig();
     void registerAllDebugCommands();

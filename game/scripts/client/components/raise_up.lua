@@ -1,7 +1,7 @@
 local RaiseUpComponent = require("common.components.raise_up")
 
 ---@class ClientRaiseUpComponent : RaiseUpComponent
----@field _origin_anchors table<Entity, Vec2>
+---@field _origin_anchors table<LogicEntity, Vec2>
 local _M = {
     k_head_lift = 10,
     k_stack_height = 12,

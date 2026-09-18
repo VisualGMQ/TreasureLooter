@@ -156,7 +156,7 @@ TilemapDetourDataHandle TilemapDetourDataBakerContext::build() {
         auto tiled_layer = layer->AsTiledLayer();
         TL_CONTINUE_IF_NULL(tiled_layer);
 
-        Entity entity = CreateEntity();
+        LogicEntity entity = CreateLogicEntity();
         TilemapLayerDefinition definition;
         definition.m_tilemap = m_tilemap;
         definition.m_layer_name = layer->GetName();

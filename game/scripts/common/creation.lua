@@ -230,11 +230,12 @@ end
 ---@param scene Scene
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
+---@param net_id number
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
----@return Entity, GameObject
-function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfsm_definition)
-    assert(false, "shouldn't step into here")
+---@return LogicEntity, GameObject
+function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definitions, hfsm_definition)
+    error("shouldn't step into here")
 end
 
 ---@param self Creation
@@ -242,9 +243,9 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateItem(scene, spawn_info, position, object_definitions)
-    assert(false, "shouldn't step into here")
+    error("shouldn't step into here")
 end
 
 ---@param self Creation
@@ -252,9 +253,9 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateFX(scene, spawn_info, position, object_definitions)
-    assert(false, "shouldn't step into here")
+    error("shouldn't step into here")
 end
 
 ---@param self Creation
@@ -262,18 +263,18 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateSkill(scene, spawn_info, position, object_definitions)
-    assert(false, "shouldn't step into here")
+    error("shouldn't step into here")
 end
 
 ---@param self Creation
 ---@param scene Scene
 ---@param prefab PrefabHandle
 ---@param transform Transform
----@return Entity
+---@return LogicEntity
 function _M:CreatePrefab(scene, prefab, transform)
-    assert(false, "shouldn't step into here")
+    error("shouldn't step into here")
 end
 
 ---@param self Creation
@@ -281,7 +282,7 @@ end
 ---@param player_related_definition PlayerRelatedDefinition
 ---@param object_definitions ObjectDefinitionTable
 function _M:CreatePlayerHint(scene, player_related_definition, object_definitions)
-    assert(false, "shouldn't step into here")
+    error("shouldn't step into here")
 end
 
 return _M

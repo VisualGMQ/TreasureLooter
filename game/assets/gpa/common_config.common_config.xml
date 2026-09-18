@@ -3,5 +3,7 @@
 	<payload>
         <entry_scene>assets/gpa/scenes/game.scene.xml</entry_scene>
 		<tile_in_chunk_size x="10" y="10"/>
+		<client_fps>240</client_fps>
+		<server_fps>30</server_fps>
 	</payload>
 </CommonConfig>

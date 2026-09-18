@@ -7,7 +7,7 @@
 
 using Sprite = SpriteDefinition;
 
-class SpriteManager : public ComponentManager<Sprite> {
+class SpriteManager : public ComponentManager<Sprite, PresentEntity> {
 public:
-    void SubmitDrawCommand(Entity);
+    void SubmitDrawCommand(PresentEntity);
 };

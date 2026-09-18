@@ -52,7 +52,7 @@ private:
 
 class Script {
 public:
-    Script(Entity entity, ScriptBinaryDataHandle handle);
+    Script(LogicEntity entity, ScriptBinaryDataHandle handle);
     ~Script();
 
     void callMethodNoArg(const char* method);
@@ -69,7 +69,7 @@ public:
 private:
     lua_State* m_L{};
     int m_table_ref{LUA_NOREF};
-    Entity m_entity{};
+    LogicEntity m_entity{};
     Path m_filename;
 
     bool m_inited = false;
@@ -94,6 +94,6 @@ public:
     void Render();
 
 private:
-    void doUpdate(Entity);
-    void doRender(Entity);
+    void doUpdate(LogicEntity);
+    void doRender(LogicEntity);
 };

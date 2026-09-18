@@ -1,18 +1,5 @@
-local ClientGameObject = require("client.gameobject")
-local ClientAttackComponent = require("client.components.attack")
-local ClientMoveComponent = require("client.components.move")
-local ClientWeaponComponent = require("client.components.weapon")
-local ClientHpComponent = require("client.components.hp")
-local ClientItemComponent = require("client.components.item")
-local ClientInteractComponent = require("client.components.interact")
-local ClientFXComponent = require("client.components.fx")
-local ClientSpawnObjectComponent = require("client.components.spawn_object")
-local ClientConstructableComponent = require("client.components.constructable")
-local ClientSkillComponent = require("client.components.skill")
 local ClientWorld = require("client.world")
-local ClientGameObjectBehavior = require("client.gameobject_behavior")
 local Creation = require("common.creation")
-local GameObject = require("common.gameobject")
 
 ---@class ClientCreation : Creation
 local _M = {}
@@ -21,10 +8,10 @@ setmetatable(_M, { __index = Creation })
 
 local k_default_script = TL_Common.Path("scripts/client/gameobject_behavior.lua")
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param did DID
 ---@param config CharacterDefinitionHandle
----@param weapon_entity Entity
+---@param weapon_entity LogicEntity
 ---@return ClientGameObjectDefinition
 function _M.ConvertCharacterDefinitionToGODefinition(entity, did, config, weapon_entity)
     local definition = {}
@@ -68,7 +55,7 @@ function _M.ConvertCharacterDefinitionToGODefinition(entity, did, config, weapon
     return definition
 end
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param did DID
 ---@param config ItemDefinitionHandle
 ---@return ClientGameObjectDefinition
@@ -100,7 +87,7 @@ function _M.ConvertItemDefinitionToGODefinition(entity, did, config)
     return definition
 end
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param skill_definition SkillDefinitionHandle
 ---@return ClientGameObjectDefinition
 function _M.ConvertSkillDefinitionToGODefinition(entity, skill_definition)
@@ -129,7 +116,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateSkill(scene, spawn_info, position, object_definitions)
     local ctx = TL_Client.GetContext()
 
@@ -161,8 +148,8 @@ function _M:CreateSkill(scene, spawn_info, position, object_definitions)
 end
 
 --- The weapon controller hosts the attack & weapon components, driving the weapon item under it.
----@param controller_entity Entity
----@param weapon_item_entity Entity
+---@param controller_entity LogicEntity
+---@param weapon_item_entity LogicEntity
 ---@param did DID
 ---@param config ItemDefinitionHandle
 ---@return ClientGameObjectDefinition
@@ -190,7 +177,7 @@ function _M.ConvertWeaponControllerToGODefinition(controller_entity, weapon_item
     return definition
 end
 
----@param entity Entity
+---@param entity LogicEntity
 ---@param did DID
 ---@param config FXDefinitionHandle
 ---@return ClientGameObjectDefinition
@@ -215,7 +202,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateFX(scene, spawn_info, position, object_definitions)
     local ctx = TL_Client.GetContext()
 
@@ -248,7 +235,7 @@ end
 ---@param did DID
 ---@param config FXDefinitionHandle
 ---@param client_script Path
----@return Entity
+---@return LogicEntity
 function _M.CreatePlayerHintFX(scene, did, config, client_script)
     local ctx = TL_Client.GetContext()
 
@@ -273,6 +260,7 @@ function _M.CreatePlayerHintFX(scene, did, config, client_script)
     end
 
     local world = ClientWorld.GetInst()
+    ---@cast world ClientWorld
     world.m_player_hint = entity
 
     return entity
@@ -282,7 +270,7 @@ end
 ---@param scene Scene
 ---@param prefab PrefabHandle
 ---@param transform Transform
----@return Entity
+---@return LogicEntity
 function _M:CreatePrefab(scene, prefab, transform)
     return scene:Instantiate(prefab, transform)
 end
@@ -292,7 +280,7 @@ end
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
 ---@param object_definitions ObjectDefinitionTable
----@return Entity, GameObject
+---@return LogicEntity, GameObject
 function _M:CreateItem(scene, spawn_info, position, object_definitions)
     local ctx = TL_Client.GetContext()
 
@@ -328,8 +316,8 @@ end
 
 ---@param self ClientCreation
 ---@param scene Scene
----@param character_entity Entity
----@return Entity
+---@param character_entity LogicEntity
+---@return LogicEntity
 function _M:createWeaponController(scene, character_entity)
     local ctx = TL_Client.GetContext()
 
@@ -342,7 +330,9 @@ function _M:createWeaponController(scene, character_entity)
     if controller_relationship then
         controller_relationship:RemoveFromParent()
         local character_relationship = ctx:GetRelationshipManager():Get(character_entity)
-        character_relationship:AddChild(controller_entity)
+        if character_relationship then
+            character_relationship:AddChild(controller_entity)
+        end
     end
 
     return controller_entity
@@ -352,10 +342,11 @@ end
 ---@param scene Scene
 ---@param spawn_info ObjectSpawnDefinition
 ---@param position Vec2
+---@param net_id number
 ---@param object_definitions ObjectDefinitionTable
 ---@param hfsm_definition ScriptHFSMDefinitionHandle|nil
----@return Entity, GameObject
-function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfsm_definition)
+---@return LogicEntity, ClientGameObject
+function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definitions, hfsm_definition)
     local ctx = TL_Client.GetContext()
 
     local transform = TL_Common.Transform()
@@ -393,7 +384,11 @@ function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfs
         if weapon_item_relationship then
             weapon_item_relationship:RemoveFromParent()
             local controller_relationship = ctx:GetRelationshipManager():Get(controller_entity)
-            controller_relationship:AddChild(weapon_item_entity)
+            if controller_relationship then
+                controller_relationship:AddChild(weapon_item_entity)
+            else
+                ctx:Log("weapon controller don't has relationship component")
+            end
         else
             ctx:Log("weapon item don't has relationship component")
         end
@@ -408,6 +403,7 @@ function _M:CreateCharacter(scene, spawn_info, position, object_definitions, hfs
     local script = ctx:GetScriptManager():Get(entity)
     if script then
         local go_definition = _M.ConvertCharacterDefinitionToGODefinition(entity, spawn_info.m_did, definition, controller_entity)
+        go_definition.m_net_id = net_id
         script:initGameObject(go_definition)
     end
 

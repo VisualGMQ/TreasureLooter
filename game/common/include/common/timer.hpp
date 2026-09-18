@@ -15,7 +15,7 @@
  */
 using TimeType = double;
 
-constexpr float kNoLimitFPS = 0;
+constexpr uint32_t kNoLimitFPS = 0;
 
 class Time {
 public:
@@ -29,7 +29,7 @@ public:
 
     [[nodiscard]] uint32_t GetUnlimitFPS() const { return m_unlimit_fps; }
 
-    void SetFPS(float fps);
+    void SetFPS(uint32_t fps);
     [[nodiscard]] bool IsFPSLimited() const;
 
     void Begin();
@@ -44,7 +44,7 @@ private:
 
     // for fps limit
     std::chrono::steady_clock::time_point m_cur_frame_begin_time{};
-    float m_limit_fps = kNoLimitFPS;
+    uint32_t m_limit_fps = kNoLimitFPS;
     float m_fps_require_time = 0.0;  // in ms
     uint32_t m_unlimit_fps = 0;
 };

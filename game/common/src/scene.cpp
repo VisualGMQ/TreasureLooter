@@ -50,8 +50,8 @@ bool Scene::IsInited() const {
     return m_inited;
 }
 
-Entity Scene::Instantiate(PrefabHandle prefab, const Transform* transform) {
-    Entity entity = COMMON_CONTEXT.CreateEntity();
+LogicEntity Scene::Instantiate(PrefabHandle prefab, const Transform* transform) {
+    LogicEntity entity = COMMON_CONTEXT.CreateLogicEntity();
     Transform trans;
     if (transform) {
         trans = *transform;
@@ -63,34 +63,36 @@ Entity Scene::Instantiate(PrefabHandle prefab, const Transform* transform) {
     return entity;
 }
 
-void Scene::RemoveEntity(Entity entity) {
+void Scene::RemoveEntity(LogicEntity entity) {
     COMMON_CONTEXT.RemoveEntity(entity);
 }
 
-void Scene::RemoveEntityFromInnerList(Entity entity) {
+void Scene::RemoveEntityFromInnerList(LogicEntity entity) {
     m_entities.erase(entity);
 }
 
-bool Scene::HasEntity(Entity entity) const {
+bool Scene::HasEntity(LogicEntity entity) const {
     return m_entities.count(entity) > 0;
 }
 
-Entity Scene::GetRootEntity() const {
+LogicEntity Scene::GetRootEntity() const {
     return m_root_entity;
 }
 
-const std::unordered_set<Entity>& Scene::GetAllEntities() const {
+const std::unordered_set<LogicEntity>& Scene::GetAllEntities() const {
     return m_entities;
 }
 
-void Scene::initEntities(SceneDefinitionHandle) {}
-
 void Scene::initByDescription(SceneDefinitionHandle level_content) {
-    initRootEntity(level_content->m_script_path);
+    initRootEntity(level_content);
     initEntities(level_content);
 }
 
 void SceneManager::Switch(SceneHandle level) {
+    m_pending_level = level;
+}
+
+void SceneManager::SwitchImmediate(SceneHandle level) {
     if (m_level) {
         m_level->OnQuit();
     }
@@ -101,7 +103,7 @@ void SceneManager::Switch(SceneHandle level) {
     }
 }
 
-void SceneManager::RemoveEntity(Entity entity) {
+void SceneManager::RemoveEntity(LogicEntity entity) {
     for (auto& [_, scene] : getAll()) {
         scene->RemoveEntityFromInnerList(entity);
     }
@@ -109,4 +111,10 @@ void SceneManager::RemoveEntity(Entity entity) {
 
 SceneHandle SceneManager::GetCurrentScene() const {
     return m_level;
+}
+
+void SceneManager::Update() {
+    TL_RETURN_IF_FALSE(m_pending_level);
+    SwitchImmediate(m_pending_level);
+    m_pending_level = nullptr;
 }

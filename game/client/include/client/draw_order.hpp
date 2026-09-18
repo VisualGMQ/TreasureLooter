@@ -23,12 +23,12 @@ private:
     bool m_inherit_y_sorting = false;
 };
 
-class DrawOrderManager : public ComponentManager<DrawOrder> {
+class DrawOrderManager : public ComponentManager<DrawOrder, PresentEntity> {
 public:
     void Update();
 
 private:
-    void updateRecursive(bool is_parent_enable_y_sorting, Entity entity);
+    void updateRecursive(bool is_parent_enable_y_sorting, LogicEntity entity);
 
     static constexpr uint32_t LayerFactor = 1000000;
     uint32_t m_id = 0;

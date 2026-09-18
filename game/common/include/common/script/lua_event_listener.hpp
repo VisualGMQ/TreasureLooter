@@ -20,10 +20,7 @@ public:
         }
 
         auto listener = [cb](EventListenerID id, const T& event) {
-            auto result = cb(static_cast<int>(id), event);
-            if (!result) {
-                LOGE("[Lua] event callback error: {}", result.message());
-            }
+            tl::CallLuaWithLog(cb, static_cast<int>(id), event);
         };
 
         EventListenerID listener_id = s_es->AddListener<T>(listener);
@@ -53,11 +50,8 @@ public:
         }
 
         auto listener = [cb](EventListenerID id, const Event& event) {
-            auto result =
-                cb(static_cast<int>(id), event.m_peer, event.Payload());
-            if (!result) {
-                LOGE("[Lua] event callback error: {}", result.message());
-            }
+            tl::CallLuaWithLog(cb, static_cast<int>(id), event.m_peer,
+                               event.Payload());
         };
 
         EventListenerID listener_id = s_es->AddListener<Event>(listener);
