@@ -136,25 +136,26 @@ if (NEED_SCHEMA_PARSER)
 endif()
 
 ################ build common ################
-set(COMMON_NAME common)
+set(COMMON_MODULE_NAME common)
 add_subdirectory(common)
 
 ################ build client ################
-set(CLIENT_NAME client)
+set(CLIENT_MODULE_NAME client)
 add_subdirectory(client)
 
 ################ build game ################
-set(GAME_NAME ${PROJECT_NAME})
+set(GAME_CLIENT_NAME ${PROJECT_NAME})
+set(GAME_SERVER_NAME ${PROJECT_NAME}-Server)
 
 if (ANDROID)
-    set(GAME_NAME main)
+    set(GAME_CLIENT_NAME main)
 endif()
 
 add_subdirectory(client_entry)
 
 ################ build server ################
 if (NOT ANDROID)
-    set(SERVER_NAME server)
+    set(SERVER_MODULE_NAME server)
     add_subdirectory(server)
     add_subdirectory(server_entry)
 endif()
@@ -165,8 +166,10 @@ if (NOT ANDROID)
 endif()
 
 ################ install #######################
-install(TARGETS ${GAME_NAME} DESTINATION .)
+install(TARGETS ${GAME_CLIENT_NAME} DESTINATION .)
+install(TARGETS ${GAME_SERVER_NAME} DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
+install(FILES ../ReadMe.md DESTINATION .)
 install(DIRECTORY scripts DESTINATION .)
 
 ################ package ##################

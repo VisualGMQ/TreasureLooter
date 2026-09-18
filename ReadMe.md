@@ -47,7 +47,7 @@ gradlew build
 
 ## How To Run
 
-Run `TreasureLooter[.exe]` under [game](game) directory.
+Run server and client under [game](game) directory.
 
 Or you can install:
 
@@ -68,11 +68,3 @@ It will generate `cmake-build/TreasureLooter-<version>-<platform>.zip` for you.
 ## For Developer
 
 For best lua code experience, you can use vscode to open `game/scripts` folder. It will read [.luarc.json](game/scripts/.luarc.json) and support you some C++ binding hints.
-
-
-## AI Code
-
-Some projects are entirely written by AI, I didn't review code, so you can ignore them when you read code:
-
-* CollisionEditor: [game/tools/collision_editor/](game/tools/collision_editor/)
-* AnimationEditor: [game/tools/animation_editor/](game/tools/animation_editor/)

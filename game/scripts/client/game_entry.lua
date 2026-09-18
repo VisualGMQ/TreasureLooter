@@ -23,6 +23,8 @@ function ClientGameEntry:OnInit()
     GameEntry.OnInit(self)
     DebugCommands.RegisterAllDebugCommand()
     world:RegisterNetEventHandler()
+
+    local ctx = TL_Client.GetContext()
     self:initNet()
 end
 
