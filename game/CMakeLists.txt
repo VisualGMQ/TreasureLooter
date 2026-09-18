@@ -12,6 +12,7 @@ add_subdirectory(3rdlibs)
 
 ################# options #####################
 option(TL_ENABLE_PROFILE "enable profile use tracy" OFF)
+option(TL_BUILD_TOOLS "build game tools" ON)
 
 ################ generate project path config file ################
 configure_file(project_path_generator.xml ${CMAKE_CURRENT_SOURCE_DIR}/project_path.xml)
@@ -153,31 +154,31 @@ endif()
 
 add_subdirectory(client_entry)
 
-################ build server ################
 if (NOT ANDROID)
+    ################ build server ################
     set(SERVER_MODULE_NAME server)
     add_subdirectory(server)
     add_subdirectory(server_entry)
+
+    ################ build tools ################
+    if (TL_BUILD_TOOLS)
+        add_subdirectory(tools)
+    endif()
+
+    ################ install #######################
+    install(TARGETS ${GAME_CLIENT_NAME} DESTINATION .)
+    install(TARGETS ${GAME_SERVER_NAME} DESTINATION .)
+    install(DIRECTORY assets DESTINATION .)
+    install(FILES ../ReadMe.md DESTINATION .)
+    install(DIRECTORY scripts DESTINATION .)
+
+    ################ package ##################
+    # include(InstallRequiredSystemLibraries)
+    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+    set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+    set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+    set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+    set(CPACK_GENERATOR "ZIP")
+    set(CPACK_SOURCE_GENERATOR "ZIP")
+    include(CPack)
 endif()
-
-################ build editor ################
-if (NOT ANDROID)
-    add_subdirectory(tools)
-endif()
-
-################ install #######################
-install(TARGETS ${GAME_CLIENT_NAME} DESTINATION .)
-install(TARGETS ${GAME_SERVER_NAME} DESTINATION .)
-install(DIRECTORY assets DESTINATION .)
-install(FILES ../ReadMe.md DESTINATION .)
-install(DIRECTORY scripts DESTINATION .)
-
-################ package ##################
-# include(InstallRequiredSystemLibraries)
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-set(CPACK_GENERATOR "ZIP")
-set(CPACK_SOURCE_GENERATOR "ZIP")
-include(CPack)
