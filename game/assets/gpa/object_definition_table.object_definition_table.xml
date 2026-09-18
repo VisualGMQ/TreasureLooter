@@ -4,7 +4,7 @@
 		<objects>
 			<elem>
 				<key>CharacterDID1</key>
-				<value>assets/gpa/monsters/fat/fat.character_def.xml</value>
+				<value>assets/gpa/monsters/waggo/waggo.character_def.xml</value>
 			</elem>
 			<elem>
 				<key>CharacterDID2</key>

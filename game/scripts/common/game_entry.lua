@@ -44,32 +44,21 @@ function GameEntry:ChangeLevel(level)
 
     local level_definition = ctx:GetAssetsManager():GetLevelDefinitionManager():Load(level)
     world.m_level_definition = level_definition
+    local new_scene_definition = ctx:GetAssetsManager():GetSceneDefinitionManager():Create()
+    local new_scene = ctx:GetSceneManager():Create(new_scene_definition)
 
-    local scene = ctx:GetSceneManager():GetCurrentScene()
+    local scene_mgr = ctx:GetSceneManager()
+    scene_mgr:Switch(new_scene)
+    ctx:GetAssetsManager():GetSceneDefinitionManager():Unload(new_scene_definition)
+
+    local scene = scene_mgr:GetCurrentScene()
     if not scene then
-        ctx:Log("change level failed: no current scene")
+        ctx:Log("create scene failed")
         return
     end
 
     ctx:Log("change level to ", level)
     self:InitSceneFromLevelDefinition(scene, level_definition)
-end
-
---- Snap a world position to the center of the tilemap cell containing it, so a
---- spawn point dropped roughly on a cell in Tiled generates on the grid.
----@param tilemap TilemapHandle
----@param position Vec2
----@return Vec2
-function GameEntry.snapToTileCenter(tilemap, position)
-    local tile_size = tilemap:GetTileSize()
-    if tile_size.x <= 0 or tile_size.y <= 0 then
-        return position
-    end
-
-    local column = math.floor(position.x / tile_size.x)
-    local row = math.floor(position.y / tile_size.y)
-    return TL_Common.Vec2((column + 0.5) * tile_size.x,
-                          (row + 0.5) * tile_size.y)
 end
 
 ---@param level_definition LevelDefinitionHandle
@@ -97,7 +86,7 @@ function GameEntry.gatherSpawnPoints(level_definition, map_layer_entities)
                 if point then
                     spawn_point_infos[object:GetName()] = {
                         m_name = object:GetName(),
-                        m_position = GameEntry.snapToTileCenter(tilemap, point),
+                        m_position = point,
                     }
                 end
             end
@@ -107,8 +96,7 @@ function GameEntry.gatherSpawnPoints(level_definition, map_layer_entities)
 
     -- for debug
     for name, v in pairs(spawn_point_infos) do
-        TL_Common.GetContext():Log("spawn point: ", name, " at (",
-            v.m_position.x, ",", v.m_position.y, ")")
+        TL_Common.GetContext():Log("spawn point: ", name)
     end
 
     return spawn_point_infos
@@ -148,44 +136,6 @@ function GameEntry.createMapLayers(scene, root_relationship, map_definition, lan
     return map_layer_entities
 end
 
-local k_spike_prefab = "assets/gpa/objects/spike.prefab.xml"
-local k_spike_spawn_point_prefix = "spike_spawn_point"
-
---- Instantiate a spike on every spike spawn point of the map. Both the server
---- (for the triggers) and the client (for the sprites) run this.
----@param scene Scene
----@param spawn_points table<string, SpawnPoint>
----@param land string
-function GameEntry:createSpikes(scene, spawn_points, land)
-    local ctx = TL_Common.GetContext()
-    local prefab_mgr = ctx:GetAssetsManager():GetPrefabManager()
-    local prefab = prefab_mgr:Load(k_spike_prefab)
-    if not prefab:IsValid() then
-        ctx:Log("spawn spikes failed: can't load ", k_spike_prefab)
-        return
-    end
-
-    local parent_entity = self.m_map_layers[land] or scene:GetRootEntity()
-    local parent_relationship = ctx:GetRelationshipManager():Get(parent_entity)
-
-    local count = 0
-    for name, spawn_point in pairs(spawn_points) do
-        if name:find(k_spike_spawn_point_prefix, 1, true) == 1 then
-            local transform = TL_Common.Transform()
-            transform.m_position = spawn_point.m_position
-            local entity = self.m_creation_strategy:CreatePrefab(
-                scene, prefab, transform)
-            if parent_relationship then
-                parent_relationship:AddChild(entity)
-            end
-            count = count + 1
-        end
-    end
-
-    prefab_mgr:Unload(prefab)
-    ctx:Log("spawned ", count, " spikes")
-end
-
 ---@param scene Scene
 ---@param level_definition LevelDefinitionHandle
 function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
@@ -205,8 +155,6 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
     if level_definition.m_map_definition.m_detour:IsValid() then
         ctx:GetTilemapDetourManager():SetCurDetourData(level_definition.m_map_definition.m_detour)
     end
-
-    self:createSpikes(scene, spawn_points, level_definition.m_land)
 
     self.m_creation_strategy:CreatePlayerHint(scene, level_definition.m_player_related_definition, self.m_object_definitions)
 

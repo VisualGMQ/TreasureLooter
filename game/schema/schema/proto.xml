@@ -34,41 +34,12 @@
         <element name="net_id" type="uint32_t" proto_id="1"/>
     </class>
 
-    <class name="Hurt" proto_id="12">
-        <element name="net_id" type="uint32_t" proto_id="1"/>
-        <element name="hp" type="uint32_t" proto_id="2"/>
-    </class>
-
-    <!-- lobby: how many players joined the running match, and its capacity -->
-    <class name="PlayerJoined" proto_id="14">
-        <element name="count" type="uint32_t" proto_id="1"/>
-        <element name="max" type="uint32_t" proto_id="2"/>
-    </class>
-
-    <!-- a client entered the game scene and is ready to start -->
-    <class name="PrepareGameFinish" proto_id="15">
-    </class>
-
-    <!-- all clients are ready: they may play after `countdown` seconds -->
-    <class name="PrepareCountdown" proto_id="16">
-        <element name="countdown" type="double" proto_id="1"/>
-    </class>
-
-    <!-- the server is full, the peer is going to be disconnected -->
-    <class name="ServerFull" proto_id="17">
-    </class>
-
-    <class name="Win" proto_id="13">
-        <element name="net_id" type="uint32_t" proto_id="1"/>
-    </class>
-
     <class name="Move" proto_id="7">
         <element name="net_id" type="uint32_t" proto_id="5"/>
         <element name="entity" type="uint32_t" proto_id="1"/>
         <element name="seq" type="uint32_t" proto_id="2"/>
         <element name="target" type="NetVec2" proto_id="3"/>
         <element name="timestamp" type="double" proto_id ="4" />
-        <element name="velocity" type="NetVec2" proto_id="6"/>
     </class>
 
     <enum name="ClientActionType" proto="true">

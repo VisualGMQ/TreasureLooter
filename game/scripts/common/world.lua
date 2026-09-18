@@ -33,9 +33,4 @@ function _M.GetInst()
     return g_world
 end
 
----@return World?
-function _M.FindInst()
-    return g_world
-end
-
 return _M

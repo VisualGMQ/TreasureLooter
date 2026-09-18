@@ -1,8 +1,8 @@
 <CharacterDefinition>
-	<uuid>740f421b-b2cf-4a5f-a498-41e003b63f40</uuid>
+	<uuid>37dd6461-3193-4b3c-bc70-674ef2363548</uuid>
 	<payload>
-		<sprite_sheet>assets/Characters/fat/SpriteSheet.png</sprite_sheet>
-		<faceset/>
+		<sprite_sheet>assets/Characters/Statue/SpriteSheet.png</sprite_sheet>
+		<faceset>assets/Characters/Statue/Faceset.png</faceset>
 		<cct>
 			<skin>0.100000</skin>
 			<min_disp>0.001000</min_disp>
