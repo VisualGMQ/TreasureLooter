@@ -1,8 +1,5 @@
 local World = require("common.world")
 
-local k_player_client_script = TL_Common.Path("scripts/client/behaviors/net_player_behavior.lua")
-local k_player_client_replicate_script = TL_Common.Path("scripts/client/behaviors/net_player_replicate_behavior.lua")
-
 ---@class FXEntry
 ---@field entity LogicEntity
 ---@field gameobject any
@@ -193,15 +190,13 @@ function _M:onSpawnPlayerReply(reply)
         local player_script = self.m_level_definition and self.m_level_definition.m_client_player_script
         if player_script and not player_script:empty() then
             spawn_info.m_client_script = player_script
-        else
-            spawn_info.m_client_script = k_player_client_script
         end
         local hfsm_path = self.m_level_definition and self.m_level_definition.m_player_related_definition.m_hfsm
         if hfsm_path and not hfsm_path:empty() then
             hfsm_definition = ctx:GetAssetsManager():GetScriptHFSMDefinitionManager():Load(hfsm_path)
         end
-    else
-        spawn_info.m_client_script = k_player_client_replicate_script
+    -- else
+    --     spawn_info.m_client_script = k_player_client_replicate_script
     end
 
     local entity, gameobject = ClientCreation.CreateCharacter(ClientCreation, scene, spawn_info,

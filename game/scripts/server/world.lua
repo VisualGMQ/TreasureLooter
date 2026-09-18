@@ -8,7 +8,6 @@ _M.__index = _M
 setmetatable(_M, { __index = World })
 
 local k_player_spawn_point = "player_spawn_point"
-local k_player_script = TL_Common.Path("scripts/server/behaviors/net_player_behavior.lua")
 
 ---@return ServerWorld
 function _M.new()
@@ -95,8 +94,6 @@ function _M:createPlayer(peer, create_info)
     local player_script = self.m_level_definition and self.m_level_definition.m_server_player_script
     if player_script and not player_script:empty() then
         spawn_info.m_server_script = player_script
-    else
-        spawn_info.m_server_script = k_player_script
     end
     spawn_info.m_spawn_point_name = k_player_spawn_point
 
