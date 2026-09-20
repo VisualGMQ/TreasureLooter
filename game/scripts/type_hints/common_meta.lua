@@ -400,6 +400,12 @@
 ---@class HFSMComponentManager
 ---@field Get fun(self: HFSMComponentManager, entity: LogicEntity): HFSMComponent?
 
+---@class BehaviorTreeComponent
+---@field GetBlackBoard fun(self: BehaviorTreeComponent): table
+
+---@class BehaviorTreeComponentManager
+---@field Get fun(self: BehaviorTreeComponentManager, entity: LogicEntity): BehaviorTreeComponent?
+
 ---@class PhysicsShape
 ---@field GetPosition fun(self: PhysicsShape): Vec2
 ---@field SetCollisionLayer fun(self: PhysicsShape, collision_group: CollisionGroup)
@@ -581,6 +587,7 @@
 ---@field GetTime fun(self: CommonContext): Time
 ---@field GetTimerManager fun(self: CommonContext): TimerManager
 ---@field GetHFSMComponentManager fun(self: CommonContext): HFSMComponentManager
+---@field GetBehaviorTreeManager fun(self: CommonContext): BehaviorTreeComponentManager
 ---@field GetTransformManager fun(self: CommonContext): TransformManager
 ---@field GetTriggerComponentManager fun(self: CommonContext): TriggerComponentManager
 ---@field GetRelationshipManager fun(self: CommonContext): RelationshipManager

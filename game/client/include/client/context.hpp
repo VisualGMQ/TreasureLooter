@@ -1,6 +1,7 @@
 #pragma once
 #include "client/camera.hpp"
 #include "client/hfsm.hpp"
+#include "client/behavior_tree.hpp"
 #include "common/context.hpp"
 #include "common/net/udp.hpp"
 #include "tilemap_layer_collision_component.hpp"
@@ -91,6 +92,7 @@ public:
     Camera m_camera;
     std::unique_ptr<DebugPanel> m_debug_panel;
     std::unique_ptr<ClientHFSMDebugger> m_hfsm_debugger;
+    std::unique_ptr<ClientBTDebugger> m_bt_debugger;
 
 protected:
     void beginImGui();

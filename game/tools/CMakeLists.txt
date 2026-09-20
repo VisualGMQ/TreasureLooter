@@ -1,3 +1,4 @@
 add_subdirectory(common)
 add_subdirectory(asset_editor)
+add_subdirectory(behavior_tree_editor)
 add_subdirectory(tilemap_detour_data_baker)

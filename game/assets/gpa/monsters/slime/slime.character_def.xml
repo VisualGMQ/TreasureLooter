@@ -41,6 +41,15 @@
 			<dead_animation>assets/gpa/anim/character/generic/dead.animation.xml</dead_animation>
 			<invincible_time>1</invincible_time>
 		</hp>
+		<ai_detect>
+			<value>
+				<detect_range>120.000000</detect_range>
+				<collision_mask>
+					<elem>CCT</elem>
+				</collision_mask>
+			</value>
+		</ai_detect>
+		<behavior_tree>assets/gpa/behavior_tree/slime.bt_definition.xml</behavior_tree>
 		<init_weapon>Invalid</init_weapon>
 	</payload>
 </CharacterDefinition>

@@ -1,0 +1,49 @@
+<schema>
+    <include>common/math.hpp</include>
+
+    <enum name="BehaviorTreeStatus" type="uint32_t">
+        <item name="Success" value="0" />
+        <item name="Failure" value="1" />
+        <item name="Running" value="2" />
+    </enum>
+
+    <enum name="BehaviorTreeNodeType" type="uint32_t">
+        <item name="Sequence" value="0" />
+        <item name="Selector" value="1" />
+        <item name="Parallel" value="2" />
+        <item name="Inverter" value="3" />
+        <item name="Succeeder" value="4" />
+        <item name="Failer" value="5" />
+        <item name="Repeat" value="6" />
+        <item name="UntilFail" value="7" />
+        <item name="Wait" value="8" />
+        <item name="Action" value="9" />
+        <item name="Condition" value="10" />
+    </enum>
+
+    <enum name="ParallelSuccessPolicy" type="uint32_t">
+        <item name="All" value="0" />
+        <item name="Any" value="1" />
+    </enum>
+
+    <enum name="ParallelFailurePolicy" type="uint32_t">
+        <item name="Any" value="0" />
+        <item name="All" value="1" />
+    </enum>
+
+    <class name="BehaviorTreeNodeDefinition">
+        <element name="id" type="uint32_t" default="0" />
+        <element name="name" type="std::string" />
+        <element name="type" type="BehaviorTreeNodeType" />
+        <element name="script" type="Path" />
+        <element name="time" type="float" default="0" />
+        <element name="count" type="int" default="0" />
+        <element name="success_policy" type="ParallelSuccessPolicy" default="ParallelSuccessPolicy::All" />
+        <element name="failure_policy" type="ParallelFailurePolicy" default="ParallelFailurePolicy::Any" />
+        <array name="children" type="uint32_t" />
+    </class>
+
+    <asset name="BehaviorTreeDefinition" extension=".bt_definition">
+        <array name="nodes" type="BehaviorTreeNodeDefinition" />
+    </asset>
+</schema>

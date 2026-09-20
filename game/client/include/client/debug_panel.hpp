@@ -14,6 +14,7 @@
 
 struct ImGuiInputTextCallbackData;
 class ClientHFSMDebugger;
+class ClientBTDebugger;
 
 template <typename... Args>
 using debug_command_type = void(Args...);
@@ -224,3 +225,4 @@ private:
 
 void RegisterHFSMDebugCommands(DebugPanel& panel,
                                ClientHFSMDebugger& debugger);
+void RegisterBTDebugCommands(DebugPanel& panel, ClientBTDebugger& debugger);

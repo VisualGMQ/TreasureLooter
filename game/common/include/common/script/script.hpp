@@ -59,6 +59,14 @@ public:
     void callMethodWithTime(const char* method, TimeType delta_time);
     void callMethodWithEntity(const char* method);
 
+    /**
+     * Calls `fn(self, entity, arg)` and returns the integer it yields, or
+     * `std::nullopt` if the method is missing or raised a Lua error. Used by
+     * behavior tree leaf nodes to read the returned status.
+     */
+    std::optional<int> callMethodReturningInt(const char* method,
+                                              const luabridge::LuaRef& arg);
+
     bool IsInited() const { return m_inited; }
     void MarkInited() { m_inited = true; }
 

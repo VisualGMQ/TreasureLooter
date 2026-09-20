@@ -127,8 +127,8 @@ end
 function _M:RegisterNetEventHandler()
     local ctx = TL_Client.GetContext()
     local event_system = ctx:GetEventSystem()
-    event_system:AddNetMsg_SpawnPlayerReplyEvent(function(id, peer, reply)
-        self:onSpawnPlayerReply(reply)
+    event_system:AddNetMsg_SpawnEvent(function(id, peer, spawn)
+        self:onSpawn(spawn)
     end)
     event_system:AddNetMsg_ConnectEvent(function(id, peer, connect)
         self:onNetConnect(peer, connect)
@@ -166,8 +166,9 @@ function _M:onPlayerKill(kill)
     self._net_gameobjects[net_id] = nil
 end
 
----@param reply ProtoSpawnPlayerReply
-function _M:onSpawnPlayerReply(reply)
+--- Create any object the server tells us to spawn (players, items, fx, ...).
+---@param spawn ProtoSpawn
+function _M:onSpawn(spawn)
     local ctx = TL_Client.GetContext()
     local scene = ctx:GetSceneManager():GetCurrentScene()
     if not scene then
@@ -176,45 +177,82 @@ function _M:onSpawnPlayerReply(reply)
 
     -- lazy require: client.creation requires client.world at load time
     local ClientCreation = require("client.creation")
+    local DID = require("common.did")
 
-    local did = reply:m_did()
-    local net_id = reply:m_net_id()
-    local net_position = reply:m_position()
+    local did = spawn:m_did()
+    local net_id = spawn:m_net_id()
+    local net_position = spawn:m_position()
     local position = TL_Common.Vec2(net_position:m_x(), net_position:m_y())
 
     local spawn_info = TL_Schema.ObjectSpawnDefinition()
     spawn_info.m_did = did
+    spawn_info.m_spawn_on_layer = spawn:m_spawn_on_layer()
 
-    local hfsm_definition = nil
-    if net_id == ctx:GetNetPeer():GetID() then
-        local player_script = self.m_level_definition and self.m_level_definition.m_client_player_script
-        if player_script and not player_script:empty() then
-            spawn_info.m_client_script = player_script
-        end
-        local hfsm_path = self.m_level_definition and self.m_level_definition.m_player_related_definition.m_hfsm
-        if hfsm_path and not hfsm_path:empty() then
-            hfsm_definition = ctx:GetAssetsManager():GetScriptHFSMDefinitionManager():Load(hfsm_path)
-        end
-    -- else
-    --     spawn_info.m_client_script = k_player_client_replicate_script
+    local client_script = spawn:m_client_script()
+    if client_script and client_script ~= "" then
+        spawn_info.m_client_script = TL_Common.Path(client_script)
     end
 
-    local entity, gameobject = ClientCreation.CreateCharacter(ClientCreation, scene, spawn_info,
-                            position, net_id, self.m_object_definitions, hfsm_definition)
+    local entity = TL_Common.null_entity
+    local gameobject = nil
+
+    if DID.IsCharacterDID(did) then
+        local hfsm_definition = nil
+        if net_id ~= 0 and net_id == ctx:GetNetPeer():GetID() then
+            -- The local player uses the level's player script + HFSM.
+            local player_script = self.m_level_definition and self.m_level_definition.m_client_player_script
+            if player_script and not player_script:empty() then
+                spawn_info.m_client_script = player_script
+            end
+            local hfsm_path = self.m_level_definition and self.m_level_definition.m_player_related_definition.m_hfsm
+            if hfsm_path and not hfsm_path:empty() then
+                hfsm_definition = ctx:GetAssetsManager():GetScriptHFSMDefinitionManager():Load(hfsm_path)
+            end
+        end
+        entity, gameobject = ClientCreation.CreateCharacter(ClientCreation, scene, spawn_info,
+                                position, net_id, self.m_object_definitions, hfsm_definition)
+    elseif DID.IsItemDID(did) then
+        entity, gameobject = ClientCreation.CreateItem(ClientCreation, scene, spawn_info,
+                                position, self.m_object_definitions)
+    elseif DID.IsFXDID(did) then
+        entity, gameobject = ClientCreation.CreateFX(ClientCreation, scene, spawn_info,
+                                position, self.m_object_definitions)
+    elseif DID.IsSkillDID(did) then
+        entity, gameobject = ClientCreation.CreateSkill(ClientCreation, scene, spawn_info,
+                                position, self.m_object_definitions)
+    else
+        ctx:Log("client spawn failed: unknown did ", did)
+        return
+    end
+
     if entity == TL_Common.null_entity then
         return
     end
 
-    local root_relationship = ctx:GetRelationshipManager():Get(scene:GetRootEntity())
-    if root_relationship then
-        root_relationship:AddChild(entity)
+    -- Attach to the layer the server spawned it on (falling back to the
+    -- gameplay layer / scene root) so draw order matches.
+    local parent_entity = nil
+    if self.m_map_layers and spawn_info.m_spawn_on_layer ~= "" then
+        parent_entity = self.m_map_layers[spawn_info.m_spawn_on_layer]
+    end
+    if parent_entity == nil or parent_entity == TL_Common.null_entity then
+        parent_entity = self.m_land_entity
+    end
+    if parent_entity == nil or parent_entity == TL_Common.null_entity then
+        parent_entity = scene:GetRootEntity()
+    end
+    local parent_relationship = ctx:GetRelationshipManager():Get(parent_entity)
+    if parent_relationship then
+        parent_relationship:AddChild(entity)
     end
 
-    if self._net_gameobjects[net_id] ~= nil then
-        ctx:Log("client spawned duplicate! net_id: ", net_id, ", did ", did)
+    if net_id ~= 0 then
+        if self._net_gameobjects[net_id] ~= nil then
+            ctx:Log("client spawned duplicate! net_id: ", net_id, ", did ", did)
+        end
+        self._net_gameobjects[net_id] = gameobject
     end
-    self._net_gameobjects[net_id] = gameobject
-    ctx:Log("client spawned player, net_id ", net_id, " did ", did)
+    ctx:Log("client spawn object, net_id ", net_id, " did ", did)
 end
 
 

@@ -144,6 +144,7 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
     local spawn_points = self.gatherSpawnPoints(level_definition, self.m_map_layers)
     world.m_spawn_points = spawn_points
     self.m_map_layers = self.createMapLayers(scene, root_relationship, level_definition.m_map_definition, level_definition.m_land)
+    world.m_map_layers = self.m_map_layers
 
     if level_definition.m_map_definition.m_detour:IsValid() then
         ctx:GetTilemapDetourManager():SetCurDetourData(level_definition.m_map_definition.m_detour)
@@ -157,61 +158,65 @@ function GameEntry:InitSceneFromLevelDefinition(scene, level_definition)
         player_hfsm_handle = ctx:GetAssetsManager():GetScriptHFSMDefinitionManager():Load(hfsm_path)
     end
 
-    -- create objects
-    for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
-        local did = spawn_info.m_did
-        local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
+    -- Level objects are created by the authoritative side (server) only; the
+    -- client creates its copies from the server's Spawn messages instead (see
+    -- client.world:onSpawn), so objects are never created twice.
+    if self.m_creation_strategy.m_authoritative then
+        for _, spawn_info in ipairs(level_definition.m_spawn_objects) do
+            local did = spawn_info.m_did
+            local spawn_point = spawn_points[spawn_info.m_spawn_point_name]
 
-        if not spawn_point then
-            ctx:Log("spawn failed: can't find spawn point ", spawn_point, " for object ", spawn_info.m_did)
-            goto continue
-        end
-
-        local transform = TL_Common.Transform()
-        transform.m_position = spawn_point.m_position
-
-        local target_entity = self.m_map_layers[spawn_info.m_spawn_on_layer]
-        ctx:Log("spawn point name ", spawn_point.m_name)
-        local relationship = ctx:GetRelationshipManager():Get(target_entity)
-        if not relationship then
-            ctx:Log("spawn failed: target layer has no relationship component")
-            goto continue
-        end
-
-        local definition = self.m_object_definitions:Get(spawn_info.m_did)
-
-        if DID.IsCharacterDID(spawn_info.m_did) then
-            local hfsm_definition = nil
-            if spawn_info.m_team_id == TL_Schema.TeamID.team1 then
-                hfsm_definition = player_hfsm_handle
+            if not spawn_point then
+                ctx:Log("spawn failed: can't find spawn point ", spawn_point, " for object ", spawn_info.m_did)
+                goto continue
             end
-            local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, 0, self.m_object_definitions, hfsm_definition)
-            relationship:AddChild(entity)
-        elseif DID.IsItemDID(did) then
-            local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
-            relationship:AddChild(entity)
-        elseif DID.IsFXDID(did) then
-            local entity = self.m_creation_strategy:CreateFX(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
-            relationship:AddChild(entity)
-        elseif DID.IsSkillDID(did) then
-            local entity = self.m_creation_strategy:CreateSkill(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
-            relationship:AddChild(entity)
-        else
-            local filename = definition and definition:GetFilename()
-            if filename and TL_Schema.FilenameIsPrefab(filename) then
-                local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(filename)
-                if not prefab:IsValid() then
-                    ctx:Log("spawn failed: can't load prefab")
-                    goto continue
-                end
 
-                local entity = self.m_creation_strategy:CreatePrefab(scene, prefab, transform)
+            local transform = TL_Common.Transform()
+            transform.m_position = spawn_point.m_position
+
+            local target_entity = self.m_map_layers[spawn_info.m_spawn_on_layer]
+            ctx:Log("spawn point name ", spawn_point.m_name)
+            local relationship = ctx:GetRelationshipManager():Get(target_entity)
+            if not relationship then
+                ctx:Log("spawn failed: target layer has no relationship component")
+                goto continue
+            end
+
+            local definition = self.m_object_definitions:Get(spawn_info.m_did)
+
+            if DID.IsCharacterDID(spawn_info.m_did) then
+                local hfsm_definition = nil
+                if spawn_info.m_team_id == TL_Schema.TeamID.team1 then
+                    hfsm_definition = player_hfsm_handle
+                end
+                local entity = self.m_creation_strategy:CreateCharacter(scene, spawn_info, spawn_point.m_position, 0, self.m_object_definitions, hfsm_definition)
+                relationship:AddChild(entity)
+            elseif DID.IsItemDID(did) then
+                local entity = self.m_creation_strategy:CreateItem(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
+                relationship:AddChild(entity)
+            elseif DID.IsFXDID(did) then
+                local entity = self.m_creation_strategy:CreateFX(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
+                relationship:AddChild(entity)
+            elseif DID.IsSkillDID(did) then
+                local entity = self.m_creation_strategy:CreateSkill(scene, spawn_info, spawn_point.m_position, self.m_object_definitions)
                 relationship:AddChild(entity)
             else
-                ctx:Log("spawn failed: no support file type")
+                local filename = definition and definition:GetFilename()
+                if filename and TL_Schema.FilenameIsPrefab(filename) then
+                    local prefab = ctx:GetAssetsManager():GetPrefabManager():Load(filename)
+                    if not prefab:IsValid() then
+                        ctx:Log("spawn failed: can't load prefab")
+                        goto continue
+                    end
+
+                    local entity = self.m_creation_strategy:CreatePrefab(scene, prefab, transform)
+                    relationship:AddChild(entity)
+                else
+                    ctx:Log("spawn failed: no support file type")
+                end
             end
+            ::continue::
         end
-        ::continue::
     end
 end
 
