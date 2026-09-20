@@ -28,6 +28,7 @@
 #include "common/asset_manager.hpp"
 #include "common/bind_point.hpp"
 #include "common/cct.hpp"
+#include "common/behavior_tree.hpp"
 #include "common/context.hpp"
 #include "common/detour/detour.hpp"
 #include "common/event.hpp"
@@ -135,6 +136,7 @@ void ClientContext::Initialize(int argc, char** argv) {
 
     m_debug_panel = std::make_unique<DebugPanel>();
     m_hfsm_debugger = std::make_unique<ClientHFSMDebugger>();
+    m_bt_debugger = std::make_unique<ClientBTDebugger>();
     registerAllDebugCommands();
 
 #ifdef TL_DEBUG
@@ -215,10 +217,6 @@ void ClientContext::AttachComponentsOnLogicEntity(
 
     auto& prefab = *instance.m_prefab;
 
-    if (prefab.m_net_replicat_info) {
-        m_replicate_component_manager->RegisterEntity(
-            entity, prefab.m_net_replicat_info->m_raw_entity);
-    }
     if (!prefab.m_client_script.empty()) {
         auto& mgr = m_assets_manager->GetManager<ScriptBinaryData>();
         ScriptBinaryDataHandle handle = mgr.Load(prefab.m_client_script);
@@ -226,6 +224,9 @@ void ClientContext::AttachComponentsOnLogicEntity(
     }
     if (prefab.m_hfsm) {
         m_hfsm_manager->Create(entity, prefab.m_hfsm);
+    }
+    if (prefab.m_behavior_tree) {
+        m_behavior_tree_manager->Create(entity, prefab.m_behavior_tree);
     }
 }
 
@@ -305,6 +306,7 @@ void ClientContext::RemoveEntity(LogicEntity entity) {
 
 void ClientContext::RemoveAllComponentsOnLogicEntity(LogicEntity entity) {
     m_hfsm_manager->RemoveEntity(entity);
+    m_behavior_tree_manager->RemoveEntity(entity);
 
     CommonContext::RemoveAllComponentsOnLogicEntity(entity);
 }
@@ -388,6 +390,7 @@ void ClientContext::logicUpdate(TimeType elapse) {
     }
     m_script_component_manager->Update();
     m_hfsm_manager->Update();
+    m_behavior_tree_manager->Update(elapse);
 
     m_ui_manager->HandleEvent();
     m_relationship_manager->Update();
@@ -458,6 +461,10 @@ void ClientContext::renderUpdate(TimeType elapse) {
         m_hfsm_debugger->Render();
     }
 
+    if (m_bt_debugger) {
+        m_bt_debugger->Render();
+    }
+
     endImGui();
     m_renderer->Present();
 }
@@ -512,6 +519,7 @@ void ClientContext::registerAllDebugCommands() {
         CLIENT_CONTEXT.m_client_tilemap_layer_collision_component_manager,
         &ClientTilemapLayerCollisionComponentManager::EnableDebugEntity);
     RegisterHFSMDebugCommands(*m_debug_panel, *m_hfsm_debugger);
+    RegisterBTDebugCommands(*m_debug_panel, *m_bt_debugger);
 }
 
 void ClientContext::Shutdown() {
@@ -536,6 +544,7 @@ void ClientContext::Shutdown() {
     m_debug_drawer.reset();
     m_debug_panel.reset();
     m_hfsm_debugger.reset();
+    m_bt_debugger.reset();
     m_input_manager.reset();
     m_gamepad_manager.reset();
 

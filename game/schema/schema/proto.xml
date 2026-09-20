@@ -24,10 +24,15 @@
         <element name="did" type="uint32_t" proto_id="2"/>
     </class>
 
-    <class name="SpawnPlayerReply" proto_id="11">
+    <!--notify the client to spawn the object of the given DID-->
+    <class name="Spawn" proto_id="11">
         <element name="net_id" type="uint32_t" proto_id="1"/>
         <element name="did" type="uint32_t" proto_id="2"/>
         <element name="position" type="NetVec2" proto_id="3"/>
+        <!--per-spawn client script (items/fx/skills); empty for characters-->
+        <element name="client_script" type="std::string" proto_id="4"/>
+        <!--layer this object should be parented to on the client-->
+        <element name="spawn_on_layer" type="std::string" proto_id="5"/>
     </class>
 
     <class name="Kill" proto_id="6">

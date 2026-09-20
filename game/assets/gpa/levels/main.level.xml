@@ -48,10 +48,9 @@
 					<value>invalid</value>
 				</team_id>
 			</elem>
-			<!-- slime disabled for now: only the player is tested
 			<elem>
 				<did>CharacterDID2</did>
-				<client_script>scripts/client/behaviors/slime_behavior.lua</client_script>
+				<client_script/>
 				<server_script/>
 				<spawn_point_name>slime_spawn_point</spawn_point_name>
 				<spawn_on_layer>arch</spawn_on_layer>
@@ -59,7 +58,6 @@
 					<value>team2</value>
 				</team_id>
 			</elem>
-			-->
 			<elem>
 				<did>ItemDID5</did>
 				<client_script>scripts/client/behaviors/workbench.lua</client_script>

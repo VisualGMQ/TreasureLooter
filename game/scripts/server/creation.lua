@@ -5,7 +5,24 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = Creation })
 
+--- The server is authoritative: only it creates the level objects and then
+--- tells clients to create their own copies (see World:AddSpawn).
+_M.m_authoritative = true
+
 local k_default_script = TL_Common.Path("scripts/server/gameobject_behavior.lua")
+
+--- Notify the server world (which broadcasts to the connected clients) that an
+--- object was spawned. Lazy require to avoid a require cycle with server.world.
+---@param entity LogicEntity
+---@param spawn_info ObjectSpawnDefinition
+---@param net_id number
+local function notifySpawn(entity, spawn_info, net_id)
+    if entity == nil or entity == TL_Common.null_entity then
+        return
+    end
+    local ServerWorld = require("server.world")
+    ServerWorld.GetInst():AddSpawn(entity, spawn_info, net_id)
+end
 
 ---@param self ServerCreation
 ---@param scene Scene
@@ -61,6 +78,8 @@ function _M:CreateCharacter(scene, spawn_info, position, net_id, object_definiti
         script:initGameObject(go_definition)
     end
 
+    notifySpawn(entity, spawn_info, net_id)
+
     return entity, script and script.m_gameobject
 end
 
@@ -78,8 +97,27 @@ end
 ---@param object_definitions ObjectDefinitionTable
 ---@return LogicEntity, GameObject|nil
 function _M:CreateItem(scene, spawn_info, position, object_definitions)
-    TL_Common.GetContext():Log("server doesn't support spawning item ", spawn_info.m_did, " yet")
-    return TL_Common.null_entity, nil
+    local ctx = TL_Common.GetContext()
+
+    local definition = object_definitions:GetItem(spawn_info.m_did)
+    if not definition then
+        ctx:Log("server spawn item failed: no definition for ", spawn_info.m_did)
+        return TL_Common.null_entity, nil
+    end
+
+    local transform = TL_Common.Transform()
+    transform.m_position = position
+
+    local prefab = Creation.ConvertItemDefinitionToPrefab(definition)
+    if not spawn_info.m_server_script:empty() then
+        prefab.m_server_script = spawn_info.m_server_script
+    end
+
+    local entity = _M.CreatePrefab(self, scene, prefab, transform)
+    ctx:Log("server spawn item ", spawn_info.m_did,
+            " on SpawnPoint(", spawn_info.m_spawn_point_name, ")")
+    notifySpawn(entity, spawn_info, 0)
+    return entity, nil
 end
 
 ---@param self ServerCreation
@@ -89,8 +127,25 @@ end
 ---@param object_definitions ObjectDefinitionTable
 ---@return LogicEntity, GameObject|nil
 function _M:CreateFX(scene, spawn_info, position, object_definitions)
-    TL_Common.GetContext():Log("server doesn't support spawning fx ", spawn_info.m_did, " yet")
-    return TL_Common.null_entity, nil
+    local ctx = TL_Common.GetContext()
+
+    local definition = object_definitions:GetFX(spawn_info.m_did)
+    if not definition then
+        ctx:Log("server spawn fx failed: no definition for ", spawn_info.m_did)
+        return TL_Common.null_entity, nil
+    end
+
+    local transform = TL_Common.Transform()
+    transform.m_position = position
+
+    local prefab = Creation.ConvertFXDefinitionToPrefab(definition)
+    if not spawn_info.m_server_script:empty() then
+        prefab.m_server_script = spawn_info.m_server_script
+    end
+
+    local entity = _M.CreatePrefab(self, scene, prefab, transform)
+    notifySpawn(entity, spawn_info, 0)
+    return entity, nil
 end
 
 ---@param self ServerCreation
@@ -100,8 +155,25 @@ end
 ---@param object_definitions ObjectDefinitionTable
 ---@return LogicEntity, GameObject|nil
 function _M:CreateSkill(scene, spawn_info, position, object_definitions)
-    TL_Common.GetContext():Log("server doesn't support spawning skill ", spawn_info.m_did, " yet")
-    return TL_Common.null_entity, nil
+    local ctx = TL_Common.GetContext()
+
+    local definition = object_definitions:GetSkill(spawn_info.m_did)
+    if not definition then
+        ctx:Log("server spawn skill failed: no definition for ", spawn_info.m_did)
+        return TL_Common.null_entity, nil
+    end
+
+    local transform = TL_Common.Transform()
+    transform.m_position = position
+
+    local prefab = Creation.ConvertSkillDefinitionToPrefab(definition)
+    if not spawn_info.m_server_script:empty() then
+        prefab.m_server_script = spawn_info.m_server_script
+    end
+
+    local entity = _M.CreatePrefab(self, scene, prefab, transform)
+    notifySpawn(entity, spawn_info, 0)
+    return entity, nil
 end
 
 return _M

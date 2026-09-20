@@ -2,11 +2,11 @@
 #include "common/entity.hpp"
 #include "common/math.hpp"
 #include "common/path.hpp"
-#include "net/sync.hpp"
 #include "schema/config.hpp"
 #include <memory>
 
 class HFSMComponentManager;
+class BehaviorTreeComponentManager;
 class IDebugDrawer;
 class ScriptBinaryDataManager;
 class TriggerComponentManager;
@@ -28,7 +28,6 @@ class EventSystem;
 class EventDebugger;
 class UDPHost;
 class EntityNameManager;
-class ReplicateComponentManager;
 class TilemapDetourManager;
 
 class CommonContext {
@@ -106,9 +105,9 @@ public:
 
     std::unique_ptr<IDebugDrawer> m_debug_drawer;
     std::unique_ptr<EntityNameManager> m_entity_name_manager;
-    std::unique_ptr<ReplicateComponentManager> m_replicate_component_manager;
     std::unique_ptr<TilemapDetourManager> m_tilemap_detour_manager;
     std::unique_ptr<HFSMComponentManager> m_hfsm_manager;
+    std::unique_ptr<BehaviorTreeComponentManager> m_behavior_tree_manager;
 
     std::unique_ptr<UDPHost> m_net_host;
 

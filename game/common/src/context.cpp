@@ -7,6 +7,7 @@
 #include "common/detour/detour.hpp"
 #include "common/entity_name_manager.hpp"
 #include "common/event.hpp"
+#include "common/behavior_tree.hpp"
 #include "common/hfsm.hpp"
 #include "common/net/udp.hpp"
 #include "common/profile.hpp"
@@ -105,9 +106,8 @@ void CommonContext::Initialize(int argc, char** argv) {
     m_bind_point_component_manager =
         std::make_unique<BindPointsComponentManager>();
     m_script_component_manager = std::make_unique<ScriptComponentManager>();
-    m_replicate_component_manager =
-        std::make_unique<ReplicateComponentManager>();
     m_hfsm_manager = std::make_unique<HFSMComponentManager>();
+    m_behavior_tree_manager = std::make_unique<BehaviorTreeComponentManager>();
 }
 
 void CommonContext::Shutdown() {
@@ -115,6 +115,7 @@ void CommonContext::Shutdown() {
     m_is_inited = false;
 
     m_hfsm_manager.reset();
+    m_behavior_tree_manager.reset();
     m_scene_manager.reset();
 
     m_script_component_manager.reset();
@@ -142,7 +143,6 @@ void CommonContext::Shutdown() {
     m_transform_manager.reset();
     m_assets_manager.reset();
 
-    m_replicate_component_manager.reset();
     m_net_host.reset();
     m_entity_name_manager.reset();
 }
@@ -229,7 +229,6 @@ LogicEntity CommonContext::CreateReplicateEntity(LogicEntity raw_entity) {
     auto entity = static_cast<LogicEntity>(
         static_cast<std::underlying_type_t<LogicEntity>>(raw_entity) +
         gReplicateEntityStart);
-    m_replicate_component_manager->RegisterEntity(entity, raw_entity);
     return entity;
 }
 

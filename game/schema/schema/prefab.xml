@@ -12,10 +12,7 @@
     <import>bind_point_schema</import>
     <import>detour</import>
     <import>hfsm</import>
-
-    <class name="ReplicateInfo">
-        <element name="raw_entity" type="LogicEntity"/>
-    </class>
+    <import>behavior_tree</import>
 
     <asset name="Prefab" extension=".prefab">
         <option type="std::string" name="name"/>
@@ -32,7 +29,7 @@
         <element type="Path" name="client_script" />
         <element type="Path" name="server_script" />
         <handle type="UIWidgetDefinition" name="ui"/>
-        <option type="ReplicateInfo" name="net_replicat_info"/>
         <handle type="ScriptHFSMDefinition" name="hfsm"/>
+        <handle type="BehaviorTreeDefinition" name="behavior_tree"/>
     </asset>
 </schema>

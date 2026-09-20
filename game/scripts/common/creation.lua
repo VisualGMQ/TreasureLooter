@@ -45,8 +45,16 @@ function _M.ConvertCharacterDefinitionToPrefab(config)
 
     prefab_handle.m_cct = config.m_cct
 
+    if config.m_behavior_tree and config.m_behavior_tree:IsValid() then
+        prefab_handle.m_behavior_tree = config.m_behavior_tree
+    end
+
     if config.m_interact then
         prefab_handle.m_trigger = _M.buildInteractTrigger(config.m_interact.m_detect_range, config.m_interact.m_collision_mask)
+    end
+
+    if config.m_ai_detect then
+        prefab_handle.m_trigger = _M.buildDetectTrigger(config.m_ai_detect.m_detect_range, config.m_ai_detect.m_collision_mask)
     end
 
     return prefab_handle
@@ -70,6 +78,33 @@ function _M.buildInteractTrigger(detect_range, collision_mask)
 
     local trigger = TL_Schema.TriggerDefinition()
     trigger.m_event_type = TL_Schema.TriggerEventType.InteractableDetect
+    local shapes = trigger.m_physics_shapes
+    table.insert(shapes, shape)
+    trigger.m_physics_shapes = shapes
+    trigger.m_trig_every_frame_when_touch = false
+
+    return trigger
+end
+
+--- Build a circular AI detect trigger. It emits no events; AI scripts poll
+--- `Trigger:GetTouchingShapes()` to find nearby targets.
+---@param detect_range number
+---@param collision_mask CollisionGroup
+---@return TriggerDefinition
+function _M.buildDetectTrigger(detect_range, collision_mask)
+    local ctx = TL_Common.GetContext()
+    local shape = ctx:GetAssetsManager():GetPhysicsShapeDefinitionManager():Create()
+    shape.m_is_rect = false
+
+    local circle = shape.m_circle
+    circle.m_center = TL_Common.Vec2(0, 0)
+    circle.m_radius = detect_range
+    shape.m_circle = circle
+
+    shape.m_collision_mask = collision_mask
+
+    local trigger = TL_Schema.TriggerDefinition()
+    trigger.m_event_type = TL_Schema.TriggerEventType.None
     local shapes = trigger.m_physics_shapes
     table.insert(shapes, shape)
     trigger.m_physics_shapes = shapes

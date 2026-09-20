@@ -9,6 +9,7 @@
     <import>tilemap_schema</import>
     <import>sprite</import>
     <import>anim_player</import>
+    <import>behavior_tree</import>
 
     <enum name="TeamID">
         <item name="invalid" />
@@ -185,6 +186,11 @@
         <element name="collision_mask" type="CollisionGroup" />
     </class>
 
+    <class name="AIDetectDefinition">
+        <element name="detect_range" type="float" default="120" />
+        <element name="collision_mask" type="CollisionGroup" />
+    </class>
+
     <asset name="CharacterDefinition" extension=".character_def">
         <handle name="sprite_sheet" type="Image" />
         <handle name="faceset" type="Image" />
@@ -194,6 +200,9 @@
         <element name="move" type="MoveComponentDefinition" />
         <element name="hp" type="HpComponentDefinition" />
         <option name="interact" type="InteractComponentDefinition" />
+        <option name="ai_detect" type="AIDetectDefinition" />
+
+        <handle name="behavior_tree" type="BehaviorTreeDefinition" />
 
         <element name="init_weapon" type="DID" default="DID::Invalid" />
         <!--<handle name="pickaxe" type="WeaponDefinition" />-->

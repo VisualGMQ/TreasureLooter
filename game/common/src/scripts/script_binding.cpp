@@ -12,6 +12,7 @@
 #include "common/event.hpp"
 #include "common/handle.hpp"
 #include "common/hfsm.hpp"
+#include "common/behavior_tree.hpp"
 #include "common/image.hpp"
 #include "common/log.hpp"
 #include "common/macros.hpp"
@@ -516,6 +517,11 @@ void bindContext(lua_State* L) {
                 .addFunction("GetHFSMComponentManager",
                              +[](CommonContext* ctx) -> HFSMComponentManager* {
                                  return ctx->m_hfsm_manager.get();
+                             })
+                .addFunction("GetBehaviorTreeManager",
+                             +[](CommonContext* ctx)
+                                 -> BehaviorTreeComponentManager* {
+                                 return ctx->m_behavior_tree_manager.get();
                              })
                 .addFunction("GetTransformManager",
                              +[](CommonContext* ctx) -> TransformManager* {
@@ -1376,6 +1382,22 @@ void bindHFSM(lua_State* L) {
         .endNamespace();
 }
 
+void bindBehaviorTree(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("TL_Common")
+            .beginClass<LuaBehaviorTreeComponent>("BehaviorTreeComponent")
+                .addFunction("GetBlackBoard",
+                             +[](LuaBehaviorTreeComponent* component) {
+                                 return component->GetBlackBoard();
+                             })
+            .endClass()
+            .beginClass<BehaviorTreeComponentManager>("BehaviorTreeComponentManager")
+                .addFunction("Create", &BehaviorTreeComponentManager::Create)
+                .addFunction("Get", &BehaviorTreeComponentManager::Get)
+            .endClass()
+        .endNamespace();
+}
+
 void bindAllTypes(lua_State* L) {
     bindEntity(L);
     bindUUID(L);
@@ -1406,6 +1428,7 @@ void bindAllTypes(lua_State* L) {
     bindEvent(L);
     bindUDP(L);
     bindHFSM(L);
+    bindBehaviorTree(L);
 }
 
 void BindCommonModule(lua_State* L) {

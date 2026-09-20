@@ -160,10 +160,7 @@ void ScriptBinaryDataManager::Initialize() {
     }
     luaL_openlibs(m_L);
 
-    // `package.path` stays as the PC fallback (the scripts are plain files
-    // under the working directory, i.e. the `game/` folder). On Android they
-    // live inside the APK, where the stock file searcher cannot reach them, so
-    // the engine searcher installed below is what actually resolves `require`.
+    // register script path
     lua_getglobal(m_L, "package");  // package
     if (lua_istable(m_L, -1)) {
         lua_getfield(m_L, -1, "path");  // package, path
@@ -173,15 +170,12 @@ void ScriptBinaryDataManager::Initialize() {
             path += ";";
             path += existing;
         }
-        lua_pop(m_L, 1);  // package
+        lua_pop(m_L, 1);
         lua_pushlstring(m_L, path.data(), path.size());
         lua_setfield(m_L, -2, "path");  // package.path = path
 
-        // Inserted ahead of the stock Lua file searcher (slot 2; Lua 5.5
-        // builds the list as preload, Lua files, C libs, C root), so game
-        // modules are resolved through the engine first while the stock
-        // searcher and `package.path` keep working as a fallback.
-        lua_getfield(m_L, -1, "searchers");  // package, searchers
+        // register ower require function
+        lua_getfield(m_L, -1, "searchers");
         if (lua_istable(m_L, -1)) {
             const size_t searcher_count = lua_rawlen(m_L, -1);
             for (size_t i = searcher_count + 1; i > 2; i--) {
@@ -401,6 +395,28 @@ void Script::callMethodWithEntity(const char* method) {
         LOGE("[Lua] {} {}: {}", m_filename, method, err ? err : "unknown");
         lua_pop(m_L, 1);
     }
+}
+
+std::optional<int> Script::callMethodReturningInt(
+    const char* method, const luabridge::LuaRef& arg) {
+    auto prepare = prepareFn(method);
+    if (!prepare) return std::nullopt;
+
+    lua_Integer entity_val = static_cast<lua_Integer>(
+        static_cast<std::underlying_type_t<LogicEntity>>(m_entity));
+    prepare->m_fn.push(m_L);
+    prepare->m_instance.push(m_L);
+    lua_pushinteger(m_L, entity_val);
+    arg.push(m_L);
+    if (lua_pcall(m_L, 3, 1, 0) != LUA_OK) {
+        const char* err = lua_tostring(m_L, -1);
+        LOGE("[Lua] {} {}: {}", m_filename, method, err ? err : "unknown");
+        lua_pop(m_L, 1);
+        return std::nullopt;
+    }
+    int result = static_cast<int>(lua_tointeger(m_L, -1));
+    lua_pop(m_L, 1);
+    return result;
 }
 
 std::optional<Script::PrepareInfo> Script::prepareFn(std::string_view method) {

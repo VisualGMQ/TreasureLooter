@@ -6,6 +6,10 @@ local _M = {}
 _M.__index = _M
 setmetatable(_M, { __index = Creation })
 
+--- The client is not authoritative: it does not create level objects, it
+--- creates them from the server's Spawn messages (see client.world:onSpawn).
+_M.m_authoritative = false
+
 local k_default_script = TL_Common.Path("scripts/client/gameobject_behavior.lua")
 
 ---@param entity LogicEntity
